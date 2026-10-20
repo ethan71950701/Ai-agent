@@ -34,7 +34,7 @@ final class AgentLoop {
     private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單"};
     private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
     private static final String[] PIPE_OK = {"grep", "head", "tail", "sort", "cut", "wc", "uniq", "tr"};
-    private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "scroll", "wait", "back", "home", "enter", "type"};
+    private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "multitouch", "scroll", "wait", "back", "home", "enter", "type"};
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     interface Ui {
@@ -342,6 +342,8 @@ final class AgentLoop {
                 case "drag_cancel":
                     if (st.dragDown) releaseDrag(st);
                     return "已取消拖曳";
+                case "multitouch":
+                    return multitouch(a, w, h, c);
                 case "scroll": {
                     boolean down = !"up".equals(a.optString("dir", "down"));
                     int x = w / 2, y1 = (int) (h * 0.7), y2 = (int) (h * 0.3);
@@ -414,6 +416,59 @@ final class AgentLoop {
         List<String> out = new ArrayList<>();
         for (int k = 1; k <= n; k++) out.add(ev("MOVE", x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n));
         return out;
+    }
+
+    /** 多指觸控：每根手指各自從起點滑到終點（起點=終點 = 按住不動），先全部按下、按住 hold_ms，再一起移動（最多 4 根）。 */
+    private static String multitouch(JSONObject a, int w, int h, Context c) {
+        JSONArray arr = a.optJSONArray("fingers");
+        if (arr == null || arr.length() == 0) return "沒有手指的資料";
+        int n = Math.min(arr.length(), 4);
+        double[][] from = new double[n][2], to = new double[n][2];
+        int[] ms = new int[n];
+        for (int i = 0; i < n; i++) {
+            JSONObject f = arr.optJSONObject(i);
+            if (f == null) return "手指資料格式不對";
+            from[i][0] = px(f.optDouble("x1"), w); from[i][1] = px(f.optDouble("y1"), h);
+            to[i][0] = px(f.optDouble("x2"), w); to[i][1] = px(f.optDouble("y2"), h);
+            ms[i] = clamp(f.optInt("ms", 400), 50, 5000);
+        }
+        if (!ensureTouch(c)) return "多指觸控啟動失敗（請確認 root 已允許 PhoneAI）";
+        double[][] cur = new double[n][];
+        for (int i = 0; i < n; i++) cur[i] = from[i].clone();
+        LiveInput.send(eLine("DOWN", 0, cur, 1));
+        for (int i = 1; i < n; i++) LiveInput.send(eLine("PDOWN", i, cur, i + 1));
+        sleep(clamp(a.optInt("hold_ms", 0), 0, 5000));
+        int total = 0;
+        for (int m : ms) total = Math.max(total, m);
+        int steps = clamp(total / 40, 3, 60);
+        long stepMs = total / steps;
+        for (int s = 1; s <= steps; s++) {
+            for (int i = 0; i < n; i++) {
+                double frac = Math.min(1.0, s * (double) stepMs / ms[i]);
+                cur[i][0] = from[i][0] + (to[i][0] - from[i][0]) * frac;
+                cur[i][1] = from[i][1] + (to[i][1] - from[i][1]) * frac;
+            }
+            LiveInput.send(eLine("MOVE", 0, cur, n));
+            sleep(stepMs);
+        }
+        for (int i = n - 1; i >= 1; i--) LiveInput.send(eLine("PUP", i, cur, i + 1));
+        LiveInput.send(eLine("UP", 0, cur, 1));
+        return "多指觸控完成（" + n + " 根手指）";
+    }
+
+    /** 送給 InputServer 的多指指令：E 動作 指針索引 指針數 x0 y0 ...（座標是像素）。 */
+    private static String eLine(String kind, int idx, double[][] cur, int count) {
+        StringBuilder sb = new StringBuilder("E ").append(kind).append(' ').append(idx).append(' ').append(count);
+        for (int i = 0; i < count; i++) sb.append(' ').append(Math.round(cur[i][0])).append(' ').append(Math.round(cur[i][1]));
+        return sb.toString();
+    }
+
+    /** 確保多指用的 InputServer（主螢幕，編號 0）已經在跑；最多等 4 秒。 */
+    private static boolean ensureTouch(Context c) {
+        if (LiveInput.ready()) return true;
+        LiveInput.start(c, 0);
+        for (int i = 0; i < 40 && !LiveInput.ready(); i++) sleep(100);
+        return LiveInput.ready();
     }
 
     private static void releaseDrag(State st) {

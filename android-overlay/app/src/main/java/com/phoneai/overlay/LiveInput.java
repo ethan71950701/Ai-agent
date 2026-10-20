@@ -24,7 +24,7 @@ final class LiveInput {
 
     static synchronized void start(Context c, int displayId) {
         Log.i(TAG, "live input start requested, display " + displayId);
-        if (displayId <= 0) return;
+        if (displayId < 0) return;   // 0 = 主螢幕（多指觸控用），>0 = 背景虛擬螢幕
         if (proc != null && display == displayId && proc.isAlive()) return;
         stop(false);  // 重啟時不送 pkill（會跟新程序賽跑）；舊程序的 stdin 一關就自己結束
         display = displayId;

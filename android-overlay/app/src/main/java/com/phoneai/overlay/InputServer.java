@@ -39,6 +39,15 @@ public final class InputServer {
         while ((line = r.readLine()) != null) {
             String[] p = line.trim().split("\\s+");
             if (p.length == 0 || p[0].isEmpty()) continue;
+            if (p[0].equals("E")) {   // 多指：E 動作 指針索引 指針數 x0 y0 x1 y1 ...（每次送出所有指針的目前位置）
+                try {
+                    downTime = injectMulti(im, inject, setDisplay, display, p, downTime);
+                } catch (Throwable t) {
+                    System.out.println("error " + t);
+                    System.out.flush();
+                }
+                continue;
+            }
             int action;
             switch (p[0]) {
                 case "D": action = MotionEvent.ACTION_DOWN; break;
@@ -62,5 +71,43 @@ public final class InputServer {
                 ev.recycle();
             }
         }
+    }
+
+    /** 送出一個多指事件。DOWN 會重設 downTime；回傳新的 downTime。 */
+    private static long injectMulti(Object im, Method inject, Method setDisplay, int display, String[] p, long downTime) throws Throwable {
+        String kind = p[1];
+        int idx = Integer.parseInt(p[2]), n = Integer.parseInt(p[3]);
+        MotionEvent.PointerProperties[] props = new MotionEvent.PointerProperties[n];
+        MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[n];
+        for (int i = 0; i < n; i++) {
+            props[i] = new MotionEvent.PointerProperties();
+            props[i].id = i;
+            props[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+            coords[i] = new MotionEvent.PointerCoords();
+            coords[i].x = Float.parseFloat(p[4 + 2 * i]);
+            coords[i].y = Float.parseFloat(p[5 + 2 * i]);
+            coords[i].pressure = 1f;
+            coords[i].size = 1f;
+        }
+        int action;
+        switch (kind) {
+            case "DOWN": action = MotionEvent.ACTION_DOWN; break;
+            case "UP": action = MotionEvent.ACTION_UP; break;
+            case "PDOWN": action = MotionEvent.ACTION_POINTER_DOWN | (idx << MotionEvent.ACTION_POINTER_INDEX_SHIFT); break;
+            case "PUP": action = MotionEvent.ACTION_POINTER_UP | (idx << MotionEvent.ACTION_POINTER_INDEX_SHIFT); break;
+            case "CANCEL": action = MotionEvent.ACTION_CANCEL; break;
+            default: action = MotionEvent.ACTION_MOVE; break;
+        }
+        long now = SystemClock.uptimeMillis();
+        if (action == MotionEvent.ACTION_DOWN) downTime = now;
+        MotionEvent ev = MotionEvent.obtain(downTime, now, action, n, props, coords, 0, 0, 1f, 1f, 0, 0,
+                InputDevice.SOURCE_TOUCHSCREEN, 0);
+        try {
+            setDisplay.invoke(ev, display);
+            inject.invoke(im, ev, 0);
+        } finally {
+            ev.recycle();
+        }
+        return downTime;
     }
 }
