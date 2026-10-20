@@ -70,10 +70,24 @@ public class MainActivity extends Activity {
     }
 
     /** 用手指的壓力決定底欄發光的強度（壓越重越亮）。Android 回報的壓力範圍因手機而異，這裡把 0.15～1.0 對應到 0～1。 */
-    private void pressureGlow(android.view.MotionEvent e, View v) {
+    private void pressureGlow(android.view.MotionEvent e, View v, boolean smooth) {
         float p = e.getPressure();
         GlassBar.touchInfo = "壓力 " + String.format(java.util.Locale.US, "%.2f", p) + "、接觸面積 " + String.format(java.util.Locale.US, "%.2f", e.getSize());
-        if (glass != null) glass.setPressGlow((p - 0.15f) / 0.85f);
+        float target = (p - 0.15f) / 0.85f;
+        if (smooth) animatePress(target, 160);
+        else if (glass != null) glass.setPressGlow(target);
+    }
+
+    private android.animation.ValueAnimator pressAnim;
+
+    /** 發光漸漸亮起／漸漸熄滅（不瞬間跳），避免短按時光一閃就沒了。 */
+    private void animatePress(float to, long ms) {
+        if (glass == null) return;
+        if (pressAnim != null) pressAnim.cancel();
+        pressAnim = android.animation.ValueAnimator.ofFloat(glass.getPressGlow(), to);
+        pressAnim.setDuration(ms);
+        pressAnim.addUpdateListener(a -> glass.setPressGlow((Float) a.getAnimatedValue()));
+        pressAnim.start();
     }
 
     private boolean barDragging;
@@ -203,7 +217,7 @@ public class MainActivity extends Activity {
             int idx = Math.max(0, Math.min(2, (int) ((ex - barPad) / barItemW)));
             switch (e.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    pressureGlow(e, v);
+                    pressureGlow(e, v, true);
                     dragT = 0;
                     dragV = 0;
                     barDragging = false;
@@ -214,7 +228,7 @@ public class MainActivity extends Activity {
                     holdLoop.postDelayed(hold[0], 140);
                     return true;
                 case android.view.MotionEvent.ACTION_MOVE: {
-                    pressureGlow(e, v);
+                    pressureGlow(e, v, false);
                     if (!barDragging && Math.abs(ex - barDownX) > slop) {
                         holdLoop.removeCallbacks(hold[0]);
                         enterDrag(ex, min, max);
@@ -238,7 +252,7 @@ public class MainActivity extends Activity {
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
                     holdLoop.removeCallbacks(hold[0]);
-                    if (glass != null) glass.setPressGlow(0f);
+                    animatePress(0f, 320);
                     if (!barDragging) {   // 短按：切換分頁（showTab 會做彈跳的圓底與圖示動畫）
                         if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP && barDownIdx != tab) showTab(barDownIdx);
                         return true;

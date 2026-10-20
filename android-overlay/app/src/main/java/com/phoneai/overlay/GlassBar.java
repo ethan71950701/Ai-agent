@@ -147,6 +147,10 @@ final class GlassBar extends FrameLayout {
     /** 按壓力度造成的發光（0..1）；由 MainActivity 的觸控事件設定。 */
     private float pressGlow;
 
+    float getPressGlow() {
+        return pressGlow;
+    }
+
     void setPressGlow(float p) {
         pressGlow = Math.max(0f, Math.min(1f, p));
         invalidate();
