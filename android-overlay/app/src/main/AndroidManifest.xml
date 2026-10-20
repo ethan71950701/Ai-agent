@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 16 Live Updates（升級成「推廣的常駐通知」）。舊系統不認得會忽略。 -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- 只連 127.0.0.1（Termux 的 agent2.py 送指令），不連外網 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 助理面板的語音辨識（App 內即時辨識，才能畫音量動畫）。overlay_install.sh 會用 root 授權 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 把指令交給 Termux 的 assistant.py（Termux 要設 allow-external-apps=true） -->
+    <uses-permission android:name="com.termux.permission.RUN_COMMAND" />
+
+    <!-- 只需要看得到桌面上有圖示的 App（匯出 App 名稱清單用），不需要 QUERY_ALL_PACKAGES -->
+    <queries>
+        <!-- 朗讀：要能找到系統的語音合成（TTS）引擎 -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <package android:name="com.google.android.googlequicksearchbox" />
+    </queries>
+
+    <application
+        android:label="PhoneAI Overlay"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:name=".App"
+        android:allowBackup="false"
+        android:theme="@style/AppTheme">
+
+        <!-- 三星 Now Bar：宣告支援 Ongoing Activity。LiveBridge 2.1.4 的清單有這行，Now Bar 設定清單才會列出它（推測，待實測） -->
+        <meta-data
+            android:name="com.samsung.android.support.ongoing_activity"
+            android:value="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 由 root 的 am start-foreground-service 或本 App 自己啟動；不開放給其他 App -->
+        <service
+            android:name=".OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shows the live status and tap ripples of a local phone automation script." />
+        </service>
+
+        <activity
+            android:name=".AskActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AssistTheme" />
+
+        <activity
+            android:name=".MemoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".LogActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".DiagActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SetupActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".GuideActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".MicTestActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SherpaTestActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ConfirmActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.Material3.DayNight.Dialog" />
+
+        <!-- 【實驗】直接顯示背景螢幕（不經影片壓縮）；用 su -c "am start -n com.phoneai.overlay/.DirectTestActivity" 開 -->
+        <activity
+            android:name=".DirectTestActivity"
+            android:exported="false" />
+
+        <provider
+            android:name=".SurfaceProvider"
+            android:authorities="com.phoneai.overlay.surface"
+            android:exported="false" />
+
+        <activity
+            android:name=".TakeoverInputActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.Material3.DayNight.Dialog" />
+
+        <!-- 快速設定磁貼 -->
+        <service
+            android:name=".AskTileService"
+            android:exported="true"
+            android:label="AI 助手"
+            android:icon="@drawable/ic_stat"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 預設數位助理（長按電源鍵） -->
+        <service
+            android:name=".AssistService"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <meta-data
+                android:name="android.voice_interaction"
+                android:resource="@xml/assist_service" />
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".AssistSessionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_VOICE_INTERACTION" />
+        <service
+            android:name=".NoRecognitionService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.speech.RecognitionService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- 無障礙懸浮層（只畫漣漪，不讀畫面）。用 root 開：overlay_install.sh -->
+        <service
+            android:name=".RippleAccessibilityService"
+            android:exported="true"
+            android:label="PhoneAI 漣漪"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/a11y_config" />
+        </service>
+    </application>
+</manifest>

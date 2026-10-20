@@ -12,3 +12,13 @@ llama.cpp/
 model/
 backup/
 __pycache__/
+# Android 編譯產物（APK 由 GitHub Actions 產生）
+.gradle/
+build/
+local.properties
+*.apk
+# sherpa-onnx 原生函式庫（編譯時由 GitHub Actions 下載並核對校驗碼，不進 repo）
+android-overlay/app/src/main/jniLibs/
+# 簽名金鑰庫（絕對不要提交；CI 從 GitHub Secrets 還原）
+*.keystore
+*.jks

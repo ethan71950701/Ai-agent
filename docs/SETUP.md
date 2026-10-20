@@ -68,3 +68,22 @@ termux-tts-speak -s MUSIC "測試"     # 要 -s MUSIC
 按下去 -> 跳輸入框 -> assistant.py --once 自己判斷：指令表命中直接下指令，沒命中交給 agent2.py（Claude 看畫面操作）。
 需要：Termux:Widget 與 Termux:API 都裝（跟 Termux 同來源）、Termux 電池設無限制、可能要開「顯示在其他應用程式上層」。
 （整條路未在手機驗證）
+
+## 10. 安裝 PhoneAI Overlay App（操作介面）
+1. 電腦或手機瀏覽器登入 GitHub → 本 repo 的 **Actions** → 最新一次成功的「Android APK」→ 最下面 **Artifacts** 的 `phoneai-overlay-apk`（zip）→ 解壓縮，把 `app-debug.apk` 放進手機的「下載」。
+2. 在 Termux（repo 要在 `main`）：
+```bash
+cd ~/phone-ai-agent && git pull && bash install.sh && bash ~/overlay_install.sh
+```
+   `overlay_install.sh` 會：用 root 安裝 APK（安裝來源標成 Google 套件安裝程式）、開「顯示在其他應用程式上層」與通知權限、
+   把三星 Now Bar 的測試開關 `enable_notification_nowbar_test` 設成 1（見 ROADMAP 8e）、讓 Termux 允許外部 App 呼叫（`allow-external-apps`）並授權 RUN_COMMAND。
+3. **開無障礙服務**（漣漪與浮動按鈕靠它；若手機上已有別的無障礙服務，要保留，下面以 SCENE 為例，請換成 `su -c "settings get secure enabled_accessibility_services"` 印出的原值再加上我們的）：
+```bash
+su -c "settings put secure enabled_accessibility_services <原本的服務>:com.phoneai.overlay/com.phoneai.overlay.RippleAccessibilityService"
+```
+4. 打開 App，在 root 管理 App 按允許。主畫面最上面就是輸入框。
+5. （選用）下拉快速設定面板編輯，把「AI 助手」磁貼拖進去；App 主畫面可勾選浮動按鈕、設定預設數位助理。
+- 之後的更新：下載新 APK 覆蓋「下載」裡的檔案，再跑第 2 步（APK 用固定金鑰簽名，直接覆蓋安裝；只有從固定金鑰之前的舊版升級那一次要先解除安裝）。
+- 看所有 App 的包名：`python ~/applist.py`。
+- 副作用提醒：Now Bar 測試開關設成 1 後，其他 App 的「可升級通知」也可能出現在 Now Bar；要還原：`su -c "settings put secure enable_notification_nowbar_test 0"`（我們的膠囊也會消失）。
+

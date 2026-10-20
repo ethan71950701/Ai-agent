@@ -1,0 +1,58 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.phoneai.overlay"
+    compileSdk 36
+
+    // 簽名金鑰：GitHub Actions 從 Secrets 還原金鑰庫並用環境變數傳進來（KEYSTORE_FILE、KEYSTORE_PASSWORD、KEY_ALIAS、KEY_PASSWORD），
+    // 這樣每次編譯簽名相同，才能直接覆蓋安裝。沒有設環境變數（本機、雲端試編譯、別人 fork）就用 Android 預設的除錯金鑰。
+    // 金鑰庫不放在 repo 裡（見 docs/PUBLISH_CHECKLIST.md「簽名金鑰」）。
+    signingConfigs {
+        debug {
+            def ks = System.getenv("KEYSTORE_FILE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    defaultConfig {
+        applicationId "com.phoneai.overlay"
+        minSdk 34
+        targetSdk 36
+        // 版本號自動跟著 GitHub Actions 的執行序號走（每次 main 編譯都變大）；本機編譯是 1 / 1.0.1
+        def runNo = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionCode runNo
+        versionName "1.0." + runNo
+        // 版本編號：GitHub Actions 傳入 -PgitSha=<commit 前 7 碼>；本機/雲端自己編譯是 dev。主畫面與診斷會顯示，方便確認「有沒有更新成功」
+        def sha = (project.findProperty("gitSha") ?: "dev").toString()
+        def stamp = new Date().format("MM/dd HH:mm", TimeZone.getTimeZone("Asia/Taipei"))
+        resValue "string", "build_id", "${sha} · ${stamp}"
+        // 更新與首次設定要從哪個 GitHub repo 下載：CI 會帶 GITHUB_REPOSITORY（fork 出去的人自動指向自己的 repo）；本機編譯用預設
+        def repo = System.getenv("GITHUB_REPOSITORY") ?: "ethan71950701/phone-ai-agent"
+        buildConfigField "String", "REPO", "\"${repo}\""
+        // 離線語音辨識（Vosk）的原生函式庫每種晶片一份，只留 arm64（手機都是）才不會讓 APK 變很大
+        ndk { abiFilters "arm64-v8a" }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Material 3 元件（按鈕、開關、卡片、文字欄位）：讓 App 介面用 Android 原生的 Material 風格
+    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.dynamicanimation:dynamicanimation:1.0.0"   // 彈簧動畫（底欄、展開、按壓回彈）
+    // 離線語音辨識（SenseVoice，sherpa-onnx 的 Java 介面；原生函式庫由 GitHub 編譯時下載，見 SherpaEngine）
+}

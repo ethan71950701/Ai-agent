@@ -1,0 +1,282 @@
+package com.phoneai.overlay;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Outline;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.RenderEffect;
+import android.graphics.RenderNode;
+import android.graphics.RuntimeShader;
+import android.graphics.Shader;
+import android.os.SystemClock;
+import android.view.View;
+import android.view.ViewOutlineProvider;
+import android.widget.FrameLayout;
+
+/**
+ * 液態玻璃（仿 iOS 26／KernelSU）。兩種用法：
+ * 1) 底欄（lens=false）：把後面的畫面縮小抓成圖，模糊，邊緣折射、色散，疊淡色與亮邊。
+ * 2) 底欄上選中的那顆（lens=true）：拖動時放大成透鏡——不模糊，中間放大、邊緣折射強烈，能看到底下的圖示與文字被放大；沒拖的時候只是半透明的淡色圓底。
+ * 抓背景時：自己整個不畫；別的玻璃元件在抓背景時只畫子內容（圖示、文字），不畫玻璃層，所以透鏡看得到底欄的圖示。
+ * 沒有變動的時候不重畫（kick() 之後約一秒多內每個畫格更新）。需要 API 33（RuntimeShader／RenderEffect），本 App minSdk 34。
+ */
+final class GlassBar extends FrameLayout {
+    private static final String COMMON =
+            "uniform shader content;\n"
+            + "uniform float2 size;\n"
+            + "uniform float radius;\n"
+            + "uniform float depth;\n"
+            + "uniform float amount;\n"
+            + "uniform float skew;\n"
+            + "half4 main(float2 p) {\n"
+            + "  float2 c = size * 0.5;\n"
+            + "  float2 q = abs(p - c) - (c - float2(radius));\n"
+            + "  float sd = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - radius;\n"   // 到圓角矩形邊的距離，內側為負
+            + "  float t = clamp(-sd / depth, 0.0, 1.0);\n"
+            + "  float bend = (1.0 - t) * (1.0 - t);\n"                                          // 越靠邊折射越強
+            + "  float2 dir = normalize(p - c + float2(0.001));\n"
+            + "  float2 z = c + (p - c) / (1.0 + ZOOM * amount);\n"                                // 中間放大（底欄 ZOOM=0）
+            + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
+            + "  float2 sp = z - dir * bend * depth * 0.75 * amount;\n"
+            + "  half4 col = content.eval(sp);\n"
+            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散
+            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * amount).r;\n"
+            + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
+            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount);\n"   // 比背景亮一點，邊緣更亮
+            + "  return col;\n"
+            + "}\n";
+    private static final String AGSL_BAR = COMMON.replace("ZOOM", "0.0");
+    private static final String AGSL_LENS = COMMON.replace("ZOOM", "0.10");
+
+    /** 有任何玻璃元件正在抓背景：其他玻璃元件只畫子內容，免得互相遞迴。 */
+    private static boolean anyCapture;
+    /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
+    static final float REST = 0.4f;
+    static volatile String status = "還沒畫過";
+
+    private final boolean lens;
+    private View source, iconSource;
+    private Bitmap bmp;
+    private Canvas bc;
+    private final RenderNode node = new RenderNode("glass");
+    private final RuntimeShader shader;
+    private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
+    private final Paint tint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint inner = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path clip = new Path();
+    private final RectF rect = new RectF();
+    private boolean capturing, failed, plain;
+    private long until;
+    private final int bgColor, tintColor;
+    private final float radius;
+    private float blurFactor = 1f;   // 模糊程度 0..1：按住底欄時降到 0（清楚看到底下），放開再回來
+    private float amount;   // 0 = 平的淡色圓底、1 = 完整透鏡效果（只有 lens 用；底欄固定 1）
+
+    GlassBar(Context c, int bgColor, int tintColor, int rimColor, float radiusPx, boolean lens) {
+        super(c);
+        this.lens = lens;
+        this.bgColor = bgColor;
+        this.tintColor = tintColor;
+        this.radius = radiusPx;
+        this.amount = lens ? REST : 1f;
+        shader = new RuntimeShader(lens ? AGSL_LENS : AGSL_BAR);
+        setWillNotDraw(false);
+        setClipChildren(false);
+        rim.setStyle(Paint.Style.STROKE);
+        rim.setStrokeWidth(Ui.dp(c, 2));
+        inner.setStyle(Paint.Style.STROKE);
+        inner.setStrokeWidth(Ui.dp(c, 3));
+        inner.setColor(0x14FFFFFF);
+        if (!lens) {
+            setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View v, Outline o) {
+                    o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), radius);
+                }
+            });
+        }
+    }
+
+    void setSource(View v) { source = v; }
+
+    /** 透鏡專用：底欄裡「只有圖示與文字」的那一層（另外抓、不模糊，只放大折射）。 */
+    void setIconSource(View v) { iconSource = v; }
+
+    /** 要放大的那排圖示（和底欄同一個座標系，與 fl 的左上角對齊）。 */
+
+    /** true = 不畫任何底（沒有模糊、底色），只畫裡面的內容。 */
+    void setPlain(boolean p) { plain = p; }
+
+    /** 透鏡的強度 0..1。 */
+    void setAmount(float a) {
+        amount = a;
+        kick(1200);
+    }
+
+    float getAmount() { return amount; }
+
+    void setBlurFactor(float f) {
+        blurFactor = Math.max(0f, Math.min(1f, f));
+        kick(1200);
+    }
+
+    /** 接下來 ms 毫秒內每個畫格都重新抓背景（捲動、動畫、點擊時呼叫）。 */
+    void kick(long ms) {
+        until = Math.max(until, SystemClock.uptimeMillis() + ms);
+        invalidate();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int ow, int oh) {
+        super.onSizeChanged(w, h, ow, oh);
+        rect.set(0, 0, w, h);
+        clip.reset();
+        clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
+        node.setPosition(0, 0, w, h);
+        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x38000000, (tintColor & 0xFFFFFF) | 0x1C000000}
+                        : new int[]{(tintColor & 0xFFFFFF) | 0x06000000, (tintColor & 0xFFFFFF) | 0x01000000},
+                null, Shader.TileMode.CLAMP));
+        rim.setShader(new LinearGradient(0, 0, w, h, new int[]{0x90FFFFFF, 0x18FFFFFF, 0x50FFFFFF},
+                new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
+        try {
+            configure(shader, 0f);
+            node.setRenderEffect(currentEffect());
+        } catch (Throwable e) {
+            failed = true;
+            status = "失敗，已退回半透明：" + e;
+        }
+    }
+
+    private void configure(RuntimeShader sh, float skewValue) {
+        sh.setFloatUniform("size", getWidth(), getHeight());
+        sh.setFloatUniform("radius", radius);
+        sh.setFloatUniform("depth", Ui.dp(getContext(), lens ? 12 : 18));
+        sh.setFloatUniform("amount", amount);
+        sh.setFloatUniform("skew", skewValue);
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (capturing) return;                        // 我正在抓背景：不要把自己畫進去
+        if (anyCapture) return;                       // 玻璃按鈕在抓背景（只要底欄後面的頁面）：底欄與按鈕都不畫
+        if (plain) {                                  // 完全透明的底欄：什麼都不畫，只畫子內容
+            super.dispatchDraw(canvas);
+            return;
+        }
+        int w = getWidth(), h = getHeight();
+        boolean glass = !failed && source != null && w > 0 && h > 0 && canvas.isHardwareAccelerated() && true;
+        if (lens) updateSkew();
+        if (glass) {
+            try {
+                drawGlass(canvas, w, h);
+                status = "正常（玻璃效果執行中）";
+            } catch (Throwable e) {   // 這支手機的玻璃效果不能用：退回半透明底色，不要讓 App 閃退
+                failed = true;
+                capturing = false;
+                anyCapture = false;
+                status = "失敗，已退回半透明：" + e;
+                drawFlat(canvas);
+            }
+        } else {
+            drawFlat(canvas);
+        }
+        super.dispatchDraw(canvas);
+        if (SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();
+    }
+
+    private float lastTx, skewNow;
+    private long lastT;
+
+    /** 玻璃按鈕的橫向速度 → 歪斜量（平滑過、停下來會回到 0）。 */
+    private void updateSkew() {
+        long now = SystemClock.uptimeMillis();
+        float tx = getTranslationX();
+        if (lastT != 0 && now > lastT) {
+            float vDpMs = (tx - lastTx) / getResources().getDisplayMetrics().density / (now - lastT);   // dp/ms
+            float target = Math.max(-0.35f, Math.min(0.35f, -vDpMs * 0.35f));
+            skewNow = skewNow * 0.6f + target * 0.4f;
+        }
+        lastTx = tx;
+        lastT = now;
+        if (Math.abs(skewNow) > 0.003f) kick(200);
+    }
+
+    private void drawFlat(Canvas canvas) {
+        if (!lens) {
+            Paint solid = new Paint(Paint.ANTI_ALIAS_FLAG);
+            solid.setColor((bgColor & 0xFFFFFF) | 0xE6000000);
+            canvas.drawPath(clip, solid);
+        }
+        canvas.drawPath(clip, tint);
+    }
+
+    /** 把 src 畫進 target（縮小 scale 倍），座標對齊到本 View 的左上角（補回 pivot 縮放造成的位移）。 */
+    private void captureInto(Bitmap target, Canvas c, View src, int scale, int erase) {
+        target.eraseColor(erase);
+        int[] a = new int[2], b = new int[2];
+        getLocationInWindow(a);
+        src.getLocationInWindow(b);
+        float x0 = a[0] - b[0] + getPivotX() * (getScaleX() - 1f);
+        float y0 = a[1] - b[1] + getPivotY() * (getScaleY() - 1f);
+        capturing = true;
+        anyCapture = true;
+        try {
+            c.save();
+            c.scale(1f / scale, 1f / scale);
+            c.translate(-x0, -y0);
+            src.draw(c);
+            c.restore();
+        } finally {
+            capturing = false;
+            anyCapture = false;
+        }
+    }
+
+    private void drawGlass(Canvas canvas, int w, int h) {
+        int scale = lens ? 2 : 4;   // 透鏡要清楚；底欄模糊反正很糊，抓 1/4 大小省很多繪製（掉幀的主因）
+        int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
+        if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
+            bmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888);
+            bc = new Canvas(bmp);
+        }
+        // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
+        captureInto(bmp, bc, source, scale, bgColor);
+        configure(shader, lens ? skewNow : 0f);
+        node.setRenderEffect(currentEffect());
+        Canvas rc = node.beginRecording();
+        rc.drawBitmap(bmp, null, rect, bmpPaint);
+        node.endRecording();
+        node.setAlpha(1f);
+        canvas.save();
+        canvas.clipPath(clip);
+        canvas.drawRenderNode(node);
+        canvas.drawPath(clip, tint);
+        canvas.restore();
+        if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
+    }
+
+    /** 把底欄那排圖示畫在透鏡裡，放大倍率隨按住的程度變化，放大中心是按鈕中心（圖示位置永遠跟底欄對齊）。 */
+    private void drawMagnifiedIcons(Canvas canvas) {
+        float s = 1f + 0.22f * amount;
+        float l = getLeft(), t = getTop();
+        float cx = l + getWidth() / 2f, cy = t + getHeight() / 2f;
+        canvas.save();
+        canvas.clipPath(clip);
+        canvas.translate(-l, -t);   // 回到底欄的座標
+        canvas.scale(s, s, cx, cy);
+        iconSource.draw(canvas);
+        canvas.restore();
+    }
+
+    private RenderEffect currentEffect() {
+        RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "content");
+        float blur = Ui.dp(getContext(), 12) * blurFactor;
+        if (blur < 0.5f) return fx;   // 按住時不模糊
+        return RenderEffect.createChainEffect(fx, RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
+    }
+}

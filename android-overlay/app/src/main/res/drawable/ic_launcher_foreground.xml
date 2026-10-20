@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 應用圖示：以光球為主題，左右上下完全對稱。108x108 座標，主要內容在中間的安全範圍內。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 外圈、中圈光環（越外越淡） -->
+    <path
+        android:pathData="M54,22 A32,32 0 1 1 54,86 A32,32 0 1 1 54,22 Z"
+        android:strokeColor="#40FFFFFF"
+        android:strokeWidth="1.6" />
+    <path
+        android:pathData="M54,30 A24,24 0 1 1 54,78 A24,24 0 1 1 54,30 Z"
+        android:strokeColor="#80FFFFFF"
+        android:strokeWidth="2" />
+    <!-- 中央光球 -->
+    <path
+        android:pathData="M54,38 A16,16 0 1 1 54,70 A16,16 0 1 1 54,38 Z"
+        android:fillColor="#FF8E8CFF" />
+    <!-- 光球中央的四角星（對稱） -->
+    <path
+        android:pathData="M54,44 C54,50 58,54 64,54 C58,54 54,58 54,64 C54,58 50,54 44,54 C50,54 54,50 54,44 Z"
+        android:fillColor="#FFFFFFFF" />
+    <!-- 上下左右與四個斜角的小星點（對稱） -->
+    <path android:pathData="M54,14 C54,16.5 55.5,18 58,18 C55.5,18 54,19.5 54,22 C54,19.5 52.5,18 50,18 C52.5,18 54,16.5 54,14 Z" android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M54,86 C54,88.5 55.5,90 58,90 C55.5,90 54,91.5 54,94 C54,91.5 52.5,90 50,90 C52.5,90 54,88.5 54,86 Z" android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M14,54 C16.5,54 18,55.5 18,58 C18,55.5 19.5,54 22,54 C19.5,54 18,52.5 18,50 C18,52.5 16.5,54 14,54 Z" android:fillColor="#FFFFFFFF" />
+    <path android:pathData="M86,54 C88.5,54 90,55.5 90,58 C90,55.5 91.5,54 94,54 C91.5,54 90,52.5 90,50 C90,52.5 88.5,54 86,54 Z" android:fillColor="#FFFFFFFF" />
+</vector>

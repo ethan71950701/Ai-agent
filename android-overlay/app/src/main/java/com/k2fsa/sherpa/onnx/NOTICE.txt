@@ -1,0 +1,4 @@
+這個資料夾的 .java 檔是 sherpa-onnx 官方的 Java 介面，原封不動複製，沒有修改。
+來源：https://github.com/k2-fsa/sherpa-onnx  版本 v1.13.8  路徑 sherpa-onnx/java-api/src/main/java/com/k2fsa/sherpa/onnx/
+授權：Apache License 2.0（版權屬於各檔案標頭所列的作者，例如 Xiaomi Corporation）。
+原生函式庫（libsherpa-onnx-jni.so、libonnxruntime.so）不放在 repo：GitHub Actions 編譯時從官方 release 下載並核對 SHA-256（見 .github/workflows/android.yml）。

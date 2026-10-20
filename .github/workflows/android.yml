@@ -1,0 +1,96 @@
+# 編譯 PhoneAI Overlay 的 APK（使用者沒有電腦，靠這個在雲端編譯），並在 main 上自動發布成 GitHub Release。
+# 下載：GitHub 頁面右側「Releases」最新一筆的 app-debug.apk（App 內「檢查並更新」也是抓這個，不需要權杖）。
+# 簽名：用 Secrets 裡的金鑰（KEYSTORE_BASE64、KEYSTORE_PASSWORD、KEY_ALIAS、KEY_PASSWORD），簽名固定才能覆蓋安裝。
+# 還沒設 Secrets 時只上傳 Artifact（臨時簽名，不發布 Release）；產生金鑰與設定步驟見 docs/PUBLISH_CHECKLIST.md。
+name: Android APK
+
+on:
+  push:
+    branches:
+      - main  # 只在 main 編譯；工作分支推送不再重複編譯
+    paths:
+      - "android-overlay/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # 發布 Release 要用
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+      # 離線語音辨識（sherpa-onnx）的原生函式庫：官方發布檔，約 27MB，不放進 repo；固定版本並核對 SHA-256，檔案被換掉就中止編譯
+      - name: Download sherpa-onnx native libs (arm64)
+        run: |
+          set -euo pipefail
+          VER=1.13.8
+          SHA=2ff63469a71cb6009aa2e3ed5f4a670f8abdcbe4bb9ffd23776afc792a6b4f44
+          curl -fsSL --retry 3 -o /tmp/sherpa-android.tar.bz2 "https://github.com/k2-fsa/sherpa-onnx/releases/download/v${VER}/sherpa-onnx-v${VER}-android.tar.bz2"
+          echo "${SHA}  /tmp/sherpa-android.tar.bz2" | sha256sum -c -
+          mkdir -p /tmp/sherpa-x android-overlay/app/src/main/jniLibs/arm64-v8a
+          tar xjf /tmp/sherpa-android.tar.bz2 -C /tmp/sherpa-x ./jniLibs/arm64-v8a/libonnxruntime.so ./jniLibs/arm64-v8a/libsherpa-onnx-jni.so
+          cp /tmp/sherpa-x/jniLibs/arm64-v8a/libonnxruntime.so /tmp/sherpa-x/jniLibs/arm64-v8a/libsherpa-onnx-jni.so android-overlay/app/src/main/jniLibs/arm64-v8a/
+          ls -l android-overlay/app/src/main/jniLibs/arm64-v8a/
+      - name: Restore signing key (from Secrets)
+        id: signing
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KS_KEYPASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && [ -n "$KS_PASS" ] && [ -n "$KS_ALIAS" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            {
+              echo "KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+              echo "KEYSTORE_PASSWORD=$KS_PASS"
+              echo "KEY_ALIAS=$KS_ALIAS"
+              echo "KEY_PASSWORD=${KS_KEYPASS:-$KS_PASS}"
+            } >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::沒有設定簽名金鑰 Secrets：這次用臨時金鑰簽名，不會發布 Release（見 docs/PUBLISH_CHECKLIST.md）"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+      # main 上沒有簽名金鑰就直接失敗：否則會產生「每次簽名都不同」的 APK，手機上每次更新都得先解除安裝
+      - name: Require signing key on main
+        if: github.ref == 'refs/heads/main' && steps.signing.outputs.signed != 'true'
+        run: |
+          echo "::error::main 上需要簽名金鑰：請照 docs/PUBLISH_CHECKLIST.md「簽名金鑰」設定 4 個 Secrets 後重跑"
+          exit 1
+      - name: Build debug APK
+        working-directory: android-overlay
+        run: gradle --no-daemon assembleDebug -PgitSha=${GITHUB_SHA::7}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phoneai-overlay-apk
+          path: android-overlay/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      # 發布 Release：App 與 update_app.py 都從「最新的 Release」下載，不需要權杖。只在 main 上、且有簽名金鑰時發布。
+      - name: Publish release
+        if: github.ref == 'refs/heads/main' && steps.signing.outputs.signed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHORT=${GITHUB_SHA::7}
+          TAG="build-${GITHUB_RUN_NUMBER}-${SHORT}"
+          gh release create "$TAG" android-overlay/app/build/outputs/apk/debug/app-debug.apk \
+            --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
+            --notes "commit: ${GITHUB_SHA}"$'\n'"自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）。"
+          # 只留最近 10 個 Release，舊的連同 tag 刪掉
+          gh release list --limit 100 --json tagName --jq '.[10:][].tagName' | while read -r old; do
+            [ -n "$old" ] && gh release delete "$old" --cleanup-tag --yes || true
+          done

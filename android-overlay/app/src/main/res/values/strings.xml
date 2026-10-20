@@ -1,0 +1,3 @@
+<resources>
+    <string name="a11y_desc">只用來在螢幕上畫 AI 點擊的漣漪，不會讀取或記錄畫面內容。</string>
+</resources>
