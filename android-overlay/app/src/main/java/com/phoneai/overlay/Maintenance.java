@@ -176,6 +176,13 @@ final class Maintenance {
     }
 
     /** 以 Termux 自己的身分（uid）執行 bash 指令，環境變數與 Termux 一致。 */
+    /** 同 termuxScript，但額外加上網路群組 3003（inet）。App 的 root 切換身份時不會自動帶上它，所以 curl／pkg 會連不到網路。 */
+    static String termuxScriptNet(String bashCmd) {
+        String inner = "export HOME=" + HOME + " PREFIX=/data/data/com.termux/files/usr PATH=" + CommandSender.TERMUX_BIN
+                + ":/system/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8; cd \"$HOME\"; " + bashCmd;
+        return "U=$(stat -c %u /data/data/com.termux)\nsu -g \"$U\" -G 3003 \"$U\" -c '" + inner.replace("'", "'\\''") + "'\n";
+    }
+
     static String termuxScript(String bashCmd) {
         String inner = "export HOME=" + HOME + " PREFIX=/data/data/com.termux/files/usr PATH=" + CommandSender.TERMUX_BIN
                 + ":/system/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8; cd \"$HOME\"; " + bashCmd;

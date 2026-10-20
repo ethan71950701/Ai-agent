@@ -276,7 +276,7 @@ public class SetupActivity extends Activity {
                 step(4);
                 say("→ 安裝套件（pkg update／upgrade／install，約 3～10 分鐘，輸出只顯示最後幾行）…");
                 final int[] n = {0};
-                int code = Maintenance.suStream(Maintenance.termuxScript(
+                int code = Maintenance.suStream(Maintenance.termuxScriptNet(
                         // </dev/null：不讓套件管理員等待鍵盤輸入（平板上最容易卡在這裡）；timeout：單一步最多 15 分鐘
                         // 先測能不能連到 Termux 官方的 Cloudflare 軟體源，連不上就換成它（原本的鏡像站全部失敗時會卡在這裡）
                         "echo '[網路] 身份：'$(id); echo '[網路] curl 結果：'$(curl -sI --max-time 15 https://packages-cf.termux.dev/apt/termux-main/ 2>&1 | head -1); "
