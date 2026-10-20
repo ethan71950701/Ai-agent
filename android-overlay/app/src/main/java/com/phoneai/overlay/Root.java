@@ -25,15 +25,33 @@ final class Root {
             + "done\n"
             + "exec su \"$@\"\n";
 
+    /** 找出能真的拿到 root 的 su：實際跑 `id`，回傳 0 才算數。順序：直接用 su（系統 PATH）→ App 的包裝腳本 → 常見路徑。 */
     static String su() {
         if (found != null) return found;
+        java.util.List<String> cands = new java.util.ArrayList<>();
+        cands.add("su");
         String wrapper = makeWrapper();
-        if (wrapper != null) return found = wrapper;
-        String[] fixed = {"/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su", "/vendor/bin/su", "/system/bin/.ext/su"};
-        for (String p : fixed) {
-            if (new File(p).canExecute()) return found = p;
+        if (wrapper != null) cands.add(wrapper);
+        for (String p : new String[]{"/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su"}) {
+            cands.add(p);
         }
-        return "su";   // 真的找不到：維持原樣，錯誤訊息會顯示在畫面上
+        for (String c : cands) {
+            if (works(c)) return found = c;
+        }
+        return "su";   // 都不行：維持原樣，錯誤訊息會顯示在畫面上
+    }
+
+    private static boolean works(String su) {
+        try {
+            Process p = new ProcessBuilder(su, "-c", "id -u").redirectErrorStream(true).start();
+            p.getOutputStream().close();
+            String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            boolean done = p.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
+            if (!done) { p.destroy(); return false; }
+            return p.exitValue() == 0 && out.endsWith("0");
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** 把包裝腳本寫進 App 的資料夾並設為可執行；失敗回傳 null。 */
