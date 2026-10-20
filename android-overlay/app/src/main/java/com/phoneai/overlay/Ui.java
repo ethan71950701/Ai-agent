@@ -529,18 +529,19 @@ final class Ui {
         if (android.os.Build.VERSION.SDK_INT >= 34) {
             d.registerOnBackInvokedCallback(prio, new android.window.OnBackAnimationCallback() {
                 @Override
+                public void onBackStarted(android.window.BackEvent e) {
+                    root.setLayerType(View.LAYER_TYPE_HARDWARE, null);   // 返回時整頁畫在獨立的層上，避免多層疊加出現重影
+                }
+
+                @Override
                 public void onBackProgressed(android.window.BackEvent e) {
-                    float p = e.getProgress();
-                    root.setScaleX(1f - 0.2f * p);
-                    root.setScaleY(1f - 0.2f * p);
-                    root.setAlpha(Math.max(0f, 1f - 1.3f * p));   // 淡得夠快，後面的頁面不會透出來
+                    // 只淡出，不縮放：縮放加淡出時會跟系統的預覽重疊，看起來像重影
+                    root.setAlpha(Math.max(0f, 1f - 1.3f * e.getProgress()));
                 }
 
                 @Override
                 public void onBackCancelled() {
-                    root.animate().alpha(1f).setDuration(120).start();
-                    Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
-                    Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+                    root.animate().alpha(1f).setDuration(120).withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start();
                 }
 
                 @Override
