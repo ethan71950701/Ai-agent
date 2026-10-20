@@ -27,6 +27,7 @@ public class LogActivity extends Activity {
         mode = getIntent().getIntExtra("mode", 0);
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, mode == 4 ? "自我檢查" : "任務過程", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
         body = Ui.infoCard(this, box, 12, true, true);   // 長按可選取、複製（貼給人看用）

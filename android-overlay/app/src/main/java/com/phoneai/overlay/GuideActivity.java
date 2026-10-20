@@ -118,6 +118,7 @@ public class GuideActivity extends Activity {
         bottom.addView(next, new LinearLayout.LayoutParams(-2, Ui.dp(this, 52)));
         root.addView(bottom, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         setContentView(root);
+        Ui.enterSpring(this);
         pager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int i) { select(i); }

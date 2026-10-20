@@ -38,6 +38,7 @@ public class SetupActivity extends Activity {
         super.onCreate(b);
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, "首次設定", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
         TextView intro = Ui.infoCard(this, box, 14, false, false);
         intro.setText("只裝了這個 App 的話，按下面的按鈕，我會下載並安裝 Termux、Termux:API、需要的套件和專案腳本（共約 200～400 MB，請連 Wi-Fi、插電，過程約 5～15 分鐘；Termux 會短暫跳到前景一次，這是正常的）。需要 root。");

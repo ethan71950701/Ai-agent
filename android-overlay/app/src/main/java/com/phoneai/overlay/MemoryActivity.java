@@ -48,6 +48,7 @@ public class MemoryActivity extends Activity {
         d = getResources().getDisplayMetrics().density;
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, "助理的記憶", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
         Ui.buttons(this, box,

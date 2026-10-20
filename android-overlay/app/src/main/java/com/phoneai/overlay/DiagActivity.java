@@ -20,6 +20,7 @@ public class DiagActivity extends Activity {
         super.onCreate(b);
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, "進階與診斷", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
 
         Ui.section(this, box, "測試與工具");

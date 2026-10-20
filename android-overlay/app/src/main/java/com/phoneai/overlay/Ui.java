@@ -237,7 +237,7 @@ final class Ui {
         card.addView(outer);
         if (click != null) {
             card.setClickable(true);
-            card.setOnClickListener(click);
+            card.setOnClickListener(v -> { rememberTap(v); click.onClick(v); });
             Anim.pressable(card, 0.98f);
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
@@ -326,7 +326,7 @@ final class Ui {
         v.addView(st);
         card.addView(v);
         card.setClickable(true);
-        card.setOnClickListener(t.click);
+        card.setOnClickListener(v -> { rememberTap(v); t.click.onClick(v); });
         Anim.pressable(card, 0.95f);
         return card;
     }
@@ -475,6 +475,37 @@ final class Ui {
         gl.topMargin = dp(a, 12);
         gl.bottomMargin = dp(a, 8);
         inner.addView(grid, gl);
+    }
+
+    // ---- 子頁開啟動畫：從點下去的那一格「彈簧」長出來 ----
+    private static float tapX = -1, tapY = -1;
+
+    /** 記住使用者點的那一格（螢幕座標的中心），子頁從這裡彈出來。 */
+    static void rememberTap(View v) {
+        int[] loc = new int[2];
+        v.getLocationOnScreen(loc);
+        tapX = loc[0] + v.getWidth() / 2f;
+        tapY = loc[1] + v.getHeight() / 2f;
+    }
+
+    /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
+    static void enterSpring(android.app.Activity a) {
+        a.overridePendingTransition(0, 0);
+        final View root = a.getWindow().getDecorView();
+        root.post(() -> {
+            int[] loc = new int[2];
+            root.getLocationOnScreen(loc);
+            float px = tapX < 0 ? root.getWidth() / 2f : tapX - loc[0];
+            float py = tapY < 0 ? root.getHeight() / 2f : tapY - loc[1];
+            root.setPivotX(px);
+            root.setPivotY(py);
+            root.setScaleX(0.55f);
+            root.setScaleY(0.55f);
+            root.setAlpha(0f);
+            root.animate().alpha(1f).setDuration(160).start();
+            Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
+            Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+        });
     }
 
     static int attr(Context c, int attrRes) {

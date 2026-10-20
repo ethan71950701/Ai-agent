@@ -38,6 +38,7 @@ public class SherpaTestActivity extends Activity {
         super.onCreate(b);
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, "語音辨識", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
         TextView hint = Ui.infoCard(this, box, 14, false, false);
         hint.setText("SenseVoice 離線辨識。先下載模型（約 228MB，建議連 Wi-Fi，下載中請不要離開這一頁）。裝好後，面板的語音就會用它：說完停頓約 1 秒會自動結束，"

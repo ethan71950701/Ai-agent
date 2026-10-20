@@ -29,6 +29,7 @@ public class MicTestActivity extends Activity {
         super.onCreate(b);
         LinearLayout[] c = new LinearLayout[1];
         setContentView(Ui.screen(this, "麥克風實驗", true, c));
+        Ui.enterSpring(this);
         LinearLayout box = c[0];
         TextView hint = Ui.infoCard(this, box, 14, false, false);
         hint.setText("按下「錄 3 秒」後，馬上對著手機說話（例如連續說「一二三四五」）。只在這支手機上算音量，不儲存、不上傳。");
