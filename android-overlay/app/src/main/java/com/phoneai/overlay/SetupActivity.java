@@ -279,7 +279,8 @@ public class SetupActivity extends Activity {
                 int code = Maintenance.suStream(Maintenance.termuxScript(
                         // </dev/null：不讓套件管理員等待鍵盤輸入（平板上最容易卡在這裡）；timeout：單一步最多 15 分鐘
                         // 先測能不能連到 Termux 官方的 Cloudflare 軟體源，連不上就換成它（原本的鏡像站全部失敗時會卡在這裡）
-                        "echo '[網路] 測試 packages-cf.termux.dev…'; "
+                        "echo '[網路] 身份：'$(id); echo '[網路] curl 結果：'$(curl -sI --max-time 15 https://packages-cf.termux.dev/apt/termux-main/ 2>&1 | head -1); "
+                                + "echo '[網路] 測試 packages-cf.termux.dev…'; "
                                 + "if curl -sI --max-time 15 https://packages-cf.termux.dev/apt/termux-main/ >/dev/null 2>&1; then echo '[網路] 連得到，改用官方軟體源'; "
                                 + "echo 'deb https://packages-cf.termux.dev/apt/termux-main stable main' > $PREFIX/etc/apt/sources.list; "
                                 + "else echo '[網路] 連不到 packages-cf.termux.dev：請檢查 Wi-Fi 能不能上網（Termux 裡 curl 不通）'; fi; "
