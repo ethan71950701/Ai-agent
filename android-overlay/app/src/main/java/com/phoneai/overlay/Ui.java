@@ -314,14 +314,18 @@ final class Ui {
         int on = attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurface);
         TextView tt = new TextView(c);
         tt.setText(t.title);
-        tt.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
+        // 標題或說明太長的卡片字體縮小，讓同一列的卡片高度接近（短的維持原本大小）
+        boolean longTitle = t.title.length() > 6;
+        tt.setTextAppearance(longTitle ? com.google.android.material.R.style.TextAppearance_Material3_TitleMedium
+                : com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         tt.setTextColor(on);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-2, -2);
         tl.topMargin = dp(c, 28);
         v.addView(tt, tl);
         TextView st = new TextView(c);
         st.setText(t.sub);
-        st.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
+        st.setTextAppearance(t.sub.length() > 12 ? com.google.android.material.R.style.TextAppearance_Material3_BodySmall
+                : com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
         st.setTextColor(attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant));
         v.addView(st);
         card.addView(v);
