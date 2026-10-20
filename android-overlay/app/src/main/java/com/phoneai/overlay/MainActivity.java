@@ -403,6 +403,7 @@ public class MainActivity extends Activity {
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", "Claude API Key", "存到 Termux 的 ~/.claude_key", true, v -> askKey()),
                 new Ui.Tile("download", "檢查並更新", "按一下：有新版本就自動更新", false, v -> startUpdate()),
+                new Ui.Tile("power", "解除安裝 PhoneAI", "還原設定、刪除腳本與 Key，最後移除本 App", true, v -> Uninstaller.start(this)),
                 new Ui.Tile("check_circle", "設定導覽", "逐步檢查 root、權限、Key", false, v -> startActivity(new Intent(this, GuideActivity.class))));
         Ui.section(this, box, "進階");
         Ui.tileGrid(this, box,
