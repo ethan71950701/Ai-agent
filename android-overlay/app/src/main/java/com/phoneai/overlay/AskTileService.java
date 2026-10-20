@@ -22,6 +22,8 @@ public class AskTileService extends TileService {
         PendingIntent pi = PendingIntent.getActivity(this, 0,
                 new Intent(this, AskActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        startActivityAndCollapse(pi);
+        // Android 14 起要用 PendingIntent 版本；Android 13 只能用 Intent 版本
+        if (android.os.Build.VERSION.SDK_INT >= 34) startActivityAndCollapse(pi);
+        else startActivityAndCollapse(new Intent(this, AskActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 }

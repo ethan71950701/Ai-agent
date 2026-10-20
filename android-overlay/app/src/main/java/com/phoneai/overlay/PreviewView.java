@@ -96,7 +96,9 @@ final class PreviewView extends FrameLayout {
         });
 
         // 告訴系統這個視窗在做動畫、要高更新率（三星的自動更新率可能把浮動視窗壓在 60Hz；有沒有用要實測）
-        try { setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH); } catch (Throwable ignored) { }
+        if (android.os.Build.VERSION.SDK_INT >= 35) {   // Android 15 起才有這個設定
+            try { setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH); } catch (Throwable ignored) { }
+        }
 
         int h0 = (int) (width * aspect);
         video = new TextureView(c);

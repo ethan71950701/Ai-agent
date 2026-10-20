@@ -27,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId "com.phoneai.overlay"
-        minSdk 34
+        minSdk 33
         targetSdk 36
         // 版本號自動跟著 GitHub Actions 的執行序號走（每次 main 編譯都變大）；本機編譯是 1 / 1.0.1
         // 基底 1000：新 repo 的序號從 1 開始，要比舊 repo 編出來的版本大，系統才會當成升版（不然會被當成降版而拒絕安裝）
