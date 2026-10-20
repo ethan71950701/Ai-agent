@@ -72,6 +72,7 @@ final class GlassBar extends FrameLayout {
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
+    private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Paint tint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -261,9 +262,8 @@ final class GlassBar extends FrameLayout {
             Paint base = new Paint(Paint.ANTI_ALIAS_FLAG);
             base.setColor(bgColor);
             canvas.drawPath(clip, base);        // 先鋪一層不透明底色，把底下原大小的圖示蓋住
-            canvas.translate(getX(), getY());   // 透鏡座標 → 底欄座標
-            canvas.drawRenderNode(parentBar.node);
             canvas.restore();
+            drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
             canvas.drawPath(clip, tint);
@@ -295,6 +295,27 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
+    /** 透鏡底下的底欄背景：從底欄的截圖裁出透鏡那一塊，用同樣的模糊半徑處理，再畫在透鏡裡。 */
+    private void drawUnderLens(Canvas canvas) {
+        Bitmap src = parentBar.bmp;
+        if (src == null || parentBar.getWidth() <= 0 || parentBar.getHeight() <= 0) return;
+        float sx = src.getWidth() / (float) parentBar.getWidth();
+        float sy = src.getHeight() / (float) parentBar.getHeight();
+        int w = getWidth(), h = getHeight();
+        float l = getX(), t = getY();
+        underNode.setPosition(0, 0, w, h);
+        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor);
+        underNode.setRenderEffect(RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
+        Canvas rc = underNode.beginRecording(w, h);
+        rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
+                rect, bmpPaint);
+        underNode.endRecording();
+        canvas.save();
+        canvas.clipPath(clip);
+        canvas.drawRenderNode(underNode);
+        canvas.restore();
+    }
+
     private void drawMagnifiedIcons(Canvas canvas) {
         float s = GlassPrefs.magnify ? 1f + GlassPrefs.zoom * amount : 1f;
         float ox = getX(), oy = getY();   // 按鈕在底欄座標中的位置（含 translationX）

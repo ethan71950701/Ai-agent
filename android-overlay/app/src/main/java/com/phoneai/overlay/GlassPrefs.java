@@ -11,7 +11,7 @@ final class GlassPrefs {
     private GlassPrefs() { }
 
     static float refr = 1f, chroma = 1f, zoom = 0.22f, skew = 1f, blur = 12f;
-    static boolean magnify = true, iconRefr = false, lensBg = false, skewOn = true;
+    static boolean magnify = true, iconRefr = false, lensBg = true, skewOn = true;
 
     static final String K_REFR = "g_refr", K_CHROMA = "g_chroma", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
     static final String K_MAGNIFY = "g_magnify", K_ICON_REFR = "g_iconRefr", K_LENS_BG = "g_lensBg", K_SKEW_ON = "g_skewOn";
@@ -30,7 +30,7 @@ final class GlassPrefs {
         blur = p.getFloat(K_BLUR, 12f);
         magnify = p.getBoolean(K_MAGNIFY, true);
         iconRefr = p.getBoolean(K_ICON_REFR, false);
-        lensBg = p.getBoolean(K_LENS_BG, false);
+        lensBg = p.getBoolean(K_LENS_BG, true);
         skewOn = p.getBoolean(K_SKEW_ON, true);
     }
 
