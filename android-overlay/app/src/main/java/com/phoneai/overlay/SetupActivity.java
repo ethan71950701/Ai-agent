@@ -258,7 +258,7 @@ public class SetupActivity extends Activity {
                 say("→ 下載專案腳本…");
                 if (!installScripts()) return;
             }
-            say("✓ Termux 與專案腳本都裝好了。2 秒後自動回到上一頁。\n之後請到「功能 → 維護」設定 Claude API Key，到「功能 → 語音測試」下載語音辨識模型。");
+            say("✓ Termux 與專案腳本都裝好了。2 秒後自動回到上一頁。\n之後請到「功能 → 維護」設定 Claude API Key，並在引導頁第 8 頁下載語音辨識模型。");
             ui.postDelayed(this::finish, 2000);
         } catch (Throwable e) {
             say("✗ 出錯：" + e);
