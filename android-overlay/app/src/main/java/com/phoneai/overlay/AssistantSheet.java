@@ -681,12 +681,24 @@ public class AssistantSheet {
                     reply = r.reply;
                 }
             } else {
-                reply = ChatEngine.ask(act, t, this::confirmOnUi);
+                reply = localAnswer(t);   // 定時、短問題不用 AI，先在本地回答
+                if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
                 if (reply == null) reply = "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
             }
             final String fr = reply;
             root.post(() -> showReply("", fr));
         }, "local-reply").start();
+    }
+
+    /** 定時任務（建立、列出、取消）或能直接回答的短問題（電量、幾點…）；都不是回 null。 */
+    private String localAnswer(String t) {
+        try {
+            String s = Schedule.handle(act, t, this::confirmOnUi);
+            if (s != null) return s;
+        } catch (Exception e) {
+            return "定時任務出錯：" + e.getMessage();
+        }
+        return Schedule.quickAnswer(act, t);
     }
 
     /** 在主執行緒跳確認框，背景執行緒等使用者按完。 */
