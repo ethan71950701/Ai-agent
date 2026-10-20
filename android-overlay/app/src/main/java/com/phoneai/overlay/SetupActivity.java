@@ -130,7 +130,8 @@ public class SetupActivity extends Activity {
             logText.append(s).append('\n');
             if (logText.length() > 6000) logText.delete(0, logText.length() - 5000);
             log.setText(logText);
-            logScroll.post(() -> logScroll.fullScroll(android.view.View.FOCUS_DOWN));
+            // 只直接設定記錄區自己的捲動位置；不用 fullScroll，它會要求外層整頁跟著捲動
+            logScroll.post(() -> logScroll.scrollTo(0, Math.max(0, log.getHeight() - logScroll.getHeight())));
         });
     }
 
