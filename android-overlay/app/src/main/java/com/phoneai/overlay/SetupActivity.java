@@ -285,7 +285,11 @@ public class SetupActivity extends Activity {
                                 + "else echo '[網路] 連不到 packages-cf.termux.dev：請檢查 Wi-Fi 能不能上網（Termux 裡 curl 不通）'; fi; "
                                 + "timeout 900 pkg update -y </dev/null 2>&1; timeout 900 pkg upgrade -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null 2>&1; "
                                 + "timeout 900 pkg install -y git python imagemagick wget unzip termux-api </dev/null 2>&1"),
-                        l -> { if (++n[0] % 8 == 0 || l.startsWith("E:")) say(l.length() > 90 ? l.substring(0, 90) : l); });
+                        l -> {
+                            // 網路測試、錯誤訊息一定要顯示；其他輸出每 8 行顯示一行，避免洗版
+                            boolean key = l.startsWith("[網路]") || l.startsWith("E:") || l.contains("Error") || l.contains("✗");
+                            if (key || ++n[0] % 8 == 0) say(l.length() > 90 ? l.substring(0, 90) : l);
+                        });
                 String chk = Maintenance.suRun("[ -x " + P + "python ] && [ -x " + P + "git ] && [ -x " + P + "termux-notification ] && echo ok");
                 if (!chk.contains("ok")) { fail("套件沒有裝好（結束碼 " + code + "）：看上面最後幾行；網路不穩的話再按一次「繼續」"); return; }
                 say("✓ 套件完成");
