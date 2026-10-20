@@ -390,12 +390,6 @@ public class MainActivity extends Activity {
         Ui.tileGrid(this, box,
                 new Ui.Tile("note", "助理的記憶", "待辦與筆記", false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                 new Ui.Tile("clock", "任務過程", "AI 每一步做了什麼", false, v -> startActivity(new Intent(this, LogActivity.class))));
-        Ui.section(this, box, "權限");
-        Ui.tileGrid(this, box,
-                new Ui.Tile("layers", "懸浮層", "顯示在其他應用程式上層", false, v -> startActivity(
-                        new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
-                new Ui.Tile("bell", "通知", "允許通知", false, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
-                new Ui.Tile("sparkle", "預設數位助理", "長按電源鍵叫出", false, v -> openAssistSettings()));
         Ui.section(this, box, "維護（不用開 Termux）");
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", "Claude API Key", "存到 Termux 的 ~/.claude_key", true, v -> askKey()),
@@ -428,6 +422,12 @@ public class MainActivity extends Activity {
         heroBox = null;
         LinearLayout g = Ui.expandGroup(this, box, "droplet", "外觀", "主題色與莫奈取色", true);
         Ui.themePicker(this, g);
+
+        LinearLayout p = Ui.expandGroup(this, box, "shield", "權限", "懸浮層、通知、預設數位助理", false);
+        Ui.row(this, p, 0, 3, "layers", "懸浮層", "顯示在其他應用程式上層", null, v -> startActivity(
+                new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
+        Ui.row(this, p, 1, 3, "bell", "通知", "允許通知", null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
+        Ui.row(this, p, 2, 3, "sparkle", "預設數位助理", "長按電源鍵叫出", null, v -> openAssistSettings());
 
         g = Ui.expandGroup(this, box, "sparkle", "底欄玻璃（進階）", "折射、模糊、放大與開關，拖動即時生效", false);
         glassSlider(g, "折射強度", "邊緣彎曲的程度", 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);

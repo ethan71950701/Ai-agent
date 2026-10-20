@@ -285,6 +285,7 @@ final class Ui {
         for (int i = 0; i < tiles.length; i += 2) {
             LinearLayout row = new LinearLayout(c);
             row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setMeasureWithLargestChildEnabled(true);   // 同一列的卡片等高，不會一張高一張矮
             for (int k = 0; k < 2; k++) {
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
                 lp.setMargins(k == 0 ? 0 : dp(c, 6), 0, k == 0 ? dp(c, 6) : 0, 0);
