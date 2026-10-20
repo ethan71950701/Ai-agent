@@ -35,11 +35,11 @@ public class MemoryActivity extends Activity {
         }
     }
     private static final int ATTEMPTS = 5;
-    private volatile int suMode = 0;
+    private static volatile int suMode = 0;
     private LinearLayout list;
     private TextView status;
     private JSONObject data;
-    private static JSONObject cache;   // 同一次 App 執行中記住上次讀到的資料
+    private static volatile JSONObject cache;   // 同一次 App 執行中記住上次讀到的資料
     private float d;
     private String diag = "";
 
@@ -70,33 +70,47 @@ public class MemoryActivity extends Activity {
 
     // ---------- 讀寫（root） ----------
 
+    /** 用 root 讀 memory.json（主畫面也會呼叫，先在背景讀好）。結果說明寫進 info。 */
+    static JSONObject readMemory(StringBuilder info) {
+        JSONObject got = null;
+        String script = "id -u; ls -l " + FILE + " 2>&1; echo =====; cat " + FILE + " 2>&1";
+        for (int n = 0; n < ATTEMPTS && got == null; n++) {
+            try {
+                Process p = new ProcessBuilder(attempt(n, script)).redirectErrorStream(true).start();
+                p.getOutputStream().close();
+                String out = readAll(p.getInputStream());
+                int code = p.waitFor();
+                int k = out.indexOf("=====\n");
+                String head = k < 0 ? out.trim() : out.substring(0, k).trim();
+                String body = k < 0 ? "" : out.substring(k + 6).trim();
+                info.append("方式").append(n).append("：結束碼 ").append(code).append("｜").append(head.replace('\n', '｜')).append('\n');
+                if (body.startsWith("{")) {
+                    got = new JSONObject(body);
+                    if (got.optJSONArray("items") == null) got.put("items", new JSONArray());
+                    suMode = n;
+                    info.append("→ 用方式").append(n).append("讀到了\n");
+                }
+            } catch (Exception e) {
+                info.append("方式").append(n).append("：").append(e).append('\n');
+            }
+        }
+        return got;
+    }
+
+    /** 主畫面開啟時呼叫（背景執行緒）：先把資料讀進快取，點進記憶頁就不用等。 */
+    static void warm() {
+        if (cache != null) return;
+        JSONObject g = readMemory(new StringBuilder());
+        if (g != null) cache = g;
+    }
+
     private void reload() {
         if (data == null) status.setText("讀取中…");   // 已有上次的資料就先顯示，背景再更新
         new Thread(() -> {
-            String err = "", info = "";
-            JSONObject got = null;
-            String script = "id -u; ls -l " + FILE + " 2>&1; echo =====; cat " + FILE + " 2>&1";
-            for (int n = 0; n < ATTEMPTS && got == null; n++) {
-                try {
-                    Process p = new ProcessBuilder(attempt(n, script)).redirectErrorStream(true).start();
-                    p.getOutputStream().close();
-                    String out = readAll(p.getInputStream());
-                    int code = p.waitFor();
-                    int k = out.indexOf("=====\n");
-                    String head = k < 0 ? out.trim() : out.substring(0, k).trim();
-                    String body = k < 0 ? "" : out.substring(k + 6).trim();
-                    info += "方式" + n + "：結束碼 " + code + "｜" + head.replace('\n', '｜') + "\n";
-                    if (body.startsWith("{")) {
-                        got = new JSONObject(body);
-                        if (got.optJSONArray("items") == null) got.put("items", new JSONArray());
-                        suMode = n;
-                        info += "→ 用方式" + n + "讀到了\n";
-                    }
-                } catch (Exception e) {
-                    info += "方式" + n + "：" + e + "\n";
-                }
-            }
-            if (got == null) err = "每種 su 寫法都讀不到 memory.json（可能真的還沒有資料，或 root 管理器不支援切換掛載空間）";
+            StringBuilder sb = new StringBuilder();
+            JSONObject got = readMemory(sb);
+            String err = got == null ? "每種 su 寫法都讀不到 memory.json（可能真的還沒有資料，或 root 管理器不支援切換掛載空間）" : "";
+            String info = sb.toString();
             final JSONObject g = got;
             final String e = err, inf = info;
             runOnUiThread(() -> {
