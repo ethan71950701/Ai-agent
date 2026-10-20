@@ -150,9 +150,6 @@ public class SetupActivity extends Activity {
 
     private void start() {
         if (busy) return;
-        bar.setVisibility(android.view.View.VISIBLE);
-        bar.setIndeterminate(true);
-        status.setText("準備中…");
 
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
@@ -167,6 +164,9 @@ public class SetupActivity extends Activity {
             return;
         }
         busy = true;
+        bar.setVisibility(android.view.View.VISIBLE);
+        bar.setIndeterminate(true);
+        status.setText("準備中…（若停在這裡超過 10 秒，請把畫面下方的記錄告訴我）");
         new Thread(this::runAll, "setup").start();
     }
 
@@ -267,6 +267,11 @@ public class SetupActivity extends Activity {
             step(3);
             say("→ 補回 App 權限與 Termux 設定…");
             say(Maintenance.repairPermissions());
+            // 測 Termux 自己能不能用 root（後面的助理腳本要用）。只回報，不擋流程。
+            // 若出現「允許 root」的提示，請在 KernelSU 裡允許 Termux，然後再按一次「繼續」。
+            String rootTest = Maintenance.suRun(Maintenance.termuxScript("timeout 8 su -c id </dev/null 2>&1; echo rc=$?"));
+            if (rootTest.contains("uid=0")) say("✓ Termux 可以使用 root");
+            else say("⚠ Termux 還不能用 root（請到 KernelSU 管理器，把 Termux 加入允許清單，然後再按一次「繼續」）");
             if (!done[3]) {
                 step(4);
                 say("→ 安裝套件（pkg update／upgrade／install，約 3～10 分鐘，輸出只顯示最後幾行）…");
