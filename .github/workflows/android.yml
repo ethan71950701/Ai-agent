@@ -86,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           SHORT=${GITHUB_SHA::7}
-          TAG="build-${GITHUB_RUN_NUMBER}-${SHORT}"
+          TAG="build-$((GITHUB_RUN_NUMBER + 1000))-${SHORT}"   # 與 versionCode 相同（+1000），App 的更新檢查用這個數字比新舊
           gh release create "$TAG" android-overlay/app/build/outputs/apk/debug/app-debug.apk \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
             --notes "commit: ${GITHUB_SHA}"$'\n'"自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）。"

@@ -15,7 +15,7 @@ repo 位置：預設是 DEFAULT_REPO；fork 的人用環境變數 PHONEAI_REPO=o
 """
 import base64, json, os, re, shutil, subprocess, sys, urllib.error, urllib.request
 
-DEFAULT_REPO = "ethan71950701/phone-ai-agent"
+DEFAULT_REPO = "ethan71950701/ai-agent"
 HOME = os.path.expanduser("~")
 
 
