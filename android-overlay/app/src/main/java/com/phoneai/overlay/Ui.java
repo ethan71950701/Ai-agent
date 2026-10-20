@@ -485,6 +485,32 @@ final class Ui {
     private static float tapX = -1, tapY = -1;
 
     /** 記住使用者點的那一格（螢幕座標的中心），子頁從這裡彈出來。 */
+    /** 圓角正方形的箭頭按鈕（原生 Material 風格，放在底部中間）：按下會縮一下，點了箭頭轉一圈。 */
+    static View arrowFab(Context c, View.OnClickListener click) {
+        MaterialCardView card = new MaterialCardView(c);
+        card.setCardBackgroundColor(attr(c, com.google.android.material.R.attr.colorPrimary));
+        card.setCardElevation(0);
+        card.setStrokeWidth(0);
+        card.setRadius(dp(c, 20));
+        IconView arrow = new IconView(c, "chevron", attr(c, com.google.android.material.R.attr.colorOnPrimary));
+        card.addView(arrow, new android.widget.FrameLayout.LayoutParams(dp(c, 28), dp(c, 28), android.view.Gravity.CENTER));
+        card.setClickable(true);
+        card.setOnClickListener(v -> {
+            arrow.animate().rotationBy(360f).setDuration(420).start();
+            click.onClick(v);
+        });
+        Anim.pressable(card, 0.9f);
+        return card;
+    }
+
+    /** 示意圖第一次出現時彈一下（彈簧，有點過衝）。 */
+    static void bounceIn(View v) {
+        v.setScaleX(0.6f);
+        v.setScaleY(0.6f);
+        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.45f);
+        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.45f);
+    }
+
     static void rememberTap(View v) {
         int[] loc = new int[2];
         v.getLocationOnScreen(loc);

@@ -73,7 +73,7 @@ public class GuideActivity extends Activity {
     private ViewPager2 pager;
     private final View[] dots = new View[N];
     private TextView prev;
-    private MaterialButton next;
+    private View next;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -96,14 +96,9 @@ public class GuideActivity extends Activity {
         root.addView(pager, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout bottom = new LinearLayout(this);
-        bottom.setOrientation(LinearLayout.HORIZONTAL);
-        bottom.setGravity(Gravity.CENTER_VERTICAL);
+        bottom.setOrientation(LinearLayout.VERTICAL);
         int pad = Ui.dp(this, 16);
         bottom.setPadding(pad, 0, pad, Ui.dp(this, 20));
-        prev = Ui.body(this, "上一步");
-        prev.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
-        prev.setOnClickListener(v -> pager.setCurrentItem(Math.max(0, pager.getCurrentItem() - 1), true));
-        bottom.addView(prev, new LinearLayout.LayoutParams(-2, -2));
         LinearLayout dotRow = new LinearLayout(this);
         dotRow.setGravity(Gravity.CENTER);
         for (int i = 0; i < N; i++) {
@@ -113,12 +108,21 @@ public class GuideActivity extends Activity {
             dotRow.addView(d, lp);
             dots[i] = d;
         }
-        bottom.addView(dotRow, new LinearLayout.LayoutParams(0, -2, 1f));
-        next = Ui.pill(this, "下一步", true, v -> {
+        bottom.addView(dotRow, new LinearLayout.LayoutParams(-1, -2));
+        // 第二排：左邊「上一步」，中間是箭頭按鈕（最後一頁同樣是箭頭，按下完成）
+        FrameLayout actions = new FrameLayout(this);
+        prev = Ui.body(this, "上一步");
+        prev.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
+        prev.setOnClickListener(v -> pager.setCurrentItem(Math.max(0, pager.getCurrentItem() - 1), true));
+        actions.addView(prev, new FrameLayout.LayoutParams(-2, -2, Gravity.START | Gravity.CENTER_VERTICAL));
+        next = Ui.arrowFab(this, v -> {
             if (pager.getCurrentItem() >= N - 1) finish();
             else pager.setCurrentItem(pager.getCurrentItem() + 1, true);
         });
-        bottom.addView(next, new LinearLayout.LayoutParams(-2, Ui.dp(this, 52)));
+        actions.addView(next, new FrameLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64), Gravity.CENTER));
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 64));
+        alp.topMargin = Ui.dp(this, 12);
+        bottom.addView(actions, alp);
         root.addView(bottom, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         setContentView(root);
         Ui.enterSpring(this);
@@ -149,7 +153,6 @@ public class GuideActivity extends Activity {
             va.start();
         }
         prev.setVisibility(sel == 0 ? View.INVISIBLE : View.VISIBLE);
-        next.setText(sel == N - 1 ? "完成" : "下一步");
     }
 
     /** 每一頁的按鈕動作。 */
@@ -216,7 +219,9 @@ public class GuideActivity extends Activity {
             LinearLayout page = (LinearLayout) h.itemView;
             page.removeAllViews();
             page.setGravity(Gravity.CENTER_HORIZONTAL);
-            page.addView(new DemoView(a, DEMO[i]), new LinearLayout.LayoutParams(-1, Ui.dp(a, 190)));
+            DemoView demo = new DemoView(a, DEMO[i]);
+            page.addView(demo, new LinearLayout.LayoutParams(-1, Ui.dp(a, 190)));
+            Ui.bounceIn(demo);   // 示意圖進場彈一下
 
             NestedScrollView sv = new NestedScrollView(a);
             LinearLayout col = new LinearLayout(a);

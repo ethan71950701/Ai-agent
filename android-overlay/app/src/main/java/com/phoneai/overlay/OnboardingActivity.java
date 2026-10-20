@@ -25,7 +25,8 @@ public class OnboardingActivity extends Activity {
             "給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。"};
     private ViewPager2 pager;
     private final View[] dots = new View[TITLES.length];
-    private TextView next, skip;
+    private View next;
+    private TextView skip;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -48,15 +49,9 @@ public class OnboardingActivity extends Activity {
         root.addView(pager, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout bottom = new LinearLayout(this);
-        bottom.setOrientation(LinearLayout.HORIZONTAL);
-        bottom.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        bottom.setOrientation(LinearLayout.VERTICAL);
         int pad = Ui.dp(this, 24);
         bottom.setPadding(pad, 0, pad, Ui.dp(this, 24));
-        skip = Ui.body(this, "略過");
-        skip.setTextIsSelectable(false);
-        skip.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 16), Ui.dp(this, 12));
-        skip.setOnClickListener(v -> finishTour());
-        bottom.addView(skip);
         LinearLayout dotRow = new LinearLayout(this);
         dotRow.setGravity(android.view.Gravity.CENTER);
         for (int i = 0; i < TITLES.length; i++) {
@@ -66,13 +61,22 @@ public class OnboardingActivity extends Activity {
             dotRow.addView(d, lp);
             dots[i] = d;
         }
-        bottom.addView(dotRow, new LinearLayout.LayoutParams(0, -2, 1f));
-        com.google.android.material.button.MaterialButton nb = Ui.pill(this, "下一步", true, v -> {
+        bottom.addView(dotRow, new LinearLayout.LayoutParams(-1, -2));
+        // 第二排：左邊「略過」，中間是箭頭按鈕（最後一頁同樣是箭頭，按下完成）
+        FrameLayout actions = new FrameLayout(this);
+        skip = Ui.body(this, "略過");
+        skip.setTextIsSelectable(false);
+        skip.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 16), Ui.dp(this, 12));
+        skip.setOnClickListener(v -> finishTour());
+        actions.addView(skip, new FrameLayout.LayoutParams(-2, -2, android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL));
+        next = Ui.arrowFab(this, v -> {
             if (pager.getCurrentItem() >= TITLES.length - 1) finishTour();
             else pager.setCurrentItem(pager.getCurrentItem() + 1, true);
         });
-        bottom.addView(nb, new LinearLayout.LayoutParams(-2, Ui.dp(this, 52)));
-        next = nb;
+        actions.addView(next, new FrameLayout.LayoutParams(Ui.dp(this, 64), Ui.dp(this, 64), android.view.Gravity.CENTER));
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 64));
+        alp.topMargin = Ui.dp(this, 12);
+        bottom.addView(actions, alp);
         FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.BOTTOM);
         root.addView(bottom, bp);
         setContentView(root);
@@ -102,7 +106,6 @@ public class OnboardingActivity extends Activity {
             });
             va.start();
         }
-        ((com.google.android.material.button.MaterialButton) next).setText(sel == TITLES.length - 1 ? "開始使用" : "下一步");
         skip.setVisibility(sel == TITLES.length - 1 ? View.INVISIBLE : View.VISIBLE);
     }
 
@@ -148,6 +151,7 @@ public class OnboardingActivity extends Activity {
             page.setPadding(Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 48), Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
             DemoView demo = new DemoView(OnboardingActivity.this, i);
             page.addView(demo, new LinearLayout.LayoutParams(-1, 0, 1f));
+            Ui.bounceIn(demo);   // 示意圖進場彈一下
             TextView t = new TextView(OnboardingActivity.this);
             t.setText(TITLES[i]);
             t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineMedium);
