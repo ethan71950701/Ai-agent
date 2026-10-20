@@ -321,7 +321,7 @@ final class Ui {
         v.addView(tt, tl);
         TextView st = new TextView(c);
         st.setText(t.sub);
-        st.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
+        st.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall);
         st.setTextColor(attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant));
         v.addView(st);
         card.addView(v);
