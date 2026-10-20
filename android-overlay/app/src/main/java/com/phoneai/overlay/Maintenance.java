@@ -42,7 +42,7 @@ final class Maintenance {
     /** 診斷用：列出每個 su 路徑實際跑 id 的結果（給使用者回報用）。 */
     static String rootDiag() {
         StringBuilder sb = new StringBuilder("診斷（每個 su 路徑跑 id 的結果）：");
-        String[] paths = {"/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su", "/vendor/bin/su", "su"};
+        String[] paths = {Root.su(), "/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su", "/vendor/bin/su", "su"};
         for (String p : paths) {
             try {
                 Process pr = new ProcessBuilder(p, "-c", "id -u").redirectErrorStream(true).start();
