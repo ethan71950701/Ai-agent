@@ -126,8 +126,25 @@ final class GlassBar extends FrameLayout {
         glowPaint.setColor(color);
     }
 
+    /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
+    private float glowAmount;
+
+    void setGlowAmount(float a) {
+        glowAmount = a;
+        invalidate();
+    }
+
     /** 按住時的發光：主色的外圈模糊後往外散開，強度跟著按住的力度。 */
     private void drawGlow(Canvas canvas) {
+        drawHalo(canvas, Math.min(1f, amount * 0.9f));
+    }
+
+    /** 整條底欄的發光（像 KernelSU 按住時底欄會亮）。 */
+    private void drawBarGlow(Canvas canvas) {
+        drawHalo(canvas, glowAmount);
+    }
+
+    private void drawHalo(Canvas canvas, float alpha) {
         int w = getWidth(), h = getHeight();
         float pad = Ui.dp(getContext(), 14);
         float blur = Ui.dp(getContext(), 7);
@@ -137,7 +154,7 @@ final class GlassBar extends FrameLayout {
         gc.translate(pad, pad);
         gc.drawRoundRect(new RectF(0, 0, w, h), radius, radius, glowPaint);
         glowNode.endRecording();
-        glowNode.setAlpha(Math.min(1f, amount * 0.9f));
+        glowNode.setAlpha(alpha);
         canvas.save();
         canvas.translate(-pad, -pad);
         canvas.drawRenderNode(glowNode);
@@ -207,6 +224,7 @@ final class GlassBar extends FrameLayout {
     protected void dispatchDraw(Canvas canvas) {
         if (capturing) return;                        // 我正在抓背景：不要把自己畫進去
         if (anyCapture) return;                       // 玻璃按鈕在抓背景（只要底欄後面的頁面）：底欄與按鈕都不畫
+        if (!lens && glowAmount > 0.02f) drawBarGlow(canvas);
         if (plain) {                                  // 完全透明的底欄：什麼都不畫，只畫子內容
             super.dispatchDraw(canvas);
             return;

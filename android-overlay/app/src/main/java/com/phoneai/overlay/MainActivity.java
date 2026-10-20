@@ -96,6 +96,7 @@ public class MainActivity extends Activity {
             lens.setAmount(v);
             float bf = 1f - Math.max(0f, Math.min(1f, (v - GlassBar.REST) / (1f - GlassBar.REST)));   // 按住越用力，模糊越少
             lens.setBlurFactor(bf);
+            if (glass != null) glass.setGlowAmount(v);   // 整條底欄跟著發光
         });
         lensAnim.start();
     }
@@ -148,6 +149,7 @@ public class MainActivity extends Activity {
                 (onS & 0xFFFFFF) | 0x40000000, Ui.dp(this, 34), false);
         card.setSource(root);
         glass = card;
+        card.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         bar = card;
         final LensClip fl = new LensClip(this);
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
