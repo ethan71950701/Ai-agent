@@ -254,6 +254,7 @@ public class GuideActivity extends Activity {
     private void refresh() {
         new Thread(() -> {
             boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");
+            String rootDiag = root ? "" : Maintenance.rootDiag();
             String t = Maintenance.suRun("[ -d /data/data/com.termux/files/home ] && echo T; [ -f /data/data/com.termux/files/home/assistant.py ] && echo S; echo done");
             boolean termux = t.contains("T");
             boolean setup = t.contains("S");
@@ -263,7 +264,7 @@ public class GuideActivity extends Activity {
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                 boolean a11y = A11yGuard.listed(this);
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                set(0, root, root ? "✓ 已授權" : "尚未授權：請到 root 管理器允許，再按「檢查 root」");
+                set(0, root, root ? "✓ 已授權" : "尚未授權：請到 root 管理器允許，再按「檢查 root」\n" + rootDiag);
                 set(1, ov, ov ? "✓ 已開啟" : "尚未開啟");
                 set(2, nt, nt ? "✓ 已允許" : "尚未允許");
                 set(3, a11y, a11y ? "✓ 已開啟" : "尚未開啟");
