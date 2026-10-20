@@ -10,7 +10,7 @@ import android.content.SharedPreferences;
 final class GlassPrefs {
     private GlassPrefs() { }
 
-    static float refr = 1f, chroma = 0.5f, zoom = 0.22f, skew = 1f, blur = 12f;
+    static float refr = 1f, chroma = 1f, zoom = 0.22f, skew = 1f, blur = 12f;
     static boolean magnify = true, iconRefr = false, lensBg = true, skewOn = true;
 
     static final String K_REFR = "g_refr", K_CHROMA = "g_chroma", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
@@ -24,7 +24,7 @@ final class GlassPrefs {
     static void load(Context c) {
         SharedPreferences p = sp(c);
         refr = p.getFloat(K_REFR, 1f);
-        chroma = p.getFloat(K_CHROMA, 0.5f);
+        chroma = p.getFloat(K_CHROMA, 1f);
         zoom = p.getFloat(K_ZOOM, 0.22f);
         skew = p.getFloat(K_SKEW, 1f);
         blur = p.getFloat(K_BLUR, 12f);
