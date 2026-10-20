@@ -152,15 +152,15 @@ final class GlassBar extends FrameLayout {
         invalidate();
     }
 
-    /** 底欄橫向中間的光帶：白色核心、外圍是主題色，像 KernelSU 按住時中間會亮。 */
-    private void drawBand(Canvas canvas) {
+    /** 底欄橫向中間的光帶：白色核心、外圍是主題色。畫進背景圖（bc），所以會跟著底欄一起模糊。 */
+    private void paintBandInto(Canvas bc, int sw, int sh) {
         float a = Math.max(glowAmount, pressGlow);
         if (a < 0.02f) return;
         bandPaint.setAlpha(Math.round(255 * Math.min(1f, a)));
-        canvas.save();
-        canvas.clipPath(clip);
-        canvas.drawRect(0, 0, getWidth(), getHeight(), bandPaint);
-        canvas.restore();
+        bc.save();
+        bc.scale(sw / (float) getWidth(), sh / (float) getHeight());   // 底欄座標 → 背景圖座標
+        bc.drawRect(0, 0, getWidth(), getHeight(), bandPaint);
+        bc.restore();
     }
 
     private void drawHalo(Canvas canvas, float alpha) {
@@ -266,7 +266,6 @@ final class GlassBar extends FrameLayout {
         } else {
             drawFlat(canvas);
         }
-        if (!lens) drawBand(canvas);                  // 光帶要畫在玻璃背景之上，否則會被蓋住
         super.dispatchDraw(canvas);
         if (SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();
     }
@@ -346,6 +345,7 @@ final class GlassBar extends FrameLayout {
         }
         // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
         captureInto(bmp, bc, source, scale, bgColor);
+        if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
         configure(shader, lens ? skewNow : 0f);
         node.setRenderEffect(currentEffect());
         Canvas rc = node.beginRecording();
