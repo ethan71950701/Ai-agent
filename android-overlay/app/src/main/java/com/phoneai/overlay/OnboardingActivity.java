@@ -110,8 +110,11 @@ public class OnboardingActivity extends Activity {
     }
 
     private void finishTour() {
-        getSharedPreferences("cfg", MODE_PRIVATE).edit().putBoolean("onboarded", true).apply();
-        startActivity(new Intent(this, GuideActivity.class));   // 歡迎動畫看完，接著進設定導覽
+        android.content.SharedPreferences cfg = getSharedPreferences("cfg", MODE_PRIVATE);
+        boolean first = !cfg.getBoolean("onboarded", false);
+        cfg.edit().putBoolean("onboarded", true).apply();
+        // 第一次開 App：歡迎動畫看完，接著進設定導覽；之後從「功能介紹」進來，看完直接回去
+        if (first) startActivity(new Intent(this, GuideActivity.class));
         finish();
     }
 
