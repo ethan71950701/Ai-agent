@@ -72,6 +72,8 @@ final class GlassBar extends FrameLayout {
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
+    private final RenderNode glowNode = new RenderNode("lensGlow");   // 按住時的發光外圈（像 KernelSU 的底欄）
+    private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
@@ -116,6 +118,31 @@ final class GlassBar extends FrameLayout {
     void setSource(View v) { source = v; }
 
     void setParentBar(GlassBar b) { parentBar = b; }
+
+    /** 發光的顏色（主色）。 */
+    void setGlowColor(int color) {
+        glowPaint.setStyle(Paint.Style.STROKE);
+        glowPaint.setStrokeWidth(Ui.dp(getContext(), 4));
+        glowPaint.setColor(color);
+    }
+
+    /** 按住時的發光：主色的外圈模糊後往外散開，強度跟著按住的力度。 */
+    private void drawGlow(Canvas canvas) {
+        int w = getWidth(), h = getHeight();
+        float pad = Ui.dp(getContext(), 14);
+        float blur = Ui.dp(getContext(), 7);
+        glowNode.setPosition(0, 0, Math.round(w + 2 * pad), Math.round(h + 2 * pad));
+        glowNode.setRenderEffect(RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.DECAL));
+        Canvas gc = glowNode.beginRecording(Math.round(w + 2 * pad), Math.round(h + 2 * pad));
+        gc.translate(pad, pad);
+        gc.drawRoundRect(new RectF(0, 0, w, h), radius, radius, glowPaint);
+        glowNode.endRecording();
+        glowNode.setAlpha(Math.min(1f, amount * 0.9f));
+        canvas.save();
+        canvas.translate(-pad, -pad);
+        canvas.drawRenderNode(glowNode);
+        canvas.restore();
+    }
 
     /** 透鏡專用：底欄裡「只有圖示與文字」的那一層（另外抓、不模糊，只放大折射）。 */
     void setIconSource(View v) { iconSource = v; }
@@ -255,6 +282,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
+        if (lens && amount > 0.05f) drawGlow(canvas);
         if (lens && parentBar != null && GlassPrefs.lensBg) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             canvas.save();

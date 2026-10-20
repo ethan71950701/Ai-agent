@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 68));
         lp.gravity = android.view.Gravity.BOTTOM;
         int m = Ui.dp(this, 16);
-        lp.setMargins(m, 0, m, m);
+        lp.setMargins(Ui.dp(this, 24), 0, Ui.dp(this, 24), m);   // 比之前窄一點，跟 KSU 的底欄寬度接近
         return lp;
     }
 
@@ -154,6 +154,7 @@ public class MainActivity extends Activity {
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
                 (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 30), true);
         lens.setSource(root);
+        lens.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
         lens.setClipChildren(false);
         indicator = lens;
