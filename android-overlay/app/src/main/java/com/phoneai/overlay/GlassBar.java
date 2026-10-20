@@ -56,6 +56,8 @@ final class GlassBar extends FrameLayout {
     private static boolean anyCapture;
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
+    /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
+    static final boolean ICON_SHADER = false;
     static volatile String status = "還沒畫過";
     static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
@@ -292,6 +294,15 @@ final class GlassBar extends FrameLayout {
         float s = 1f + 0.22f * amount;
         float ox = getX(), oy = getY();   // 按鈕在底欄座標中的位置（含 translationX）
         float cx = ox + getWidth() / 2f, cy = oy + getHeight() / 2f;
+        if (!ICON_SHADER) {   // 實驗：不經過折射著色器，直接畫放大的圖示（用來確認方塊是不是來自圖示層）
+            canvas.save();
+            canvas.clipPath(clip);
+            canvas.translate(-ox, -oy);
+            canvas.scale(s, s, cx, cy);
+            iconSource.draw(canvas);
+            canvas.restore();
+            return;
+        }
         Canvas rc = iconNode.beginRecording(getWidth(), getHeight());
         rc.translate(-ox, -oy);           // 底欄座標 → 按鈕座標
         rc.scale(s, s, cx, cy);           // 以按鈕中心放大
