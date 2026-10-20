@@ -27,7 +27,7 @@ public class App extends Application {
 
     private static boolean themed(Activity a) {
         return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof SetupActivity || a instanceof DiagActivity || a instanceof MemoryActivity
-                || a instanceof LogActivity || a instanceof SherpaTestActivity || a instanceof MicTestActivity || a instanceof GuideActivity;
+                || a instanceof LogActivity || a instanceof MicTestActivity || a instanceof GuideActivity;
     }
 
     static android.content.Context ctx;   // 給 Root 找 App 資料夾用

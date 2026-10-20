@@ -390,9 +390,6 @@ public class MainActivity extends Activity {
         Ui.tileGrid(this, box,
                 new Ui.Tile("note", "助理的記憶", "待辦與筆記", false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                 new Ui.Tile("clock", "任務過程", "AI 每一步做了什麼", false, v -> startActivity(new Intent(this, LogActivity.class))));
-        Ui.section(this, box, "語音");
-        Ui.tileGrid(this, box,
-                new Ui.Tile("wave", "語音辨識", "SenseVoice 離線；下載與測試", true, v -> startActivity(new Intent(this, SherpaTestActivity.class))));
         Ui.section(this, box, "權限");
         Ui.tileGrid(this, box,
                 new Ui.Tile("layers", "懸浮層", "顯示在其他應用程式上層", false, v -> startActivity(

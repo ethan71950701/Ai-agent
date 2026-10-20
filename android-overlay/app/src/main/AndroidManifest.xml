@@ -102,10 +102,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".SherpaTestActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".ConfirmActivity"
             android:exported="false"
             android:taskAffinity=""

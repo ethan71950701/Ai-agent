@@ -60,7 +60,7 @@ public class GuideActivity extends Activity {
                     "重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。",
                     "複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。",
                     "不要把 Key 貼給任何人，包括 AI 助手。"},
-            {"按「下載語音模型」，會開啟語音辨識頁面，在那裡按下載。", "下載完成後按返回鍵回到這裡，狀態會自動更新。", "不想現在下載可以先跳過，之後到「功能 → 語音辨識」再下載。"},
+            {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
             {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
             {"有問題就到「功能 → 進階與診斷」看狀態，或到「功能 → 進階與診斷 → 自我檢查」。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
     private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
@@ -68,6 +68,7 @@ public class GuideActivity extends Activity {
     private static final int[] DEMO = {10, 11, 12, 13, 2, 14, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
+    private volatile boolean voiceBusy;
     private final String[] label = new String[N];
     private ViewPager2 pager;
     private final View[] dots = new View[N];
@@ -161,7 +162,7 @@ public class GuideActivity extends Activity {
             case 4: requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); break;
             case 5: startActivity(new Intent(this, SetupActivity.class)); break;
             case 6: Maintenance.askKey(this, this::refresh); break;
-            case 7: startActivity(new Intent(this, SherpaTestActivity.class)); break;
+            case 7: downloadVoice(); break;
             case 8:
                 try {
                     startActivity(new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS));
@@ -171,6 +172,30 @@ public class GuideActivity extends Activity {
                 break;
             default: finish(); break;
         }
+    }
+
+    /** 第 8 頁：直接在這一頁下載語音模型（進度顯示在這一頁），不另外開子頁。 */
+    private void downloadVoice() {
+        if (voiceBusy || SherpaEngine.ready(this)) return;
+        voiceBusy = true;
+        new Thread(() -> {
+            String err = null;
+            try {
+                SherpaEngine.download(this, m -> runOnUiThread(() -> {
+                    label[7] = m;
+                    pager.getAdapter().notifyDataSetChanged();
+                }));
+            } catch (Throwable e) {
+                err = String.valueOf(e.getMessage() != null ? e.getMessage() : e);
+                SherpaEngine.deleteRec(SherpaEngine.dir(this));
+            }
+            final String e2 = err;
+            runOnUiThread(() -> {
+                voiceBusy = false;
+                refresh();
+                if (e2 != null) android.widget.Toast.makeText(this, "下載失敗：" + e2 + "（可以再按一次）", android.widget.Toast.LENGTH_LONG).show();
+            });
+        }, "sensevoice-dl").start();
     }
 
     private final class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
