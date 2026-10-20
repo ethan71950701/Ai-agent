@@ -531,9 +531,9 @@ final class Ui {
                 @Override
                 public void onBackProgressed(android.window.BackEvent e) {
                     float p = e.getProgress();
-                    root.setScaleX(1f - 0.25f * p);
-                    root.setScaleY(1f - 0.25f * p);
-                    root.setAlpha(1f - 0.5f * p);
+                    root.setScaleX(1f - 0.2f * p);
+                    root.setScaleY(1f - 0.2f * p);
+                    root.setAlpha(Math.max(0f, 1f - 1.3f * p));   // 淡得夠快，後面的頁面不會透出來
                 }
 
                 @Override
