@@ -62,7 +62,7 @@ final class LensClip extends FrameLayout {
         float rad = r.height() / 2f;
         path.addRoundRect(r, rad, rad, Path.Direction.CW);
         canvas.save();
-        canvas.clipPath(path);
+        canvas.clipOutPath(path);   // 按鈕範圍內不畫原大小的圖示（放大的版本由透鏡畫）
         boolean b = super.drawChild(canvas, child, drawingTime);
         canvas.restore();
         return b;

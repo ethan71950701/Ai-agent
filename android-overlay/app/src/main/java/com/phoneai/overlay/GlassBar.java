@@ -251,6 +251,9 @@ final class GlassBar extends FrameLayout {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             canvas.save();
             canvas.clipPath(clip);
+            Paint base = new Paint(Paint.ANTI_ALIAS_FLAG);
+            base.setColor(bgColor);
+            canvas.drawPath(clip, base);        // 先鋪一層不透明底色，把底下原大小的圖示蓋住
             canvas.translate(getX(), getY());   // 透鏡座標 → 底欄座標
             canvas.drawRenderNode(parentBar.node);
             canvas.restore();
