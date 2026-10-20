@@ -67,7 +67,7 @@ final class Updater {
                 }
                 if (url == null) { done(a, "最新版本沒有 APK，稍後再試"); return; }
                 final String v = shown;
-                toast(a, scriptMsg);
+                a.runOnUiThread(() -> toast(a, scriptMsg));
                 final String apkUrl = url; final long apkSize = size; final String apkName = name;
                 a.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
                         .setTitle("有新版本 " + v)
