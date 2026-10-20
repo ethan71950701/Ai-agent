@@ -46,7 +46,7 @@ final class GlassBar extends FrameLayout {
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
-            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount);\n"   // 比背景亮一點，邊緣更亮
+            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON.replace("ZOOM", "0.0");
