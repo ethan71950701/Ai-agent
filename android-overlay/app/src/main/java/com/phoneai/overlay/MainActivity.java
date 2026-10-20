@@ -69,6 +69,13 @@ public class MainActivity extends Activity {
         Ui.switchRow(this, g, i, n, icon, title, null, on, (v, checked) -> GlassPrefs.putBool(this, key, checked));
     }
 
+    /** 用手指的壓力決定底欄發光的強度（壓越重越亮）。Android 回報的壓力範圍因手機而異，這裡把 0.15～1.0 對應到 0～1。 */
+    private void pressureGlow(android.view.MotionEvent e, View v) {
+        float p = e.getPressure();
+        GlassBar.touchInfo = "壓力 " + String.format(java.util.Locale.US, "%.2f", p) + "、接觸面積 " + String.format(java.util.Locale.US, "%.2f", e.getSize());
+        if (glass != null) glass.setPressGlow((p - 0.15f) / 0.85f);
+    }
+
     private boolean barDragging;
     private float barDownX;
     private int barDownIdx;
@@ -196,6 +203,7 @@ public class MainActivity extends Activity {
             int idx = Math.max(0, Math.min(2, (int) ((ex - barPad) / barItemW)));
             switch (e.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
+                    pressureGlow(e, v);
                     dragT = 0;
                     dragV = 0;
                     barDragging = false;
@@ -206,6 +214,7 @@ public class MainActivity extends Activity {
                     holdLoop.postDelayed(hold[0], 140);
                     return true;
                 case android.view.MotionEvent.ACTION_MOVE: {
+                    pressureGlow(e, v);
                     if (!barDragging && Math.abs(ex - barDownX) > slop) {
                         holdLoop.removeCallbacks(hold[0]);
                         enterDrag(ex, min, max);
@@ -229,6 +238,7 @@ public class MainActivity extends Activity {
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
                     holdLoop.removeCallbacks(hold[0]);
+                    if (glass != null) glass.setPressGlow(0f);
                     if (!barDragging) {   // 短按：切換分頁（showTab 會做彈跳的圓底與圖示動畫）
                         if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP && barDownIdx != tab) showTab(barDownIdx);
                         return true;

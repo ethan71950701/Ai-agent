@@ -74,6 +74,8 @@ final class GlassBar extends FrameLayout {
     private final RenderNode node = new RenderNode("glass");
     private final RenderNode glowNode = new RenderNode("lensGlow");   // 按住時的發光外圈（像 KernelSU 的底欄）
     private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint bandPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    static volatile String touchInfo = "";   // 診斷用：最近一次觸控的壓力與接觸面積
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
@@ -120,7 +122,10 @@ final class GlassBar extends FrameLayout {
     void setParentBar(GlassBar b) { parentBar = b; }
 
     /** 發光的顏色（主色）。 */
+    private int glowColor = 0xFF8AB4F8;
+
     void setGlowColor(int color) {
+        glowColor = color;
         glowPaint.setStyle(Paint.Style.STROKE);
         glowPaint.setStrokeWidth(Ui.dp(getContext(), 4));
         glowPaint.setColor(color);
@@ -139,9 +144,23 @@ final class GlassBar extends FrameLayout {
         drawHalo(canvas, Math.min(1f, amount * 0.9f));
     }
 
-    /** 整條底欄的發光（像 KernelSU 按住時底欄會亮）。 */
-    private void drawBarGlow(Canvas canvas) {
-        drawHalo(canvas, glowAmount);
+    /** 按壓力度造成的發光（0..1）；由 MainActivity 的觸控事件設定。 */
+    private float pressGlow;
+
+    void setPressGlow(float p) {
+        pressGlow = Math.max(0f, Math.min(1f, p));
+        invalidate();
+    }
+
+    /** 底欄橫向中間的光帶：白色核心、外圍是主題色，像 KernelSU 按住時中間會亮。 */
+    private void drawBand(Canvas canvas) {
+        float a = Math.max(glowAmount, pressGlow);
+        if (a < 0.02f) return;
+        bandPaint.setAlpha(Math.round(255 * Math.min(1f, a)));
+        canvas.save();
+        canvas.clipPath(clip);
+        canvas.drawRect(0, 0, getWidth(), getHeight(), bandPaint);
+        canvas.restore();
     }
 
     private void drawHalo(Canvas canvas, float alpha) {
@@ -199,6 +218,8 @@ final class GlassBar extends FrameLayout {
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x38000000, (tintColor & 0xFFFFFF) | 0x1C000000}
                         : new int[]{(tintColor & 0xFFFFFF) | 0x06000000, (tintColor & 0xFFFFFF) | 0x01000000},
                 null, Shader.TileMode.CLAMP));
+        bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{0x00FFFFFF, (glowColor & 0xFFFFFF) | 0x66000000, 0xD0FFFFFF,
+                (glowColor & 0xFFFFFF) | 0x66000000, 0x00FFFFFF}, new float[]{0f, 0.3f, 0.5f, 0.7f, 1f}, Shader.TileMode.CLAMP));
         rim.setShader(new LinearGradient(0, 0, w, h, new int[]{0x90FFFFFF, 0x18FFFFFF, 0x50FFFFFF},
                 new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
         try {
@@ -224,7 +245,7 @@ final class GlassBar extends FrameLayout {
     protected void dispatchDraw(Canvas canvas) {
         if (capturing) return;                        // 我正在抓背景：不要把自己畫進去
         if (anyCapture) return;                       // 玻璃按鈕在抓背景（只要底欄後面的頁面）：底欄與按鈕都不畫
-        if (!lens && glowAmount > 0.02f) drawBarGlow(canvas);
+        if (!lens) drawBand(canvas);
         if (plain) {                                  // 完全透明的底欄：什麼都不畫，只畫子內容
             super.dispatchDraw(canvas);
             return;

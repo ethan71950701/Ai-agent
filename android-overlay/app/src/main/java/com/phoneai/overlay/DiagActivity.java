@@ -94,6 +94,7 @@ public class DiagActivity extends Activity {
         sb.append("系統長按電源鍵動作：").append(powerLongPressText()).append('\n');
         sb.append("底欄玻璃效果：").append(GlassBar.status).append('\n');
         sb.append("按鈕透鏡：").append(GlassBar.lensInfo).append('\n');
+        sb.append("底欄觸控：").append(GlassBar.touchInfo).append('\n');
         sb.append("Termux 指令權限：").append(checkSelfPermission(CommandSender.PERM)
                 == PackageManager.PERMISSION_GRANTED ? "✓" : "✕（到「修復權限」一鍵補回）").append('\n');
         sb.append("\n最近的任務（含用量估價）：\n");
