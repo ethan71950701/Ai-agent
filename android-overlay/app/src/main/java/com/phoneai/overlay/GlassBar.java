@@ -61,6 +61,9 @@ final class GlassBar extends FrameLayout {
 
     private final boolean lens;
     private View source, iconSource;
+    // 透鏡裡的圖示：也要經過折射著色器（之前只是直接畫，所以沒有形變、彩色光暈）
+    private final RenderNode iconNode = new RenderNode("lensIcons");
+    private RuntimeShader iconShader;
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
@@ -86,6 +89,7 @@ final class GlassBar extends FrameLayout {
         this.radius = radiusPx;
         this.amount = lens ? REST : 1f;
         shader = new RuntimeShader(lens ? AGSL_LENS : AGSL_BAR);
+        if (lens) iconShader = new RuntimeShader(AGSL_LENS);
         setWillNotDraw(false);
         setClipChildren(false);
         rim.setStyle(Paint.Style.STROKE);
@@ -139,6 +143,7 @@ final class GlassBar extends FrameLayout {
         clip.reset();
         clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
         node.setPosition(0, 0, w, h);
+        iconNode.setPosition(0, 0, w, h);
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x38000000, (tintColor & 0xFFFFFF) | 0x1C000000}
                         : new int[]{(tintColor & 0xFFFFFF) | 0x06000000, (tintColor & 0xFFFFFF) | 0x01000000},
                 null, Shader.TileMode.CLAMP));
@@ -262,17 +267,21 @@ final class GlassBar extends FrameLayout {
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
     }
 
-    /** 把底欄那排圖示畫在透鏡裡，放大倍率隨按住的程度變化，放大中心是按鈕中心（圖示位置永遠跟底欄對齊）。 */
+    /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
     private void drawMagnifiedIcons(Canvas canvas) {
         float s = 1f + 0.22f * amount;
-        // 畫布原點已經在按鈕的位置（含位移 translationX）；要把底欄的圖示對回原本的位置，要減的是 getX()／getY()，不是 getLeft()
-        float ox = getX(), oy = getY();
-        float cx = ox + getWidth() / 2f, cy = oy + getHeight() / 2f;   // 放大中心：按鈕中心（底欄座標）
+        float ox = getX(), oy = getY();   // 按鈕在底欄座標中的位置（含 translationX）
+        float cx = ox + getWidth() / 2f, cy = oy + getHeight() / 2f;
+        Canvas rc = iconNode.beginRecording(getWidth(), getHeight());
+        rc.translate(-ox, -oy);           // 底欄座標 → 按鈕座標
+        rc.scale(s, s, cx, cy);           // 以按鈕中心放大
+        iconSource.draw(rc);
+        iconNode.endRecording();
+        configure(iconShader, skewNow);
+        iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "content"));
         canvas.save();
         canvas.clipPath(clip);
-        canvas.translate(-ox, -oy);
-        canvas.scale(s, s, cx, cy);
-        iconSource.draw(canvas);
+        canvas.drawRenderNode(iconNode);
         canvas.restore();
     }
 
