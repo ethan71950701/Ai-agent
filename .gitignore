@@ -1,0 +1,14 @@
+# 絕對不要提交的東西
+.claude_key
+*.key
+.env
+# 截圖與紀錄（可能含私人畫面或指令）
+*.png
+*.jpg
+*.log
+# 模型與引擎（很大，另外下載）
+*.gguf
+llama.cpp/
+model/
+backup/
+__pycache__/
