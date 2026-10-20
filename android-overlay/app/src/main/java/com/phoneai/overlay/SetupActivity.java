@@ -221,34 +221,9 @@ public class SetupActivity extends Activity {
         return true;
     }
 
-    private boolean installScripts() throws Exception {
-        File zip = new File(getCacheDir(), "repo.zip");
-        try {
-            download("https://codeload.github.com/" + REPO + "/zip/refs/heads/main", zip, null);   // 公開 repo：不需要權杖
-        } catch (java.io.IOException e) {
-            // 私人 repo（或網路問題）：改用已存的 GitHub 權杖（只在記憶體用來下載）
-            String t = Maintenance.suRun("cat " + Maintenance.TOKEN).trim();
-            if (t.isEmpty() || t.startsWith("ERR:")) {
-                fail("下載專案失敗（" + e.getMessage() + "）。如果這個 repo 是私人的，請先到「功能 → 維護 → GitHub 權杖」設定唯讀權杖，再按繼續");
-                return false;
-            }
-            download("https://api.github.com/repos/" + REPO + "/zipball/main", zip, t);
-        }
-        File dir = new File(getCacheDir(), "repo");
-        deleteRec(dir);
-        unzipStrip(zip, dir);
-        zip.delete();
-        String home = Maintenance.HOME;
-        String r = Maintenance.suRun("U=$(stat -c %u /data/data/com.termux)\nrm -rf " + home + "/phone-ai-agent\ncp -r '" + dir.getAbsolutePath() + "' " + home + "/phone-ai-agent\n"
-                + "chown -R $U:$U " + home + "/phone-ai-agent\n[ -f " + home + "/phone-ai-agent/install.sh ] && echo copied");
-        deleteRec(dir);
-        if (!r.contains("copied")) { fail("複製專案失敗：" + r.trim()); return false; }
-        say("  執行 install.sh…");
-        Maintenance.suStream(Maintenance.termuxScript("bash ~/phone-ai-agent/install.sh 2>&1"), l -> say("  " + (l.length() > 90 ? l.substring(0, 90) : l)));
-        // 把 ZIP 版專案換成 Git 版，之後「檢查並更新」才能 git pull（失敗不影響其餘）
-        Maintenance.suStream(Maintenance.termuxScript("python ~/update_app.py --init-repo 2>&1 | tail -3"), l -> say("  " + l));
-        boolean ok = Maintenance.suRun("[ -f " + home + "/assistant.py ] && echo yes").contains("yes");
-        if (!ok) { fail("腳本沒有複製到 Termux 家目錄"); return false; }
+    private boolean installScripts() {
+        String err = Project.install(this, this::say);
+        if (err != null) { fail(err); return false; }
         say("✓ 專案腳本好了");
         return true;
     }
@@ -265,69 +240,8 @@ public class SetupActivity extends Activity {
 
     /** 下載（手動跟著轉址；權杖只送給第一個網址 api.github.com，轉址後不帶）。 */
     private void download(String url, File dest, String token) throws Exception {
-        String cur = url;
-        boolean first = true;
-        for (int hop = 0; hop < 6; hop++) {
-            HttpURLConnection c = (HttpURLConnection) new URL(cur).openConnection();
-            c.setInstanceFollowRedirects(false);
-            c.setConnectTimeout(20000);
-            c.setReadTimeout(60000);
-            c.setRequestProperty("User-Agent", "PhoneAI-Setup");
-            c.setRequestProperty("Accept", "application/vnd.github+json");
-            if (first && token != null) c.setRequestProperty("Authorization", "Bearer " + token);
-            int code = c.getResponseCode();
-            if (code / 100 == 3) {
-                cur = c.getHeaderField("Location");
-                first = false;
-                c.disconnect();
-                continue;
-            }
-            if (code != 200) throw new java.io.IOException("HTTP " + code + "（" + (cur.length() > 60 ? cur.substring(0, 60) : cur) + "）");
-            long total = c.getContentLengthLong(), got = 0, lastSay = 0;
-            try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(dest)) {
-                byte[] buf = new byte[65536];
-                int n;
-                while ((n = in.read(buf)) > 0) {
-                    out.write(buf, 0, n);
-                    got += n;
-                    if (total > 5_000_000 && got - lastSay > total / 10) {
-                        lastSay = got;
-                        say("  下載 " + (got * 100 / total) + "%");
-                    }
-                }
-            }
-            return;
-        }
-        throw new java.io.IOException("轉址太多次");
+        Project.download(url, dest, token, this::say);
     }
 
-    private static void unzipStrip(File zip, File dest) throws Exception {
-        String canon = dest.getCanonicalPath() + File.separator;
-        dest.mkdirs();
-        try (ZipInputStream z = new ZipInputStream(new java.io.BufferedInputStream(new java.io.FileInputStream(zip)))) {
-            ZipEntry e;
-            while ((e = z.getNextEntry()) != null) {
-                String name = e.getName();
-                int k = name.indexOf('/');
-                if (k < 0) continue;
-                name = name.substring(k + 1);   // 去掉最上層的「owner-repo-sha/」
-                if (name.isEmpty()) continue;
-                File out = new File(dest, name);
-                if (!out.getCanonicalPath().startsWith(canon)) continue;   // 擋 zip slip
-                if (e.isDirectory()) { out.mkdirs(); continue; }
-                out.getParentFile().mkdirs();
-                try (OutputStream o = new FileOutputStream(out)) {
-                    byte[] buf = new byte[65536];
-                    int n;
-                    while ((n = z.read(buf)) > 0) o.write(buf, 0, n);
-                }
-            }
-        }
-    }
 
-    private static void deleteRec(File f) {
-        File[] kids = f.listFiles();
-        if (kids != null) for (File k : kids) deleteRec(k);
-        f.delete();
-    }
 }
