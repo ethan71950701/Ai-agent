@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 要用完整歷史產生「這次更新了什麼」
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -87,9 +89,25 @@ jobs:
           set -euo pipefail
           SHORT=${GITHUB_SHA::7}
           TAG="build-$((GITHUB_RUN_NUMBER + 1000))-${SHORT}"   # 與 versionCode 相同（+1000），App 的更新檢查用這個數字比新舊
+          # 更新說明：上一個 Release 之後的提交訊息（沒有上一個就列最近 15 筆）
+          PREV_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+          PREV_SHA=""
+          if [ -n "$PREV_TAG" ]; then PREV_SHA=$(echo "$PREV_TAG" | awk -F- '{print $NF}'); fi
+          {
+            echo "commit: ${GITHUB_SHA}"
+            echo
+            echo "## 這次更新了什麼"
+            if [ -n "$PREV_SHA" ] && git cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
+              git log --no-merges --format='- %s' "${PREV_SHA}..${GITHUB_SHA}"
+            else
+              git log --no-merges -n 15 --format='- %s' "${GITHUB_SHA}"
+            fi
+            echo
+            echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）。"
+          } > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" android-overlay/app/build/outputs/apk/debug/app-debug.apk \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
-            --notes "commit: ${GITHUB_SHA}"$'\n'"自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）。"
+            --notes-file "$RUNNER_TEMP/notes.md"
           # 只留最近 10 個 Release，舊的連同 tag 刪掉
           gh release list --limit 100 --json tagName --jq '.[10:][].tagName' | while read -r old; do
             [ -n "$old" ] && gh release delete "$old" --cleanup-tag --yes || true

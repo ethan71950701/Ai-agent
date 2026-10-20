@@ -71,7 +71,8 @@ final class Updater {
                 final String apkUrl = url; final long apkSize = size; final String apkName = name;
                 a.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
                         .setTitle("有新版本 " + v)
-                        .setMessage("目前是 1.0." + BuildConfig.VERSION_CODE + "，最新是 " + v + "。要現在更新嗎？進度會顯示在通知列與 Now Bar。")
+                        .setMessage("目前是 1.0." + BuildConfig.VERSION_CODE + "，最新是 " + v + "。\n\n" + notesOf(rel)
+                                + "\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。")
                         .setPositiveButton("更新", (d, w) -> new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start())
                         .setNegativeButton("稍後", (d, w) -> busy = false)
                         .setOnCancelListener(d -> busy = false)
@@ -169,6 +170,19 @@ final class Updater {
         try (InputStream in = c.getInputStream()) {
             return new JSONObject(new String(in.readAllBytes(), "UTF-8"));
         }
+    }
+
+    /** 發布說明（去掉 commit 那一行），太長就截斷。 */
+    static String notesOf(JSONObject rel) {
+        String body = rel.optString("body", "");
+        StringBuilder sb = new StringBuilder();
+        for (String line : body.split("\n")) {
+            if (line.startsWith("commit:")) continue;
+            sb.append(line).append('\n');
+        }
+        String t = sb.toString().trim();
+        if (t.isEmpty()) return "（這次沒有更新說明）";
+        return t.length() > 600 ? t.substring(0, 600) + "…" : t;
     }
 
     /** 從標籤 build-<序號>-<sha7> 取出序號；讀不到回傳 0。 */
