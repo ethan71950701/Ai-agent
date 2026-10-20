@@ -304,7 +304,7 @@ final class GlassBar extends FrameLayout {
         int w = getWidth(), h = getHeight();
         float l = getX(), t = getY();
         underNode.setPosition(0, 0, w, h);
-        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor);
+        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density);   // 底下的背景永遠模糊（不隨按住變化）
         underNode.setRenderEffect(RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
