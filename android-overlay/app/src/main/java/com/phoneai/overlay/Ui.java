@@ -516,6 +516,45 @@ final class Ui {
                 return true;
             }
         });
+        registerBack(a, root);
+    }
+
+    /**
+     * 系統的返回手勢：子頁面用預測返回時，頁面跟著手指縮小、變淡（預覽），放手就回到原來的大小或真的關閉。
+     * Android 14 以上才有逐步的進度；Android 13 只註冊一般返回，行為同以前。
+     */
+    private static void registerBack(android.app.Activity a, View root) {
+        android.window.OnBackInvokedDispatcher d = a.getOnBackInvokedDispatcher();
+        int prio = android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT;
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            d.registerOnBackInvokedCallback(prio, new android.window.OnBackAnimationCallback() {
+                @Override
+                public void onBackProgressed(android.window.BackEvent e) {
+                    float p = e.getProgress();
+                    root.setScaleX(1f - 0.25f * p);
+                    root.setScaleY(1f - 0.25f * p);
+                    root.setAlpha(1f - 0.5f * p);
+                }
+
+                @Override
+                public void onBackCancelled() {
+                    root.animate().alpha(1f).setDuration(120).start();
+                    Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
+                    Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+                }
+
+                @Override
+                public void onBackInvoked() {
+                    a.finish();
+                    a.overridePendingTransition(0, 0);
+                }
+            });
+        } else {
+            d.registerOnBackInvokedCallback(prio, () -> {
+                a.finish();
+                a.overridePendingTransition(0, 0);
+            });
+        }
     }
 
     static int attr(Context c, int attrRes) {
