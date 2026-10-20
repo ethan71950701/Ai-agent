@@ -131,6 +131,7 @@ public class MainActivity extends Activity {
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
                 (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 38), true);
         lens.setSource(root);
+        lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
         lens.setClipChildren(false);
         indicator = lens;
         card.setClipChildren(false);

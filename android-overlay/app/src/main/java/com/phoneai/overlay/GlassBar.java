@@ -64,6 +64,7 @@ final class GlassBar extends FrameLayout {
     // 透鏡裡的圖示：也要經過折射著色器（之前只是直接畫，所以沒有形變、彩色光暈）
     private final RenderNode iconNode = new RenderNode("lensIcons");
     private RuntimeShader iconShader;
+    private GlassBar parentBar;   // 透鏡所在的底欄：透鏡下面直接用底欄已經模糊好的背景，不會變透明
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
@@ -108,6 +109,8 @@ final class GlassBar extends FrameLayout {
     }
 
     void setSource(View v) { source = v; }
+
+    void setParentBar(GlassBar b) { parentBar = b; }
 
     /** 透鏡專用：底欄裡「只有圖示與文字」的那一層（另外抓、不模糊，只放大折射）。 */
     void setIconSource(View v) { iconSource = v; }
@@ -244,6 +247,20 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
+        if (lens && parentBar != null) {
+            // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
+            canvas.save();
+            canvas.clipPath(clip);
+            canvas.translate(getX(), getY());   // 透鏡座標 → 底欄座標
+            canvas.drawRenderNode(parentBar.node);
+            canvas.restore();
+            canvas.save();
+            canvas.clipPath(clip);
+            canvas.drawPath(clip, tint);
+            canvas.restore();
+            if (iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
+            return;
+        }
         int scale = lens ? 2 : 4;   // 透鏡要清楚；底欄模糊反正很糊，抓 1/4 大小省很多繪製（掉幀的主因）
         int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
         if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
