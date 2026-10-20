@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
 
     private androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams barParams() {
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
-                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 88));
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 68));
         lp.gravity = android.view.Gravity.BOTTOM;
         int m = Ui.dp(this, 16);
         lp.setMargins(m, 0, m, m);
@@ -145,14 +145,14 @@ public class MainActivity extends Activity {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         final GlassBar card = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
                 (Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHighest) & 0xFFFFFF) | 0x59000000,   // 玻璃上的淡淡底色
-                (onS & 0xFFFFFF) | 0x40000000, Ui.dp(this, 44), false);
+                (onS & 0xFFFFFF) | 0x40000000, Ui.dp(this, 34), false);
         card.setSource(root);
         glass = card;
         bar = card;
         final LensClip fl = new LensClip(this);
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
-                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 38), true);
+                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 30), true);
         lens.setSource(root);
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
         lens.setClipChildren(false);
@@ -165,7 +165,7 @@ public class MainActivity extends Activity {
         final LinearLayout h2 = tabRow(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         fl.addView(h, new android.widget.FrameLayout.LayoutParams(-1, -1));
         fl.addView(h2, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 76), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
+        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 58), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
         fl.set(h2, indicator);
         lens.setIconSource(h2);   // 按住時放大的圖示：就是底欄那排主色圖示
         card.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
@@ -263,7 +263,7 @@ public class MainActivity extends Activity {
             LinearLayout item = new LinearLayout(this);
             item.setOrientation(LinearLayout.VERTICAL);
             item.setGravity(android.view.Gravity.CENTER);
-            item.addView(new IconView(this, TAB_ICON[i], color), new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26)));
+            item.addView(new IconView(this, TAB_ICON[i], color), new LinearLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22)));
             TextView lb = new TextView(this);
             lb.setText(TAB_LABEL[i]);
             lb.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelMedium);
