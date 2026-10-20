@@ -263,11 +263,12 @@ final class GlassBar extends FrameLayout {
     /** 把底欄那排圖示畫在透鏡裡，放大倍率隨按住的程度變化，放大中心是按鈕中心（圖示位置永遠跟底欄對齊）。 */
     private void drawMagnifiedIcons(Canvas canvas) {
         float s = 1f + 0.22f * amount;
-        float l = getLeft(), t = getTop();
-        float cx = l + getWidth() / 2f, cy = t + getHeight() / 2f;
+        // 畫布原點已經在按鈕的位置（含位移 translationX）；要把底欄的圖示對回原本的位置，要減的是 getX()／getY()，不是 getLeft()
+        float ox = getX(), oy = getY();
+        float cx = ox + getWidth() / 2f, cy = oy + getHeight() / 2f;   // 放大中心：按鈕中心（底欄座標）
         canvas.save();
         canvas.clipPath(clip);
-        canvas.translate(-l, -t);   // 回到底欄的座標
+        canvas.translate(-ox, -oy);
         canvas.scale(s, s, cx, cy);
         iconSource.draw(canvas);
         canvas.restore();

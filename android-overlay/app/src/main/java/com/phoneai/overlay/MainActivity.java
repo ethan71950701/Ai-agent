@@ -286,7 +286,6 @@ public class MainActivity extends Activity {
 
     private MaterialCardView hero;
     private String myTheme = "";
-    private static boolean autoRepairTried;
 
     private void buildHome() {
         hero = new MaterialCardView(this);
@@ -477,10 +476,6 @@ public class MainActivity extends Activity {
         boolean a11y = A11yGuard.listed(this);
         boolean term = checkSelfPermission(CommandSender.PERM) == PackageManager.PERMISSION_GRANTED;
         boolean ok = ov && a11y && term;
-        if (!term && !autoRepairTried) {   // 第一次發現缺 Termux 權限就自動用 root 補（不用開 Termux）
-            autoRepairTried = true;
-            repairPerms();
-        }
         int bg = Ui.attr(this, ok ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorErrorContainer);
         int on = Ui.attr(this, ok ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnErrorContainer);
         hero.setCardBackgroundColor(bg);
