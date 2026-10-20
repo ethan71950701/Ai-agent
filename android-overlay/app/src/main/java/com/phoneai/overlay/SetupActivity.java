@@ -67,7 +67,9 @@ public class SetupActivity extends Activity {
         list.removeAllViews();
         Ui.section(this, list, "步驟");
         for (int i = 0; i < NAMES.length; i++) {
-            Ui.row(this, list, i, NAMES.length, done[i] ? "check_circle" : "circle", NAMES[i], done[i] ? "完成" : "尚未完成", null, null);
+            String label = done[i] ? "完成" : "尚未完成";
+            if (i == 0 && done[0] && termuxFromPlay) label = "已安裝，但是 Google Play 版：請先解除安裝";
+            Ui.row(this, list, i, NAMES.length, done[i] ? "check_circle" : "circle", NAMES[i], label, null, null);
         }
     }
 
@@ -83,12 +85,22 @@ public class SetupActivity extends Activity {
                     + "[ -f " + Maintenance.HOME + "/assistant.py ] && echo T5\n"
                     + "[ -s " + Maintenance.KEY + " ] && echo T6\n");
             for (int i = 0; i < NAMES.length; i++) done[i] = r.contains("T" + (i + 1));
+            // Google Play 版的 Termux 簽章跟我們要的 GitHub 版不同，不能覆蓋安裝，也比較舊；要先請使用者解除安裝
+            String inst = Maintenance.suRun("dumpsys package com.termux 2>/dev/null | grep -m1 installerPackageName; echo done");
+            termuxFromPlay = inst.contains("com.android.vending");
+            runOnUiThread(() -> { if (termuxFromPlay) say("⚠ 偵測到的 Termux 是 Google Play 版，請先解除安裝它（見下方說明），再按「開始安裝」"); });
             runOnUiThread(this::render);
         }).start();
     }
 
+    private boolean termuxFromPlay;
+
     private void start() {
         if (busy) return;
+        if (termuxFromPlay) {
+            fail("目前的 Termux 是 Google Play 版，簽章跟這裡要裝的不同，無法覆蓋。請到系統設定 → 應用程式 → Termux → 解除安裝，再按「繼續」。（Termux:API 如果也是 Play 版，一樣要解除安裝）");
+            return;
+        }
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
         if (!done[5] && apiKey == null) {
