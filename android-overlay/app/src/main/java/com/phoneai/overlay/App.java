@@ -30,9 +30,12 @@ public class App extends Application {
                 || a instanceof LogActivity || a instanceof SherpaTestActivity || a instanceof MicTestActivity || a instanceof GuideActivity;
     }
 
+    static android.content.Context ctx;   // 給 Root 找 App 資料夾用
+
     @Override
     public void onCreate() {
         super.onCreate();
+        ctx = this;
         GlassPrefs.load(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
