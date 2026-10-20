@@ -1,7 +1,9 @@
 package com.phoneai.overlay;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -64,8 +66,8 @@ final class Uninstaller {
                     + "rm -f /sdcard/Download/phoneai_memory_backup.json");
             // 3. 選擇刪除時，才解除安裝 Termux 與 Termux:API
             if (deleteTermux) Maintenance.suRun("pm uninstall com.termux.api; pm uninstall com.termux");
-            // 4. 最後才解除安裝本 App（執行後本 App 會直接結束）
-            Maintenance.suRun("pm uninstall com.phoneai.overlay");
+            // 4. 最後才解除安裝本 App：用系統的解除安裝畫面，由你按確定（不靠 root，也不會因為 App 自己被結束而失敗）
+            a.runOnUiThread(() -> a.startActivity(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.getPackageName()))));
         }, "uninstall").start();
     }
 }
