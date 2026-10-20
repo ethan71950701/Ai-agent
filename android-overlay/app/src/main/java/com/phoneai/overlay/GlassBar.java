@@ -32,6 +32,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float depth;\n"
             + "uniform float amount;\n"
             + "uniform float skew;\n"
+            + "uniform float refr;\n"
+            + "uniform float chroma;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
             + "  float2 q = abs(p - c) - (c - float2(radius));\n"
@@ -39,25 +41,25 @@ final class GlassBar extends FrameLayout {
             + "  float t = clamp(-sd / depth, 0.0, 1.0);\n"
             + "  float bend = (1.0 - t) * (1.0 - t);\n"                                          // 越靠邊折射越強
             + "  float2 dir = normalize(p - c + float2(0.001));\n"
-            + "  float2 z = c + (p - c) / (1.0 + ZOOM * amount);\n"                                // 中間放大（底欄 ZOOM=0）
+            + "  float2 z = p;\n"
             + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
-            + "  float2 sp = z - dir * bend * depth * 0.75 * amount;\n"
+            + "  float2 sp = z - dir * bend * depth * 0.75 * refr * amount;\n"
             + "  half4 col = content.eval(sp);\n"
-            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散
-            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * amount).r;\n"
+            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散
+            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
             + "}\n";
-    private static final String AGSL_BAR = COMMON.replace("ZOOM", "0.0");
-    private static final String AGSL_LENS = COMMON.replace("ZOOM", "0.10");
+    private static final String AGSL_BAR = COMMON;
+    private static final String AGSL_LENS = COMMON;
 
     /** 有任何玻璃元件正在抓背景：其他玻璃元件只畫子內容，免得互相遞迴。 */
     private static boolean anyCapture;
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
-    static final boolean ICON_SHADER = false;
+    // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = "還沒畫過";
     static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
@@ -169,6 +171,8 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("depth", Ui.dp(getContext(), lens ? 12 : 18));
         sh.setFloatUniform("amount", amount);
         sh.setFloatUniform("skew", skewValue);
+        sh.setFloatUniform("refr", GlassPrefs.refr);
+        sh.setFloatUniform("chroma", GlassPrefs.chroma);
     }
 
     @Override
@@ -209,8 +213,9 @@ final class GlassBar extends FrameLayout {
         float tx = getTranslationX();
         if (lastT != 0 && now > lastT) {
             float vDpMs = (tx - lastTx) / getResources().getDisplayMetrics().density / (now - lastT);   // dp/ms
-            float target = Math.max(-0.35f, Math.min(0.35f, -vDpMs * 0.35f));
+            float target = Math.max(-0.35f, Math.min(0.35f, -vDpMs * 0.35f)) * GlassPrefs.skew;
             skewNow = skewNow * 0.6f + target * 0.4f;
+            if (!GlassPrefs.skewOn) skewNow = 0f;
         }
         lastTx = tx;
         lastT = now;
@@ -249,7 +254,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
-        if (lens && parentBar != null) {
+        if (lens && parentBar != null && GlassPrefs.lensBg) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             canvas.save();
             canvas.clipPath(clip);
@@ -291,10 +296,10 @@ final class GlassBar extends FrameLayout {
 
     /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
     private void drawMagnifiedIcons(Canvas canvas) {
-        float s = 1f + 0.22f * amount;
+        float s = GlassPrefs.magnify ? 1f + GlassPrefs.zoom * amount : 1f;
         float ox = getX(), oy = getY();   // 按鈕在底欄座標中的位置（含 translationX）
         float cx = ox + getWidth() / 2f, cy = oy + getHeight() / 2f;
-        if (!ICON_SHADER) {   // 實驗：不經過折射著色器，直接畫放大的圖示（用來確認方塊是不是來自圖示層）
+        if (!GlassPrefs.iconRefr) {   // 實驗：不經過折射著色器，直接畫放大的圖示（用來確認方塊是不是來自圖示層）
             canvas.save();
             canvas.clipPath(clip);
             canvas.translate(-ox, -oy);
@@ -319,7 +324,7 @@ final class GlassBar extends FrameLayout {
     private RenderEffect currentEffect() {
         RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "content");
         // 按住時模糊降到很小（但不為 0）：永遠走同一條 chain 效果，避免只剩著色器時折射消失
-        float blur = Math.max(0.5f, Ui.dp(getContext(), 12) * blurFactor);
+        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor);
         return RenderEffect.createChainEffect(fx, RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
     }
 }

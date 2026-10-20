@@ -33,6 +33,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        GlassPrefs.load(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
             public void onActivityPreCreated(Activity a, Bundle b) {

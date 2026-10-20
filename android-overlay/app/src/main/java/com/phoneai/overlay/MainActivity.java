@@ -46,6 +46,29 @@ public class MainActivity extends Activity {
     private float dragX, dragV;
     private android.animation.ValueAnimator lensAnim;
     /** 透鏡強度淡入／淡出（按住拖動時 1，放開 0）。 */
+    /** 底欄玻璃的一條滑桿：拖動即時寫入 cfg 並套用。 */
+    private void glassSlider(LinearLayout g, String title, String hint, float min, float max, float value, String key) {
+        LinearLayout inner = Ui.card(this, g);
+        TextView t = Ui.body(this, title + "　" + String.format(java.util.Locale.US, "%.2f", value));
+        t.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+        inner.addView(t);
+        inner.addView(Ui.body(this, hint));
+        com.google.android.material.slider.Slider sl = new com.google.android.material.slider.Slider(this);
+        sl.setValueFrom(min);
+        sl.setValueTo(max);
+        sl.setValue(Math.max(min, Math.min(max, value)));
+        sl.addOnChangeListener((s, v, fromUser) -> {
+            GlassPrefs.putFloat(this, key, v);
+            t.setText(title + "　" + String.format(java.util.Locale.US, "%.2f", v));
+        });
+        inner.addView(sl, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    /** 底欄玻璃的一個開關。 */
+    private void glassSwitch(LinearLayout g, int i, int n, String icon, String title, boolean on, String key) {
+        Ui.switchRow(this, g, i, n, icon, title, null, on, (v, checked) -> GlassPrefs.putBool(this, key, checked));
+    }
+
     private boolean barDragging;
     private float barDownX;
     private int barDownIdx;
@@ -378,6 +401,23 @@ public class MainActivity extends Activity {
         heroBox = null;
         LinearLayout g = Ui.expandGroup(this, box, "droplet", "外觀", "主題色與莫奈取色", true);
         Ui.themePicker(this, g);
+
+        g = Ui.expandGroup(this, box, "sparkle", "底欄玻璃（進階）", "折射、模糊、放大與開關，拖動即時生效", false);
+        glassSlider(g, "折射強度", "邊緣彎曲的程度", 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
+        glassSlider(g, "色散（紅藍錯位）", "邊緣的彩色光暈，0 = 沒有", 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
+        glassSlider(g, "模糊程度（dp）", "底欄背景的模糊半徑", 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
+        glassSlider(g, "圖示放大倍率", "按住時圖示放大的量（0.22 ≈ 1.22 倍）", 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
+        glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
+        glassSwitch(g, 0, 5, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
+        glassSwitch(g, 1, 5, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
+        glassSwitch(g, 2, 5, "target", "透鏡底下用底欄背景", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
+        glassSwitch(g, 3, 5, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+        LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
+        rl.topMargin = Ui.dp(this, 12);
+        g.addView(Ui.pill(this, "恢復預設", false, v -> {
+            GlassPrefs.reset(this);
+            recreate();
+        }), rl);
 
         g = Ui.expandGroup(this, box, "float", "呼叫方式", "浮動按鈕、電源鍵、預設助理", false);
         Ui.switchRow(this, g, 0, 3, "float", "浮動按鈕", "螢幕邊緣的 AI 圓鈕，可拖曳", cfg().getBoolean("float_on", false), (v, on) -> {
