@@ -39,6 +39,7 @@ public class MemoryActivity extends Activity {
     private LinearLayout list;
     private TextView status;
     private JSONObject data;
+    private static JSONObject cache;   // 同一次 App 執行中記住上次讀到的資料
     private float d;
     private String diag = "";
 
@@ -58,6 +59,7 @@ public class MemoryActivity extends Activity {
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
         box.addView(list);
+        if (cache != null) { data = cache; render(); }   // 同一次 App 執行中，再進來時立刻顯示
     }
 
     @Override
@@ -69,7 +71,7 @@ public class MemoryActivity extends Activity {
     // ---------- 讀寫（root） ----------
 
     private void reload() {
-        status.setText("讀取中…");
+        if (data == null) status.setText("讀取中…");   // 已有上次的資料就先顯示，背景再更新
         new Thread(() -> {
             String err = "", info = "";
             JSONObject got = null;
@@ -99,7 +101,7 @@ public class MemoryActivity extends Activity {
             final String e = err, inf = info;
             runOnUiThread(() -> {
                 diag = inf;
-                if (g != null) { data = g; render(); } else status.setText(e + "\n" + inf);
+                if (g != null) { data = g; cache = g; render(); } else status.setText(e + "\n" + inf);
             });
         }).start();
     }

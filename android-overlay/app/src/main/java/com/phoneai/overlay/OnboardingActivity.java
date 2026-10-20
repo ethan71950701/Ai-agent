@@ -30,6 +30,7 @@ public class OnboardingActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        registerBack();
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Ui.attr(this, com.google.android.material.R.attr.colorSurface));
         root.setFitsSystemWindows(true);
@@ -111,8 +112,11 @@ public class OnboardingActivity extends Activity {
         finish();
     }
 
-    @Override
-    public void onBackPressed() { finishTour(); }
+    // 預測返回（Android 13+）：小米等手機要 App 自己註冊，不會呼叫 onBackPressed
+    private void registerBack() {
+        getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::finishTour);
+    }
 
     /** 第一頁就讓使用者選主題色（和設定頁是同一個元件）。 */
     private void addThemePicker(Activity a, LinearLayout page) {
