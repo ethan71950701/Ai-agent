@@ -201,11 +201,10 @@ final class Schedule {
         String t = (text == null ? "" : text).replaceAll("[\\s，。,.？?！!]", "");
         if (t.isEmpty() || t.length() > 18 || t.toLowerCase().startsWith("ai")) return false;
         if (t.matches("^(開|關|打開|關閉|开|关|打开|关闭|調|调|設|设).*")) return false;
-        if (BATT_RE.matcher(t).find() && BATT_Q.matcher(t).find()) return true;
-        if (ANDROID_RE.matcher(t).find() || YEAR_RE.matcher(t).find() || TIME_RE.matcher(t).find()) return true;
-        if (Q_RE.matcher(t).find() && (STORE_RE.matcher(t).find() || MEM_RE.matcher(t).find() || MODEL_RE.matcher(t).find()
-                || BRIGHT_RE.matcher(t).find() || WIFI_RE.matcher(t).find() || VOL_RE.matcher(t).find())) return true;
-        return false;
+        // 只要句子裡有主題詞就算查詢（「告訴我電量」「看一下儲存空間」都可以）；動作類的已在上面排除
+        if (BATT_RE.matcher(t).find() || ANDROID_RE.matcher(t).find() || YEAR_RE.matcher(t).find() || TIME_RE.matcher(t).find()) return true;
+        return STORE_RE.matcher(t).find() || MEM_RE.matcher(t).find() || MODEL_RE.matcher(t).find()
+                || BRIGHT_RE.matcher(t).find() || WIFI_RE.matcher(t).find() || VOL_RE.matcher(t).find();
     }
 
     /** 能直接回答的短問題，回傳答案；不是這類問題回 null（不呼叫 AI）。 */
@@ -213,7 +212,7 @@ final class Schedule {
         String t = (text == null ? "" : text).replaceAll("[\\s，。,.？?！!]", "");
         if (t.isEmpty() || t.length() > 18 || t.toLowerCase().startsWith("ai")) return null;
         try {
-            if (BATT_RE.matcher(t).find() && BATT_Q.matcher(t).find()) return battery(c);
+            if (BATT_RE.matcher(t).find()) return battery(c);
             if (!t.matches("^(開|關|打開|關閉|开|关|打开|关闭|調|调|設|设).*")) {
                 String r = system(c, t);
                 if (r != null) return r;
@@ -247,7 +246,6 @@ final class Schedule {
     }
 
     private static String system(Context c, String t) {
-        if (!Q_RE.matcher(t).find()) return null;
         if (STORE_RE.matcher(t).find()) {
             StatFs s = new StatFs(Environment.getDataDirectory().getPath());
             double total = s.getTotalBytes() / 1e9, free = s.getAvailableBytes() / 1e9;
