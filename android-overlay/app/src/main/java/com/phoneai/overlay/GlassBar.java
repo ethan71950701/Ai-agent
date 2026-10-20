@@ -245,7 +245,6 @@ final class GlassBar extends FrameLayout {
     protected void dispatchDraw(Canvas canvas) {
         if (capturing) return;                        // 我正在抓背景：不要把自己畫進去
         if (anyCapture) return;                       // 玻璃按鈕在抓背景（只要底欄後面的頁面）：底欄與按鈕都不畫
-        if (!lens) drawBand(canvas);
         if (plain) {                                  // 完全透明的底欄：什麼都不畫，只畫子內容
             super.dispatchDraw(canvas);
             return;
@@ -267,6 +266,7 @@ final class GlassBar extends FrameLayout {
         } else {
             drawFlat(canvas);
         }
+        if (!lens) drawBand(canvas);                  // 光帶要畫在玻璃背景之上，否則會被蓋住
         super.dispatchDraw(canvas);
         if (SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();
     }

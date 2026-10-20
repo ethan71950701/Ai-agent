@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
             lens.setAmount(v);
             float bf = 1f - Math.max(0f, Math.min(1f, (v - GlassBar.REST) / (1f - GlassBar.REST)));   // 按住越用力，模糊越少
             lens.setBlurFactor(bf);
-            if (glass != null) glass.setGlowAmount(v);   // 整條底欄跟著發光
+            if (glass != null) glass.setGlowAmount(Math.max(0f, (v - GlassBar.REST) / (1f - GlassBar.REST)));   // 放開回到 0，按住到 1
         });
         lensAnim.start();
     }
