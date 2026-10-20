@@ -218,8 +218,10 @@ final class GlassBar extends FrameLayout {
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x38000000, (tintColor & 0xFFFFFF) | 0x1C000000}
                         : new int[]{(tintColor & 0xFFFFFF) | 0x06000000, (tintColor & 0xFFFFFF) | 0x01000000},
                 null, Shader.TileMode.CLAMP));
-        bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{0x00FFFFFF, (glowColor & 0xFFFFFF) | 0x66000000, 0xD0FFFFFF,
-                (glowColor & 0xFFFFFF) | 0x66000000, 0x00FFFFFF}, new float[]{0f, 0.3f, 0.5f, 0.7f, 1f}, Shader.TileMode.CLAMP));
+        // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
+        bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(glowColor & 0xFFFFFF) | 0x00000000, (glowColor & 0xFFFFFF) | 0x26000000,
+                (glowColor & 0xFFFFFF) | 0x4D000000, (glowColor & 0xFFFFFF) | 0x26000000, (glowColor & 0xFFFFFF) | 0x00000000},
+                new float[]{0f, 0.3f, 0.5f, 0.7f, 1f}, Shader.TileMode.CLAMP));
         rim.setShader(new LinearGradient(0, 0, w, h, new int[]{0x90FFFFFF, 0x18FFFFFF, 0x50FFFFFF},
                 new float[]{0f, 0.5f, 1f}, Shader.TileMode.CLAMP));
         try {
