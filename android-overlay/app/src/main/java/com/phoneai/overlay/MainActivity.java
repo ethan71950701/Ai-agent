@@ -410,7 +410,7 @@ public class MainActivity extends Activity {
         glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
         glassSwitch(g, 0, 5, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
         glassSwitch(g, 1, 5, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
-        glassSwitch(g, 2, 5, "target", "透鏡底下用底欄背景", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
+        glassSwitch(g, 2, 5, "target", "透鏡底下用底欄背景（會出現半透明方塊，先關）", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
         glassSwitch(g, 3, 5, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);
