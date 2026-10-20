@@ -57,6 +57,7 @@ final class GlassBar extends FrameLayout {
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
     static volatile String status = "還沒畫過";
+    static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
     private final boolean lens;
     private View source, iconSource;
@@ -257,6 +258,7 @@ final class GlassBar extends FrameLayout {
         canvas.drawRenderNode(node);
         canvas.drawPath(clip, tint);
         canvas.restore();
+        if (lens) lensInfo = "強度 " + String.format("%.2f", amount) + "、模糊倍率 " + String.format("%.2f", blurFactor) + "、歪斜 " + String.format("%.3f", skewNow);
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
     }
 
@@ -276,8 +278,8 @@ final class GlassBar extends FrameLayout {
 
     private RenderEffect currentEffect() {
         RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "content");
-        float blur = Ui.dp(getContext(), 12) * blurFactor;
-        if (blur < 0.5f) return fx;   // 按住時不模糊
+        // 按住時模糊降到很小（但不為 0）：永遠走同一條 chain 效果，避免只剩著色器時折射消失
+        float blur = Math.max(0.5f, Ui.dp(getContext(), 12) * blurFactor);
         return RenderEffect.createChainEffect(fx, RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
     }
 }
