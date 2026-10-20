@@ -496,19 +496,25 @@ final class Ui {
     static void enterSpring(android.app.Activity a) {
         a.overridePendingTransition(0, 0);
         final View root = a.getWindow().getDecorView();
-        root.post(() -> {
-            int[] loc = new int[2];
-            root.getLocationOnScreen(loc);
-            float px = tapX < 0 ? root.getWidth() / 2f : tapX - loc[0];
-            float py = tapY < 0 ? root.getHeight() / 2f : tapY - loc[1];
-            root.setPivotX(px);
-            root.setPivotY(py);
-            root.setScaleX(0.55f);
-            root.setScaleY(0.55f);
-            root.setAlpha(0f);
-            root.animate().alpha(1f).setDuration(160).start();
-            Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
-            Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+        // 先在第一次繪製前就設成縮小、透明，避免先看到整頁閃一下再縮小
+        root.setAlpha(0f);
+        root.setScaleX(0.55f);
+        root.setScaleY(0.55f);
+        root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                root.getViewTreeObserver().removeOnPreDrawListener(this);
+                int[] loc = new int[2];
+                root.getLocationOnScreen(loc);
+                float px = tapX < 0 ? root.getWidth() / 2f : tapX - loc[0];
+                float py = tapY < 0 ? root.getHeight() / 2f : tapY - loc[1];
+                root.setPivotX(px);
+                root.setPivotY(py);
+                root.animate().alpha(1f).setDuration(160).start();
+                Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
+                Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+                return true;
+            }
         });
     }
 

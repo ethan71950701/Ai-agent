@@ -399,7 +399,7 @@ public class MainActivity extends Activity {
         Ui.section(this, box, "進階");
         Ui.tileGrid(this, box,
                 new Ui.Tile("terminal", "進階與診斷", "版本、狀態、測試", false, v -> startActivity(new Intent(this, DiagActivity.class))),
-                new Ui.Tile("sparkle", "使用教學", "再看一次介紹動畫", false, v -> startActivity(new Intent(this, OnboardingActivity.class))));
+                new Ui.Tile("sparkle", "功能介紹", "再看一次介紹動畫", false, v -> startActivity(new Intent(this, OnboardingActivity.class))));
     }
 
     private void startUpdate() {
