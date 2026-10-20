@@ -29,16 +29,15 @@ import java.util.zip.ZipInputStream;
 public class SetupActivity extends Activity {
     private static final String REPO = BuildConfig.REPO;   // 編譯時決定（CI 帶 GITHUB_REPOSITORY，fork 會自動指向自己的 repo）
     private static final String P = "/data/data/com.termux/files/usr/bin/";
-    private static final String[] NAMES = {"Termux", "Termux:API", "Termux 基本環境", "基本套件（Python、Git…）", "專案腳本", "Claude API Key", "語音辨識模型（約 228 MB）"};
+    private static final String[] NAMES = {"Termux", "Termux:API", "Termux 基本環境", "基本套件（Python、Git…）", "專案腳本"};
     private final boolean[] done = new boolean[NAMES.length];
     private LinearLayout list;
     private TextView log;
     private ScrollView logScroll;   // 記錄區獨立可滑動，不跟著整頁捲動
     private volatile boolean busy;
-    private String apiKey;      // 使用者在精靈裡輸入、尚未存檔的 Key（只在記憶體，存檔後丟掉）
     private final StringBuilder logText = new StringBuilder();
     // 進度顯示：目前第幾步、這一步花了多久、上次有回報是幾秒前（讓你知道它還在動）
-    private static final String[] STEP_NAMES = {"安裝 Termux", "安裝 Termux:API", "Termux 基本環境", "補回權限", "安裝套件", "下載專案腳本", "儲存 API Key", "下載語音辨識模型"};
+    private static final String[] STEP_NAMES = {"安裝 Termux", "安裝 Termux:API", "Termux 基本環境", "補回權限", "安裝套件", "下載專案腳本"};
     private ProgressBar bar;
     private TextView status;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -158,7 +157,6 @@ public class SetupActivity extends Activity {
                     + "[ -f " + Maintenance.HOME + "/assistant.py ] && echo T5\n"
                     + "[ -s " + Maintenance.KEY + " ] && echo T6\n");
             for (int i = 0; i < NAMES.length; i++) done[i] = r.contains("T" + (i + 1));
-            done[6] = SherpaEngine.ready(this);   // 第 8 步：語音模型以實際檔案為準
             // Google Play 版的 Termux 簽章跟我們要的 GitHub 版不同，不能覆蓋安裝，也比較舊；要先請使用者解除安裝
             String inst = Maintenance.suRun("dumpsys package com.termux 2>/dev/null | grep -m1 installerPackageName; echo done");
             termuxFromPlay = inst.contains("com.android.vending");
@@ -179,70 +177,6 @@ public class SetupActivity extends Activity {
         bar.setIndeterminate(true);
         status.setText("準備中…（若停在這裡超過 10 秒，請把畫面下方的記錄告訴我）");
         new Thread(this::runAll, "setup").start();
-    }
-
-    private interface Str { void ok(String s); }
-
-    /** 在第 7 步才跳出 Key 輸入框；背景執行緒等使用者按完（取消視為先不設定）。 */
-    private void askKeyAndWait() {
-        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-        runOnUiThread(() -> promptSecret("Claude API Key", "貼上 API Key（只存在這支手機 Termux 的 ~/.claude_key，不會顯示、不會上傳到別處；不要貼給任何人）。先不設定的話按取消，之後在「功能 → 維護」再設。", k -> {
-            savePendingKey(k);
-            latch.countDown();
-        }, () -> {
-            savePendingKey("");
-            latch.countDown();
-        }));
-        try { latch.await(); } catch (InterruptedException ignored) { }
-    }
-
-    // Key 一輸入就先放在 App 自己的私有資料夾（不在 /sdcard），Termux 還沒裝好時也不會丟；存進 Termux 後才刪除
-    private java.io.File pendingKeyFile() { return new java.io.File(getFilesDir(), "pending_key"); }
-
-    private void savePendingKey(String k) {
-        try {
-            java.io.File f = pendingKeyFile();
-            java.io.FileOutputStream out = new java.io.FileOutputStream(f);
-            out.write(k.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            out.close();
-            f.setReadable(false, false);
-            f.setReadable(true, true);
-            f.setWritable(false, false);
-            f.setWritable(true, true);
-        } catch (java.io.IOException e) {
-            say("✗ 暫存 API Key 失敗：" + e.getMessage());
-        }
-    }
-
-    private String readPendingKey() {
-        try {
-            java.io.File f = pendingKeyFile();
-            if (!f.exists()) return null;
-            byte[] b = java.nio.file.Files.readAllBytes(f.toPath());
-            return new String(b, java.nio.charset.StandardCharsets.UTF_8).trim();
-        } catch (java.io.IOException e) {
-            return null;
-        }
-    }
-
-    private void promptSecret(String title, String help, Str ok) { promptSecret(title, help, ok, null); }
-
-    private void promptSecret(String title, String help, Str ok, Runnable skip) {
-        final com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(this);
-        til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        til.setEndIconMode(com.google.android.material.textfield.TextInputLayout.END_ICON_PASSWORD_TOGGLE);
-        final com.google.android.material.textfield.TextInputEditText et = new com.google.android.material.textfield.TextInputEditText(til.getContext());
-        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        til.addView(et);
-        LinearLayout form = new LinearLayout(this);
-        form.setOrientation(LinearLayout.VERTICAL);
-        int fp = Ui.dp(this, 20);
-        form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(this, help));
-        form.addView(til);
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(title).setView(form)
-                .setPositiveButton("確定", (d, w) -> ok.ok(et.getText().toString().trim()))
-                .setNegativeButton("取消", (d, w) -> { if (skip != null) skip.run(); }).show();
     }
 
     /** 流程結束（成功或失敗）：隱藏進度條，回到待機狀態。 */
@@ -324,36 +258,7 @@ public class SetupActivity extends Activity {
                 say("→ 下載專案腳本…");
                 if (!installScripts()) return;
             }
-            if (!done[5]) {
-                step(6);
-                if (apiKey == null && readPendingKey() == null) askKeyAndWait();
-                String key = apiKey != null ? apiKey : readPendingKey();
-                apiKey = null;
-                if (key != null && !key.isEmpty()) {
-                    String err = Maintenance.saveKey(key);
-                    if (err != null) { say("✗ " + err + "（可以之後在「功能 → 維護 → Claude API Key」重設）"); }
-                    else {
-                        say("✓ API Key 已存好");
-                        pendingKeyFile().delete();
-                    }
-                } else {
-                    pendingKeyFile().delete();
-                    say("（API Key 先沒設定；之後在「功能 → 維護 → Claude API Key」設）");
-                }
-            }
-            if (!done[6]) {
-                step(7);
-                say("→ 下載語音辨識模型（SenseVoice，約 228 MB）…");
-                try {
-                    SherpaEngine.download(this, m -> detail = m);
-                    detail = "";
-                    say("✓ 語音辨識模型裝好了");
-                } catch (Exception e) {
-                    detail = "";
-                    say("✗ 語音模型沒有下載成功：" + e.getMessage() + "（不影響其他功能，之後可在「功能 → 語音測試」重試）");
-                }
-            }
-            say("✓ 全部完成。2 秒後自動回到上一頁；之後可到「功能 → 維護 → 自我檢查」確認。");
+            say("✓ Termux 與專案腳本都裝好了。2 秒後自動回到上一頁。\n之後請到「功能 → 維護」設定 Claude API Key，到「功能 → 語音測試」下載語音辨識模型。");
             ui.postDelayed(this::finish, 2000);
         } catch (Throwable e) {
             say("✗ 出錯：" + e);
