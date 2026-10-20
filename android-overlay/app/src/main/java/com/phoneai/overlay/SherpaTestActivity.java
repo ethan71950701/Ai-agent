@@ -19,13 +19,6 @@ import java.security.MessageDigest;
  * 以及「錄一句話試試看」。模型安裝後，面板的語音就會自動用它。
  */
 public class SherpaTestActivity extends Activity {
-    private static final String REPO = "csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17";
-    private static final String[] FILES = {"model.int8.onnx", "tokens.txt"};
-    private static final long[] SIZES = {239233841L, 315894L};
-    private static final String[] SHA = {
-            "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51",
-            "f449eb28dc567533d7fa59be34e2abca8784f771850c78a47fb731a31429a1dc"};
-    private static final String[] HOSTS = {"https://huggingface.co", "https://hf-mirror.com"};
     private static final int REQ = 72;
 
     private com.google.android.material.button.MaterialButton dl, rec;
@@ -73,7 +66,7 @@ public class SherpaTestActivity extends Activity {
         new Thread(() -> {
             String err = null;
             try {
-                download();
+                SherpaEngine.download(SherpaTestActivity.this, m -> runOnUiThread(() -> dl.setText(m)));
             } catch (Throwable e) {
                 err = String.valueOf(e.getMessage() != null ? e.getMessage() : e);
                 deleteRec(SherpaEngine.dir(this));
@@ -88,56 +81,7 @@ public class SherpaTestActivity extends Activity {
         }, "sensevoice-dl").start();
     }
 
-    private void download() throws Exception {
-        File d = SherpaEngine.dir(this);
-        deleteRec(d);
-        d.mkdirs();
-        for (int i = 0; i < FILES.length; i++) {
-            final String name = FILES[i];
-            File tmp = new File(d, name + ".part"), dest = new File(d, name);
-            Exception last = null;
-            boolean ok = false;
-            for (String host : HOSTS) {   // 官方連不上或太慢就換鏡像
-                try {
-                    ParallelDownloader.download(host + "/" + REPO + "/resolve/main/" + name, tmp, 4, (got, total, bps, conns) -> {
-                        final String m = String.format(java.util.Locale.US, "下載 %s：%d%%（%d／%d MB，%.1f MB/s，%d 條連線）",
-                                name, total > 0 ? got * 100 / total : 0, got >> 20, total >> 20, bps / 1048576.0, conns);
-                        runOnUiThread(() -> dl.setText(m));
-                    });
-                    int idx = i;
-                    if (tmp.length() != SIZES[idx]) throw new Exception(name + " 大小不對（" + tmp.length() + "／" + SIZES[idx] + "）");
-                    runOnUiThread(() -> dl.setText("核對 " + name + " 的校驗碼…"));
-                    if (!sha256(tmp).equalsIgnoreCase(SHA[idx])) throw new Exception(name + " 校驗碼不符（不是預期的檔案，已丟棄）");
-                    if (!tmp.renameTo(dest)) throw new Exception("搬移檔案失敗");
-                    ok = true;
-                    break;
-                } catch (Exception e) {
-                    last = e;
-                    tmp.delete();
-                }
-            }
-            if (!ok) throw last != null ? last : new Exception("下載失敗");
-        }
-        new File(d, ".ok").createNewFile();
-    }
-
-    private static String sha256(File f) throws Exception {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-        try (InputStream in = new FileInputStream(f)) {
-            byte[] buf = new byte[1 << 16];
-            int n;
-            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
-        }
-        StringBuilder sb = new StringBuilder();
-        for (byte x : md.digest()) sb.append(String.format("%02x", x));
-        return sb.toString();
-    }
-
-    private static void deleteRec(File f) {
-        File[] k = f.listFiles();
-        if (k != null) for (File x : k) deleteRec(x);
-        f.delete();
-    }
+    private static void deleteRec(File f) { SherpaEngine.deleteRec(f); }
 
     // ---------- 試錄 ----------
 

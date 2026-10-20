@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
 public class SetupActivity extends Activity {
     private static final String REPO = BuildConfig.REPO;   // 編譯時決定（CI 帶 GITHUB_REPOSITORY，fork 會自動指向自己的 repo）
     private static final String P = "/data/data/com.termux/files/usr/bin/";
-    private static final String[] NAMES = {"Termux", "Termux:API", "Termux 基本環境", "基本套件（Python、Git…）", "專案腳本", "Claude API Key"};
+    private static final String[] NAMES = {"Termux", "Termux:API", "Termux 基本環境", "基本套件（Python、Git…）", "專案腳本", "Claude API Key", "語音辨識模型（約 228 MB）"};
     private final boolean[] done = new boolean[NAMES.length];
     private LinearLayout list;
     private TextView log;
@@ -38,13 +38,14 @@ public class SetupActivity extends Activity {
     private String apiKey;      // 使用者在精靈裡輸入、尚未存檔的 Key（只在記憶體，存檔後丟掉）
     private final StringBuilder logText = new StringBuilder();
     // 進度顯示：目前第幾步、這一步花了多久、上次有回報是幾秒前（讓你知道它還在動）
-    private static final String[] STEP_NAMES = {"安裝 Termux", "安裝 Termux:API", "Termux 基本環境", "補回權限", "安裝套件", "下載專案腳本", "儲存 API Key"};
+    private static final String[] STEP_NAMES = {"安裝 Termux", "安裝 Termux:API", "Termux 基本環境", "補回權限", "安裝套件", "下載專案腳本", "儲存 API Key", "下載語音辨識模型"};
     private ProgressBar bar;
     private TextView status;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private volatile int curStep = -1;
     private volatile long stepStart;
     private volatile long lastSay;
+    private volatile String detail = "";   // 下載的即時進度（只顯示在狀態列，不逐行寫進記錄）
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             if (busy && curStep < 0) {
@@ -54,7 +55,8 @@ public class SetupActivity extends Activity {
                 long run = (now - stepStart) / 1000, quiet = (now - lastSay) / 1000;
                 String tail = quiet < 3 ? "剛剛還有回報" : "已經 " + quiet + " 秒沒有新輸出（大多是在等下載或套件，請耐心等）";
                 status.setText("第 " + (curStep + 1) + "／" + STEP_NAMES.length + " 步：" + STEP_NAMES[curStep]
-                        + "\n這一步已花 " + run / 60 + " 分 " + run % 60 + " 秒　·　" + tail);
+                        + "\n這一步已花 " + run / 60 + " 分 " + run % 60 + " 秒　·　" + tail
+                        + (detail.isEmpty() ? "" : "\n" + detail));
             }
             ui.postDelayed(this, 1000);
         }
@@ -155,6 +157,7 @@ public class SetupActivity extends Activity {
                     + "[ -f " + Maintenance.HOME + "/assistant.py ] && echo T5\n"
                     + "[ -s " + Maintenance.KEY + " ] && echo T6\n");
             for (int i = 0; i < NAMES.length; i++) done[i] = r.contains("T" + (i + 1));
+            done[6] = SherpaEngine.ready(this);   // 第 8 步：語音模型以實際檔案為準
             // Google Play 版的 Termux 簽章跟我們要的 GitHub 版不同，不能覆蓋安裝，也比較舊；要先請使用者解除安裝
             String inst = Maintenance.suRun("dumpsys package com.termux 2>/dev/null | grep -m1 installerPackageName; echo done");
             termuxFromPlay = inst.contains("com.android.vending");
@@ -335,6 +338,18 @@ public class SetupActivity extends Activity {
                 } else {
                     pendingKeyFile().delete();
                     say("（API Key 先沒設定；之後在「功能 → 維護 → Claude API Key」設）");
+                }
+            }
+            if (!done[6]) {
+                step(7);
+                say("→ 下載語音辨識模型（SenseVoice，約 228 MB）…");
+                try {
+                    SherpaEngine.download(this, m -> detail = m);
+                    detail = "";
+                    say("✓ 語音辨識模型裝好了");
+                } catch (Exception e) {
+                    detail = "";
+                    say("✗ 語音模型沒有下載成功：" + e.getMessage() + "（不影響其他功能，之後可在「功能 → 語音測試」重試）");
                 }
             }
             say("✓ 全部完成。2 秒後自動回到上一頁；之後可到「功能 → 維護 → 自我檢查」確認。");

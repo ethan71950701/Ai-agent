@@ -11,6 +11,9 @@ import com.k2fsa.sherpa.onnx.OfflineSenseVoiceModelConfig;
 import com.k2fsa.sherpa.onnx.OfflineStream;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.MessageDigest;
 
 /**
  * 離線語音辨識：SenseVoice（sherpa-onnx，非串流：說完一次辨識）。取代先前的 Vosk。
@@ -31,6 +34,65 @@ final class SherpaEngine {
     private final OfflineRecognizer rec;
 
     private SherpaEngine(OfflineRecognizer r) { rec = r; }
+
+    static final String REPO = "csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17";
+    static final String[] FILES = {"model.int8.onnx", "tokens.txt"};
+    static final long[] SIZES = {239233841L, 315894L};
+    static final String[] SHA = {
+            "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51",
+            "f449eb28dc567533d7fa59be34e2abca8784f771850c78a47fb731a31429a1dc"};
+    static final String[] HOSTS = {"https://huggingface.co", "https://hf-mirror.com"};
+    /** 下載並校驗 SenseVoice 模型；進度文字由 say 回報（可能在背景執行緒）。 */
+    static void download(Context c, java.util.function.Consumer<String> say) throws Exception {
+        File d = dir(c);
+        deleteRec(d);
+        d.mkdirs();
+        for (int i = 0; i < FILES.length; i++) {
+            final String name = FILES[i];
+            File tmp = new File(d, name + ".part"), dest = new File(d, name);
+            Exception last = null;
+            boolean ok = false;
+            for (String host : HOSTS) {   // 官方連不上或太慢就換鏡像
+                try {
+                    ParallelDownloader.download(host + "/" + REPO + "/resolve/main/" + name, tmp, 4, (got, total, bps, conns) -> {
+                        final String m = String.format(java.util.Locale.US, "下載 %s：%d%%（%d／%d MB，%.1f MB/s，%d 條連線）",
+                                name, total > 0 ? got * 100 / total : 0, got >> 20, total >> 20, bps / 1048576.0, conns);
+                        say.accept(m);
+                    });
+                    int idx = i;
+                    if (tmp.length() != SIZES[idx]) throw new Exception(name + " 大小不對（" + tmp.length() + "／" + SIZES[idx] + "）");
+                    say.accept("核對 " + name + " 的校驗碼…");
+                    if (!sha256(tmp).equalsIgnoreCase(SHA[idx])) throw new Exception(name + " 校驗碼不符（不是預期的檔案，已丟棄）");
+                    if (!tmp.renameTo(dest)) throw new Exception("搬移檔案失敗");
+                    ok = true;
+                    break;
+                } catch (Exception e) {
+                    last = e;
+                    tmp.delete();
+                }
+            }
+            if (!ok) throw last != null ? last : new Exception("下載失敗");
+        }
+        new File(d, ".ok").createNewFile();
+    }
+
+    private static String sha256(File f) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = new FileInputStream(f)) {
+            byte[] buf = new byte[1 << 16];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (byte x : md.digest()) sb.append(String.format("%02x", x));
+        return sb.toString();
+    }
+
+    static void deleteRec(File f) {
+        File[] k = f.listFiles();
+        if (k != null) for (File x : k) deleteRec(x);
+        f.delete();
+    }
 
     static File dir(Context c) { return new File(new File(c.getFilesDir(), "sherpa"), MODEL_ID); }
 
