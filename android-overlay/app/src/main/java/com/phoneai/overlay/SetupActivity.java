@@ -78,8 +78,9 @@ public class SetupActivity extends Activity {
         if (busy) return;
         new Thread(() -> {
             // 以「資料夾存在」或 pm 查得到，任一成立就算已安裝（避免 pm 輸出格式差異造成重複安裝）
-            String r = Maintenance.suRun("{ pm path com.termux >/dev/null 2>&1 || [ -d /data/data/com.termux/files/home ]; } && echo T1\n"
-                    + "{ pm path com.termux.api >/dev/null 2>&1 || [ -d /data/data/com.termux.api ]; } && echo T2\n"
+            // 只以套件管理員為準：資料夾可能是之前殘留的，不能當作「已安裝」
+            String r = Maintenance.suRun("pm path com.termux >/dev/null 2>&1 && echo T1\n"
+                    + "pm path com.termux.api >/dev/null 2>&1 && echo T2\n"
                     + "[ -x " + P + "bash ] && echo T3\n"
                     + "[ -x " + P + "python ] && [ -x " + P + "git ] && [ -x " + P + "termux-notification ] && echo T4\n"
                     + "[ -f " + Maintenance.HOME + "/assistant.py ] && echo T5\n"
