@@ -154,11 +154,13 @@ public class MainActivity extends Activity {
     }
 
     private androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams barParams() {
+        // 底欄寬度固定：最寬 360dp 並置中，橫向時不會拉成整條很長；螢幕較窄時左右各留 24dp
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int width = Math.min(screenW - Ui.dp(this, 48), Ui.dp(this, 360));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
-                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 68));
-        lp.gravity = android.view.Gravity.BOTTOM;
-        int m = Ui.dp(this, 16);
-        lp.setMargins(Ui.dp(this, 24), 0, Ui.dp(this, 24), m);   // 比之前窄一點，跟 KSU 的底欄寬度接近
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(width, Ui.dp(this, 68));
+        lp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        lp.setMargins(0, 0, 0, Ui.dp(this, 16));
         return lp;
     }
 
