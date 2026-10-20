@@ -13,8 +13,8 @@ import java.io.InputStream;
  * 沒有按鈕：進來就讀一次；自我檢查還在跑（沒看到結束標記）時每 2 秒自動刷新。
  */
 public class LogActivity extends Activity {
-    private static final String FILE = "/data/data/com.termux/files/home/assistant.log";
-    private static final String SELFTEST = "/data/data/com.termux/files/home/selftest.log";
+    private static final String FILE = "/data/data/com.phoneai.overlay/files/assistant.log";   // 任務過程紀錄（App 內的自動操作迴圈還沒寫入，目前會顯示「沒有紀錄」）
+    private static final String SELFTEST = "/data/data/com.phoneai.overlay/files/selftest.log";
     private static final int MAX_CHARS = 60000;   // 太長的紀錄只留最後一段，免得畫面卡
     private int mode;
     private boolean visible;

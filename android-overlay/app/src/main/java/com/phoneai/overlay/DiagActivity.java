@@ -24,17 +24,16 @@ public class DiagActivity extends Activity {
         LinearLayout box = c[0];
 
         Ui.section(this, box, "測試與工具");
-        Ui.row(this, box, 0, 5, "shield", "修復權限", "用 root 補回懸浮層、通知、無障礙、Termux 權限", Ui.chevron(this), v -> repairPerms());
-        Ui.row(this, box, 1, 5, "check_circle", "自我檢查", "檢查 root、Termux、金鑰檔等，結果在新頁面", Ui.chevron(this), v -> selfTest());
-        Ui.row(this, box, 2, 5, "sparkle", "測試漣漪與通知", "約 8 秒", Ui.chevron(this), v -> {
+        Ui.row(this, box, 0, 4, "shield", "修復權限", "用 root 補回懸浮層、通知、無障礙權限", Ui.chevron(this), v -> repairPerms());
+        Ui.row(this, box, 1, 4, "sparkle", "測試漣漪與通知", "約 8 秒", Ui.chevron(this), v -> {
             startForegroundService(new Intent(this, OverlayService.class).setAction(OverlayService.ACTION_TEST));
             info.postDelayed(this::refresh, 1500);
         });
-        Ui.row(this, box, 3, 5, "list", "App 清單", "顯示讀到幾個 App", Ui.chevron(this), v -> {
+        Ui.row(this, box, 2, 4, "list", "App 清單", "顯示讀到幾個 App", Ui.chevron(this), v -> {
             String t = AppListExporter.build(this);
-            info.append("\n讀到 " + t.split("\n").length + " 個 App（Termux 用 python ~/applist.py 取得）\n");
+            info.append("\n讀到 " + t.split("\n").length + " 個 App\n");
         });
-        Ui.row(this, box, 4, 5, "refresh", "重新整理狀態", null, null, v -> refresh());
+        Ui.row(this, box, 3, 4, "refresh", "重新整理狀態", null, null, v -> refresh());
 
         Ui.section(this, box, "狀態");
         info = Ui.body(this, "");
@@ -55,12 +54,6 @@ public class DiagActivity extends Activity {
             final String r = Maintenance.repairPermissions();
             runOnUiThread(() -> { android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); refresh(); });
         }).start();
-    }
-
-    private void selfTest() {
-        String err = Maintenance.runInTermux(this, "python \"$HOME/selftest.py\"", "selftest.log");
-        if (err != null) { android.widget.Toast.makeText(this, err, android.widget.Toast.LENGTH_LONG).show(); return; }
-        startActivity(new Intent(this, LogActivity.class).putExtra("mode", 4));
     }
 
     /** 系統設定 power_button_long_press：0 = 什麼都不做（電源鍵助理偵測程式才不會被電源選單搶走）、1 = 跳電源選單、其他 = 別的動作（例如叫語音助理）。 */
@@ -98,8 +91,6 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append("按鈕透鏡：").append(GlassBar.lensInfo).append('\n');
         sb.append("底欄觸控：").append(GlassBar.touchInfo).append('\n');
-        sb.append("Termux 指令權限：").append(checkSelfPermission(CommandSender.PERM)
-                == PackageManager.PERMISSION_GRANTED ? "✓" : "✕（到「修復權限」一鍵補回）").append('\n');
         sb.append("\n最近的任務（含用量估價）：\n");
         try {
             org.json.JSONArray h = new org.json.JSONArray(getSharedPreferences("cfg", MODE_PRIVATE).getString("history", "[]"));

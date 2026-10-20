@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 final class Maintenance {
     private Maintenance() { }
 
-    static final String HOME = CommandSender.TERMUX_HOME;
+    static final String HOME = "/data/data/com.termux/files/home";   // 舊的 Termux 家目錄（只用來搬移資料）
     static final String TOKEN = HOME + "/.gh_token";
     private static final String[][] SU = {{Root.su(), "-mm"}, {Root.su(), "-M"}, {Root.su()}};
 
@@ -113,28 +113,6 @@ final class Maintenance {
         }
     }
 
-    /** 在 Termux 背景跑 bash 指令，輸出寫進 ~/<logName>。成功回傳 null。 */
-    static String runInTermux(Context c, String bashCmd, String logName) {
-        String full = "export PYTHONUNBUFFERED=1 UPDATE_FROM_APP=1; " + bashCmd + " > \"$HOME/" + logName + "\" 2>&1; echo '=== 結束 ===' >> \"$HOME/" + logName + "\"";
-        if (c.checkSelfPermission(CommandSender.PERM) == PackageManager.PERMISSION_GRANTED) {
-            try {
-                Intent i = new Intent("com.termux.RUN_COMMAND");
-                i.setClassName("com.termux", "com.termux.app.RunCommandService");
-                i.putExtra("com.termux.RUN_COMMAND_PATH", CommandSender.TERMUX_BIN + "/bash");
-                i.putExtra("com.termux.RUN_COMMAND_ARGUMENTS", new String[]{"-c", full});
-                i.putExtra("com.termux.RUN_COMMAND_WORKDIR", HOME);
-                i.putExtra("com.termux.RUN_COMMAND_BACKGROUND", true);
-                c.startForegroundService(i);
-                return null;
-            } catch (Exception ignored) { }
-        }
-        // 備援：root 切到 Termux 的 uid 執行
-        String inner = "export HOME=" + HOME + " PREFIX=/data/data/com.termux/files/usr PATH=" + CommandSender.TERMUX_BIN
-                + ":/system/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp; cd \"$HOME\"; " + full;
-        final String script = "U=$(stat -c %u /data/data/com.termux)\nsu \"$U\" -c '" + inner.replace("'", "'\\''") + "' &\n";
-        new Thread(() -> suRun(script), "termux-root").start();
-        return null;
-    }
 
     // ---------- API Key ----------
     static final String KEY = HOME + "/.claude_key";
@@ -148,10 +126,18 @@ final class Maintenance {
         key = key == null ? "" : key.trim();
         if (key.length() < 20 || key.contains("\n") || key.contains("'") || key.contains(" ")) return "金鑰格式不對（太短、有空白、換行或引號）";
         if (key.startsWith("sk-ant-usr-")) return "這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」";
-        String r = suRun("U=$(stat -c %u /data/data/com.termux)\n"
-                + "printf %s '" + key + "' > " + KEY + "\n"
-                + "chown $U:$U " + KEY + "; chmod 600 " + KEY + "\n[ -s " + KEY + " ] && echo saved");
-        return r.contains("saved") ? null : "存檔失敗：" + (r.startsWith("ERR:") ? r.substring(4).trim() : r.trim());
+        try {
+            java.io.File f = new java.io.File(App.ctx.getFilesDir(), "claude_key"), tmp = new java.io.File(f.getPath() + ".tmp");
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) { out.write(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+            tmp.setReadable(false, false);
+            tmp.setReadable(true, true);
+            tmp.setWritable(false, false);
+            tmp.setWritable(true, true);
+            if (!tmp.renameTo(f)) return "存檔失敗：無法覆蓋舊的 Key";
+            return null;
+        } catch (Exception e) {
+            return "存檔失敗：" + e.getMessage();
+        }
     }
 
     // ---------- 串流執行（首次設定用） ----------
@@ -175,19 +161,7 @@ final class Maintenance {
         return -1;
     }
 
-    /** 以 Termux 自己的身分（uid）執行 bash 指令，環境變數與 Termux 一致。 */
-    /** 同 termuxScript，但額外加上網路群組 3003（inet）。App 的 root 切換身份時不會自動帶上它，所以 curl／pkg 會連不到網路。 */
-    static String termuxScriptNet(String bashCmd) {
-        String inner = "export HOME=" + HOME + " PREFIX=/data/data/com.termux/files/usr PATH=" + CommandSender.TERMUX_BIN
-                + ":/system/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8; cd \"$HOME\"; " + bashCmd;
-        return "U=$(stat -c %u /data/data/com.termux)\nsu -g \"$U\" -G 3003 \"$U\" -c '" + inner.replace("'", "'\\''") + "'\n";
-    }
 
-    static String termuxScript(String bashCmd) {
-        String inner = "export HOME=" + HOME + " PREFIX=/data/data/com.termux/files/usr PATH=" + CommandSender.TERMUX_BIN
-                + ":/system/bin LD_LIBRARY_PATH=/data/data/com.termux/files/usr/lib TMPDIR=/data/data/com.termux/files/usr/tmp LANG=en_US.UTF-8; cd \"$HOME\"; " + bashCmd;
-        return "U=$(stat -c %u /data/data/com.termux)\nsu \"$U\" -c '" + inner.replace("'", "'\\''") + "'\n";
-    }
 
     /** 輸入 Claude API Key 的對話框（主畫面與設定導覽共用）。儲存成功後呼叫 after（在主執行緒）。 */
     static void askKey(final android.app.Activity a, final Runnable after) {

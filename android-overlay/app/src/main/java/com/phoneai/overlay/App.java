@@ -26,7 +26,7 @@ public class App extends Application {
     }
 
     private static boolean themed(Activity a) {
-        return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof SetupActivity || a instanceof DiagActivity || a instanceof MemoryActivity
+        return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof DiagActivity || a instanceof MemoryActivity
                 || a instanceof LogActivity || a instanceof MicTestActivity || a instanceof GuideActivity;
     }
 

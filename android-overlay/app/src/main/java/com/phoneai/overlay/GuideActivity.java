@@ -22,22 +22,21 @@ import com.google.android.material.button.MaterialButton;
 
 /**
  * 設定導覽：和歡迎動畫同一種介面（左右滑動、每頁一個循環小動畫、底下圓點），共 9 步。
- * 每頁右下角的狀態會自動檢查（root、權限、Termux、API Key），做完回來會更新。
+ * 每頁右下角的狀態會自動檢查（root、權限、API Key、語音模型），做完回來會更新。
  */
 public class GuideActivity extends Activity {
-    private static final int N = 10;
+    private static final int N = 9;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
             "1. 授權 root", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
-            "6. 安裝 Termux 與基本環境", "7. Claude API Key", "8. 離線語音辨識模型", "9. 長按電源鍵叫出（選用）", "10. 試試看"};
+            "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
-            "PhoneAI 需要 root 權限：用來讀寫 Termux 的檔案、補回權限，以及開啟需要 root 的功能。沒有 root 的手機目前無法使用大部分功能。",
+            "PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
             "讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。",
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
-            "AI 的大腦跑在 Termux（手機上的 Linux 終端機 App）。這一步會自動下載 Termux 和 Termux:API，並安裝需要的套件與專案程式。",
-            "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機的 Termux 裡，不會上傳到別處。",
+            "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
             "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
             "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
             "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
@@ -51,9 +50,6 @@ public class GuideActivity extends Activity {
                     "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
                     "有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。"},
             {"按「允許麥克風」，在系統視窗按「允許」。"},
-            {"按「開始安裝」，App 會自動完成全部：安裝 Termux、套件，並下載專案腳本。",
-                    "建議連 Wi-Fi、插電，約 5～15 分鐘。Termux 會跳到前面一次，正常。",
-                    "出錯時照畫面上的原因處理，再按一次就會從失敗的地方繼續。"},
             {"用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
                     "到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。",
                     "到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。",
@@ -62,10 +58,10 @@ public class GuideActivity extends Activity {
                     "不要把 Key 貼給任何人，包括 AI 助手。"},
             {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
             {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
-            {"有問題就到「功能 → 進階與診斷」看狀態，或到「功能 → 進階與診斷 → 自我檢查」。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
+            {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
     private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
-            "開始安裝", "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
-    private static final int[] DEMO = {10, 11, 12, 13, 2, 14, 15, 2, 1, 5};
+            "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
+    private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
     private volatile boolean voiceBusy;
@@ -163,10 +159,9 @@ public class GuideActivity extends Activity {
             case 2: requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF); break;
             case 3: startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); break;
             case 4: requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); break;
-            case 5: startActivity(new Intent(this, SetupActivity.class)); break;
-            case 6: Maintenance.askKey(this, this::refresh); break;
-            case 7: downloadVoice(); break;
-            case 8:
+            case 5: Maintenance.askKey(this, this::refresh); break;
+            case 6: downloadVoice(); break;
+            case 7:
                 try {
                     startActivity(new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS));
                 } catch (Exception e) {
@@ -185,7 +180,7 @@ public class GuideActivity extends Activity {
             String err = null;
             try {
                 SherpaEngine.download(this, m -> runOnUiThread(() -> {
-                    label[7] = m;
+                    label[6] = m;
                     pager.getAdapter().notifyDataSetChanged();
                 }));
             } catch (Throwable e) {
@@ -288,10 +283,7 @@ public class GuideActivity extends Activity {
         new Thread(() -> {
             boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");
             String rootDiag = root ? "" : Maintenance.rootDiag();
-            String t = Maintenance.suRun("[ -d /data/data/com.termux/files/home ] && echo T; [ -f /data/data/com.termux/files/home/assistant.py ] && echo S; echo done");
-            boolean termux = t.contains("T");
-            boolean setup = t.contains("S");
-            boolean key = Maintenance.suRun("[ -s /data/data/com.termux/files/home/.claude_key ] && echo K; echo done").contains("K");
+            boolean key = new java.io.File(getFilesDir(), "claude_key").length() > 0;
             runOnUiThread(() -> {
                 boolean ov = Settings.canDrawOverlays(this);
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
@@ -302,12 +294,11 @@ public class GuideActivity extends Activity {
                 set(2, nt, nt ? "✓ 已允許" : "尚未允許");
                 set(3, a11y, a11y ? "✓ 已開啟" : "尚未開啟");
                 set(4, mic, mic ? "✓ 已允許" : "尚未允許");
-                set(5, setup, setup ? "✓ 已安裝完成" : termux ? "Termux 已在，但基本環境還沒裝好" : "尚未安裝");
-                set(6, key, key ? "✓ 已設定" : "尚未設定");
+                set(5, key, key ? "✓ 已設定" : "尚未設定");
                 boolean voice = SherpaEngine.ready(this);
-                set(7, voice, voice ? "✓ 已下載" : "尚未下載（可以先跳過）");
-                set(8, false, "請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）");
-                set(9, false, "做完這一步就可以開始用了");
+                set(6, voice, voice ? "✓ 已下載" : "尚未下載（可以先跳過）");
+                set(7, false, "請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）");
+                set(8, false, "做完這一步就可以開始用了");
                 pager.getAdapter().notifyDataSetChanged();
             });
         }).start();

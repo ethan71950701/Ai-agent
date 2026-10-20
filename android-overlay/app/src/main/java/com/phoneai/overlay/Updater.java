@@ -36,9 +36,7 @@ final class Updater {
         toast(a, "檢查更新中…");
         new Thread(() -> {
             try {
-                // 腳本跟著 App 一起更新（一次下載整個專案，複製到 Termux 並執行 install.sh）
-                String scriptErr = Project.install(a, s -> { });
-                String scriptMsg = scriptErr == null ? "腳本已更新" : "腳本更新失敗：" + scriptErr;
+                String scriptMsg = "";   // 腳本已經不需要：所有功能都在 App 裡
                 JSONObject rel = latest();
                 if (rel == null) {
                     done(a, "目前沒有發布的版本，已是最新版本");
@@ -51,7 +49,7 @@ final class Updater {
                 boolean newer = remote > 0 ? remote > BuildConfig.VERSION_CODE
                         : !(installed != null && !installed.equals("dev") && !sha.isEmpty() && sha.startsWith(installed));
                 if (!newer) {
-                    done(a, "已是最新版本（1.0." + BuildConfig.VERSION_CODE + "）；" + scriptMsg);
+                    done(a, "已是最新版本（1.0." + BuildConfig.VERSION_CODE + "）");
                     return;
                 }
                 String url = null; long size = 0; String name = "";
@@ -67,7 +65,7 @@ final class Updater {
                 }
                 if (url == null) { done(a, "最新版本沒有 APK，稍後再試"); return; }
                 final String v = shown;
-                a.runOnUiThread(() -> toast(a, scriptMsg));
+                a.runOnUiThread(() -> toast(a, "已是最新版本"));
                 final String apkUrl = url; final long apkSize = size; final String apkName = name;
                 a.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
                         .setTitle("有新版本 " + v)

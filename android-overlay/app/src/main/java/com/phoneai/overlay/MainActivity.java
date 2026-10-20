@@ -19,13 +19,6 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 /** 設定畫面：大標題頂欄、狀態摘要卡、分組的圖示列表（仿系統設定）；原始診斷資訊在「進階與診斷」子頁。 */
 public class MainActivity extends Activity {
     private LinearLayout heroBox;
-    private AskPanel ask;
-
-    @Override
-    protected void onActivityResult(int req, int res, Intent data) {
-        super.onActivityResult(req, res, data);
-        ask.handleResult(req, res, data);
-    }
 
     private void openAssistSettings() {
         try {
@@ -140,7 +133,6 @@ public class MainActivity extends Activity {
         root = Ui.screen(this, TAB_TITLE[tab], false, c);
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
-        ask = new AskPanel(this, null);
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
         ((android.view.ViewGroup) root).addView(floatingBar(), barParams());
         setContentView(root);
@@ -322,10 +314,8 @@ public class MainActivity extends Activity {
         ((com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0]).setTitle(TAB_TITLE[i]);
         final float dir = prev < 0 ? 0f : (i > prev ? 1f : -1f);   // 新內容從切換的方向彈進來
         final int tabNow = i;
-        final android.view.View av = ask.view();
         final Runnable swap = () -> {
             if (tabNow != tab) return;
-            if (av.getParent() != null) ((android.view.ViewGroup) av.getParent()).removeView(av);
             box.removeAllViews();
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
@@ -355,7 +345,8 @@ public class MainActivity extends Activity {
 
         Ui.section(this, box, "問問看");
         LinearLayout askBox = Ui.card(this, box);
-        askBox.addView(ask.view());
+        Ui.row(this, askBox, 0, 1, "sparkle", "問問看", "文字或語音問助理（點一下開啟）", Ui.chevron(this),
+                v -> startActivity(new Intent(this, AskActivity.class)));
     }
 
     /** 狀態小標籤（圖示＋文字）；沒完成的可以點進去設定。 */
@@ -543,8 +534,7 @@ public class MainActivity extends Activity {
         boolean ov = Settings.canDrawOverlays(this);
         boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         boolean a11y = A11yGuard.listed(this);
-        boolean term = checkSelfPermission(CommandSender.PERM) == PackageManager.PERMISSION_GRANTED;
-        boolean ok = ov && a11y && term;
+        boolean ok = ov && a11y;
         int bg = Ui.attr(this, ok ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorErrorContainer);
         int on = Ui.attr(this, ok ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnErrorContainer);
         hero.setCardBackgroundColor(bg);
@@ -573,15 +563,15 @@ public class MainActivity extends Activity {
         View[] chips = {
             chip("懸浮層", ov, on, v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
             chip("通知", nt, on, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
-            chip("無障礙", a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))),
-            chip("Termux 權限", term, on, v -> repairPerms())};
-        for (int i = 0; i < 4; i += 2) {
+            chip("無障礙", a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))};
+        for (int i = 0; i < chips.length; i += 2) {
             LinearLayout r = new LinearLayout(this);
             r.setOrientation(LinearLayout.HORIZONTAL);
             for (int k = 0; k < 2; k++) {
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
                 lp.setMargins(k == 0 ? 0 : Ui.dp(this, 4), 0, k == 0 ? Ui.dp(this, 4) : 0, 0);
-                r.addView(chips[i + k], lp);
+                if (i + k < chips.length) r.addView(chips[i + k], lp);
+                else r.addView(new View(this), lp);
             }
             LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
             rp.topMargin = Ui.dp(this, 10);
