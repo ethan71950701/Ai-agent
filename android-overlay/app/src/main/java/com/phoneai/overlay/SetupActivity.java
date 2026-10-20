@@ -97,10 +97,7 @@ public class SetupActivity extends Activity {
 
     private void start() {
         if (busy) return;
-        if (termuxFromPlay) {
-            fail("目前的 Termux 是 Google Play 版，簽章跟這裡要裝的不同，無法覆蓋。請到系統設定 → 應用程式 → Termux → 解除安裝，再按「繼續」。（Termux:API 如果也是 Play 版，一樣要解除安裝）");
-            return;
-        }
+
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
         if (!done[5] && apiKey == null) {
@@ -147,9 +144,9 @@ public class SetupActivity extends Activity {
 
     private void runAll() {
         try {
-            if (!done[0]) {
+            if (!done[0] || termuxFromPlay) {
                 say("→ 下載並安裝 Termux…");
-                if (!installRelease("termux/termux-app", "arm64-v8a", "termux")) return;
+                if (!installRelease("termux/termux-app", "arm64-v8a", "termux")) return;   // 已裝但是 Play 版時也會進來，問一次要不要替換
             }
             if (!done[1]) {
                 say("→ 下載並安裝 Termux:API…");
@@ -208,7 +205,7 @@ public class SetupActivity extends Activity {
     // ---------- 下載與安裝 ----------
 
     /** 從 GitHub 最新 release 挑符合的 .apk、下載、用 root 安裝。 */
-    private boolean installRelease(String repo, String must, String pkgName) throws Exception {
+    private boolean installRelease(String repo, String must, String label) throws Exception {
         String json = httpString("https://api.github.com/repos/" + repo + "/releases/latest", null);
         JSONArray assets = new JSONObject(json).getJSONArray("assets");
         String url = null, name = null;
@@ -218,23 +215,45 @@ public class SetupActivity extends Activity {
         }
         if (url == null) { fail("找不到 " + repo + " 的 " + must + " 安裝檔（它的發布格式可能變了）"); return false; }
         say("  檔案：" + name);
-        File apk = new File(getCacheDir(), pkgName + ".apk");
+        String pkg = label.equals("termux") ? "com.termux" : "com.termux.api";
+        File apk = new File(getCacheDir(), label + ".apk");
         download(url, apk, null);
         say("  安裝中…");
-        String r = Maintenance.suRun("cp '" + apk.getAbsolutePath() + "' /data/local/tmp/" + pkgName + ".apk && chmod 644 /data/local/tmp/" + pkgName + ".apk\n"
-                + "pm install -r --user 0 /data/local/tmp/" + pkgName + ".apk 2>&1\nrm -f /data/local/tmp/" + pkgName + ".apk");
+        String r = installApk(apk, label);
+        if (!r.contains("Success") && (r.contains("UPDATE_INCOMPATIBLE") || r.contains("SIGNATURE"))) {
+            // 舊的（Google Play 版等）簽章不同：問一次，同意後用 root 解除安裝舊版再裝新版
+            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            final boolean[] yes = {false};
+            runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                    .setTitle("要替換成 GitHub 版嗎？")
+                    .setMessage("手機上的 " + pkg + " 是別的來源的版本（簽章不同），不能直接覆蓋。\n\n"
+                            + "同意的話，會先解除安裝舊版，再安裝 GitHub 版。舊版裡的 Termux 資料（例如 ~/memory.json 的記憶）會一起刪除；"
+                            + "記憶會先備份到 /sdcard/Download/phoneai_memory_backup.json。")
+                    .setPositiveButton("解除安裝並重裝", (d, w) -> { yes[0] = true; latch.countDown(); })
+                    .setNegativeButton("取消", (d, w) -> latch.countDown())
+                    .setOnCancelListener(d -> latch.countDown())
+                    .show());
+            latch.await();
+            if (!yes[0]) { apk.delete(); fail("已取消：沒有替換。之後可以再按「繼續」。"); return false; }
+            say("  備份記憶並解除安裝舊版…");
+            Maintenance.suRun("cp " + Maintenance.HOME + "/memory.json /sdcard/Download/phoneai_memory_backup.json 2>/dev/null; true");
+            Maintenance.suRun("pm uninstall --user 0 " + pkg + " 2>&1; true");
+            say("  重新安裝 GitHub 版…");
+            r = installApk(apk, label);
+        }
         apk.delete();
         if (!r.contains("Success")) {
-            if (r.contains("UPDATE_INCOMPATIBLE") || r.contains("SIGNATURE")) {
-                fail("安裝失敗：你手機上的 " + pkgName + " 是從別的來源裝的（簽章不同，例如商店或 F-Droid 版），不能直接覆蓋。"
-                        + "請先在 Termux 執行 cp ~/memory.json ~/memory.json.bak 備份，再到系統設定解除安裝 " + pkgName + "，然後按「繼續」。");
-            } else {
-                fail("安裝失敗：" + r.trim());
-            }
+            fail("安裝失敗：" + r.trim());
             return false;
         }
-        say("✓ " + pkgName + " 裝好了");
+        say("✓ " + pkg + " 裝好了");
         return true;
+    }
+
+    /** 用 root 安裝 APK，回傳 pm 的輸出。 */
+    private String installApk(File apk, String label) {
+        return Maintenance.suRun("cp '" + apk.getAbsolutePath() + "' /data/local/tmp/" + label + ".apk && chmod 644 /data/local/tmp/" + label + ".apk\n"
+                + "pm install -r --user 0 /data/local/tmp/" + label + ".apk 2>&1\nrm -f /data/local/tmp/" + label + ".apk");
     }
 
     private boolean installScripts() {
