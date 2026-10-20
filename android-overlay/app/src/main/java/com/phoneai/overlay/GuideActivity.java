@@ -25,11 +25,11 @@ import com.google.android.material.button.MaterialButton;
  * 每頁右下角的狀態會自動檢查（root、權限、Termux、API Key），做完回來會更新。
  */
 public class GuideActivity extends Activity {
-    private static final int N = 9;
+    private static final int N = 10;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
             "1. 授權 root", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
-            "6. 安裝 Termux 與基本環境", "7. Claude API Key", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
+            "6. 安裝 Termux 與基本環境", "7. Claude API Key", "8. 離線語音辨識模型", "9. 長按電源鍵叫出（選用）", "10. 試試看"};
     private static final String[] WHY = {
             "PhoneAI 需要 root 權限：用來讀寫 Termux 的檔案、補回權限，以及開啟需要 root 的功能。沒有 root 的手機目前無法使用大部分功能。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
@@ -38,6 +38,7 @@ public class GuideActivity extends Activity {
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
             "AI 的大腦跑在 Termux（手機上的 Linux 終端機 App）。這一步會自動下載 Termux 和 Termux:API，並安裝需要的套件與專案程式。",
             "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機的 Termux 裡，不會上傳到別處。",
+            "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
             "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
             "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
     private static final String[][] STEPS = {
@@ -59,11 +60,12 @@ public class GuideActivity extends Activity {
                     "重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。",
                     "複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。",
                     "不要把 Key 貼給任何人，包括 AI 助手。"},
+            {"按「下載語音模型」，會開啟語音辨識頁面，在那裡按下載。", "下載完成後按返回鍵回到這裡，狀態會自動更新。", "不想現在下載可以先跳過，之後到「功能 → 語音辨識」再下載。"},
             {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
             {"有問題就到「功能 → 進階與診斷」看狀態，或到「功能 → 進階與診斷 → 自我檢查」。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
     private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
-            "開始安裝", "輸入 API Key", "開啟語音輸入設定", "完成，回到 App"};
-    private static final int[] DEMO = {10, 11, 12, 13, 2, 14, 15, 1, 5};
+            "開始安裝", "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
+    private static final int[] DEMO = {10, 11, 12, 13, 2, 14, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
     private final String[] label = new String[N];
@@ -159,7 +161,8 @@ public class GuideActivity extends Activity {
             case 4: requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); break;
             case 5: startActivity(new Intent(this, SetupActivity.class)); break;
             case 6: Maintenance.askKey(this, this::refresh); break;
-            case 7:
+            case 7: startActivity(new Intent(this, SherpaTestActivity.class)); break;
+            case 8:
                 try {
                     startActivity(new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS));
                 } catch (Exception e) {
@@ -271,8 +274,10 @@ public class GuideActivity extends Activity {
                 set(4, mic, mic ? "✓ 已允許" : "尚未允許");
                 set(5, setup, setup ? "✓ 已安裝完成" : termux ? "Termux 已在，但基本環境還沒裝好" : "尚未安裝");
                 set(6, key, key ? "✓ 已設定" : "尚未設定");
-                set(7, false, "請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）");
-                set(8, false, "做完這一步就可以開始用了");
+                boolean voice = SherpaEngine.ready(this);
+                set(7, voice, voice ? "✓ 已下載" : "尚未下載（可以先跳過）");
+                set(8, false, "請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）");
+                set(9, false, "做完這一步就可以開始用了");
                 pager.getAdapter().notifyDataSetChanged();
             });
         }).start();
