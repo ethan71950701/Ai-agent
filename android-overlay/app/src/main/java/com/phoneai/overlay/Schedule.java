@@ -192,12 +192,7 @@ final class Schedule {
     }
 
     private static void notify(Context c, String title, String text, int id) {
-        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= 26) nm.createNotificationChannel(new NotificationChannel(CHANNEL, "定時查詢", NotificationManager.IMPORTANCE_DEFAULT));
-        Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, CHANNEL) : new Notification.Builder(c);
-        b.setSmallIcon(android.R.drawable.ic_dialog_info).setContentTitle(title).setContentText(text)
-                .setStyle(new Notification.BigTextStyle().bigText(text)).setAutoCancel(true);
-        nm.notify(id, b.build());
+        Notify.notifyText(c, title, text, id);
     }
 
     // ---------- 短問題（照搬 intents.py） ----------

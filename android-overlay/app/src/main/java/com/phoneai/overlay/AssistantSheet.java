@@ -686,6 +686,7 @@ public class AssistantSheet {
                 if (reply == null) reply = "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
             }
             final String fr = reply;
+            Notify.say(act, fr);   // 唸出來＋通知（原本是 Termux 的 termux-tts-speak / termux-notification）
             root.post(() -> showReply("", fr));
         }, "local-reply").start();
     }
