@@ -326,7 +326,7 @@ final class Ui {
         v.addView(st);
         card.addView(v);
         card.setClickable(true);
-        card.setOnClickListener(v -> { rememberTap(v); t.click.onClick(v); });
+        card.setOnClickListener(c2 -> { rememberTap(c2); t.click.onClick(c2); });
         Anim.pressable(card, 0.95f);
         return card;
     }
