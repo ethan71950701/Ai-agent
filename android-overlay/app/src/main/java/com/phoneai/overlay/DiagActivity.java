@@ -93,6 +93,9 @@ public class DiagActivity extends Activity {
                 .append(cfgp.getString("a11y_last", null) != null ? "（最近 " + cfgp.getString("a11y_last", "") + "）" : "").append('\n');
         sb.append("系統長按電源鍵動作：").append(powerLongPressText()).append('\n');
         sb.append("底欄玻璃效果：").append(GlassBar.status).append('\n');
+        // 小米的小愛同學長按電源鍵可能綁在別的設定上：用 root 列出所有跟電源／長按／助理有關的設定名稱（只讀，不改）
+        sb.append("\n【電源鍵相關設定（只讀）】\n").append(Maintenance.suRun(
+                "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append("按鈕透鏡：").append(GlassBar.lensInfo).append('\n');
         sb.append("底欄觸控：").append(GlassBar.touchInfo).append('\n');
         sb.append("Termux 指令權限：").append(checkSelfPermission(CommandSender.PERM)
