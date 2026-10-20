@@ -91,7 +91,7 @@ final class Schedule {
             if ((period.equals("半夜") || period.equals("凌晨")) && h == 12) h = 0;
         }
         if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
-        String task = m.group(5).replaceAll("^[\\s，,。]+|[\\s，,。]+$", "");
+        String task = m.group(4).replaceAll("^[\\s，,。]+|[\\s，,。]+$", "");
         if (task.isEmpty()) return null;
         taskOut[0] = task;
         return new int[]{h, mi};
