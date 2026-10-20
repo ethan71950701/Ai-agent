@@ -2,7 +2,10 @@ package com.phoneai.overlay;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -32,6 +35,26 @@ public class SetupActivity extends Activity {
     private volatile boolean busy;
     private String apiKey;      // 使用者在精靈裡輸入、尚未存檔的 Key（只在記憶體，存檔後丟掉）
     private final StringBuilder logText = new StringBuilder();
+    // 進度顯示：目前第幾步、這一步花了多久、上次有回報是幾秒前（讓你知道它還在動）
+    private static final String[] STEP_NAMES = {"安裝 Termux", "安裝 Termux:API", "Termux 基本環境", "補回權限", "安裝套件", "下載專案腳本", "儲存 API Key"};
+    private ProgressBar bar;
+    private TextView status;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private volatile int curStep = -1;
+    private volatile long stepStart;
+    private volatile long lastSay;
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            if (busy && curStep >= 0) {
+                long now = System.currentTimeMillis();
+                long run = (now - stepStart) / 1000, quiet = (now - lastSay) / 1000;
+                String tail = quiet < 3 ? "剛剛還有回報" : "已經 " + quiet + " 秒沒有新輸出（大多是在等下載或套件，請耐心等）";
+                status.setText("第 " + (curStep + 1) + "／" + STEP_NAMES.length + " 步：" + STEP_NAMES[curStep]
+                        + "\n這一步已花 " + run / 60 + " 分 " + run % 60 + " 秒　·　" + tail);
+            }
+            ui.postDelayed(this, 1000);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle b) {
@@ -46,7 +69,28 @@ public class SetupActivity extends Activity {
         list.setOrientation(LinearLayout.VERTICAL);
         box.addView(list);
         Ui.buttons(this, box, Ui.pill(this, "開始設定／繼續", true, v -> start()), Ui.pill(this, "重新檢查", false, v -> check()));
+        bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setIndeterminate(true);
+        bar.setMax(100);
+        box.addView(bar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 8)));
+        status = Ui.infoCard(this, box, 13, false, false);
+        status.setText("尚未開始");
         log = Ui.infoCard(this, box, 12, true, true);
+        ui.post(tick);
+    }
+
+    @Override
+    protected void onDestroy() {
+        ui.removeCallbacks(tick);
+        super.onDestroy();
+    }
+
+    /** 進入新的一步：更新步驟名稱、重設計時。 */
+    private void step(int n) {
+        curStep = n;
+        stepStart = System.currentTimeMillis();
+        lastSay = stepStart;
+        runOnUiThread(() -> { bar.setIndeterminate(true); });
     }
 
     @Override
@@ -56,7 +100,12 @@ public class SetupActivity extends Activity {
     }
 
     private void say(String s) {
+        lastSay = System.currentTimeMillis();
+        // 下載的「  下載 NN%」行會直接變成進度條的百分比
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("下載 (\\d+)%").matcher(s);
+        final int pct = m.find() ? Integer.parseInt(m.group(1)) : -1;
         runOnUiThread(() -> {
+            if (pct >= 0) { bar.setIndeterminate(false); bar.setProgress(pct); }
             logText.append(s).append('\n');
             if (logText.length() > 6000) logText.delete(0, logText.length() - 5000);
             log.setText(logText);
@@ -175,14 +224,17 @@ public class SetupActivity extends Activity {
     private void runAll() {
         try {
             if (!done[0] || termuxFromPlay) {
+                step(0);
                 say("→ 下載並安裝 Termux…");
                 if (!installRelease("termux/termux-app", "arm64-v8a", "termux")) return;   // 已裝但是 Play 版時也會進來，問一次要不要替換
             }
             if (!done[1]) {
+                step(1);
                 say("→ 下載並安裝 Termux:API…");
                 if (!installRelease("termux/termux-api", ".apk", "termux-api")) return;
             }
             if (!done[2]) {
+                step(2);
                 say("→ 啟動 Termux 一次，讓它解開基本環境（Termux 會跳到前景，完成後我會切回來）…");
                 Maintenance.suRun("am start -n com.termux/com.termux.app.TermuxActivity");
                 boolean ok = false;
@@ -196,9 +248,11 @@ public class SetupActivity extends Activity {
                 say("✓ Termux 基本環境好了");
             }
             // 補回權限（允許外部 App 呼叫 Termux 等）
+            step(3);
             say("→ 補回 App 權限與 Termux 設定…");
             say(Maintenance.repairPermissions());
             if (!done[3]) {
+                step(4);
                 say("→ 安裝套件（pkg update／upgrade／install，約 3～10 分鐘，輸出只顯示最後幾行）…");
                 final int[] n = {0};
                 int code = Maintenance.suStream(Maintenance.termuxScript(
@@ -211,10 +265,12 @@ public class SetupActivity extends Activity {
                 say("✓ 套件完成");
             }
             if (!done[4]) {
+                step(5);
                 say("→ 下載專案腳本…");
                 if (!installScripts()) return;
             }
             if (!done[5]) {
+                step(6);
                 String key = apiKey != null ? apiKey : readPendingKey();
                 apiKey = null;
                 if (key != null && !key.isEmpty()) {
