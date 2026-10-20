@@ -666,10 +666,6 @@ public class AssistantSheet {
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，光球收掉；下面留著縮小的光球和輸入列，可以接續對話。 */
     /** 固定指令（root 直接執行）或聊天（Claude API）：在背景做，回答到了用回答卡片顯示。 */
-    private boolean nativeAgent() {
-        return act.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("agent_native", true);
-    }
-
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做，回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
@@ -698,16 +694,11 @@ public class AssistantSheet {
                 Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
                 return "已開啟 App";
             case Router.AGENT:
-                if (nativeAgent()) {
-                    return AgentLoop.run(act, t, new AgentLoop.Ui() {
-                        @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
-                        @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
-                        @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
-                    });
-                }
-                String err = CommandSender.send(act, t);   // 關掉新迴圈時，改用 Termux 的 assistant.py
-                if (err != null) root.post(() -> setStatus("❌ " + err));
-                return null;
+                return AgentLoop.run(act, t, new AgentLoop.Ui() {
+                    @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
+                    @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
+                    @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+                });
             default: {
                 String reply = localAnswer(t);
                 if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
