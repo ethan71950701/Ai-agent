@@ -101,12 +101,12 @@ public class SetupActivity extends Activity {
 
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
-        if (!done[5] && apiKey == null) {
+        if (!done[5] && apiKey == null && !pendingKeyFile().exists()) {
             promptSecret("Claude API Key", "貼上 API Key（只存在這支手機 Termux 的 ~/.claude_key，不會顯示、不會上傳到別處；不要貼給任何人）。先不設定的話按取消，之後在「功能 → 維護」再設。", k -> {
-                apiKey = k;
+                savePendingKey(k);
                 start();
             }, () -> {
-                apiKey = "";
+                savePendingKey("");
                 start();
             });
             return;
@@ -116,6 +116,35 @@ public class SetupActivity extends Activity {
     }
 
     private interface Str { void ok(String s); }
+
+    // Key 一輸入就先放在 App 自己的私有資料夾（不在 /sdcard），Termux 還沒裝好時也不會丟；存進 Termux 後才刪除
+    private java.io.File pendingKeyFile() { return new java.io.File(getFilesDir(), "pending_key"); }
+
+    private void savePendingKey(String k) {
+        try {
+            java.io.File f = pendingKeyFile();
+            java.io.FileOutputStream out = new java.io.FileOutputStream(f);
+            out.write(k.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            out.close();
+            f.setReadable(false, false);
+            f.setReadable(true, true);
+            f.setWritable(false, false);
+            f.setWritable(true, true);
+        } catch (java.io.IOException e) {
+            say("✗ 暫存 API Key 失敗：" + e.getMessage());
+        }
+    }
+
+    private String readPendingKey() {
+        try {
+            java.io.File f = pendingKeyFile();
+            if (!f.exists()) return null;
+            byte[] b = java.nio.file.Files.readAllBytes(f.toPath());
+            return new String(b, java.nio.charset.StandardCharsets.UTF_8).trim();
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
 
     private void promptSecret(String title, String help, Str ok) { promptSecret(title, help, ok, null); }
 
@@ -186,12 +215,17 @@ public class SetupActivity extends Activity {
                 if (!installScripts()) return;
             }
             if (!done[5]) {
-                if (apiKey != null && !apiKey.isEmpty()) {
-                    String err = Maintenance.saveKey(apiKey);
-                    apiKey = null;
+                String key = apiKey != null ? apiKey : readPendingKey();
+                apiKey = null;
+                if (key != null && !key.isEmpty()) {
+                    String err = Maintenance.saveKey(key);
                     if (err != null) { say("✗ " + err + "（可以之後在「功能 → 維護 → Claude API Key」重設）"); }
-                    else say("✓ API Key 已存好");
+                    else {
+                        say("✓ API Key 已存好");
+                        pendingKeyFile().delete();
+                    }
                 } else {
+                    pendingKeyFile().delete();
                     say("（API Key 先沒設定；之後在「功能 → 維護 → Claude API Key」設）");
                 }
             }
