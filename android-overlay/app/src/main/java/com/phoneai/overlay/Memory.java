@@ -77,6 +77,39 @@ final class Memory {
         }, "memory-migrate").start();
     }
 
+    /** 記下一則經驗（沒有期限，重複的不再存）。app = 經驗適用的 App 套件，null = 通用。回傳 true = 新增。 */
+    static synchronized boolean addLesson(Context c, String text, String app) throws Exception {
+        text = text == null ? "" : text.trim();
+        if (text.isEmpty()) return false;
+        if (text.length() > 200) text = text.substring(0, 200);
+        JSONObject d = load(c);
+        for (JSONObject it : items(d))
+            if ("lesson".equals(it.optString("kind")) && !it.optBoolean("deleted") && text.equals(it.optString("text"))
+                    && (app == null ? !it.has("app") : app.equals(it.optString("app")))) return false;
+        JSONObject it = new JSONObject().put("id", d.optInt("next_id", 1)).put("kind", "lesson").put("text", text)
+                .put("created", now()).put("done", false).put("done_at", JSONObject.NULL)
+                .put("deleted", false).put("pinned", false);
+        if (app != null) it.put("app", app);
+        d.getJSONArray("items").put(it);
+        d.put("next_id", it.getInt("id") + 1);
+        save(c, d);
+        return true;
+    }
+
+    /** 開始任務前要帶進提示的經驗：通用的最新 4 則 + 這些 App 的最新 8 則（照 memory.py 的 lessons）。 */
+    static synchronized List<String> lessonsFor(Context c, List<String> apps) {
+        JSONObject d = load(c);
+        List<String> gen = new ArrayList<>(), mine = new ArrayList<>();
+        for (JSONObject it : items(d)) {
+            if (!"lesson".equals(it.optString("kind")) || it.optBoolean("deleted")) continue;
+            if (!it.has("app")) gen.add(it.optString("text"));
+            else if (apps.contains(it.optString("app"))) mine.add(it.optString("text"));
+        }
+        List<String> out = new ArrayList<>(gen.subList(Math.max(0, gen.size() - 4), gen.size()));
+        out.addAll(mine.subList(Math.max(0, mine.size() - 8), mine.size()));
+        return out;
+    }
+
     private static String now() { return new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US).format(new java.util.Date()); }
 
     private static JSONObject byId(JSONObject d, int id) {

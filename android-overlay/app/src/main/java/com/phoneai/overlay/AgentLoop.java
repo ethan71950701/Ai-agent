@@ -20,23 +20,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 自動操作迴圈（第一段）：截圖 → 交給 Claude 看圖決定下一步 → 用 root 執行 → 重複，直到 done／fail／ask_user。
- * 照搬 scripts/agent2.py 的核心：同一份系統提示、同一份動作格式、同一份敏感字規則。
- * 還沒搬的（之後的段落）：背景虛擬螢幕、分段拖曳、多指觸控、批次動作、經驗記錄、搜尋、模型升級。遇到這些動作會回報「尚未支援」並繼續。
+ * 自動操作迴圈：截圖 → Claude 看圖決定下一步 → 用 root 執行 → 重複。照搬 scripts/agent2.py 的核心與第二段功能：
+ * 分段拖曳（drag_start／move／end／cancel，手指一直按著）、拖曳（drag）、批次動作（batch，中間不截圖）、
+ * 經驗記錄（remember，存進記憶）、網路搜尋（search，Claude 的網頁搜尋，每個任務最多 2 次）、等待、唯讀 shell。
+ * 還沒搬的：多指觸控（multitouch）、背景虛擬螢幕、模型自動升級、重複動作偵測。
  */
 final class AgentLoop {
     static final String MODEL = "claude-sonnet-5-5";
-    static final int WIDTH = 432;          // 截圖寬度（省 token，跟 agent2.py 預設一樣）
+    static final String SEARCH_MODEL = "claude-sonnet-5-5";
+    static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 8;
+    private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
     private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單"};
-    private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname", "cmd"};
+    private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
     private static final String[] PIPE_OK = {"grep", "head", "tail", "sort", "cut", "wc", "uniq", "tr"};
+    private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "scroll", "wait", "back", "home", "enter", "type"};
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     interface Ui {
         void hide();                    // 收起助理面板，讓畫面可以操作
         void status(String text);       // 通知列上的進度文字
         boolean confirm(String msg);    // 敏感操作的確認框（在背景執行緒呼叫，會等使用者按）
+    }
+
+    /** 這一次任務的狀態：開過哪些 App、量測次數、記了幾則經驗、搜尋次數、拖曳手指是否還按著。 */
+    private static final class State {
+        final List<String> opened = new ArrayList<>();
+        final List<String> remembered = new ArrayList<>();
+        int measures, remembers, searches;
+        boolean dragDown;
+        int dx, dy;
     }
 
     private AgentLoop() { }
@@ -48,46 +61,86 @@ final class AgentLoop {
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return "還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。";
         int[] wh = screenSize();
+        State st = new State();
         ui.hide();
         sleep(600);
         List<String> history = new ArrayList<>();
-        for (int step = 1; step <= MAX_STEPS; step++) {
-            ui.status("第 " + step + "／" + MAX_STEPS + " 步");
-            String img = screenshot();
-            if (img == null) return "截圖失敗：請確認 root 已允許 PhoneAI。";
-            JSONObject action;
-            try {
-                action = askModel(key, task, history, img);
-            } catch (Exception e) {
-                return "連不上 AI：" + e.getMessage();
-            }
-            if (action == null) return "AI 的回答看不懂，已停止。";
-            String name = action.optString("action");
-            String think = action.optString("think");
-            switch (name) {
-                case "done":
-                    return action.optString("say", "完成了。");
-                case "fail":
-                    return "做不到：" + action.optString("say", "（沒有原因）");
-                case "ask_user":
-                    return action.optString("question", "請告訴我你要怎麼做。");
-                case "ask": {
-                    boolean manual = action.optBoolean("manual");
-                    String why = action.optString("why", "這一步需要你確認");
-                    if (!ui.confirm(manual ? why + "\n請自己動手，完成後按確定。" : why + "\n要繼續嗎？")) return "已取消。";
-                    history.add(step + ". ask 使用者同意（" + why + "）");
-                    break;
+        String finalSay = null;
+        try {
+            for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
+                ui.status("第 " + step + "／" + MAX_STEPS + " 步");
+                String img = screenshot();
+                if (img == null) return "截圖失敗：請確認 root 已允許 PhoneAI。";
+                List<String> lessons = Memory.lessonsFor(c, st.opened);
+                JSONObject action;
+                try {
+                    action = askModel(key, task, history, img, lessons);
+                } catch (Exception e) {
+                    return "連不上 AI：" + e.getMessage();
                 }
-                default: {
-                    String result = execute(action, wh, c);
-                    history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
-                    break;
+                if (action == null) return "AI 的回答看不懂，已停止。";
+                double wait = action.optDouble("wait", 1.2);
+                String name = action.optString("action");
+                if (st.dragDown && !name.startsWith("drag_") && !name.equals("wait")) {
+                    releaseDrag(st);
+                    history.add(step + ". 拖曳到一半，因為換了別的動作，已放開手指");
                 }
+                rememberLesson(c, action, st, history);
+                switch (name) {
+                    case "done":
+                        finalSay = action.optString("say", "完成了。");
+                        break;
+                    case "fail":
+                        finalSay = "做不到：" + action.optString("say", "（沒有原因）");
+                        break;
+                    case "ask_user":
+                        finalSay = action.optString("question", "請告訴我你要怎麼做。");
+                        break;
+                    case "ask": {
+                        boolean manual = action.optBoolean("manual");
+                        String why = action.optString("why", "這一步需要你確認");
+                        if (!ui.confirm(manual ? why + "\n請自己動手，完成後按確定。" : why + "\n要繼續嗎？")) return "已取消。";
+                        history.add(step + ". ask 使用者同意（" + why + "）");
+                        break;
+                    }
+                    case "search": {
+                        String q = action.optString("q").trim();
+                        if (q.isEmpty() || st.searches >= SEARCH_MAX) {
+                            history.add(step + ". 搜尋次數已用完或沒有關鍵字，請改用畫面操作");
+                            break;
+                        }
+                        st.searches++;
+                        ui.status("第 " + step + "／" + MAX_STEPS + " 步 · 搜尋網路中");
+                        String ans = webSearch(key, q);
+                        history.add(step + ". " + (ans != null ? "搜尋「" + q + "」得到：" + (ans.length() > 300 ? ans.substring(0, 300) : ans)
+                                : "搜尋「" + q + "」失敗，請改用畫面操作"));
+                        break;
+                    }
+                    case "batch": {
+                        List<JSONObject> subs = filterBatch(action.optJSONArray("actions"));
+                        if (subs.isEmpty()) { history.add(step + ". batch 裡沒有可執行的動作，請直接給單一動作"); break; }
+                        StringBuilder log = new StringBuilder(step + ". 連續執行" + subs.size() + "個動作（中間不看畫面）：");
+                        for (JSONObject sub : subs) {
+                            String r = execute(sub, wh, c, st);
+                            log.append(" [").append(sub.optString("action")).append(" → ").append(r).append("]");
+                            sleep(400);
+                        }
+                        history.add(log.toString());
+                        break;
+                    }
+                    default: {
+                        String result = execute(action, wh, c, st);
+                        String think = action.optString("think");
+                        history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
+                        break;
+                    }
+                }
+                if (finalSay == null) sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));
             }
-            double wait = action.optDouble("wait", 1.2);
-            sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));
+        } finally {
+            if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
-        return "已到最大步數（" + MAX_STEPS + "），還沒完成。";
+        return finalSay != null ? finalSay : "已到最大步數（" + MAX_STEPS + "），還沒完成。";
     }
 
     // ---------- 螢幕 ----------
@@ -129,11 +182,15 @@ final class AgentLoop {
 
     // ---------- 模型 ----------
 
-    private static JSONObject askModel(String key, String task, List<String> history, String img) throws Exception {
+    private static JSONObject askModel(String key, String task, List<String> history, String img, List<String> lessons) throws Exception {
         JSONArray content = new JSONArray();
         content.put(new JSONObject().put("type", "image").put("source",
                 new JSONObject().put("type", "base64").put("media_type", "image/jpeg").put("data", img)));
         StringBuilder text = new StringBuilder("任務：").append(task);
+        if (!lessons.isEmpty()) {
+            text.append("\n已學到的經驗（之前記下來的規律，照用）：\n");
+            for (String l : lessons) text.append("・").append(l).append('\n');
+        }
         if (!history.isEmpty()) {
             text.append("\n已執行的動作（最近的在後面）：\n");
             for (int i = Math.max(0, history.size() - 8); i < history.size(); i++) text.append(history.get(i)).append('\n');
@@ -148,10 +205,70 @@ final class AgentLoop {
         if (out == null) return null;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < out.length(); i++) if ("text".equals(out.getJSONObject(i).optString("type"))) sb.append(out.getJSONObject(i).optString("text"));
-        String s = sb.toString();
-        int a = s.indexOf('{'), b = s.lastIndexOf('}');
-        if (a < 0 || b <= a) return null;
-        return new JSONObject(s.substring(a, b + 1));
+        return parseLast(sb.toString());
+    }
+
+    /** 取最後一個 JSON 物件（能處理巢狀，例如 batch 的 actions 陣列）。 */
+    static JSONObject parseLast(String out) {
+        JSONObject found = null;
+        int i = 0;
+        while ((i = out.indexOf('{', i)) >= 0) {
+            int depth = 0, end = -1;
+            boolean inStr = false;
+            for (int k = i; k < out.length(); k++) {
+                char ch = out.charAt(k);
+                if (inStr) { if (ch == '\\') k++; else if (ch == '"') inStr = false; continue; }
+                if (ch == '"') inStr = true;
+                else if (ch == '{') depth++;
+                else if (ch == '}' && --depth == 0) { end = k; break; }
+            }
+            if (end < 0) break;
+            try { found = new JSONObject(out.substring(i, end + 1)); } catch (Exception ignored) { }
+            i = end + 1;
+        }
+        return found;
+    }
+
+    /** Claude 的網頁搜尋（server tool），回傳繁體中文摘要；失敗回 null。 */
+    static String webSearch(String key, String query) {
+        try {
+            JSONObject tool = new JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 1)
+                    .put("user_location", new JSONObject().put("type", "approximate").put("country", "TW").put("timezone", "Asia/Taipei"));
+            JSONArray msgs = new JSONArray().put(new JSONObject().put("role", "user")
+                    .put("content", "請用繁體中文回答，根據網路搜尋結果，只講事實，不超過120字：" + query));
+            StringBuilder text = new StringBuilder();
+            for (int turn = 0; turn < 3; turn++) {
+                JSONObject body = new JSONObject().put("model", SEARCH_MODEL).put("max_tokens", 700)
+                        .put("tools", new JSONArray().put(tool)).put("messages", msgs);
+                JSONObject r = ChatEngine.post(body, key);
+                JSONArray content = r.optJSONArray("content");
+                for (int i = 0; content != null && i < content.length(); i++) {
+                    JSONObject b = content.getJSONObject(i);
+                    if ("text".equals(b.optString("type"))) text.append(b.optString("text"));
+                }
+                if (!"pause_turn".equals(r.optString("stop_reason"))) break;
+                msgs.put(new JSONObject().put("role", "assistant").put("content", content));
+            }
+            return text.length() > 0 ? text.toString().trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // ---------- 經驗 ----------
+
+    /** 模型說「remember」：馬上記下來（下一步就看得到），一個任務最多 3 則，同樣的話不重複存。 */
+    private static void rememberLesson(Context c, JSONObject action, State st, List<String> history) {
+        String rem = action.optString("remember").trim();
+        if (rem.isEmpty() || st.remembers >= MAX_REMEMBER || rem.length() > 200) return;
+        st.remembers++;
+        try {
+            String app = st.opened.isEmpty() ? null : st.opened.get(0);
+            if (Memory.addLesson(c, rem, app)) {
+                st.remembered.add(rem);
+                Notify.notifyText(c, "AI 學到的經驗（可在 App 記憶頁刪除）", rem, 7195);
+            }
+        } catch (Exception ignored) { }
     }
 
     // ---------- 動作 ----------
@@ -160,8 +277,17 @@ final class AgentLoop {
 
     private static String sh(String cmd) { return Maintenance.suRun(cmd); }
 
+    private static List<JSONObject> filterBatch(JSONArray arr) {
+        List<JSONObject> out = new ArrayList<>();
+        for (int i = 0; arr != null && i < arr.length() && out.size() < BATCH_LIMIT; i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o != null && in(BATCH_OK, o.optString("action"))) out.add(o);
+        }
+        return out;
+    }
+
     /** 執行一個動作，回傳給下一步看的結果文字。 */
-    static String execute(JSONObject a, int[] wh, Context c) {
+    static String execute(JSONObject a, int[] wh, Context c, State st) {
         int w = wh[0], h = wh[1];
         String name = a.optString("action");
         try {
@@ -171,13 +297,51 @@ final class AgentLoop {
                     return "已點擊";
                 case "longpress": {
                     int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
-                    sh("input swipe " + x + " " + y + " " + x + " " + y + " " + a.optInt("ms", 800));
+                    sh("input swipe " + x + " " + y + " " + x + " " + y + " " + clamp(a.optInt("ms", 800), 300, 5000));
                     return "已長按";
                 }
                 case "swipe":
                     sh("input swipe " + px(a.optDouble("x1"), w) + " " + px(a.optDouble("y1"), h) + " "
-                            + px(a.optDouble("x2"), w) + " " + px(a.optDouble("y2"), h) + " " + a.optInt("ms", 300));
+                            + px(a.optDouble("x2"), w) + " " + px(a.optDouble("y2"), h) + " " + clamp(a.optInt("ms", 300), 50, 5000));
                     return "已滑動";
+                case "drag": {
+                    int x1 = px(a.optDouble("x1"), w), y1 = px(a.optDouble("y1"), h), x2 = px(a.optDouble("x2"), w), y2 = px(a.optDouble("y2"), h);
+                    int ms = clamp(a.optInt("ms", 500), 50, 5000), hold = clamp(a.optInt("hold_ms", 600), 200, 5000);
+                    if (hold > 0 && (x1 != x2 || y1 != y2)) sh("input draganddrop " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + (ms + hold));
+                    else sh("input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + (ms + hold));
+                    return "已拖曳";
+                }
+                case "drag_start": {
+                    if (st.measures >= MAX_MEASURES) return "你已經分段拖曳量過" + st.measures + "次了，不要再量；用 remember 記下規律，之後直接用 drag 或 batch";
+                    st.measures++;
+                    int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
+                    int tx = px(a.optDouble("to_x"), w), ty = px(a.optDouble("to_y"), h);
+                    sh(dragScript("start", x, y, tx, ty));
+                    st.dragDown = true;
+                    st.dx = tx;
+                    st.dy = ty;
+                    return "手指按住並拖到目的地，還沒放開（看新畫面再決定 drag_move、drag_end 或 drag_cancel）";
+                }
+                case "drag_move": {
+                    if (!st.dragDown) return "現在沒有按著的手指，請先用 drag_start";
+                    int tx = a.has("x") ? px(a.optDouble("x"), w) : st.dx, ty = a.has("y") ? px(a.optDouble("y"), h) : st.dy;
+                    sh(dragScript("move", st.dx, st.dy, tx, ty));
+                    st.dx = tx;
+                    st.dy = ty;
+                    return "手指移到新位置，還沒放開";
+                }
+                case "drag_end": {
+                    if (!st.dragDown) return "現在沒有按著的手指";
+                    if (a.has("x") && a.has("y")) {
+                        int tx = px(a.optDouble("x"), w), ty = px(a.optDouble("y"), h);
+                        sh(dragScript("end", st.dx, st.dy, tx, ty));
+                    } else sh(dragScript("end", st.dx, st.dy, st.dx, st.dy));
+                    st.dragDown = false;
+                    return "已放開手指";
+                }
+                case "drag_cancel":
+                    if (st.dragDown) releaseDrag(st);
+                    return "已取消拖曳";
                 case "scroll": {
                     boolean down = !"up".equals(a.optString("dir", "down"));
                     int x = w / 2, y1 = (int) (h * 0.7), y2 = (int) (h * 0.3);
@@ -195,8 +359,9 @@ final class AgentLoop {
                     return type(a.optString("text"), a.optBoolean("clear", true), a.optBoolean("enter", false), c);
                 case "open": {
                     String pkg = a.optString("pkg", "");
-                    if (pkg.isEmpty()) return "沒有套件名稱，無法開啟「" + a.optString("name") + "」（之後會支援用名稱查）";
+                    if (pkg.isEmpty()) return "沒有套件名稱，無法開啟「" + a.optString("name") + "」";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
+                    st.opened.add(pkg);
                     return "已開啟 " + pkg;
                 }
                 case "cmd":
@@ -208,11 +373,52 @@ final class AgentLoop {
                     return out.length() > 1500 ? out.substring(0, 1500) + "…" : out;
                 }
                 default:
-                    return "「" + name + "」尚未支援（之後的段落會搬進來）";
+                    return "「" + name + "」尚未支援（之後會搬進來）";
             }
         } catch (Exception e) {
             return "執行失敗：" + e.getMessage();
         }
+    }
+
+    /** 分段拖曳用 `input motionevent`：每個事件各自送出，手指在事件之間一直按著。op: start／move／end／cancel（像素座標）。 */
+    static String dragScript(String op, int x0, int y0, int x1, int y1) {
+        List<String> parts = new ArrayList<>();
+        int ex = x1, ey = y1;
+        if (op.equals("start")) {
+            parts.add(ev("DOWN", x0, y0));
+            parts.add("sleep 0.35");
+            parts.addAll(moves(x0, y0, x1, y1));
+        } else if (op.equals("move")) {
+            parts.addAll(moves(x0, y0, x1, y1));
+        } else if (op.equals("end")) {
+            if (x0 != x1 || y0 != y1) parts.addAll(moves(x0, y0, x1, y1));
+            parts.add(ev("UP", x1, y1));
+        } else {
+            parts.add(ev("CANCEL", x0, y0));
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String p : parts) {
+            if (sb.length() > 0) sb.append("; sleep 0.04; ");
+            sb.append(p);
+        }
+        return sb.toString();
+    }
+
+    private static String ev(String kind, int x, int y) {
+        return "input motionevent " + kind + " " + x + " " + y;
+    }
+
+    /** 移動拆成每約 90 像素一格的 MOVE 事件，遊戲才看得到「拖著走」。 */
+    private static List<String> moves(int x0, int y0, int x1, int y1) {
+        int n = clamp(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) / 90, 1, 10);
+        List<String> out = new ArrayList<>();
+        for (int k = 1; k <= n; k++) out.add(ev("MOVE", x0 + (x1 - x0) * k / n, y0 + (y1 - y0) * k / n));
+        return out;
+    }
+
+    private static void releaseDrag(State st) {
+        sh(dragScript("end", st.dx, st.dy, st.dx, st.dy));
+        st.dragDown = false;
     }
 
     private static String cmd(String name) {
@@ -241,7 +447,7 @@ final class AgentLoop {
         return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
     }
 
-    /** 把文字放進剪貼簿（需要在主執行緒、App 在前景；背景時可能失敗，之後用 root 的剪貼簿指令改善）。 */
+    /** 把文字放進剪貼簿（Android 10 以後背景 App 可能寫不進去；實測時若失敗，之後改用 root 寫剪貼簿）。 */
     private static void paste(Context c, String text) {
         MAIN.post(() -> {
             ClipboardManager cm = (ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -250,7 +456,7 @@ final class AgentLoop {
         sleep(400);
     }
 
-    /** 唯讀 shell：第一段的程式在白名單裡，後面只能接過濾程式，不能寫入、跳脫或子命令（照搬 intents.py 的規則，簡化版）。 */
+    /** 唯讀 shell：白名單程式，後面只能接過濾程式，不能寫入、跳脫或子命令。 */
     static boolean readOnly(String cmd) {
         if (cmd == null || cmd.trim().isEmpty() || cmd.contains("\n")) return false;
         if (cmd.matches(".*[;&`$<>*?{}()\\\\].*") && !cmd.contains("|")) return false;
@@ -260,9 +466,8 @@ final class AgentLoop {
             String prog = words[0];
             boolean ok = i == 0 ? in(READ_BINS, prog) : in(PIPE_OK, prog);
             if (!ok) return false;
-            if (i == 0 && (prog.equals("settings") || prog.equals("cmd") || prog.equals("pm") || prog.equals("am")
-                    || prog.equals("wm")) && words.length > 1 && !in(new String[]{"get", "list", "status", "size", "packages", "-h", "print-stats"}, words[1])
-                    && !(prog.equals("cmd") && words.length > 1 && words[1].equals("wifi"))) return false;
+            if (i == 0 && (prog.equals("settings") || prog.equals("cmd") || prog.equals("pm") || prog.equals("am") || prog.equals("wm"))
+                    && words.length > 1 && !in(new String[]{"get", "list", "status", "size", "packages", "-h", "print-stats", "wifi"}, words[1])) return false;
         }
         return true;
     }
@@ -271,6 +476,8 @@ final class AgentLoop {
         for (String x : arr) if (x.equals(s)) return true;
         return false;
     }
+
+    private static int clamp(int v, int lo, int hi) { return Math.max(lo, Math.min(hi, v)); }
 
     private static void sleep(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) { }
