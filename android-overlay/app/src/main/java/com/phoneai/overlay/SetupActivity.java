@@ -45,7 +45,9 @@ public class SetupActivity extends Activity {
     private volatile long lastSay;
     private final Runnable tick = new Runnable() {
         @Override public void run() {
-            if (busy && curStep >= 0) {
+            if (busy && curStep < 0) {
+                status.setText("準備中…（第一步還沒開始）");
+            } else if (busy) {
                 long now = System.currentTimeMillis();
                 long run = (now - stepStart) / 1000, quiet = (now - lastSay) / 1000;
                 String tail = quiet < 3 ? "剛剛還有回報" : "已經 " + quiet + " 秒沒有新輸出（大多是在等下載或套件，請耐心等）";
@@ -70,11 +72,12 @@ public class SetupActivity extends Activity {
         box.addView(list);
         Ui.buttons(this, box, Ui.pill(this, "開始設定／繼續", true, v -> start()), Ui.pill(this, "重新檢查", false, v -> check()));
         bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        bar.setIndeterminate(true);
+        bar.setIndeterminate(false);
         bar.setMax(100);
+        bar.setVisibility(android.view.View.GONE);   // 沒在跑的時候不顯示，免得看起來像在讀取
         box.addView(bar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 8)));
         status = Ui.infoCard(this, box, 13, false, false);
-        status.setText("尚未開始");
+        status.setText("尚未開始。按下面的「開始設定／繼續」才會動。");
         log = Ui.infoCard(this, box, 12, true, true);
         ui.post(tick);
     }
@@ -147,6 +150,9 @@ public class SetupActivity extends Activity {
 
     private void start() {
         if (busy) return;
+        bar.setVisibility(android.view.View.VISIBLE);
+        bar.setIndeterminate(true);
+        status.setText("準備中…");
 
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
@@ -215,10 +221,20 @@ public class SetupActivity extends Activity {
                 .setNegativeButton("取消", (d, w) -> { if (skip != null) skip.run(); }).show();
     }
 
+    /** 流程結束（成功或失敗）：隱藏進度條，回到待機狀態。 */
+    private void idle() {
+        busy = false;
+        curStep = -1;
+        runOnUiThread(() -> {
+            bar.setVisibility(android.view.View.GONE);
+            status.setText("沒有在執行。看上面的記錄；要繼續請按「開始設定／繼續」。");
+            check();
+        });
+    }
+
     private void fail(String why) {
         say("✗ " + why);
-        busy = false;
-        runOnUiThread(this::check);
+        idle();
     }
 
     private void runAll() {
@@ -289,8 +305,7 @@ public class SetupActivity extends Activity {
         } catch (Throwable e) {
             say("✗ 出錯：" + e);
         }
-        busy = false;
-        runOnUiThread(this::check);
+        idle();
     }
 
     // ---------- 下載與安裝 ----------
