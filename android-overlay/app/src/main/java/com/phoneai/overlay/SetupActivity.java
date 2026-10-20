@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -32,6 +33,7 @@ public class SetupActivity extends Activity {
     private final boolean[] done = new boolean[NAMES.length];
     private LinearLayout list;
     private TextView log;
+    private ScrollView logScroll;   // 記錄區獨立可滑動，不跟著整頁捲動
     private volatile boolean busy;
     private String apiKey;      // 使用者在精靈裡輸入、尚未存檔的 Key（只在記憶體，存檔後丟掉）
     private final StringBuilder logText = new StringBuilder();
@@ -78,7 +80,21 @@ public class SetupActivity extends Activity {
         box.addView(bar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 8)));
         status = Ui.infoCard(this, box, 13, false, false);
         status.setText("尚未開始。按下面的「開始設定／繼續」才會動。");
-        log = Ui.infoCard(this, box, 12, true, true);
+        // 記錄放在獨立的固定高度區域，自己可以上下滑；新內容會自動捲到最底，狀態列不會被推走
+        logScroll = new ScrollView(this);
+        logScroll.setBackgroundColor(Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 340));
+        slp.topMargin = Ui.dp(this, 12);
+        box.addView(logScroll, slp);
+        log = new TextView(this);
+        log.setTypeface(android.graphics.Typeface.MONOSPACE);
+        log.setTextSize(12);
+        log.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+        log.setLineSpacing(0, 1.15f);
+        log.setTextIsSelectable(true);
+        int lp = Ui.dp(this, 16);
+        log.setPadding(lp, lp, lp, lp);
+        logScroll.addView(log);
         ui.post(tick);
     }
 
@@ -112,6 +128,7 @@ public class SetupActivity extends Activity {
             logText.append(s).append('\n');
             if (logText.length() > 6000) logText.delete(0, logText.length() - 5000);
             log.setText(logText);
+            logScroll.post(() -> logScroll.fullScroll(android.view.View.FOCUS_DOWN));
         });
     }
 
