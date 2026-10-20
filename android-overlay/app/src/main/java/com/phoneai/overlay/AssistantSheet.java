@@ -635,11 +635,14 @@ public class AssistantSheet {
         String t = input.getText().toString().trim();
         if (t.isEmpty()) return;
         if (questionMode) { answerQuestion(t); return; }
-        String err = CommandSender.send(act, t);
+        // 路由：固定指令 / 聊天在 App 裡做；操作手機（AGENT）仍交給 Termux 的迴圈
+        Assist.Route route = Assist.route(t);
+        String err = route.kind == Assist.AGENT ? CommandSender.send(act, t) : null;
         if (err != null) {
             setStatus("❌ " + err);
             return;
         }
+        if (route.kind != Assist.AGENT) root.post(() -> runLocal(route, t));   // 等這次送出的畫面狀態排完再開始
         stopRecognizer();
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);        // 送出時再震一下
@@ -667,6 +670,39 @@ public class AssistantSheet {
     }
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，光球收掉；下面留著縮小的光球和輸入列，可以接續對話。 */
+    /** 固定指令（root 直接執行）或聊天（Claude API）：在背景做，回答到了用回答卡片顯示。 */
+    private void runLocal(Assist.Route r, String t) {
+        new Thread(() -> {
+            String reply;
+            if (r.kind == Assist.FIXED) {
+                if (r.confirm && !confirmOnUi("這會開關飛航模式，可能會斷網，要繼續嗎？")) reply = "已取消";
+                else {
+                    Maintenance.suRun(r.cmd);
+                    reply = r.reply;
+                }
+            } else {
+                reply = ChatEngine.ask(act, t, this::confirmOnUi);
+                if (reply == null) reply = "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
+            }
+            final String fr = reply;
+            root.post(() -> showReply("", fr));
+        }, "local-reply").start();
+    }
+
+    /** 在主執行緒跳確認框，背景執行緒等使用者按完。 */
+    private boolean confirmOnUi(String msg) {
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final boolean[] ok = {false};
+        act.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(act)
+                .setMessage(msg)
+                .setPositiveButton("確定", (d, w) -> { ok[0] = true; latch.countDown(); })
+                .setNegativeButton("取消", (d, w) -> latch.countDown())
+                .setOnCancelListener(d -> latch.countDown())
+                .show());
+        try { latch.await(); } catch (InterruptedException e) { return false; }
+        return ok[0];
+    }
+
     public void showReply(String title, String text) {
         if (dismissing) return;
         if (replyCard != null) {  // 已經有回答卡（接續對話的下一則、彩蛋的第二張）：換掉舊的

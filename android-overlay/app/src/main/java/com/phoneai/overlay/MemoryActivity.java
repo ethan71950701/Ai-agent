@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
  * 所以用 root 讀寫（寫入是覆蓋原檔內容，檔案擁有者與 600 權限不變）。格式與 scripts/memory.py 一致；刪除 = 標記 deleted（跟 Python 一樣不真的移除）。
  */
 public class MemoryActivity extends Activity {
-    private static final String FILE = "/data/data/com.termux/files/home/memory.json";
+    private static final String FILE = "/data/data/com.phoneai.overlay/files/memory.json";   // 已搬進 App（原本在 Termux 的 ~/memory.json）
     /** App 自己的 su 預設在「只看得到自己資料夾」的掛載空間裡（Android 的 App 資料隔離），看不到 Termux 的檔案；
      *  所以依序試幾種「跳到系統全域掛載空間」的 su 寫法，第一個看得到檔案的就記起來。 */
     private static String[] attempt(int n, String cmd) {

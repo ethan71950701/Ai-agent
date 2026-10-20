@@ -133,7 +133,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        new Thread(MemoryActivity::warm, "memory-warm").start();   // 先在背景讀好助理的記憶，點進去就不用等
+        Memory.migrateFromTermux(this, MemoryActivity::warm);   // 第一次：把 Termux 的記憶搬進 App（只做一次）；之後先在背景讀好，點進去就不用等
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
         LinearLayout[] c = new LinearLayout[1];
