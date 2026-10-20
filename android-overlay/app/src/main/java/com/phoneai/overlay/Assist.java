@@ -5,7 +5,7 @@ package com.phoneai.overlay;
  * 固定指令清單照搬 scripts/assistant.py 的 COMMANDS。
  */
 final class Assist {
-    static final int FIXED = 1, AGENT = 2, CHAT = 3;
+    static final int FIXED = 1, NONE = 2;
 
     static final class Route {
         final int kind;
@@ -42,8 +42,6 @@ final class Assist {
             new Cmd(new String[]{"關飛航", "關閉飛航"}, "cmd connectivity airplane-mode disable", "已關閉飛航模式", true),
     };
 
-    /** 操作手機的動詞：命中就交給 Termux 的迴圈（還沒搬進 App）。 */
-    private static final String[] AGENT_WORDS = {"打開", "開啟", "進入", "點", "按一下", "滑", "截圖", "輸入", "切換", "找到", "回到"};
 
     private Assist() { }
 
@@ -51,17 +49,20 @@ final class Assist {
         return (t == null ? "" : t).replaceAll("[\\s\\-_，。,.]", "").toLowerCase(java.util.Locale.ROOT);
     }
 
+    static Route fixed(int i) { return new Route(FIXED, COMMANDS[i].cmd, COMMANDS[i].reply, COMMANDS[i].confirm); }
+    static int commandCount() { return COMMANDS.length; }
+    static String commandKey(int i) { return COMMANDS[i].keys[0]; }
+    static String commandReply(int i) { return COMMANDS[i].reply; }
+
+    /** 關鍵字命中固定指令（最長的那個關鍵字優先）回 FIXED；沒命中回 NONE，交給 Haiku 路由判斷。 */
     static Route route(String text) {
         String t = norm(text);
-        if (t.isEmpty()) return new Route(CHAT, null, null, false);
         Cmd best = null;
         int bestLen = 0;
         for (Cmd c : COMMANDS)
             for (String k : c.keys)
-                if (t.contains(k) && k.length() > bestLen) { best = c; bestLen = k.length(); }
+                if (!t.isEmpty() && t.contains(k) && k.length() > bestLen) { best = c; bestLen = k.length(); }
         if (best != null) return new Route(FIXED, best.cmd, best.reply, best.confirm);
-        for (String w : AGENT_WORDS)
-            if (t.contains(w)) return new Route(AGENT, null, null, false);
-        return new Route(CHAT, null, null, false);
+        return new Route(NONE, null, null, false);
     }
 }

@@ -635,15 +635,9 @@ public class AssistantSheet {
         String t = input.getText().toString().trim();
         if (t.isEmpty()) return;
         if (questionMode) { answerQuestion(t); return; }
-        // 路由：固定指令 / 聊天在 App 裡做；操作手機（AGENT）仍交給 Termux 的迴圈
+        // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）
         Assist.Route route = Assist.route(t);
-        boolean native_ = route.kind == Assist.AGENT && nativeAgent();   // 新的 App 內迴圈（可在 cfg 的 agent_native 關掉改回 Termux）
-        String err = route.kind == Assist.AGENT && !native_ ? CommandSender.send(act, t) : null;
-        if (err != null) {
-            setStatus("❌ " + err);
-            return;
-        }
-        if (route.kind != Assist.AGENT || native_) root.post(() -> runLocal(route, t));   // 等這次送出的畫面狀態排完再開始
+        root.post(() -> runLocal(route, t));
         stopRecognizer();
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);        // 送出時再震一下
@@ -676,30 +670,50 @@ public class AssistantSheet {
         return act.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("agent_native", true);
     }
 
+    /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做，回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
-            String reply;
-            if (r.kind == Assist.AGENT) {
-                reply = AgentLoop.run(act, t, new AgentLoop.Ui() {
-                    @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
-                    @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
-                    @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
-                });
-            } else if (r.kind == Assist.FIXED) {
-                if (r.confirm && !confirmOnUi("這會開關飛航模式，可能會斷網，要繼續嗎？")) reply = "已取消";
-                else {
-                    Maintenance.suRun(r.cmd);
-                    reply = r.reply;
-                }
-            } else {
-                reply = localAnswer(t);   // 定時、短問題不用 AI，先在本地回答
-                if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
-                if (reply == null) reply = "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
-            }
+            String reply = r.kind == Assist.FIXED ? runFixed(r) : routeAndRun(t);
+            if (reply == null) return;   // Termux 自己會回報（操作手機時）
             final String fr = reply;
-            Notify.say(act, fr);   // 唸出來＋通知（原本是 Termux 的 termux-tts-speak / termux-notification）
+            Notify.say(act, fr);
             root.post(() -> showReply("", fr));
         }, "local-reply").start();
+    }
+
+    private String runFixed(Assist.Route r) {
+        if (r.confirm && !confirmOnUi("這會開關飛航模式，可能會斷網，要繼續嗎？")) return "已取消";
+        Maintenance.suRun(r.cmd);
+        return r.reply;
+    }
+
+    /** Haiku 判斷這句話是指令、開 App、聊天還是操作畫面，再分派。判斷失敗就當聊天（聊天會回報連不上的原因）。 */
+    private String routeAndRun(String t) {
+        Router.Decision d = Router.decide(act, t);
+        String kind = d == null ? Router.CHAT : d.kind;
+        switch (kind) {
+            case Router.CMD:
+                return runFixed(Assist.fixed(d.cmdIndex));
+            case Router.APP:
+                Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
+                return "已開啟 App";
+            case Router.AGENT:
+                if (nativeAgent()) {
+                    return AgentLoop.run(act, t, new AgentLoop.Ui() {
+                        @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
+                        @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
+                        @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+                    });
+                }
+                String err = CommandSender.send(act, t);   // 關掉新迴圈時，改用 Termux 的 assistant.py
+                if (err != null) root.post(() -> setStatus("❌ " + err));
+                return null;
+            default: {
+                String reply = localAnswer(t);
+                if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
+                return reply != null ? reply : "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
+            }
+        }
     }
 
     /** 定時任務（建立、列出、取消）或能直接回答的短問題（電量、幾點…）；都不是回 null。 */
