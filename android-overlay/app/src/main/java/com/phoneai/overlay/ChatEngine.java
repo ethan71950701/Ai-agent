@@ -101,6 +101,11 @@ final class ChatEngine {
     private static JSONObject call(JSONArray messages, String system, String key) throws Exception {
         JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 1000).put("system", system)
                 .put("messages", messages).put("tools", new JSONArray(TOOLS));
+        return post(body, key);
+    }
+
+    /** 送出一則 Messages API 的請求（聊天與自動操作共用）。 */
+    static JSONObject post(JSONObject body, String key) throws Exception {
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         con.setRequestMethod("POST");
         con.setConnectTimeout(20000);

@@ -637,12 +637,13 @@ public class AssistantSheet {
         if (questionMode) { answerQuestion(t); return; }
         // 路由：固定指令 / 聊天在 App 裡做；操作手機（AGENT）仍交給 Termux 的迴圈
         Assist.Route route = Assist.route(t);
-        String err = route.kind == Assist.AGENT ? CommandSender.send(act, t) : null;
+        boolean native_ = route.kind == Assist.AGENT && nativeAgent();   // 新的 App 內迴圈（可在 cfg 的 agent_native 關掉改回 Termux）
+        String err = route.kind == Assist.AGENT && !native_ ? CommandSender.send(act, t) : null;
         if (err != null) {
             setStatus("❌ " + err);
             return;
         }
-        if (route.kind != Assist.AGENT) root.post(() -> runLocal(route, t));   // 等這次送出的畫面狀態排完再開始
+        if (route.kind != Assist.AGENT || native_) root.post(() -> runLocal(route, t));   // 等這次送出的畫面狀態排完再開始
         stopRecognizer();
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);        // 送出時再震一下
@@ -671,10 +672,20 @@ public class AssistantSheet {
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，光球收掉；下面留著縮小的光球和輸入列，可以接續對話。 */
     /** 固定指令（root 直接執行）或聊天（Claude API）：在背景做，回答到了用回答卡片顯示。 */
+    private boolean nativeAgent() {
+        return act.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("agent_native", true);
+    }
+
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
             String reply;
-            if (r.kind == Assist.FIXED) {
+            if (r.kind == Assist.AGENT) {
+                reply = AgentLoop.run(act, t, new AgentLoop.Ui() {
+                    @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
+                    @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
+                    @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+                });
+            } else if (r.kind == Assist.FIXED) {
                 if (r.confirm && !confirmOnUi("這會開關飛航模式，可能會斷網，要繼續嗎？")) reply = "已取消";
                 else {
                     Maintenance.suRun(r.cmd);
