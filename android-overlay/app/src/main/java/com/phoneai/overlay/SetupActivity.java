@@ -170,16 +170,6 @@ public class SetupActivity extends Activity {
 
         // 需要的輸入先問齊（Key 與權杖只留在記憶體，用完就丟）
         // 公開的 repo 不需要權杖；私人 repo 下載失敗時才會請你到「功能 → 維護 → GitHub 權杖」設定
-        if (!done[5] && apiKey == null && !pendingKeyFile().exists()) {
-            promptSecret("Claude API Key", "貼上 API Key（只存在這支手機 Termux 的 ~/.claude_key，不會顯示、不會上傳到別處；不要貼給任何人）。先不設定的話按取消，之後在「功能 → 維護」再設。", k -> {
-                savePendingKey(k);
-                start();
-            }, () -> {
-                savePendingKey("");
-                start();
-            });
-            return;
-        }
         busy = true;
         bar.setVisibility(android.view.View.VISIBLE);
         bar.setIndeterminate(true);
@@ -188,6 +178,19 @@ public class SetupActivity extends Activity {
     }
 
     private interface Str { void ok(String s); }
+
+    /** 在第 7 步才跳出 Key 輸入框；背景執行緒等使用者按完（取消視為先不設定）。 */
+    private void askKeyAndWait() {
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        runOnUiThread(() -> promptSecret("Claude API Key", "貼上 API Key（只存在這支手機 Termux 的 ~/.claude_key，不會顯示、不會上傳到別處；不要貼給任何人）。先不設定的話按取消，之後在「功能 → 維護」再設。", k -> {
+            savePendingKey(k);
+            latch.countDown();
+        }, () -> {
+            savePendingKey("");
+            latch.countDown();
+        }));
+        try { latch.await(); } catch (InterruptedException ignored) { }
+    }
 
     // Key 一輸入就先放在 App 自己的私有資料夾（不在 /sdcard），Termux 還沒裝好時也不會丟；存進 Termux 後才刪除
     private java.io.File pendingKeyFile() { return new java.io.File(getFilesDir(), "pending_key"); }
@@ -319,6 +322,7 @@ public class SetupActivity extends Activity {
             }
             if (!done[5]) {
                 step(6);
+                if (apiKey == null && readPendingKey() == null) askKeyAndWait();
                 String key = apiKey != null ? apiKey : readPendingKey();
                 apiKey = null;
                 if (key != null && !key.isEmpty()) {
@@ -333,7 +337,8 @@ public class SetupActivity extends Activity {
                     say("（API Key 先沒設定；之後在「功能 → 維護 → Claude API Key」設）");
                 }
             }
-            say("✓ 全部完成。回上一頁，到「功能 → 維護 → 自我檢查」確認；然後就可以長按電源鍵或從首頁問助理了。");
+            say("✓ 全部完成。2 秒後自動回到上一頁；之後可到「功能 → 維護 → 自我檢查」確認。");
+            ui.postDelayed(this::finish, 2000);
         } catch (Throwable e) {
             say("✗ 出錯：" + e);
         }
