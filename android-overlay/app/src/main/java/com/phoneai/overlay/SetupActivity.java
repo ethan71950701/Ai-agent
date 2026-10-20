@@ -147,9 +147,10 @@ public class SetupActivity extends Activity {
                 say("→ 啟動 Termux 一次，讓它解開基本環境（Termux 會跳到前景，完成後我會切回來）…");
                 Maintenance.suRun("am start -n com.termux/com.termux.app.TermuxActivity");
                 boolean ok = false;
-                for (int i = 0; i < 90 && !ok; i++) {   // 最多等 3 分鐘
+                for (int i = 0; i < 90 && !ok; i++) {   // 最多等 3 分鐘；第一次開 Termux 會解壓基本環境，每 10 秒告訴你還在等
                     try { Thread.sleep(2000); } catch (InterruptedException ignored) { }
                     ok = Maintenance.suRun("[ -x " + P + "bash ] && echo yes").contains("yes");
+                    if (!ok && i % 5 == 4) say("  仍在等 Termux 初始化（第一次可能要幾分鐘）…");
                 }
                 Maintenance.suRun("am start -n com.phoneai.overlay/.SetupActivity");
                 if (!ok) { fail("Termux 的基本環境沒有在 3 分鐘內出現：請手動開一次 Termux，等它跑完再按「繼續」"); return; }
@@ -162,7 +163,9 @@ public class SetupActivity extends Activity {
                 say("→ 安裝套件（pkg update／upgrade／install，約 3～10 分鐘，輸出只顯示最後幾行）…");
                 final int[] n = {0};
                 int code = Maintenance.suStream(Maintenance.termuxScript(
-                        "yes | pkg update -y 2>&1; yes | pkg upgrade -y 2>&1; pkg install -y git python imagemagick wget unzip termux-api 2>&1"),
+                        // </dev/null：不讓套件管理員等待鍵盤輸入（平板上最容易卡在這裡）；timeout：單一步最多 15 分鐘
+                        "timeout 900 pkg update -y </dev/null 2>&1; timeout 900 pkg upgrade -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold </dev/null 2>&1; "
+                                + "timeout 900 pkg install -y git python imagemagick wget unzip termux-api </dev/null 2>&1"),
                         l -> { if (++n[0] % 8 == 0 || l.startsWith("E:")) say(l.length() > 90 ? l.substring(0, 90) : l); });
                 String chk = Maintenance.suRun("[ -x " + P + "python ] && [ -x " + P + "git ] && [ -x " + P + "termux-notification ] && echo ok");
                 if (!chk.contains("ok")) { fail("套件沒有裝好（結束碼 " + code + "）：看上面最後幾行；網路不穩的話再按一次「繼續」"); return; }
