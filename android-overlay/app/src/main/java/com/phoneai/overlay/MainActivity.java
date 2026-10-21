@@ -316,6 +316,8 @@ public class MainActivity extends Activity {
         final int tabNow = i;
         final Runnable swap = () -> {
             if (tabNow != tab) return;
+            removeHomeBar();
+            removeHomeBar();
             box.removeAllViews();
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
@@ -340,7 +342,70 @@ public class MainActivity extends Activity {
     private LinearLayout hero;
     private String myTheme = "";
 
+    private View homeBar;
+
+    /** 首頁底部的輸入框：文字（送出）、麥克風（語音）。 */
+    private void showHomeBar() {
+        removeHomeBar();
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setCornerRadius(Ui.dp(this, 28));
+        gd.setColor(Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        bar.setBackground(gd);
+        bar.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setHint("問問看");
+        et.setSingleLine(true);
+        et.setBackground(null);
+        et.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+        et.setHintTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        et.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
+        Runnable send = () -> {
+            String t = et.getText().toString().trim();
+            if (t.isEmpty()) return;
+            et.setText("");
+            startActivity(new Intent(this, AskActivity.class).putExtra("text", t).putExtra("voice", false));
+        };
+        et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
+        bar.addView(et, new LinearLayout.LayoutParams(0, -2, 1f));
+        IconView mic = new IconView(this, "mic", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+        mic.setOnClickListener(v -> startActivity(new Intent(this, AskActivity.class)));
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44));
+        bar.addView(mic, mp);
+        android.widget.FrameLayout send44 = new android.widget.FrameLayout(this);
+        android.graphics.drawable.GradientDrawable cg = new android.graphics.drawable.GradientDrawable();
+        cg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        cg.setColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+        send44.setBackground(cg);
+        IconView arrow = new IconView(this, "chevron", Ui.attr(this, com.google.android.material.R.attr.colorOnPrimary));
+        send44.addView(arrow, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22), android.view.Gravity.CENTER));
+        send44.setOnClickListener(v -> send.run());
+        bar.addView(send44, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
+        lp.gravity = android.view.Gravity.BOTTOM;
+        lp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 96));   // 留在底部導覽列上方
+        ((android.view.ViewGroup) root).addView(bar, lp);
+        homeBar = bar;
+    }
+
+    private void removeHomeBar() {
+        if (homeBar != null && homeBar.getParent() != null) ((android.view.ViewGroup) homeBar.getParent()).removeView(homeBar);
+        homeBar = null;
+    }
+
     private void buildHome() {
+        TextView greet = new TextView(this);
+        greet.setText("你好，需要什麼幫忙？");
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28);
+        greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+        greet.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
+        gp.topMargin = Ui.dp(this, 40);
+        gp.bottomMargin = Ui.dp(this, 16);
+        box.addView(greet, gp);
         // 英雄區：用普通的 LinearLayout 加圓角背景（不用 MaterialCardView，避免它被撐高）
         hero = new LinearLayout(this);
         hero.setOrientation(LinearLayout.VERTICAL);
@@ -349,30 +414,7 @@ public class MainActivity extends Activity {
         heroBox = hero;
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
-        // 問問看：橫跨整個寬度的主要按鈕（不再懸浮在中間）
-        TextView greet = new TextView(this);
-        greet.setText("需要什麼幫忙？");
-        greet.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
-        greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
-        gp.topMargin = Ui.dp(this, 24);
-        box.addView(greet, gp);
-        LinearLayout askBox = new LinearLayout(this);
-        askBox.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams abp = new LinearLayout.LayoutParams(-1, -2);
-        abp.topMargin = Ui.dp(this, 12);
-        box.addView(askBox, abp);
-        askBox.addView(Ui.pill(this, "問問看", true, v -> startActivity(new Intent(this, AskActivity.class))),
-                new LinearLayout.LayoutParams(-1, Ui.dp(this, 56)));
-
-        // 試試說：幾個例子，點一下就打開問問看
-        Ui.section(this, box, "試試說");
-        LinearLayout ex = Ui.card(this, box);
-        String[][] examples = {{"clock", "現在幾點", "也可以問日期、星期"}, {"power", "電量多少", "也能問儲存空間、記憶體"},
-                {"wave", "開藍牙", "Wi-Fi、藍牙、自動旋轉、勿擾都行"}, {"note", "每天晚上 10 點告訴我電量", "定時回報，到時間會通知"}};
-        for (int i = 0; i < examples.length; i++)
-            Ui.row(this, ex, i, examples.length, examples[i][0], examples[i][1], examples[i][2], Ui.chevron(this),
-                    v -> startActivity(new Intent(this, AskActivity.class)));
+        showHomeBar();
     }
 
     /** 狀態小標籤（圖示＋文字）；沒完成的可以點進去設定。 */
@@ -568,6 +610,7 @@ public class MainActivity extends Activity {
         heroBg.setCornerRadius(Ui.dp(this, 24));
         heroBg.setColor(bg);
         hero.setBackground(heroBg);
+        hero.setVisibility(ok ? View.GONE : View.VISIBLE);   // 一切就緒就不顯示，有問題才出現
         heroBox.removeAllViews();
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);

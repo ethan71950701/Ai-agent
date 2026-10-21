@@ -271,6 +271,12 @@ public class AssistantSheet {
     // ---------- 進場 / 離場 ----------
 
     /** 開場：先從螢幕最上方放出光波、灑下光點（AuroraView.playIntro），波過去後光球和輸入列再浮上來。 */
+    /** 首頁輸入框送來的文字：直接填進面板並送出。 */
+    public void presetAndSend(String t) {
+        setText(t);
+        submit();
+    }
+
     public void enter() {
         current = this;
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下

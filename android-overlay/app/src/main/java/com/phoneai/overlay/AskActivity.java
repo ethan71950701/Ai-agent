@@ -16,6 +16,8 @@ public class AskActivity extends Activity {
         sheet = new AssistantSheet(this);
         setContentView(sheet.view());
         sheet.enter();
+        String preset = getIntent().getStringExtra("text");   // 首頁輸入框送來的文字：直接送出（不自動聽）
+        if (preset != null && !preset.isEmpty()) sheet.presetAndSend(preset);
         String q = getIntent().getStringExtra("question");
         if (q != null) sheet.setQuestion(q);   // agent2 要問使用者問題（ask_user）：回答問題模式
         String rt = getIntent().getStringExtra("reply_text");
