@@ -349,7 +349,7 @@ public class MainActivity extends Activity {
         heroBox.setOrientation(LinearLayout.VERTICAL);
         int p = Ui.dp(this, 20);
         heroBox.setPadding(p, p, p, Ui.dp(this, 14));
-        hero.addView(heroBox);
+        hero.addView(heroBox, new android.widget.FrameLayout.LayoutParams(-1, -2));   // 明確「包住內容」，不讓它填滿整張卡片
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
         Ui.section(this, box, "問問看");
