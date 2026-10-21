@@ -349,15 +349,30 @@ public class MainActivity extends Activity {
         heroBox = hero;
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
-        // 問問看：Material 風格的圓角按鈕，放在中間，點了開啟助理面板
+        // 問問看：橫跨整個寬度的主要按鈕（不再懸浮在中間）
+        TextView greet = new TextView(this);
+        greet.setText("需要什麼幫忙？");
+        greet.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium);
+        greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
+        gp.topMargin = Ui.dp(this, 24);
+        box.addView(greet, gp);
         LinearLayout askBox = new LinearLayout(this);
         askBox.setOrientation(LinearLayout.VERTICAL);
-        askBox.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
         LinearLayout.LayoutParams abp = new LinearLayout.LayoutParams(-1, -2);
-        abp.topMargin = Ui.dp(this, 24);
+        abp.topMargin = Ui.dp(this, 12);
         box.addView(askBox, abp);
         askBox.addView(Ui.pill(this, "問問看", true, v -> startActivity(new Intent(this, AskActivity.class))),
-                new LinearLayout.LayoutParams(-2, Ui.dp(this, 56)));
+                new LinearLayout.LayoutParams(-1, Ui.dp(this, 56)));
+
+        // 試試說：幾個例子，點一下就打開問問看
+        Ui.section(this, box, "試試說");
+        LinearLayout ex = Ui.card(this, box);
+        String[][] examples = {{"clock", "現在幾點", "也可以問日期、星期"}, {"power", "電量多少", "也能問儲存空間、記憶體"},
+                {"wave", "開藍牙", "Wi-Fi、藍牙、自動旋轉、勿擾都行"}, {"note", "每天晚上 10 點告訴我電量", "定時回報，到時間會通知"}};
+        for (int i = 0; i < examples.length; i++)
+            Ui.row(this, ex, i, examples.length, examples[i][0], examples[i][1], examples[i][2], Ui.chevron(this),
+                    v -> startActivity(new Intent(this, AskActivity.class)));
     }
 
     /** 狀態小標籤（圖示＋文字）；沒完成的可以點進去設定。 */
