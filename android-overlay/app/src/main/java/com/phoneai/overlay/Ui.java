@@ -134,7 +134,7 @@ final class Ui {
         ctl.setTitle(title);
         ctl.setCollapsedTitleTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         ctl.setExpandedTitleTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_DisplaySmall);
-        ctl.setExpandedTitleColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
+        ctl.setExpandedTitleColor(attr(a, com.google.android.material.R.attr.colorPrimary));   // 大標題用主題的強調色
         ctl.setCollapsedTitleTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
         ctl.setContentScrimColor(attr(a, com.google.android.material.R.attr.colorSurface));
         ctl.setExpandedTitleMarginStart(dp(a, 24));
@@ -201,8 +201,9 @@ final class Ui {
         h.setPadding(dp(c, 16), dp(c, 12), dp(c, 16), dp(c, 12));
 
         if (icon != null) {
-            Badge ic = new Badge(c, icon, 40, attr(c, com.google.android.material.R.attr.colorSecondaryContainer),
-                    attr(c, com.google.android.material.R.attr.colorOnSecondaryContainer));
+            // 設定列的圖示：中性底、主題強調色（跟功能頁一致）
+            Badge ic = new Badge(c, icon, 40, attr(c, com.google.android.material.R.attr.colorSurfaceContainerHighest),
+                    attr(c, com.google.android.material.R.attr.colorPrimary));
             ((LinearLayout.LayoutParams) ic.getLayoutParams()).rightMargin = dp(c, 16);
             h.addView(ic);
         }
