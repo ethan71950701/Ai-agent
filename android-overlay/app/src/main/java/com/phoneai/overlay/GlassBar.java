@@ -192,8 +192,8 @@ final class GlassBar extends FrameLayout {
         clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
-        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x38000000, (tintColor & 0xFFFFFF) | 0x1C000000}
-                        : new int[]{(tintColor & 0xFFFFFF) | 0x06000000, (tintColor & 0xFFFFFF) | 0x01000000},
+        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{0x00000000, 0x00000000}   // 透鏡不要底色
+                        : new int[]{(tintColor & 0xFFFFFF) | 0x40000000, (tintColor & 0xFFFFFF) | 0x30000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
         bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(glowColor & 0xFFFFFF) | 0x00000000, (glowColor & 0xFFFFFF) | 0x26000000,
@@ -301,12 +301,6 @@ final class GlassBar extends FrameLayout {
     private void drawGlass(Canvas canvas, int w, int h) {
         if (lens && parentBar != null && GlassPrefs.lensBg) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
-            canvas.save();
-            canvas.clipPath(clip);
-            Paint base = new Paint(Paint.ANTI_ALIAS_FLAG);
-            base.setColor(bgColor);
-            canvas.drawPath(clip, base);        // 先鋪一層不透明底色，把底下原大小的圖示蓋住
-            canvas.restore();
             drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
@@ -322,7 +316,7 @@ final class GlassBar extends FrameLayout {
             bc = new Canvas(bmp);
         }
         // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
-        captureInto(bmp, bc, source, scale, bgColor);
+        captureInto(bmp, bc, source, scale, 0x00000000);   // 透明底：底欄本身不蓋住底下的內容
         if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
         configure(shader, lens ? skewNow : 0f);
         node.setRenderEffect(currentEffect());

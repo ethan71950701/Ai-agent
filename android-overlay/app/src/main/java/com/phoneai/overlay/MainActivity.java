@@ -134,14 +134,6 @@ public class MainActivity extends Activity {
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
-        // 底欄底下先鋪一塊近黑的底板（同樣的位置與圓角）：玻璃折射到的底層就是黑的
-        android.view.View plate = new android.view.View(this);
-        android.graphics.drawable.GradientDrawable pg = new android.graphics.drawable.GradientDrawable();
-        pg.setCornerRadius(Ui.dp(this, 34));
-        pg.setColor(0xD00A0B0C);   // 約 82% 不透明：底下的內容只隱約看得到一點
-        plate.setBackground(pg);
-        navPlate = plate;
-        ((android.view.ViewGroup) root).addView(plate, barParams());
         navBar = floatingBar();
         ((android.view.ViewGroup) root).addView(navBar, barParams());
         setContentView(root);
@@ -167,19 +159,18 @@ public class MainActivity extends Activity {
     }
 
     /** 懸浮底欄：浮在內容上方的圓角膠囊；選中的分頁有一個會滑動、拉伸的淡色圓底（彈簧動畫），往下捲時整條收起、往上捲再出現。 */
-    private View navBar, navPlate;
+    private View navBar;
 
-    /** 底欄上下移動時，黑底板跟著動。 */
+    /** 底欄上下移動。 */
     private void moveNav(float to, float stiff, float damp) {
         Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, to, stiff, damp);
-        if (navPlate != null) Anim.spring(navPlate, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, to, stiff, damp);
     }
 
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
-        final GlassBar card = new GlassBar(this, 0xFF0E1012,   // 底色不透明的近黑（玻璃折射仍保留）
-                0x1FFFFFFF,
+        final GlassBar card = new GlassBar(this, 0xFF0E1012,   // 底欄是透明玻璃（像酷安），只有很淡的暗色
+                0x00000000,
                 0x44FFFFFF, Ui.dp(this, 34), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
