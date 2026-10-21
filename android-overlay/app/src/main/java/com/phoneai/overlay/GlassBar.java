@@ -45,10 +45,10 @@ final class GlassBar extends FrameLayout {
             + "  float2 dir = normalize(p - c + float2(0.001));\n"
             + "  float2 z = p;\n"
             + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
-            + "  float2 sp = z - dir * bend * depth * 0.75 * refr * amount;\n"
+            + "  float2 sp = clamp(z - dir * bend * depth * 0.75 * refr * amount, float2(0.0), size);\n"   // 限制在內容範圍內，免得邊緣取到透明的像素而發色
             + "  half4 col = content.eval(sp);\n"
-            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
-            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
+            + "  col.b = content.eval(clamp(z - dir * bend * depth * 1.0 * refr * chroma * amount, float2(0.0), size)).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
+            + "  col.r = content.eval(clamp(z - dir * bend * depth * 0.5 * refr * chroma * amount, float2(0.0), size)).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + satBoost * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
