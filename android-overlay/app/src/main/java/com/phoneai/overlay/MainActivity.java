@@ -349,21 +349,15 @@ public class MainActivity extends Activity {
         heroBox = hero;
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
-        // 問問看：中間一顆光球，點一下開啟助理面板（跟原本的光球是同一種）
-        LinearLayout orbBox = new LinearLayout(this);
-        orbBox.setOrientation(LinearLayout.VERTICAL);
-        orbBox.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
-        LinearLayout.LayoutParams obp = new LinearLayout.LayoutParams(-1, -2);
-        obp.topMargin = Ui.dp(this, 28);
-        box.addView(orbBox, obp);
-        OrbView orb = new OrbView(this);
-        orb.setOnClickListener(v -> startActivity(new Intent(this, AskActivity.class)));
-        orbBox.addView(orb, new LinearLayout.LayoutParams(Ui.dp(this, 120), Ui.dp(this, 120)));
-        TextView hint = Ui.body(this, "點一下問助理");
-        hint.setGravity(android.view.Gravity.CENTER);
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-2, -2);
-        hp.topMargin = Ui.dp(this, 10);
-        orbBox.addView(hint, hp);
+        // 問問看：Material 風格的圓角按鈕，放在中間，點了開啟助理面板
+        LinearLayout askBox = new LinearLayout(this);
+        askBox.setOrientation(LinearLayout.VERTICAL);
+        askBox.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        LinearLayout.LayoutParams abp = new LinearLayout.LayoutParams(-1, -2);
+        abp.topMargin = Ui.dp(this, 24);
+        box.addView(askBox, abp);
+        askBox.addView(Ui.pill(this, "問問看", true, v -> startActivity(new Intent(this, AskActivity.class))),
+                new LinearLayout.LayoutParams(-2, Ui.dp(this, 56)));
     }
 
     /** 狀態小標籤（圖示＋文字）；沒完成的可以點進去設定。 */
