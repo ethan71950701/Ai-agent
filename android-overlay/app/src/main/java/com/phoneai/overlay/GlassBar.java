@@ -78,6 +78,8 @@ final class GlassBar extends FrameLayout {
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
+    /** 按住時透鏡的白邊（純白、較寬，畫進折射的內容裡）。 */
+    private final Paint lightEdge = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint tint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint inner = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -370,10 +372,11 @@ final class GlassBar extends FrameLayout {
         // 按住時的白邊畫進折射的內容裡，所以會跟著透鏡的邊緣一起被折射（靜止時不畫）
         float k = Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST)));
         if (k > 0f) {
-            rim.setStrokeWidth(Ui.dp(getContext(), 3));
-            rim.setAlpha(Math.round(255 * k));
-            rc.drawPath(clip, rim);
-            rim.setAlpha(255);
+            lightEdge.setStyle(Paint.Style.STROKE);
+            lightEdge.setColor(0xFFFFFFFF);
+            lightEdge.setStrokeWidth(Ui.dp(getContext(), 6));
+            lightEdge.setAlpha(Math.round(255 * k));
+            rc.drawPath(clip, lightEdge);
         }
         underNode.endRecording();
         canvas.save();
