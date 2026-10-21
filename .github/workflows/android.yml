@@ -74,7 +74,7 @@ jobs:
           exit 1
       - name: Build debug APK
         working-directory: android-overlay
-        run: gradle --no-daemon assembleDebug -PgitSha=${GITHUB_SHA::7}
+        run: ./gradlew --no-daemon assembleDebug -PgitSha="${GITHUB_SHA::7}"
       - uses: actions/upload-artifact@v4
         with:
           name: phoneai-overlay-apk
