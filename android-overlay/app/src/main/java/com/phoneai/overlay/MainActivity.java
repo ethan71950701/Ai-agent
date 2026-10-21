@@ -92,8 +92,6 @@ public class MainActivity extends Activity {
         if (barDragging) return;
         barDragging = true;
         Anim.cancel(indicator);
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1.2f, 500f, 0.6f);
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1.4f, 500f, 0.6f);
         lensTo(1f);
         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X,
                 Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 8)) / 2f)), 380f, 0.7f);
@@ -152,7 +150,7 @@ public class MainActivity extends Activity {
         int screenW = getResources().getDisplayMetrics().widthPixels;
         int width = Math.min(screenW - Ui.dp(this, 48), Ui.dp(this, 360));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
-                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(width, Ui.dp(this, 68));
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(width, Ui.dp(this, 58));
         lp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
         lp.setMargins(0, 0, 0, Ui.dp(this, 16));
         return lp;
@@ -171,7 +169,7 @@ public class MainActivity extends Activity {
         // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
         final GlassBar card = new GlassBar(this, 0xFF0E1012,   // 底欄是透明玻璃（像酷安），只有很淡的暗色
                 0x00000000,
-                0x44FFFFFF, Ui.dp(this, 34), false);
+                0x44FFFFFF, Ui.dp(this, 29), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
         card.setGlowColor(0xFFFFFFFF);   // 玻璃的光用中性白，不跟主題色
@@ -179,7 +177,7 @@ public class MainActivity extends Activity {
         final LensClip fl = new LensClip(this);
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
-                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 30), true);
+                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 24), true);
         lens.setSource(root);   // 透鏡保留折射與形變
         lens.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
@@ -193,7 +191,7 @@ public class MainActivity extends Activity {
         final LinearLayout h2 = tabRow(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         fl.addView(h, new android.widget.FrameLayout.LayoutParams(-1, -1));
         fl.addView(h2, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 58), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
+        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 48), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
         fl.set(h2, indicator);
         lens.setIconSource(h2);   // 按住時放大的圖示：就是底欄那排主色圖示
         card.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
@@ -238,18 +236,7 @@ public class MainActivity extends Activity {
                         enterDrag(ex, min, max);
                     }
                     if (!barDragging) return true;
-                    // 液體的形變：移動越快，按鈕沿移動方向被拉長、上下被壓扁
-                    long nowMs = android.os.SystemClock.uptimeMillis();
-                    if (dragT != 0 && nowMs > dragT) {
-                        float vDp = Math.abs(ex - dragX) / getResources().getDisplayMetrics().density / (nowMs - dragT);
-                        dragV = dragV * 0.7f + vDp * 0.3f;
-                    }
-                    dragX = ex;
-                    dragT = nowMs;
-                    float st = Math.min(0.5f, dragV * 0.6f);   // 拖動越快，拉伸與壓扁越明顯
                     Anim.cancel(indicator);
-                    indicator.setScaleX(1.2f + st);
-                    indicator.setScaleY(1.4f - st * 0.6f);
                     indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 8)) / 2f)));
                     return true;
                 }
@@ -262,10 +249,8 @@ public class MainActivity extends Activity {
                         return true;
                     }
                     barDragging = false;
-                    Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 400f, 0.6f);
                     lensTo(GlassBar.REST);
                     if (e.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL || idx == tab) {
-                        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 400f, 0.6f);
                         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X, barPad + tab * barItemW + Ui.dp(this, 4), 400f, 0.65f);
                     } else {
                         showTab(idx);

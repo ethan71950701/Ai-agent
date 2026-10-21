@@ -34,6 +34,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float skew;\n"
             + "uniform float refr;\n"
             + "uniform float chroma;\n"
+            + "uniform float brightBoost;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
             + "  float2 q = abs(p - c) - (c - float2(radius));\n"
@@ -48,7 +49,7 @@ final class GlassBar extends FrameLayout {
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
-            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
+            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -232,6 +233,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
+        sh.setFloatUniform("brightBoost", lens ? 0f : 0.03f);   // 透鏡按住時不加邊緣白光
     }
 
     @Override
