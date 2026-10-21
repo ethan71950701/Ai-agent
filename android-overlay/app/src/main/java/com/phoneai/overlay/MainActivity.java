@@ -92,8 +92,8 @@ public class MainActivity extends Activity {
         if (barDragging) return;
         barDragging = true;
         Anim.cancel(indicator);
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1.2f, 500f, 0.6f);   // 按住時上層按鈕放大
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1.25f, 500f, 0.6f);
+        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.pressX, 500f, 0.6f);   // 按住時上層按鈕放大（倍數在設定頁調）
+        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, GlassPrefs.pressY, 500f, 0.6f);
         lensTo(1f);
         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X,
                 Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)), 380f, 0.7f);
@@ -584,6 +584,8 @@ public class MainActivity extends Activity {
         glassSlider(g, "色散（只有上層透鏡）", "透鏡邊緣的彩色光邊，0 = 沒有", 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
         glassSlider(g, "模糊程度（dp）", "底欄背景的模糊半徑", 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
         glassSlider(g, "圖示放大倍率", "按住時圖示放大的量（0.22 ≈ 1.22 倍）", 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
+        glassSlider(g, "按住放大（左右）", "按住時上層按鈕橫向放大的倍數", 1f, 1.6f, GlassPrefs.pressX, GlassPrefs.K_PRESS_X);
+        glassSlider(g, "按住放大（上下）", "按住時上層按鈕直向放大的倍數", 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
         glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
         glassSwitch(g, 0, 5, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
         glassSwitch(g, 1, 5, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
