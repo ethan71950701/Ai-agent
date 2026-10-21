@@ -307,9 +307,10 @@ final class Ui {
         LinearLayout v = new LinearLayout(c);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setPadding(dp(c, 20), dp(c, 20), dp(c, 20), dp(c, 20));
+        // 一般卡片：圖示底是中性色，圖示用主題的強調色（跟參考的樣式一樣）；主要卡片照舊
         Badge ic = new Badge(c, t.icon, 56,
-                attr(c, t.emph ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorSecondaryContainer),
-                attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimary : com.google.android.material.R.attr.colorOnSecondaryContainer));
+                attr(c, t.emph ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorSurfaceContainerHighest),
+                attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimary : com.google.android.material.R.attr.colorPrimary));
         v.addView(ic);
         int on = attr(c, t.emph ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnSurface);
         TextView tt = new TextView(c);
