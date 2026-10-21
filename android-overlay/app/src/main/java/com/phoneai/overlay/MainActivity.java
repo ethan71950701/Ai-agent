@@ -605,7 +605,6 @@ public class MainActivity extends Activity {
 
         g = Ui.expandGroup(this, box, "sparkle", "底欄玻璃（進階）", "折射、模糊、放大與開關，拖動即時生效", false);
         glassSlider(g, "折射強度", "邊緣彎曲的程度", 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
-        glassSlider(g, "色散（紅藍錯位）", "邊緣的彩色光暈，0 = 沒有", 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
         glassSlider(g, "模糊程度（dp）", "底欄背景的模糊半徑", 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
         glassSlider(g, "圖示放大倍率", "按住時圖示放大的量（0.22 ≈ 1.22 倍）", 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
         glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
