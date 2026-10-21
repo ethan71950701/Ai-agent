@@ -135,16 +135,6 @@ final class GlassBar extends FrameLayout {
         bc.restore();
     }
 
-    /** 按住時透鏡外圈的淺色邊：靜止時不顯示，按得越用力越清楚，讓上層玻璃看得出來。 */
-    private void drawRim(Canvas canvas) {
-        float k = Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST)));
-        if (k <= 0f) return;
-        rim.setStrokeWidth(Ui.dp(getContext(), 2));
-        rim.setAlpha(Math.round(255 * k));
-        canvas.drawPath(clip, rim);
-        rim.setAlpha(255);
-    }
-
     /** 底欄外圈一道很細的淺色邊（像酷安）。 */
     private void drawEdge(Canvas canvas) {
         rim.setStrokeWidth(Ui.dp(getContext(), 1));
@@ -271,7 +261,6 @@ final class GlassBar extends FrameLayout {
         } else {
             drawFlat(canvas);
         }
-        if (lens) drawRim(canvas);
         if (!lens) drawEdge(canvas);
         super.dispatchDraw(canvas);
         postInvalidateOnAnimation();   // 每一幀都重新抓背景：底下的頁面一動，折射就跟著動（以前只在 kick 後約一秒更新，所以會停住）
@@ -378,6 +367,14 @@ final class GlassBar extends FrameLayout {
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
                 rect, bmpPaint);
+        // 按住時的白邊畫進折射的內容裡，所以會跟著透鏡的邊緣一起被折射（靜止時不畫）
+        float k = Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST)));
+        if (k > 0f) {
+            rim.setStrokeWidth(Ui.dp(getContext(), 3));
+            rim.setAlpha(Math.round(255 * k));
+            rc.drawPath(clip, rim);
+            rim.setAlpha(255);
+        }
         underNode.endRecording();
         canvas.save();
         canvas.clipPath(clip);
