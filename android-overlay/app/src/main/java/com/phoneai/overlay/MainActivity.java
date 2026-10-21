@@ -134,7 +134,8 @@ public class MainActivity extends Activity {
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
-        ((android.view.ViewGroup) root).addView(floatingBar(), barParams());
+        navBar = floatingBar();
+        ((android.view.ViewGroup) root).addView(navBar, barParams());
         setContentView(root);
         showTab(tab);
         if (b == null && !cfg().getBoolean("onboarded", false)) startActivity(new Intent(this, OnboardingActivity.class));   // 第一次開啟：先看教學
@@ -158,9 +159,11 @@ public class MainActivity extends Activity {
     }
 
     /** 懸浮底欄：浮在內容上方的圓角膠囊；選中的分頁有一個會滑動、拉伸的淡色圓底（彈簧動畫），往下捲時整條收起、往上捲再出現。 */
+    private View navBar;
+
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
-        final GlassBar card = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
+        final GlassBar card = new GlassBar(this, 0xF0101214,   // 幾乎黑的背板：只透出一點點底下的文字
                 (Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHighest) & 0xFFFFFF) | 0x59000000,   // 玻璃上的淡淡底色
                 (onS & 0xFFFFFF) | 0x40000000, Ui.dp(this, 34), false);
         card.setSource(root);
@@ -322,7 +325,7 @@ public class MainActivity extends Activity {
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
             box.setAlpha(1f);
-            Anim.cascade(box, 14, dir * Ui.dp(this, 36), Ui.dp(this, prev < 0 ? 24 : 12), 35);
+            if (tabNow != 0) Anim.cascade(box, 14, dir * Ui.dp(this, 36), Ui.dp(this, prev < 0 ? 24 : 12), 35);
             // 保險：進場動畫結束後，把每一項強制恢復為完全顯示（避免動畫停在透明，內容看不見、點不到）
             box.postDelayed(() -> {
                 for (int k = 0; k < box.getChildCount(); k++) {
@@ -371,7 +374,7 @@ public class MainActivity extends Activity {
         et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
         bar.addView(et, new LinearLayout.LayoutParams(0, -2, 1f));
         IconView mic = new IconView(this, "mic", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-        mic.setOnClickListener(v -> startActivity(new Intent(this, AskActivity.class)));
+        mic.setOnClickListener(v -> homeVoice());   // 語音直接在首頁錄音、辨識、回答（不開面板）
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44));
         bar.addView(mic, mp);
         android.widget.FrameLayout send44 = new android.widget.FrameLayout(this);
@@ -392,13 +395,14 @@ public class MainActivity extends Activity {
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams flp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 220));
         flp.gravity = android.view.Gravity.BOTTOM;
-        ((android.view.ViewGroup) root).addView(fade, 0, flp);   // 放最底層：不蓋住底部導覽列
+        int navIdx = navBar != null ? ((android.view.ViewGroup) root).indexOfChild(navBar) : ((android.view.ViewGroup) root).getChildCount();
+        ((android.view.ViewGroup) root).addView(fade, navIdx, flp);   // 在底欄下面（不蓋住底欄）
         ParticleView particles = new ParticleView(this);
         particles.setColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams plp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 200));
         plp.gravity = android.view.Gravity.BOTTOM;
-        ((android.view.ViewGroup) root).addView(particles, 1, plp);   // 粒子在漸層之上
+        ((android.view.ViewGroup) root).addView(particles, navIdx + 1, plp);   // 粒子在漸層之上、底欄之下
         homeFx = new android.view.View[]{fade, particles};
 
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
@@ -430,6 +434,40 @@ public class MainActivity extends Activity {
 
     private TextView answerView;
 
+    /** 首頁麥克風：在頁面上錄音（離線辨識），辨識出的文字直接回答。 */
+    private void homeVoice() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 31);
+            return;
+        }
+        if (!SherpaEngine.ready(this)) {
+            android.widget.Toast.makeText(this, "請先到引導頁下載語音辨識模型", android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText("我在聽…"); }
+        SpeechCapture.start(new SpeechCapture.Cb() {
+            @Override public void onListening() { }
+            @Override public void onLevel(float v) { }
+            @Override public void onDone(short[] pcm) {
+                if (pcm == null) { showAnswer("沒聽到聲音，再按一次麥克風"); return; }
+                new Thread(() -> {
+                    String text = "";
+                    try { text = SherpaEngine.recognize(MainActivity.this, SpeechCapture.toFloat(pcm), SpeechCapture.RATE); }
+                    catch (Throwable e) { text = ""; }
+                    final String t = text == null ? "" : text.trim();
+                    runOnUiThread(() -> { if (t.isEmpty()) showAnswer("沒聽清楚，再按一次麥克風"); else homeAsk(t); });
+                }, "home-voice").start();
+            }
+            @Override public void onError(String msg) { showAnswer("錄音失敗：" + msg); }
+        });
+    }
+
+    private void showAnswer(String text) {
+        if (answerView == null) return;
+        answerView.setVisibility(View.VISIBLE);
+        answerView.setText(text);
+    }
+
     private android.view.View[] homeFx;
 
     private void removeHomeBar() {
@@ -445,6 +483,7 @@ public class MainActivity extends Activity {
         greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 34);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
+        greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
         gp.topMargin = Ui.dp(this, 96);
         gp.bottomMargin = Ui.dp(this, 16);

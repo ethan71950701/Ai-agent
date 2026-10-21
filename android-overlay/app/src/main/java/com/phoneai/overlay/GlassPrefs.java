@@ -10,7 +10,7 @@ import android.content.SharedPreferences;
 final class GlassPrefs {
     private GlassPrefs() { }
 
-    static float refr = 0.6f, chroma = 0f, zoom = 0.22f, skew = 1f, blur = 12f;   // 預設：折射較輕、無色散（不要彩色光邊），比較通透
+    static float refr = 0.6f, chroma = 0f, zoom = 0.22f, skew = 1f, blur = 4f;   // 預設：折射較輕、無色散（不要彩色光邊），比較通透
     static boolean magnify = true, iconRefr = true, lensBg = true, skewOn = true;   // 圖示折射預設開啟
 
     static final String K_REFR = "g_refr", K_CHROMA = "g_chroma", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
@@ -27,7 +27,7 @@ final class GlassPrefs {
         chroma = p.getFloat(K_CHROMA, 0f);
         zoom = p.getFloat(K_ZOOM, 0.22f);
         skew = p.getFloat(K_SKEW, 1f);
-        blur = p.getFloat(K_BLUR, 12f);
+        blur = p.getFloat(K_BLUR, 4f);
         magnify = p.getBoolean(K_MAGNIFY, true);
         iconRefr = p.getBoolean(K_ICON_REFR, true);
         lensBg = p.getBoolean(K_LENS_BG, true);

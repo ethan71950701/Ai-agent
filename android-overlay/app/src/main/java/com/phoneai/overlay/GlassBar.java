@@ -135,7 +135,7 @@ final class GlassBar extends FrameLayout {
     private float glowAmount;
 
     void setGlowAmount(float a) {
-        glowAmount = a;
+        glowAmount = 0f;   // 按下發光已取消（底欄保持安靜）
         invalidate();
     }
 
@@ -152,7 +152,7 @@ final class GlassBar extends FrameLayout {
     }
 
     void setPressGlow(float p) {
-        pressGlow = Math.max(0f, Math.min(1f, p));
+        pressGlow = 0f;   // 按下發光已取消
         invalidate();
     }
 
