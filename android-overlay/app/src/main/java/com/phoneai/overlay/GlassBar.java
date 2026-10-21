@@ -246,7 +246,7 @@ final class GlassBar extends FrameLayout {
             drawFlat(canvas);
         }
         super.dispatchDraw(canvas);
-        if (SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();
+        postInvalidateOnAnimation();   // 每一幀都重新抓背景：底下的頁面一動，折射就跟著動（以前只在 kick 後約一秒更新，所以會停住）
     }
 
     private float lastTx, skewNow;
