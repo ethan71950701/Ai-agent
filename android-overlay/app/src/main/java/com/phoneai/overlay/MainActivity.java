@@ -163,9 +163,10 @@ public class MainActivity extends Activity {
 
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
-        final GlassBar card = new GlassBar(this, 0xF0101214,   // 幾乎黑的背板：只透出一點點底下的文字
-                (Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHighest) & 0xFFFFFF) | 0x59000000,   // 玻璃上的淡淡底色
-                (onS & 0xFFFFFF) | 0x40000000, Ui.dp(this, 34), false);
+        // 玻璃感（不截取畫面，不會卡）：半透明深色底 + 淡淡的白色光面 + 細亮邊
+        final GlassBar card = new GlassBar(this, 0xB8101214,
+                0x1FFFFFFF,
+                0x44FFFFFF, Ui.dp(this, 34), false);
         card.setSource(null);   // 底欄不再即時截取底下畫面做模糊（會卡），改為純色背板
         glass = card;
         card.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
@@ -485,7 +486,7 @@ public class MainActivity extends Activity {
         greet.setGravity(android.view.Gravity.CENTER);
         greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
-        gp.topMargin = Ui.dp(this, 96);
+        gp.topMargin = Ui.dp(this, 48);
         gp.bottomMargin = Ui.dp(this, 16);
         box.addView(greet, gp);
         answerView = new TextView(this);   // 回答顯示在問候語下面
