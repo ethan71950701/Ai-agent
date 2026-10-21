@@ -12,12 +12,13 @@ import com.google.android.material.color.DynamicColorsOptions;
 /** 套用主題色：開了「莫奈取色」就跟桌布走；沒開就用使用者選的種子色產生整套配色。只套在 App 自己的畫面，不動助理面板。 */
 public class App extends Application {
     // 18 色：淺一點（使用者覺得太深）。排列：第一排 5 色（前面再加一個「莫奈」），第二排 7 色，第三排 6 色
+    // 主題色：KernelSU 的 15 個主色（manager/…/ui/theme/Colors.kt 的 keyColorOptions）
     static final int[] SEEDS = {
-            0xFF4FC3F7, 0xFF7986CB, 0xFFBA68C8, 0xFFF06292, 0xFFEF5350,
-            0xFFFF7043, 0xFFFFA726, 0xFFFFCA28, 0xFFD4E157, 0xFF9CCC65, 0xFF66BB6A, 0xFF26A69A, 0xFF26C6DA,
-            0xFF42A5F5, 0xFF78909C, 0xFFA1887F, 0xFFF48FB1, 0xFFB39DDB};
-    static final String[] SEED_NAMES = {"天藍", "靛藍", "紫", "粉", "紅", "橙紅", "橙", "琥珀", "黃綠", "青檸", "綠", "翡翠", "青",
-            "水藍", "灰藍", "棕", "玫瑰", "薰衣草"};
+            0xFFF44336, 0xFFE91E63, 0xFF9C27B0, 0xFF673AB7, 0xFF3F51B5,
+            0xFF2196F3, 0xFF00BCD4, 0xFF009688, 0xFF4FAF50, 0xFFFFEB3B,
+            0xFFFFC107, 0xFFFF9800, 0xFF795548, 0xFF607D8F, 0xFFFF9CA8};
+    static final String[] SEED_NAMES = {"紅", "粉紅", "紫", "深紫", "靛藍", "藍", "青", "藍綠", "綠", "黃",
+            "琥珀", "橘", "棕", "灰藍", "粉"};
 
     /** 目前選的主題（莫奈或哪一色）；比對它就知道畫面是不是已經是最新的主題。 */
     static String themeKey(Context c) {

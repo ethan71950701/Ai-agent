@@ -430,7 +430,7 @@ final class Ui {
         LinearLayout inner = card(a, parent);
         LinearLayout grid = new LinearLayout(a);
         grid.setOrientation(LinearLayout.VERTICAL);
-        int[] counts = {5, 7, 6};
+        int[] counts = {4, 5, 6};   // 15 個主色，莫奈格子放在第一排
         int k = 0;
         for (int r = 0; r < 3; r++) {
             LinearLayout row = new LinearLayout(a);
