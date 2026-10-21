@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
-        final GlassBar card = new GlassBar(this, 0xE8101214,
+        final GlassBar card = new GlassBar(this, 0xFF0E1012,   // 底色不透明的近黑（玻璃折射仍保留）
                 0x1FFFFFFF,
                 0x44FFFFFF, Ui.dp(this, 34), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
@@ -322,7 +322,8 @@ public class MainActivity extends Activity {
             if (tabNow != tab) return;
             removeHomeBar();
             removeHomeBar();
-            box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間，才不會能往下滑
+            box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間
+            setHomeScroll(tabNow != 0);
             box.removeAllViews();
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
@@ -348,6 +349,25 @@ public class MainActivity extends Activity {
     private String myTheme = "";
 
     private View homeBar;
+
+    /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
+    private void setHomeScroll(boolean on) {
+        if (root == null) return;
+        View bar = ((android.view.ViewGroup) root).getChildAt(0);
+        if (bar instanceof com.google.android.material.appbar.AppBarLayout)
+            for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
+                View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
+                if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams)
+                    ((com.google.android.material.appbar.AppBarLayout.LayoutParams) c.getLayoutParams()).setScrollFlags(
+                            on ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                               | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED : 0);
+            }
+        if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
+            androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
+            sv.setNestedScrollingEnabled(on);
+            sv.setOverScrollMode(on ? View.OVER_SCROLL_IF_CONTENT_SCROLLS : View.OVER_SCROLL_NEVER);
+        }
+    }
 
     /** 首頁底部的輸入框：文字（送出）、麥克風（語音）。 */
     private void showHomeBar() {
@@ -392,7 +412,7 @@ public class MainActivity extends Activity {
         final AuroraView aurora = new AuroraView(this);
         aurora.setEnergy(0.3f);
         ((android.view.ViewGroup) root).addView(aurora, 0, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1));
-        root.post(() -> aurora.setGlowY(root.getHeight() - Ui.dp(this, 40)));
+        root.post(() -> aurora.setGlowY(root.getHeight() - Ui.dp(this, 200)));   // 光暈提高，不被底欄擋住
         homeFx = new android.view.View[]{aurora};
 
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
