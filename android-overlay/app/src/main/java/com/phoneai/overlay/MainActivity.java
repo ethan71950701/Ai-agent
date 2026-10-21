@@ -569,22 +569,13 @@ public class MainActivity extends Activity {
         top.addView(tx, new LinearLayout.LayoutParams(0, -2, 1f));
         heroBox.addView(top);
 
-        View[] chips = {
-            chip("懸浮層", ov, on, v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
-            chip("通知", nt, on, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
-            chip("無障礙", a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))};
-        for (int i = 0; i < chips.length; i += 2) {
-            LinearLayout r = new LinearLayout(this);
-            r.setOrientation(LinearLayout.HORIZONTAL);
-            for (int k = 0; k < 2; k++) {
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
-                lp.setMargins(k == 0 ? 0 : Ui.dp(this, 4), 0, k == 0 ? Ui.dp(this, 4) : 0, 0);
-                if (i + k < chips.length) r.addView(chips[i + k], lp);
-                else r.addView(new View(this), lp);
-            }
-            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
-            rp.topMargin = Ui.dp(this, 10);
-            heroBox.addView(r, rp);
-        }
+        // 三個權限狀態：一列一項（跟功能頁同樣的列），沒有完成的點下去可以設定
+        String[][] items = {{"layers", "懸浮層", ov ? "已開啟" : "尚未開啟"}, {"bell", "通知", nt ? "已允許" : "尚未允許"}, {"shield", "無障礙", a11y ? "已開啟" : "尚未開啟"}};
+        View.OnClickListener[] fixes = {
+            v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))),
+            v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1),
+            v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))};
+        for (int i2 = 0; i2 < items.length; i2++)
+            Ui.row(this, heroBox, i2, items.length, items[i2][0], items[i2][1], items[i2][2], null, fixes[i2]);
     }
 }
