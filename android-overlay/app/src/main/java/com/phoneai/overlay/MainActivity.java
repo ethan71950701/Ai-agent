@@ -546,10 +546,11 @@ public class MainActivity extends Activity {
         boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         boolean a11y = A11yGuard.listed(this);
         boolean ok = ov && a11y;
-        int bg = Ui.attr(this, ok ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorErrorContainer);
-        int on = Ui.attr(this, ok ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnErrorContainer);
+        // 中性底色：英雄區與權限格子都用表面色，主色只留給按鈕；狀態用文字與圖示表示
+        int bg = Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHigh);
+        int on = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         android.graphics.drawable.GradientDrawable heroBg = new android.graphics.drawable.GradientDrawable();
-        heroBg.setCornerRadius(Ui.dp(this, 32));
+        heroBg.setCornerRadius(Ui.dp(this, 24));
         heroBg.setColor(bg);
         hero.setBackground(heroBg);
         heroBox.removeAllViews();
