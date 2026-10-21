@@ -349,10 +349,21 @@ public class MainActivity extends Activity {
         heroBox = hero;
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
-        Ui.section(this, box, "問問看");
-        LinearLayout askBox = Ui.card(this, box);
-        Ui.row(this, askBox, 0, 1, "sparkle", "問問看", "文字或語音問助理（點一下開啟）", Ui.chevron(this),
-                v -> startActivity(new Intent(this, AskActivity.class)));
+        // 問問看：中間一顆光球，點一下開啟助理面板（跟原本的光球是同一種）
+        LinearLayout orbBox = new LinearLayout(this);
+        orbBox.setOrientation(LinearLayout.VERTICAL);
+        orbBox.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+        LinearLayout.LayoutParams obp = new LinearLayout.LayoutParams(-1, -2);
+        obp.topMargin = Ui.dp(this, 28);
+        box.addView(orbBox, obp);
+        OrbView orb = new OrbView(this);
+        orb.setOnClickListener(v -> startActivity(new Intent(this, AskActivity.class)));
+        orbBox.addView(orb, new LinearLayout.LayoutParams(Ui.dp(this, 120), Ui.dp(this, 120)));
+        TextView hint = Ui.body(this, "點一下問助理");
+        hint.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-2, -2);
+        hp.topMargin = Ui.dp(this, 10);
+        orbBox.addView(hint, hp);
     }
 
     /** 狀態小標籤（圖示＋文字）；沒完成的可以點進去設定。 */
@@ -571,13 +582,23 @@ public class MainActivity extends Activity {
 
         View gap = new View(this);   // 狀態文字和下面的列之間留一點空間
         heroBox.addView(gap, new LinearLayout.LayoutParams(-1, Ui.dp(this, 16)));
-        // 三個權限狀態：一列一項（跟功能頁同樣的列），沒有完成的點下去可以設定
-        String[][] items = {{"layers", "懸浮層", ov ? "已開啟" : "尚未開啟"}, {"bell", "通知", nt ? "已允許" : "尚未允許"}, {"shield", "無障礙", a11y ? "已開啟" : "尚未開啟"}};
-        View.OnClickListener[] fixes = {
-            v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))),
-            v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1),
-            v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))};
-        for (int i2 = 0; i2 < items.length; i2++)
-            Ui.row(this, heroBox, i2, items.length, items[i2][0], items[i2][1], items[i2][2], null, fixes[i2]);
+        // 三個權限狀態：兩欄的圓角格子（沒完成的點下去可以設定）
+        View[] chips = {
+            chip("懸浮層", ov, on, v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
+            chip("通知", nt, on, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
+            chip("無障礙", a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))};
+        for (int i = 0; i < chips.length; i += 2) {
+            LinearLayout r = new LinearLayout(this);
+            r.setOrientation(LinearLayout.HORIZONTAL);
+            for (int k = 0; k < 2; k++) {
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+                lp.setMargins(k == 0 ? 0 : Ui.dp(this, 4), 0, k == 0 ? Ui.dp(this, 4) : 0, 0);
+                if (i + k < chips.length) r.addView(chips[i + k], lp);
+                else r.addView(new View(this), new LinearLayout.LayoutParams(0, 0, 1f));
+            }
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
+            rp.topMargin = Ui.dp(this, 10);
+            heroBox.addView(r, rp);
+        }
     }
 }
