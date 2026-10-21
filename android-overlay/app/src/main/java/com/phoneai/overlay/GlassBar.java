@@ -193,7 +193,7 @@ final class GlassBar extends FrameLayout {
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{0x00000000, 0x00000000}   // 透鏡不要底色
-                        : new int[]{(tintColor & 0xFFFFFF) | 0x40000000, (tintColor & 0xFFFFFF) | 0x30000000},
+                        : new int[]{(tintColor & 0xFFFFFF) | 0x80000000, (tintColor & 0xFFFFFF) | 0x66000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
         bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(glowColor & 0xFFFFFF) | 0x00000000, (glowColor & 0xFFFFFF) | 0x26000000,
@@ -343,8 +343,8 @@ final class GlassBar extends FrameLayout {
         int w = getWidth(), h = getHeight();
         float l = getX(), t = getY();
         underNode.setPosition(0, 0, w, h);
-        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density);   // 底下的背景永遠模糊（不隨按住變化）
-        underNode.setRenderEffect(RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
+        configure(shader, skewNow);
+        underNode.setRenderEffect(currentEffect());   // 透鏡底下的背景也經過折射（之前只有圖示折射）
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
                 rect, bmpPaint);
