@@ -54,10 +54,12 @@ final class GlassBar extends FrameLayout {
             + "  half4 col = content.eval(sp);\n"
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
-            + "  half3 slin = pow(max(col.rgb, half3(0.0)), half3(2.2));\n"                          // 飽和度在線性空間做（參考 AndroidLiquidGlassView），不動 alpha
+            + "  half ca = max(col.a, half(0.001));\n"
+            + "  half3 slin = pow(max(col.rgb / ca, half3(0.0)), half3(2.2));\n"                     // 先還原成一般顏色（預乘的顏色直接做次方會超出 alpha，產生綠、洋紅斑），再在線性空間調飽和度
             + "  half sy = dot(slin, half3(0.2126, 0.7152, 0.0722));\n"
             + "  slin = mix(half3(sy), slin, half(1.0 + 0.6 * amount));\n"
-            + "  col.rgb = clamp(pow(clamp(slin, half3(0.0), half3(1.0)), half3(1.0 / 2.2)) + half3(bend * brightBoost * amount) * col.a, half3(0.0), half3(1.0));\n"
+            + "  half3 sout = pow(clamp(slin, half3(0.0), half3(1.0)), half3(1.0 / 2.2));\n"
+            + "  col.rgb = clamp(sout * col.a + half3(bend * brightBoost * amount) * col.a, half3(0.0), half3(1.0));\n"   // 再乘回 alpha，alpha 本身不動
             + "  float3 nrm = normalize(float3(dir * hp, 1.0));\n"                                   // 表面法線
             + "  float3 hv = normalize(normalize(float3(-0.5, -0.6, 0.8)) + float3(0.0, 0.0, 1.0));\n"  // 光（左上）與視線的半角向量
             + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 300.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
