@@ -54,8 +54,11 @@ final class GlassBar extends FrameLayout {
             + "  half4 col = content.eval(sp);\n"
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
-            + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
-            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
+            + "  half a = max(col.a, half(0.001));\n"
+            + "  half3 sc = col.rgb / a;\n"                                                        // 先還原成一般顏色，飽和度才不會在半透明邊緣算出綠、洋紅斑（不能叫 c，shader 開頭已有 float2 c）
+            + "  half sl = dot(sc, half3(0.299, 0.587, 0.114));\n"
+            + "  sc = (half3(sl) + (sc - half3(sl)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount);\n"
+            + "  col.rgb = clamp(sc, half3(0.0), half3(1.0)) * col.a;\n"
             + "  float3 nrm = normalize(float3(dir * hp, 1.0));\n"                                   // 表面法線
             + "  float3 hv = normalize(normalize(float3(-0.5, -0.6, 0.8)) + float3(0.0, 0.0, 1.0));\n"  // 光（左上）與視線的半角向量
             + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 300.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
