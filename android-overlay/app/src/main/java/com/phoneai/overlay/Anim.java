@@ -30,6 +30,14 @@ final class Anim {
     }
 
     /** 取消這個 View 上還在跑的彈簧（手指要直接拖它時用）。 */
+    /** 只取消某一個屬性的彈簧（拖動時只停位移，不影響放大）。 */
+    static void cancel(View v, DynamicAnimation.ViewProperty prop) {
+        java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation> m = RUNNING.get(v);
+        if (m == null) return;
+        SpringAnimation a = m.get(prop);
+        if (a != null && a.isRunning()) a.cancel();
+    }
+
     static void cancel(View v) {
         java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation> m = RUNNING.get(v);
         if (m == null) return;

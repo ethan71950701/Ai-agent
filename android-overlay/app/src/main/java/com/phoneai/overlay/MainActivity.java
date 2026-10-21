@@ -238,7 +238,7 @@ public class MainActivity extends Activity {
                         enterDrag(ex, min, max);
                     }
                     if (!barDragging) return true;
-                    Anim.cancel(indicator);
+                    Anim.cancel(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X);   // 只停位移，放大的彈簧不能被取消
                     indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)));
                     return true;
                 }
