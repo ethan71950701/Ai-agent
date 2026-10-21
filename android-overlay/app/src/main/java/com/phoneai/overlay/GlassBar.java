@@ -126,6 +126,14 @@ final class GlassBar extends FrameLayout {
         glowColor = color;
     }
 
+    /** 把暗色層畫進背景圖（底欄座標 → 背景圖座標）。 */
+    private void paintTintInto(Canvas bc, int sw, int sh) {
+        bc.save();
+        bc.scale(sw / (float) getWidth(), sh / (float) getHeight());
+        bc.drawRect(0, 0, getWidth(), getHeight(), tint);
+        bc.restore();
+    }
+
     /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
     private float glowAmount;
 
@@ -318,6 +326,7 @@ final class GlassBar extends FrameLayout {
         // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
         captureInto(bmp, bc, source, scale, bgColor);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
         if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
+        if (!lens) paintTintInto(bc, sw, sh);      // 暗色層也畫進背景圖：透鏡折射到的底欄就是暗的，跟底欄一致
         configure(shader, lens ? skewNow : 0f);
         node.setRenderEffect(currentEffect());
         Canvas rc = node.beginRecording();
@@ -327,7 +336,6 @@ final class GlassBar extends FrameLayout {
         canvas.save();
         canvas.clipPath(clip);
         canvas.drawRenderNode(node);
-        canvas.drawPath(clip, tint);
         canvas.restore();
         if (lens) lensInfo = "強度 " + String.format("%.2f", amount) + "、模糊倍率 " + String.format("%.2f", blurFactor) + "、歪斜 " + String.format("%.3f", skewNow);
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
