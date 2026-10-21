@@ -136,7 +136,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | `agent2.py` enter 動作 | ✅ | 使用者實測（2026-10-18）：Chrome 網址列輸入 hello world 並按 Enter，跳出搜尋結果 |
 | `agent2.py` ask 動作（非 manual，敏感步驟前跳確認框） | ✅ | 使用者實測（2026-10-18）：任務「點登入按鈕」，AI 發現已登入、換帳號要先登出（敏感），用 `ask` 跳出確認框並說明原因；按否沒有動作 |
 | `agent2.py` 點擊層級確認框（`what` 含送出/登入/安裝等字才跳） | 🟡 | 還沒觸發過（上面那次 AI 先走了 `ask`）；程式碼與 `ask` 共用同一個 `confirm()`，風險低；要測需要一個畫面上真的有「送出/傳送/同意」按鈕又無害的情境 |
-| PhoneAI Overlay App（`android-overlay/`）編譯與安裝 | ✅ | GitHub Actions 編譯（只在 `main` 觸發）、固定簽名可覆蓋安裝；使用者長期使用中。雲端也能用 Android SDK 36 + Gradle 先編譯確認（見 11b） |
+| PhoneAI Overlay App（`android-overlay/`）編譯與安裝 | ✅ | GitHub Actions 編譯（只在 `main` 觸發）、固定簽名可覆蓋安裝；使用者長期使用中。雲端也能用 Android SDK 36 + Gradle 先編譯確認（見 11b）。2026-10-21：修正 AGP/Gradle 版本解析問題（`com.android.application` `8.11.1` → `8.7.3`，CI Gradle `8.14.3` → `8.9`） |
 | App 點擊漣漪（無障礙懸浮層 `RippleAccessibilityService`） | ✅ | 使用者實測：「設定」前景可見、位置準、不擋點擊。一般懸浮層在「設定」前景會被系統強制隱藏（dumpsys 確認），所以改用無障礙。滑動軌跡單獨測過、agent2 的 swipe 整合未測 |
 | App 常駐通知升級成 Live Update / Now Bar 膠囊 | ✅ | 使用者實測：左上角膠囊出現、`shouldHide()` 回 false。關鍵：不帶 `ongoingActivityNoti.*` + secure `enable_notification_nowbar_test=1`（`overlay_install.sh` 會設；見 ROADMAP 8e）。副作用：其他 App 的可升級通知也可能出現在 Now Bar。使用者實測：鎖定畫面看得到、通知「停止」鈕可中斷 agent2、膠囊文字「AI 步數」跟著步驟變化 |
 | App 操作介面：輸入框、語音（倒數 5 秒）、快速設定磁貼、預設數位助理（長按電源鍵）、浮動按鈕 | ✅ | 使用者實測全部可用（2026-10-17）。走 Termux `RUN_COMMAND`（`allow-external-apps`）；root 備援路徑未觸發過 |

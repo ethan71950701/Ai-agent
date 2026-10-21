@@ -32,7 +32,7 @@ jobs:
           packages: "platforms;android-36 build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.14.3"
+          gradle-version: "8.9"
       # 離線語音辨識（sherpa-onnx）的原生函式庫：官方發布檔，約 27MB，不放進 repo；固定版本並核對 SHA-256，檔案被換掉就中止編譯
       - name: Download sherpa-onnx native libs (arm64)
         run: |
