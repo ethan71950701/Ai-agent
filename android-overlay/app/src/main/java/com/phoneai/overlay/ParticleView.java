@@ -10,7 +10,8 @@ import java.util.Random;
 
 /** 底部的粒子特效：一些小光點慢慢往上飄、忽明忽暗（很淡，不搶內容）。 */
 final class ParticleView extends View {
-    private static final int N = 26;
+    private static final int N = 30;
+    private final float dens;
     private final float[] x = new float[N], y = new float[N], r = new float[N], sp = new float[N], ph = new float[N];
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Random rnd = new Random(7);
@@ -18,10 +19,11 @@ final class ParticleView extends View {
 
     ParticleView(Context c) {
         super(c);
+        dens = c.getResources().getDisplayMetrics().density;
         for (int i = 0; i < N; i++) {
             x[i] = rnd.nextFloat();
             y[i] = rnd.nextFloat();
-            r[i] = 1.5f + rnd.nextFloat() * 2.5f;
+            r[i] = (2f + rnd.nextFloat() * 2.5f) * dens;   // 大一點，才看得見
             sp[i] = 0.02f + rnd.nextFloat() * 0.04f;
             ph[i] = rnd.nextFloat() * 6.28f;
         }
@@ -42,9 +44,9 @@ final class ParticleView extends View {
             // 往上飄，走到頂端就從底部重來
             float yy = (y[i] - (t / 1000f) * sp[i]) % 1f;
             if (yy < 0) yy += 1f;
-            float alpha = 0.25f + 0.25f * (float) Math.sin(t / 900.0 + ph[i]);
+            float alpha = 0.6f + 0.35f * (float) Math.sin(t / 900.0 + ph[i]);
             p.setColor(color);
-            p.setAlpha((int) (255 * Math.max(0.05f, Math.min(0.6f, alpha)) * (1f - yy * 0.6f)));
+            p.setAlpha((int) (255 * Math.max(0.2f, Math.min(0.95f, alpha)) * (1f - yy * 0.5f)));
             canvas.drawCircle(x[i] * w, yy * h, r[i], p);
         }
         postInvalidateOnAnimation();

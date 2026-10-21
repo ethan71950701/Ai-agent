@@ -387,11 +387,11 @@ public class MainActivity extends Activity {
         send44.setOnClickListener(v -> send.run());
         bar.addView(send44, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
         // 底部漸層 + 粒子：從透明漸變到背景色，粒子在底部慢慢飄（先加，才會在輸入框下面）
-        int bgc = Ui.attr(this, com.google.android.material.R.attr.colorSurface);
-        android.view.View fade = new android.view.View(this);
+        int pc = Ui.attr(this, com.google.android.material.R.attr.colorPrimary);
+        android.view.View fade = new android.view.View(this);   // 底部主題色的淡光暈（由下往上淡出）
         fade.setBackground(new android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{bgc, (bgc & 0x00FFFFFF) | 0xE6000000, (bgc & 0x00FFFFFF)}));
+                new int[]{(pc & 0x00FFFFFF) | 0x38000000, (pc & 0x00FFFFFF)}));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams flp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 220));
         flp.gravity = android.view.Gravity.BOTTOM;
