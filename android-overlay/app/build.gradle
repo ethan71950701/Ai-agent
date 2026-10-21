@@ -55,5 +55,6 @@ dependencies {
     // Material 3 元件（按鈕、開關、卡片、文字欄位）：讓 App 介面用 Android 原生的 Material 風格
     implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.dynamicanimation:dynamicanimation:1.0.0"   // 彈簧動畫（底欄、展開、按壓回彈）
+    implementation "com.qmdeve.liquidglass:core:1.1.0"   // 開源液態玻璃元件（取代自製底欄玻璃實作）
     // 離線語音辨識（SenseVoice，sherpa-onnx 的 Java 介面；原生函式庫由 GitHub 編譯時下載，見 SherpaEngine）
 }
