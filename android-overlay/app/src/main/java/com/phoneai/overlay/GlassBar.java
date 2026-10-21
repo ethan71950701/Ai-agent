@@ -238,7 +238,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
         sh.setFloatUniform("brightBoost", 0.03f);
-        sh.setFloatUniform("edgeLight", lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f);   // 只有按住的透鏡有
+        sh.setFloatUniform("edgeLight", 0f);   // 水滴高光暫時關閉（形狀不對，待重做）
     }
 
     @Override
