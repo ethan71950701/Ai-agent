@@ -52,8 +52,8 @@ final class GlassBar extends FrameLayout {
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
-            + "  float hl = pow(clamp(1.0 + sd / edgeW, 0.0, 1.0), 3.0) * edgeLight;\n"   // 離邊緣越近越亮的高光
-            + "  col.rgb = mix(col.rgb, half3(1.0), half(hl * 0.85));\n"
+            + "  float hl = pow(clamp(1.0 + sd / edgeW, 0.0, 1.0), 4.0) * edgeLight;\n"   // 離邊緣越近越亮的高光
+            + "  col.rgb = mix(col.rgb, half3(1.0), half(hl * 0.6));\n"
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -238,7 +238,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
         sh.setFloatUniform("brightBoost", 0.03f);
-        sh.setFloatUniform("edgeW", Ui.dp(getContext(), 10));   // 高光寬度
+        sh.setFloatUniform("edgeW", Ui.dp(getContext(), 3));   // 高光寬度
         sh.setFloatUniform("edgeLight", lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f);   // 只有按住的透鏡有
     }
 
