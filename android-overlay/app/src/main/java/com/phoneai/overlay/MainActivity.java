@@ -177,7 +177,7 @@ public class MainActivity extends Activity {
         final LensClip fl = new LensClip(this);
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
-                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 24), true);
+                (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 26), true);
         lens.setSource(root);   // 透鏡保留折射與形變
         lens.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
@@ -191,7 +191,7 @@ public class MainActivity extends Activity {
         final LinearLayout h2 = tabRow(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         fl.addView(h, new android.widget.FrameLayout.LayoutParams(-1, -1));
         fl.addView(h2, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 48), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
+        fl.addView(indicator, new android.widget.FrameLayout.LayoutParams(10, Ui.dp(this, 52), android.view.Gravity.CENTER_VERTICAL));   // 透鏡放在最上層，才會蓋住並放大底下的圖示
         fl.set(h2, indicator);
         lens.setIconSource(h2);   // 按住時放大的圖示：就是底欄那排主色圖示
         card.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
