@@ -366,7 +366,7 @@ public class MainActivity extends Activity {
             String t = et.getText().toString().trim();
             if (t.isEmpty()) return;
             et.setText("");
-            startActivity(new Intent(this, AskActivity.class).putExtra("text", t).putExtra("voice", false));
+            homeAsk(t);
         };
         et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
         bar.addView(et, new LinearLayout.LayoutParams(0, -2, 1f));
@@ -383,6 +383,24 @@ public class MainActivity extends Activity {
         send44.addView(arrow, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22), android.view.Gravity.CENTER));
         send44.setOnClickListener(v -> send.run());
         bar.addView(send44, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
+        // 底部漸層 + 粒子：從透明漸變到背景色，粒子在底部慢慢飄（先加，才會在輸入框下面）
+        int bgc = Ui.attr(this, com.google.android.material.R.attr.colorSurface);
+        android.view.View fade = new android.view.View(this);
+        fade.setBackground(new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{bgc, (bgc & 0x00FFFFFF) | 0xE6000000, (bgc & 0x00FFFFFF)}));
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams flp =
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 220));
+        flp.gravity = android.view.Gravity.BOTTOM;
+        ((android.view.ViewGroup) root).addView(fade, 0, flp);   // 放最底層：不蓋住底部導覽列
+        ParticleView particles = new ParticleView(this);
+        particles.setColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams plp =
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 200));
+        plp.gravity = android.view.Gravity.BOTTOM;
+        ((android.view.ViewGroup) root).addView(particles, 1, plp);   // 粒子在漸層之上
+        homeFx = new android.view.View[]{fade, particles};
+
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
         lp.gravity = android.view.Gravity.BOTTOM;
@@ -391,21 +409,54 @@ public class MainActivity extends Activity {
         homeBar = bar;
     }
 
+    /** 首頁直接回答：在問候語下面顯示回答（不開面板）。 */
+    private void homeAsk(String t) {
+        if (answerView == null) return;
+        answerView.setVisibility(View.VISIBLE);
+        answerView.setText("思考中…");
+        new Thread(() -> {
+            String r = Brain.answer(this, t, new AgentLoop.Ui() {
+                @Override public void hide() { }
+                @Override public void status(String s) { Notify.notifyText(MainActivity.this, "AI 正在操作手機", s, 7195); }
+                @Override public boolean confirm(String msg) { return Brain.confirm(MainActivity.this, msg); }
+            });
+            final String fr = r == null ? "" : r;
+            runOnUiThread(() -> {
+                if (answerView != null) answerView.setText(fr);
+                Notify.say(this, fr);
+            });
+        }, "home-ask").start();
+    }
+
+    private TextView answerView;
+
+    private android.view.View[] homeFx;
+
     private void removeHomeBar() {
         if (homeBar != null && homeBar.getParent() != null) ((android.view.ViewGroup) homeBar.getParent()).removeView(homeBar);
         homeBar = null;
+        if (homeFx != null) for (android.view.View v : homeFx) if (v.getParent() != null) ((android.view.ViewGroup) v.getParent()).removeView(v);
+        homeFx = null;
     }
 
     private void buildHome() {
         TextView greet = new TextView(this);
         greet.setText("你好，需要什麼幫忙？");
-        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28);
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 34);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
         LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
-        gp.topMargin = Ui.dp(this, 40);
+        gp.topMargin = Ui.dp(this, 96);
         gp.bottomMargin = Ui.dp(this, 16);
         box.addView(greet, gp);
+        answerView = new TextView(this);   // 回答顯示在問候語下面
+        answerView.setVisibility(View.GONE);
+        answerView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
+        answerView.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+        answerView.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-1, -2);
+        ap.bottomMargin = Ui.dp(this, 16);
+        box.addView(answerView, ap);
         // 英雄區：用普通的 LinearLayout 加圓角背景（不用 MaterialCardView，避免它被撐高）
         hero = new LinearLayout(this);
         hero.setOrientation(LinearLayout.VERTICAL);
