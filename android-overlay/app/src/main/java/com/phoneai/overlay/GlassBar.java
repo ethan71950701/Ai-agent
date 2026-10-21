@@ -193,7 +193,7 @@ final class GlassBar extends FrameLayout {
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{0x00000000, 0x00000000}   // 透鏡不要底色
-                        : new int[]{(tintColor & 0xFFFFFF) | 0x80000000, (tintColor & 0xFFFFFF) | 0x66000000},
+                        : new int[]{(tintColor & 0xFFFFFF) | 0xA0000000, (tintColor & 0xFFFFFF) | 0x88000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
         bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(glowColor & 0xFFFFFF) | 0x00000000, (glowColor & 0xFFFFFF) | 0x26000000,
@@ -316,7 +316,7 @@ final class GlassBar extends FrameLayout {
             bc = new Canvas(bmp);
         }
         // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
-        captureInto(bmp, bc, source, scale, 0x00000000);   // 透明底：底欄本身不蓋住底下的內容
+        captureInto(bmp, bc, source, scale, bgColor);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
         if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
         configure(shader, lens ? skewNow : 0f);
         node.setRenderEffect(currentEffect());
