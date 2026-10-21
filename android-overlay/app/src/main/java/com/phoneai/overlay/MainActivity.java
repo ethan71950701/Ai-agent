@@ -569,6 +569,8 @@ public class MainActivity extends Activity {
         top.addView(tx, new LinearLayout.LayoutParams(0, -2, 1f));
         heroBox.addView(top);
 
+        View gap = new View(this);   // 狀態文字和下面的列之間留一點空間
+        heroBox.addView(gap, new LinearLayout.LayoutParams(-1, Ui.dp(this, 16)));
         // 三個權限狀態：一列一項（跟功能頁同樣的列），沒有完成的點下去可以設定
         String[][] items = {{"layers", "懸浮層", ov ? "已開啟" : "尚未開啟"}, {"bell", "通知", nt ? "已允許" : "尚未允許"}, {"shield", "無障礙", a11y ? "已開啟" : "尚未開啟"}};
         View.OnClickListener[] fixes = {
