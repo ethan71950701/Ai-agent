@@ -245,21 +245,8 @@ final class GlassBar extends FrameLayout {
         } else {
             drawFlat(canvas);
         }
-        if (lens) drawRim(canvas);
         super.dispatchDraw(canvas);
         postInvalidateOnAnimation();   // 每一幀都重新抓背景：底下的頁面一動，折射就跟著動（以前只在 kick 後約一秒更新，所以會停住）
-    }
-
-    /** 透鏡的液體白邊：外圈一道柔和的白光（像液體邊緣的厚度）、內側一道細亮線；按住越用力越亮。 */
-    private void drawRim(Canvas canvas) {
-        float k = Math.min(1f, 0.5f + amount);
-        rim.setStrokeWidth(Ui.dp(getContext(), 7));
-        rim.setAlpha(Math.round(90 * k));
-        canvas.drawPath(clip, rim);
-        rim.setStrokeWidth(1.5f * getResources().getDisplayMetrics().density);
-        rim.setAlpha(Math.round(255 * k));
-        canvas.drawPath(clip, rim);
-        rim.setAlpha(255);
     }
 
     private float lastTx, skewNow;
