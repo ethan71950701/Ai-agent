@@ -52,8 +52,8 @@ final class GlassBar extends FrameLayout {
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  float2 lightDir = normalize(float2(-0.55, -0.85));\n"
-            + "  float spec = pow(clamp(dot(dir, lightDir), 0.0, 1.0), 10.0) * smoothstep(0.55, 1.0, t) * edgeLight;\n"   // 小水滴的高光：只在左上角的邊緣一小塊
-            + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.9));\n"
+            + "  float spec = pow(clamp(dot(dir, lightDir), 0.0, 1.0), 30.0) * smoothstep(0.8, 1.0, t) * edgeLight;\n"   // 小水滴的高光：只在左上角的邊緣一小塊
+            + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.7));\n"
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
