@@ -34,6 +34,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float skew;\n"
             + "uniform float refr;\n"
             + "uniform float chroma;\n"
+            + "uniform float satBoost;\n"
+            + "uniform float brightBoost;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
             + "  float2 q = abs(p - c) - (c - float2(radius));\n"
@@ -48,7 +50,7 @@ final class GlassBar extends FrameLayout {
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
-            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * 0.03 * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
+            + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + satBoost * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -218,6 +220,8 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
+        sh.setFloatUniform("satBoost", GlassPrefs.dbgNoSat ? 0f : 0.6f);     // 診斷開關：飽和度提高
+        sh.setFloatUniform("brightBoost", GlassPrefs.dbgNoBright ? 0f : 0.03f);   // 診斷開關：亮度提高
     }
 
     @Override
@@ -273,7 +277,7 @@ final class GlassBar extends FrameLayout {
             solid.setColor((bgColor & 0xFFFFFF) | 0xE6000000);
             canvas.drawPath(clip, solid);
         }
-        canvas.drawPath(clip, tint);
+        if (!GlassPrefs.dbgNoTint) canvas.drawPath(clip, tint);
     }
 
     /** 把 src 畫進 target（縮小 scale 倍），座標對齊到本 View 的左上角（補回 pivot 縮放造成的位移）。 */
@@ -310,7 +314,7 @@ final class GlassBar extends FrameLayout {
             drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
-            canvas.drawPath(clip, tint);
+            if (!GlassPrefs.dbgNoTint) canvas.drawPath(clip, tint);
             canvas.restore();
             if (iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
             return;
@@ -333,7 +337,7 @@ final class GlassBar extends FrameLayout {
         canvas.save();
         canvas.clipPath(clip);
         canvas.drawRenderNode(node);
-        canvas.drawPath(clip, tint);
+        if (!GlassPrefs.dbgNoTint) canvas.drawPath(clip, tint);
         canvas.restore();
         if (lens) lensInfo = "強度 " + String.format("%.2f", amount) + "、模糊倍率 " + String.format("%.2f", blurFactor) + "、歪斜 " + String.format("%.3f", skewNow);
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);

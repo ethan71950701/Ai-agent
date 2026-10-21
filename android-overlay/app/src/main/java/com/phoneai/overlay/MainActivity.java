@@ -609,10 +609,13 @@ public class MainActivity extends Activity {
         glassSlider(g, "模糊程度（dp）", "底欄背景的模糊半徑", 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
         glassSlider(g, "圖示放大倍率", "按住時圖示放大的量（0.22 ≈ 1.22 倍）", 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
         glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
-        glassSwitch(g, 0, 5, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
-        glassSwitch(g, 1, 5, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
-        glassSwitch(g, 2, 5, "target", "透鏡底下用底欄背景（會出現半透明方塊，先關）", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
-        glassSwitch(g, 3, 5, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+        glassSwitch(g, 0, 7, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
+        glassSwitch(g, 1, 7, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
+        glassSwitch(g, 2, 7, "target", "透鏡底下用底欄背景（會出現半透明方塊，先關）", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
+        glassSwitch(g, 3, 7, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+        glassSwitch(g, 4, 7, "target", "診斷：關閉飽和度提高", GlassPrefs.dbgNoSat, GlassPrefs.K_DBG_SAT);
+        glassSwitch(g, 5, 7, "target", "診斷：關閉透鏡的淡色底", GlassPrefs.dbgNoTint, GlassPrefs.K_DBG_TINT);
+        glassSwitch(g, 6, 7, "target", "診斷：關閉亮度提高", GlassPrefs.dbgNoBright, GlassPrefs.K_DBG_BRIGHT);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);
         g.addView(Ui.pill(this, "恢復預設", false, v -> {
