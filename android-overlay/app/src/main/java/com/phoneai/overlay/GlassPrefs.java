@@ -23,13 +23,13 @@ final class GlassPrefs {
     /** 從 cfg 載入到靜態欄位（App 啟動時、以及改設定後呼叫）。 */
     static void load(Context c) {
         SharedPreferences p = sp(c);
-        refr = p.getFloat(K_REFR, 1f);
-        chroma = p.getFloat(K_CHROMA, 1f);
+        refr = p.getFloat(K_REFR, 0.6f);
+        chroma = p.getFloat(K_CHROMA, 0f);
         zoom = p.getFloat(K_ZOOM, 0.22f);
         skew = p.getFloat(K_SKEW, 1f);
         blur = p.getFloat(K_BLUR, 12f);
         magnify = p.getBoolean(K_MAGNIFY, true);
-        iconRefr = p.getBoolean(K_ICON_REFR, false);
+        iconRefr = p.getBoolean(K_ICON_REFR, true);
         lensBg = p.getBoolean(K_LENS_BG, true);
         skewOn = p.getBoolean(K_SKEW_ON, true);
     }
