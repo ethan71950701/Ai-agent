@@ -321,6 +321,15 @@ public class MainActivity extends Activity {
             refresh();
             box.setAlpha(1f);
             Anim.cascade(box, 14, dir * Ui.dp(this, 36), Ui.dp(this, prev < 0 ? 24 : 12), 35);
+            // 保險：進場動畫結束後，把每一項強制恢復為完全顯示（避免動畫停在透明，內容看不見、點不到）
+            box.postDelayed(() -> {
+                for (int k = 0; k < box.getChildCount(); k++) {
+                    View ch = box.getChildAt(k);
+                    ch.setAlpha(1f);
+                    ch.setTranslationX(0f);
+                    ch.setTranslationY(0f);
+                }
+            }, 1200);
             kickGlass();
         };
         if (prev < 0) swap.run();
