@@ -342,7 +342,6 @@ final class GlassBar extends FrameLayout {
             canvas.drawPath(clip, tint);
             tint.setAlpha(255);
             canvas.restore();
-            if (iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
             return;
         }
         int scale = lens ? 2 : 4;   // 透鏡要清楚；底欄模糊反正很糊，抓 1/4 大小省很多繪製（掉幀的主因）
@@ -384,6 +383,14 @@ final class GlassBar extends FrameLayout {
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
                 rect, bmpPaint);
+        // 放大的圖示也畫進這層內容：跟背景一起被同一個折射著色器處理，就會有折射效果
+        if (iconSource != null && amount > 0.02f) {
+            float sc = GlassPrefs.magnify ? 1f + GlassPrefs.zoom * amount : 1f;
+            float cx = l + w / 2f, cy = t + h / 2f;
+            rc.translate(-l, -t);
+            rc.scale(sc, sc, cx, cy);
+            iconSource.draw(rc);
+        }
         underNode.endRecording();
         canvas.save();
         canvas.clipPath(clip);
