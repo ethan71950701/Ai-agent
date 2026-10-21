@@ -337,19 +337,16 @@ public class MainActivity extends Activity {
         Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, 0f, 400f, 0.7f);
     }
 
-    private MaterialCardView hero;
+    private LinearLayout hero;
     private String myTheme = "";
 
     private void buildHome() {
-        hero = new MaterialCardView(this);
-        hero.setCardElevation(0);
-        hero.setStrokeWidth(0);
-        hero.setRadius(Ui.dp(this, 32));
-        heroBox = new LinearLayout(this);
-        heroBox.setOrientation(LinearLayout.VERTICAL);
+        // 英雄區：用普通的 LinearLayout 加圓角背景（不用 MaterialCardView，避免它被撐高）
+        hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
         int p = Ui.dp(this, 20);
-        heroBox.setPadding(p, p, p, Ui.dp(this, 14));
-        hero.addView(heroBox, new android.widget.FrameLayout.LayoutParams(-1, -2));   // 明確「包住內容」，不讓它填滿整張卡片
+        hero.setPadding(p, p, p, Ui.dp(this, 14));
+        heroBox = hero;
         box.addView(hero, new LinearLayout.LayoutParams(-1, -2));
 
         Ui.section(this, box, "問問看");
@@ -546,7 +543,10 @@ public class MainActivity extends Activity {
         boolean ok = ov && a11y;
         int bg = Ui.attr(this, ok ? com.google.android.material.R.attr.colorPrimaryContainer : com.google.android.material.R.attr.colorErrorContainer);
         int on = Ui.attr(this, ok ? com.google.android.material.R.attr.colorOnPrimaryContainer : com.google.android.material.R.attr.colorOnErrorContainer);
-        hero.setCardBackgroundColor(bg);
+        android.graphics.drawable.GradientDrawable heroBg = new android.graphics.drawable.GradientDrawable();
+        heroBg.setCornerRadius(Ui.dp(this, 32));
+        heroBg.setColor(bg);
+        hero.setBackground(heroBg);
         heroBox.removeAllViews();
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
