@@ -17,6 +17,10 @@ public class App extends Application {
             0xFFF44336, 0xFFE91E63, 0xFF9C27B0, 0xFF673AB7, 0xFF3F51B5,
             0xFF2196F3, 0xFF00BCD4, 0xFF009688, 0xFF4FAF50, 0xFFFFEB3B,
             0xFFFFC107, 0xFFFF9800, 0xFF795548, 0xFF607D8F, 0xFFFF9CA8};
+    static final int[] ACCENTS = {
+            R.style.Accent0, R.style.Accent1, R.style.Accent2, R.style.Accent3, R.style.Accent4,
+            R.style.Accent5, R.style.Accent6, R.style.Accent7, R.style.Accent8, R.style.Accent9,
+            R.style.Accent10, R.style.Accent11, R.style.Accent12, R.style.Accent13, R.style.Accent14};
     static final String[] SEED_NAMES = {"紅", "粉紅", "紫", "深紫", "靛藍", "藍", "青", "藍綠", "綠", "黃",
             "琥珀", "橘", "棕", "灰藍", "粉"};
 
@@ -43,11 +47,13 @@ public class App extends Application {
             public void onActivityPreCreated(Activity a, Bundle b) {
                 if (!themed(a)) return;
                 SharedPreferences sp = getSharedPreferences("cfg", MODE_PRIVATE);
-                DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
                 if (!sp.getBoolean("monet_on", true)) {
+                    // 選了固定主題色：深色背景 + 預先算好的亮色強調色（不用系統的深淺模式）
                     int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
-                    ob.setContentBasedSource(SEEDS[i]);
+                    a.getTheme().applyStyle(ACCENTS[i], true);
+                    return;
                 }
+                DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
                 DynamicColors.applyToActivityIfAvailable(a, ob.build());
             }
             @Override public void onActivityCreated(Activity a, Bundle b) { }

@@ -2,7 +2,8 @@
 <resources>
     <!-- 助理面板用的透明主題：背景由 App 自己畫（變暗 + 極光 + 底部面板） -->
     <!-- App 整體：Material 3，跟著系統的深色／淺色模式 -->
-    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar" />
+    <!-- 固定深色背景：不跟系統的深色／淺色模式走；強調色由 accents.xml 的 Accent0～14 決定 -->
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar" />
 
     <style name="AssistTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>

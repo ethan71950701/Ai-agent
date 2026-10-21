@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 強調色：深色背景上用亮色（每個主題色各一組，由 build 前的腳本產生，不要手改） -->
+    <style name="Accent0">
+        <item name="colorPrimary">#F88981</item>
+        <item name="colorOnPrimary">#4D0904</item>
+        <item name="colorPrimaryContainer">#F8C2BF</item>
+        <item name="colorOnPrimaryContainer">#440804</item>
+    </style>
+    <style name="Accent1">
+        <item name="colorPrimary">#F386AB</item>
+        <item name="colorOnPrimary">#4A071E</item>
+        <item name="colorPrimaryContainer">#F6C1D3</item>
+        <item name="colorOnPrimaryContainer">#41061A</item>
+    </style>
+    <style name="Accent2">
+        <item name="colorPrimary">#DB92E7</item>
+        <item name="colorOnPrimary">#3B0F43</item>
+        <item name="colorPrimaryContainer">#EAC7F0</item>
+        <item name="colorOnPrimaryContainer">#340D3A</item>
+    </style>
+    <style name="Accent3">
+        <item name="colorPrimary">#B298E1</item>
+        <item name="colorOnPrimary">#23123F</item>
+        <item name="colorPrimaryContainer">#D6CAED</item>
+        <item name="colorOnPrimaryContainer">#1E1037</item>
+    </style>
+    <style name="Accent4">
+        <item name="colorPrimary">#98A3E1</item>
+        <item name="colorOnPrimary">#12193F</item>
+        <item name="colorPrimaryContainer">#CACFED</item>
+        <item name="colorOnPrimaryContainer">#101637</item>
+    </style>
+    <style name="Accent5">
+        <item name="colorPrimary">#81C3F8</item>
+        <item name="colorOnPrimary">#042D4D</item>
+        <item name="colorPrimaryContainer">#BEDFF8</item>
+        <item name="colorOnPrimaryContainer">#042744</item>
+    </style>
+    <style name="Accent6">
+        <item name="colorPrimary">#7AF0FF</item>
+        <item name="colorOnPrimary">#004852</item>
+        <item name="colorPrimaryContainer">#BBF4FB</item>
+        <item name="colorOnPrimaryContainer">#003F47</item>
+    </style>
+    <style name="Accent7">
+        <item name="colorPrimary">#7AFFF3</item>
+        <item name="colorOnPrimary">#00524A</item>
+        <item name="colorPrimaryContainer">#BBFBF5</item>
+        <item name="colorOnPrimaryContainer">#004741</item>
+    </style>
+    <style name="Accent8">
+        <item name="colorPrimary">#98E199</item>
+        <item name="colorOnPrimary">#123F13</item>
+        <item name="colorPrimaryContainer">#CAEDCA</item>
+        <item name="colorOnPrimaryContainer">#103710</item>
+    </style>
+    <style name="Accent9">
+        <item name="colorPrimary">#FFF17A</item>
+        <item name="colorOnPrimary">#524900</item>
+        <item name="colorPrimaryContainer">#FBF5BB</item>
+        <item name="colorOnPrimaryContainer">#474000</item>
+    </style>
+    <style name="Accent10">
+        <item name="colorPrimary">#FFDE7A</item>
+        <item name="colorOnPrimary">#523D00</item>
+        <item name="colorPrimaryContainer">#FBEBBB</item>
+        <item name="colorOnPrimaryContainer">#473600</item>
+    </style>
+    <style name="Accent11">
+        <item name="colorPrimary">#FFC97A</item>
+        <item name="colorOnPrimary">#523100</item>
+        <item name="colorPrimaryContainer">#FBE1BB</item>
+        <item name="colorOnPrimaryContainer">#472B00</item>
+    </style>
+    <style name="Accent12">
+        <item name="colorPrimary">#E1AC98</item>
+        <item name="colorOnPrimary">#3F1E12</item>
+        <item name="colorPrimaryContainer">#EDD3CA</item>
+        <item name="colorOnPrimaryContainer">#371A10</item>
+    </style>
+    <style name="Accent13">
+        <item name="colorPrimary">#98C5E1</item>
+        <item name="colorOnPrimary">#122E3F</item>
+        <item name="colorPrimaryContainer">#CADFED</item>
+        <item name="colorOnPrimaryContainer">#102837</item>
+    </style>
+    <style name="Accent14">
+        <item name="colorPrimary">#FF7A8A</item>
+        <item name="colorOnPrimary">#52000A</item>
+        <item name="colorPrimaryContainer">#FBBBC3</item>
+        <item name="colorOnPrimaryContainer">#470009</item>
+    </style>
+</resources>
