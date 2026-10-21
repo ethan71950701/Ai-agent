@@ -35,6 +35,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float refr;\n"
             + "uniform float chroma;\n"
             + "uniform float brightBoost;\n"
+            + "uniform float edgeW;\n"
+            + "uniform float edgeLight;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
             + "  float2 q = abs(p - c) - (c - float2(radius));\n"
@@ -50,6 +52,8 @@ final class GlassBar extends FrameLayout {
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
+            + "  float hl = pow(clamp(1.0 + sd / edgeW, 0.0, 1.0), 3.0) * edgeLight;\n"   // 離邊緣越近越亮的高光
+            + "  col.rgb = mix(col.rgb, half3(1.0), half(hl * 0.85));\n"
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -78,8 +82,6 @@ final class GlassBar extends FrameLayout {
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
-    /** 按住時透鏡的白邊（純白、較寬，畫進折射的內容裡）。 */
-    private final Paint lightEdge = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint tint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint inner = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -235,7 +237,9 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
-        sh.setFloatUniform("brightBoost", 0.03f);   // 邊緣白光（會被折射）
+        sh.setFloatUniform("brightBoost", 0.03f);
+        sh.setFloatUniform("edgeW", Ui.dp(getContext(), 10));   // 高光寬度
+        sh.setFloatUniform("edgeLight", lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f);   // 只有按住的透鏡有
     }
 
     @Override
@@ -369,15 +373,6 @@ final class GlassBar extends FrameLayout {
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
                 rect, bmpPaint);
-        // 按住時的白邊畫進折射的內容裡，所以會跟著透鏡的邊緣一起被折射（靜止時不畫）
-        float k = Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST)));
-        if (k > 0f) {
-            lightEdge.setStyle(Paint.Style.STROKE);
-            lightEdge.setColor(0xFFFFFFFF);
-            lightEdge.setStrokeWidth(Ui.dp(getContext(), 6));
-            lightEdge.setAlpha(Math.round(255 * k));
-            rc.drawPath(clip, lightEdge);
-        }
         underNode.endRecording();
         canvas.save();
         canvas.clipPath(clip);
