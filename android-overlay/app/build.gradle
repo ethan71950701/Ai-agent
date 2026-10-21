@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace "com.phoneai.overlay"
-    compileSdk 36
+    compileSdk 37
 
     // 簽名金鑰：GitHub Actions 從 Secrets 還原金鑰庫並用環境變數傳進來（KEYSTORE_FILE、KEYSTORE_PASSWORD、KEY_ALIAS、KEY_PASSWORD），
     // 這樣每次編譯簽名相同，才能直接覆蓋安裝。沒有設環境變數（本機、雲端試編譯、別人 fork）就用 Android 預設的除錯金鑰。
