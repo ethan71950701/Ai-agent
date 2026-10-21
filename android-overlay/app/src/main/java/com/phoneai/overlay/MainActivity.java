@@ -92,6 +92,8 @@ public class MainActivity extends Activity {
         if (barDragging) return;
         barDragging = true;
         Anim.cancel(indicator);
+        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1.2f, 500f, 0.6f);   // 按住時上層按鈕放大
+        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1.25f, 500f, 0.6f);
         lensTo(1f);
         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X,
                 Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)), 380f, 0.7f);
@@ -249,6 +251,8 @@ public class MainActivity extends Activity {
                         return true;
                     }
                     barDragging = false;
+                    Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 400f, 0.6f);
+                    Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 400f, 0.6f);
                     lensTo(GlassBar.REST);
                     if (e.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL || idx == tab) {
                         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X, barPad + tab * barItemW + Ui.dp(this, 12), 400f, 0.65f);
