@@ -11,11 +11,11 @@ final class GlassPrefs {
     private GlassPrefs() { }
 
     static float pressX = 1.2f, pressY = 1.4f;   // 按住時透鏡的橫向／直向放大倍數
-    static float refr = 0.6f, chroma = 0f, zoom = 0.4f, skew = 1f, blur = 0f;   // 預設：折射較輕；色散只給上層透鏡（底欄不會有彩色光邊）
+    static float refr = 0.6f, zoom = 0.4f, skew = 1f, blur = 0f;   // 預設：折射較輕；色散只給上層透鏡（底欄不會有彩色光邊）
     static boolean magnify = true, iconRefr = true, lensBg = true, skewOn = true;   // 圖示折射預設開啟
 
     static final String K_PRESS_X = "g_pressX", K_PRESS_Y = "g_pressY";
-    static final String K_REFR = "g_refr", K_CHROMA = "g_chroma", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
+    static final String K_REFR = "g_refr", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
     static final String K_MAGNIFY = "g_magnify", K_ICON_REFR = "g_iconRefr", K_LENS_BG = "g_lensBg", K_SKEW_ON = "g_skewOn";
 
     private static SharedPreferences sp(Context c) {
@@ -26,7 +26,6 @@ final class GlassPrefs {
     static void load(Context c) {
         SharedPreferences p = sp(c);
         refr = p.getFloat(K_REFR, 0.6f);
-        chroma = p.getFloat(K_CHROMA, 0f);
         zoom = p.getFloat(K_ZOOM, 0.4f);
         pressX = p.getFloat(K_PRESS_X, 1.2f);
         pressY = p.getFloat(K_PRESS_Y, 1.4f);
@@ -50,7 +49,7 @@ final class GlassPrefs {
 
     /** 全部恢復預設。 */
     static void reset(Context c) {
-        sp(c).edit().remove(K_REFR).remove(K_CHROMA).remove(K_ZOOM).remove(K_PRESS_X).remove(K_PRESS_Y).remove(K_SKEW).remove(K_BLUR)
+        sp(c).edit().remove(K_REFR).remove(K_ZOOM).remove(K_PRESS_X).remove(K_PRESS_Y).remove(K_SKEW).remove(K_BLUR)
                 .remove(K_MAGNIFY).remove(K_ICON_REFR).remove(K_LENS_BG).remove(K_SKEW_ON).apply();
         load(c);
     }

@@ -33,7 +33,6 @@ final class GlassBar extends FrameLayout {
             + "uniform float amount;\n"
             + "uniform float skew;\n"
             + "uniform float refr;\n"
-            + "uniform float chroma;\n"
             + "uniform float brightBoost;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
@@ -46,8 +45,6 @@ final class GlassBar extends FrameLayout {
             + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
             + "  float2 sp = z - dir * bend * depth * 0.75 * refr * amount;\n"
             + "  half4 col = content.eval(sp);\n"
-            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
-            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  return col;\n"
@@ -234,7 +231,6 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("amount", amount);
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("refr", GlassPrefs.refr);
-        sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
         sh.setFloatUniform("brightBoost", 0.03f);   // 邊緣白光（會被折射）
     }
 
