@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
-        final GlassBar card = new GlassBar(this, 0xB8101214,
+        final GlassBar card = new GlassBar(this, 0xE8101214,
                 0x1FFFFFFF,
                 0x44FFFFFF, Ui.dp(this, 34), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
@@ -322,6 +322,7 @@ public class MainActivity extends Activity {
             if (tabNow != tab) return;
             removeHomeBar();
             removeHomeBar();
+            box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間，才不會能往下滑
             box.removeAllViews();
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
@@ -387,24 +388,12 @@ public class MainActivity extends Activity {
         send44.addView(arrow, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22), android.view.Gravity.CENTER));
         send44.setOnClickListener(v -> send.run());
         bar.addView(send44, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
-        // 底部漸層 + 粒子：從透明漸變到背景色，粒子在底部慢慢飄（先加，才會在輸入框下面）
-        int pc = Ui.attr(this, com.google.android.material.R.attr.colorPrimary);
-        android.view.View fade = new android.view.View(this);   // 底部主題色的淡光暈（由下往上淡出）
-        fade.setBackground(new android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{(pc & 0x00FFFFFF) | 0x38000000, (pc & 0x00FFFFFF)}));
-        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams flp =
-                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 220));
-        flp.gravity = android.view.Gravity.BOTTOM;
-        int navIdx = navBar != null ? ((android.view.ViewGroup) root).indexOfChild(navBar) : ((android.view.ViewGroup) root).getChildCount();
-        ((android.view.ViewGroup) root).addView(fade, navIdx, flp);   // 在底欄下面（不蓋住底欄）
-        ParticleView particles = new ParticleView(this);
-        particles.setColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams plp =
-                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 200));
-        plp.gravity = android.view.Gravity.BOTTOM;
-        ((android.view.ViewGroup) root).addView(particles, navIdx + 1, plp);   // 粒子在漸層之上、底欄之下
-        homeFx = new android.view.View[]{fade, particles};
+        // 底部光暈 + 粒子：跟助理面板同一個 AuroraView（貼著底邊的光），放在最底層
+        final AuroraView aurora = new AuroraView(this);
+        aurora.setEnergy(0.3f);
+        ((android.view.ViewGroup) root).addView(aurora, 0, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1));
+        root.post(() -> aurora.setGlowY(root.getHeight() - Ui.dp(this, 40)));
+        homeFx = new android.view.View[]{aurora};
 
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
