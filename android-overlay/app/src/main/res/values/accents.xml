@@ -1,94 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 強調色：深色背景上用亮色（每個主題色各一組，由 build 前的腳本產生，不要手改） -->
+    <!-- 每個主題色各一組：強調色（亮色）＋ 同色相的深色表面（背景與卡片不再是冷灰，跟主題色協調）。由 Python 產生，不要手改 -->
     <style name="Accent0">
         <item name="colorPrimary">#F88981</item>
         <item name="colorOnPrimary">#4D0904</item>
         <item name="colorPrimaryContainer">#F8C2BF</item>
         <item name="colorOnPrimaryContainer">#440804</item>
+        <item name="colorSurface">#181414</item>
+        <item name="colorSurfaceContainer">#221C1C</item>
+        <item name="colorSurfaceContainerHigh">#2D2525</item>
+        <item name="colorSurfaceContainerHighest">#382F2E</item>
+        <item name="colorOnSurface">#EBEAEA</item>
+        <item name="colorOnSurfaceVariant">#CAC4C4</item>
     </style>
     <style name="Accent1">
         <item name="colorPrimary">#F386AB</item>
         <item name="colorOnPrimary">#4A071E</item>
         <item name="colorPrimaryContainer">#F6C1D3</item>
         <item name="colorOnPrimaryContainer">#41061A</item>
+        <item name="colorSurface">#181415</item>
+        <item name="colorSurfaceContainer">#221C1E</item>
+        <item name="colorSurfaceContainerHigh">#2D2527</item>
+        <item name="colorSurfaceContainerHighest">#382E31</item>
+        <item name="colorOnSurface">#EBEAEA</item>
+        <item name="colorOnSurfaceVariant">#CAC4C6</item>
     </style>
     <style name="Accent2">
         <item name="colorPrimary">#DB92E7</item>
         <item name="colorOnPrimary">#3B0F43</item>
         <item name="colorPrimaryContainer">#EAC7F0</item>
         <item name="colorOnPrimaryContainer">#340D3A</item>
+        <item name="colorSurface">#171418</item>
+        <item name="colorSurfaceContainer">#211C22</item>
+        <item name="colorSurfaceContainerHigh">#2C252D</item>
+        <item name="colorSurfaceContainerHighest">#372E38</item>
+        <item name="colorOnSurface">#EBEAEB</item>
+        <item name="colorOnSurfaceVariant">#C9C4CA</item>
     </style>
     <style name="Accent3">
         <item name="colorPrimary">#B298E1</item>
         <item name="colorOnPrimary">#23123F</item>
         <item name="colorPrimaryContainer">#D6CAED</item>
         <item name="colorOnPrimaryContainer">#1E1037</item>
+        <item name="colorSurface">#151418</item>
+        <item name="colorSurfaceContainer">#1E1C22</item>
+        <item name="colorSurfaceContainerHigh">#28252D</item>
+        <item name="colorSurfaceContainerHighest">#322E38</item>
+        <item name="colorOnSurface">#EAEAEB</item>
+        <item name="colorOnSurfaceVariant">#C6C4CA</item>
     </style>
     <style name="Accent4">
         <item name="colorPrimary">#98A3E1</item>
         <item name="colorOnPrimary">#12193F</item>
         <item name="colorPrimaryContainer">#CACFED</item>
         <item name="colorOnPrimaryContainer">#101637</item>
+        <item name="colorSurface">#141418</item>
+        <item name="colorSurfaceContainer">#1C1C22</item>
+        <item name="colorSurfaceContainerHigh">#25262D</item>
+        <item name="colorSurfaceContainerHighest">#2E2F38</item>
+        <item name="colorOnSurface">#EAEAEB</item>
+        <item name="colorOnSurfaceVariant">#C4C5CA</item>
     </style>
     <style name="Accent5">
         <item name="colorPrimary">#81C3F8</item>
         <item name="colorOnPrimary">#042D4D</item>
         <item name="colorPrimaryContainer">#BEDFF8</item>
         <item name="colorOnPrimaryContainer">#042744</item>
+        <item name="colorSurface">#141618</item>
+        <item name="colorSurfaceContainer">#1C1F22</item>
+        <item name="colorSurfaceContainerHigh">#25292D</item>
+        <item name="colorSurfaceContainerHighest">#2E3438</item>
+        <item name="colorOnSurface">#EAEBEB</item>
+        <item name="colorOnSurfaceVariant">#C4C7CA</item>
     </style>
     <style name="Accent6">
         <item name="colorPrimary">#7AF0FF</item>
         <item name="colorOnPrimary">#004852</item>
         <item name="colorPrimaryContainer">#BBF4FB</item>
         <item name="colorOnPrimaryContainer">#003F47</item>
+        <item name="colorSurface">#141718</item>
+        <item name="colorSurfaceContainer">#1C2122</item>
+        <item name="colorSurfaceContainerHigh">#252C2D</item>
+        <item name="colorSurfaceContainerHighest">#2E3738</item>
+        <item name="colorOnSurface">#EAEBEB</item>
+        <item name="colorOnSurfaceVariant">#C4CACA</item>
     </style>
     <style name="Accent7">
         <item name="colorPrimary">#7AFFF3</item>
         <item name="colorOnPrimary">#00524A</item>
         <item name="colorPrimaryContainer">#BBFBF5</item>
         <item name="colorOnPrimaryContainer">#004741</item>
+        <item name="colorSurface">#141817</item>
+        <item name="colorSurfaceContainer">#1C2221</item>
+        <item name="colorSurfaceContainerHigh">#252D2C</item>
+        <item name="colorSurfaceContainerHighest">#2E3837</item>
+        <item name="colorOnSurface">#EAEBEB</item>
+        <item name="colorOnSurfaceVariant">#C4CACA</item>
     </style>
     <style name="Accent8">
         <item name="colorPrimary">#98E199</item>
         <item name="colorOnPrimary">#123F13</item>
         <item name="colorPrimaryContainer">#CAEDCA</item>
         <item name="colorOnPrimaryContainer">#103710</item>
+        <item name="colorSurface">#141814</item>
+        <item name="colorSurfaceContainer">#1C221C</item>
+        <item name="colorSurfaceContainerHigh">#252D25</item>
+        <item name="colorSurfaceContainerHighest">#2E382E</item>
+        <item name="colorOnSurface">#EAEBEA</item>
+        <item name="colorOnSurfaceVariant">#C4CAC4</item>
     </style>
     <style name="Accent9">
         <item name="colorPrimary">#FFF17A</item>
         <item name="colorOnPrimary">#524900</item>
         <item name="colorPrimaryContainer">#FBF5BB</item>
         <item name="colorOnPrimaryContainer">#474000</item>
+        <item name="colorSurface">#181714</item>
+        <item name="colorSurfaceContainer">#22211C</item>
+        <item name="colorSurfaceContainerHigh">#2D2C25</item>
+        <item name="colorSurfaceContainerHighest">#38372E</item>
+        <item name="colorOnSurface">#EBEBEA</item>
+        <item name="colorOnSurfaceVariant">#CACAC4</item>
     </style>
     <style name="Accent10">
         <item name="colorPrimary">#FFDE7A</item>
         <item name="colorOnPrimary">#523D00</item>
         <item name="colorPrimaryContainer">#FBEBBB</item>
         <item name="colorOnPrimaryContainer">#473600</item>
+        <item name="colorSurface">#181714</item>
+        <item name="colorSurfaceContainer">#22201C</item>
+        <item name="colorSurfaceContainerHigh">#2D2B25</item>
+        <item name="colorSurfaceContainerHighest">#38362E</item>
+        <item name="colorOnSurface">#EBEBEA</item>
+        <item name="colorOnSurfaceVariant">#CAC9C4</item>
     </style>
     <style name="Accent11">
         <item name="colorPrimary">#FFC97A</item>
         <item name="colorOnPrimary">#523100</item>
         <item name="colorPrimaryContainer">#FBE1BB</item>
         <item name="colorOnPrimaryContainer">#472B00</item>
+        <item name="colorSurface">#181614</item>
+        <item name="colorSurfaceContainer">#221F1C</item>
+        <item name="colorSurfaceContainerHigh">#2D2A25</item>
+        <item name="colorSurfaceContainerHighest">#38342E</item>
+        <item name="colorOnSurface">#EBEBEA</item>
+        <item name="colorOnSurfaceVariant">#CAC8C4</item>
     </style>
     <style name="Accent12">
         <item name="colorPrimary">#E1AC98</item>
         <item name="colorOnPrimary">#3F1E12</item>
         <item name="colorPrimaryContainer">#EDD3CA</item>
         <item name="colorOnPrimaryContainer">#371A10</item>
+        <item name="colorSurface">#181514</item>
+        <item name="colorSurfaceContainer">#221D1C</item>
+        <item name="colorSurfaceContainerHigh">#2D2725</item>
+        <item name="colorSurfaceContainerHighest">#38312E</item>
+        <item name="colorOnSurface">#EBEAEA</item>
+        <item name="colorOnSurfaceVariant">#CAC5C4</item>
     </style>
     <style name="Accent13">
         <item name="colorPrimary">#98C5E1</item>
         <item name="colorOnPrimary">#122E3F</item>
         <item name="colorPrimaryContainer">#CADFED</item>
         <item name="colorOnPrimaryContainer">#102837</item>
+        <item name="colorSurface">#141618</item>
+        <item name="colorSurfaceContainer">#1C1F22</item>
+        <item name="colorSurfaceContainerHigh">#252A2D</item>
+        <item name="colorSurfaceContainerHighest">#2E3438</item>
+        <item name="colorOnSurface">#EAEBEB</item>
+        <item name="colorOnSurfaceVariant">#C4C8CA</item>
     </style>
     <style name="Accent14">
         <item name="colorPrimary">#FF7A8A</item>
         <item name="colorOnPrimary">#52000A</item>
         <item name="colorPrimaryContainer">#FBBBC3</item>
         <item name="colorOnPrimaryContainer">#470009</item>
+        <item name="colorSurface">#181414</item>
+        <item name="colorSurfaceContainer">#221C1C</item>
+        <item name="colorSurfaceContainerHigh">#2D2526</item>
+        <item name="colorSurfaceContainerHighest">#382E2F</item>
+        <item name="colorOnSurface">#EBEAEA</item>
+        <item name="colorOnSurfaceVariant">#CAC4C4</item>
     </style>
 </resources>
