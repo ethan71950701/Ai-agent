@@ -72,8 +72,6 @@ final class GlassBar extends FrameLayout {
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
-    private final RenderNode glowNode = new RenderNode("lensGlow");   // 按住時的發光外圈（像 KernelSU 的底欄）
-    private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint bandPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     static volatile String touchInfo = "";   // 診斷用：最近一次觸控的壓力與接觸面積
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
@@ -126,9 +124,6 @@ final class GlassBar extends FrameLayout {
 
     void setGlowColor(int color) {
         glowColor = color;
-        glowPaint.setStyle(Paint.Style.STROKE);
-        glowPaint.setStrokeWidth(Ui.dp(getContext(), 4));
-        glowPaint.setColor(color);
     }
 
     /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
@@ -137,11 +132,6 @@ final class GlassBar extends FrameLayout {
     void setGlowAmount(float a) {
         glowAmount = 0f;   // 按下發光已取消（底欄保持安靜）
         invalidate();
-    }
-
-    /** 按住時的發光：主色的外圈模糊後往外散開，強度跟著按住的力度。 */
-    private void drawGlow(Canvas canvas) {
-        drawHalo(canvas, Math.min(1f, amount * 0.9f));
     }
 
     /** 按壓力度造成的發光（0..1）；由 MainActivity 的觸控事件設定。 */
@@ -165,23 +155,6 @@ final class GlassBar extends FrameLayout {
         bc.scale(sw / (float) getWidth(), sh / (float) getHeight());   // 底欄座標 → 背景圖座標
         bc.drawRect(0, 0, getWidth(), getHeight(), bandPaint);
         bc.restore();
-    }
-
-    private void drawHalo(Canvas canvas, float alpha) {
-        int w = getWidth(), h = getHeight();
-        float pad = Ui.dp(getContext(), 14);
-        float blur = Ui.dp(getContext(), 7);
-        glowNode.setPosition(0, 0, Math.round(w + 2 * pad), Math.round(h + 2 * pad));
-        glowNode.setRenderEffect(RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.DECAL));
-        Canvas gc = glowNode.beginRecording(Math.round(w + 2 * pad), Math.round(h + 2 * pad));
-        gc.translate(pad, pad);
-        gc.drawRoundRect(new RectF(0, 0, w, h), radius, radius, glowPaint);
-        glowNode.endRecording();
-        glowNode.setAlpha(alpha);
-        canvas.save();
-        canvas.translate(-pad, -pad);
-        canvas.drawRenderNode(glowNode);
-        canvas.restore();
     }
 
     /** 透鏡專用：底欄裡「只有圖示與文字」的那一層（另外抓、不模糊，只放大折射）。 */
@@ -326,7 +299,6 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
-        if (lens && amount > 0.05f) drawGlow(canvas);
         if (lens && parentBar != null && GlassPrefs.lensBg) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             canvas.save();

@@ -138,8 +138,9 @@ public class MainActivity extends Activity {
         android.view.View plate = new android.view.View(this);
         android.graphics.drawable.GradientDrawable pg = new android.graphics.drawable.GradientDrawable();
         pg.setCornerRadius(Ui.dp(this, 34));
-        pg.setColor(0xFF0A0B0C);
+        pg.setColor(0xD00A0B0C);   // 約 82% 不透明：底下的內容只隱約看得到一點
         plate.setBackground(pg);
+        navPlate = plate;
         ((android.view.ViewGroup) root).addView(plate, barParams());
         navBar = floatingBar();
         ((android.view.ViewGroup) root).addView(navBar, barParams());
@@ -166,7 +167,13 @@ public class MainActivity extends Activity {
     }
 
     /** 懸浮底欄：浮在內容上方的圓角膠囊；選中的分頁有一個會滑動、拉伸的淡色圓底（彈簧動畫），往下捲時整條收起、往上捲再出現。 */
-    private View navBar;
+    private View navBar, navPlate;
+
+    /** 底欄上下移動時，黑底板跟著動。 */
+    private void moveNav(float to, float stiff, float damp) {
+        Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, to, stiff, damp);
+        if (navPlate != null) Anim.spring(navPlate, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, to, stiff, damp);
+    }
 
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
@@ -282,8 +289,8 @@ public class MainActivity extends Activity {
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> {
             kickGlass();
             int dy = y - oy;
-            if (dy > 8) Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, Ui.dp(this, 110), 400f, 0.85f);
-            else if (dy < -8 || y == 0) Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, 0f, 400f, 0.7f);
+            if (dy > 8) moveNav(Ui.dp(this, 110), 400f, 0.85f);
+            else if (dy < -8 || y == 0) moveNav(0f, 400f, 0.7f);
         });
         return card;
     }
@@ -349,7 +356,7 @@ public class MainActivity extends Activity {
         };
         if (prev < 0) swap.run();
         else box.animate().alpha(0f).setDuration(90).withEndAction(swap).start();   // 舊內容先淡出再換，不會「啪」一下消失
-        Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_Y, 0f, 400f, 0.7f);
+        moveNav(0f, 400f, 0.7f);
     }
 
     private LinearLayout hero;
