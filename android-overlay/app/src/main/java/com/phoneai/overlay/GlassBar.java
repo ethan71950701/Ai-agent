@@ -134,6 +134,12 @@ final class GlassBar extends FrameLayout {
         bc.restore();
     }
 
+    /** 底欄外圈一道很細的淺色邊（像酷安）。 */
+    private void drawEdge(Canvas canvas) {
+        rim.setStrokeWidth(Ui.dp(getContext(), 1));
+        canvas.drawPath(clip, rim);
+    }
+
     /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
     private float glowAmount;
 
@@ -200,7 +206,7 @@ final class GlassBar extends FrameLayout {
         clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
-        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{0x00000000, 0x00000000}   // 透鏡不要底色
+        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x3A000000, (tintColor & 0xFFFFFF) | 0x26000000}   // 靜止時有淡色圓底（像酷安），按住後慢慢消失
                         : new int[]{(tintColor & 0xFFFFFF) | 0xD0000000, (tintColor & 0xFFFFFF) | 0xD0000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
@@ -253,6 +259,7 @@ final class GlassBar extends FrameLayout {
         } else {
             drawFlat(canvas);
         }
+        if (!lens) drawEdge(canvas);
         super.dispatchDraw(canvas);
         postInvalidateOnAnimation();   // 每一幀都重新抓背景：底下的頁面一動，折射就跟著動（以前只在 kick 後約一秒更新，所以會停住）
     }
@@ -312,7 +319,9 @@ final class GlassBar extends FrameLayout {
             drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
+            tint.setAlpha(Math.round(255 * Math.max(0f, Math.min(1f, 1f - (amount - REST) / (1f - REST)))));
             canvas.drawPath(clip, tint);
+            tint.setAlpha(255);
             canvas.restore();
             if (iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
             return;
