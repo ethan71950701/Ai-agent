@@ -163,11 +163,11 @@ public class MainActivity extends Activity {
 
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
-        // 玻璃感（不截取畫面，不會卡）：半透明深色底 + 淡淡的白色光面 + 細亮邊
+        // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
         final GlassBar card = new GlassBar(this, 0xB8101214,
                 0x1FFFFFFF,
                 0x44FFFFFF, Ui.dp(this, 34), false);
-        card.setSource(null);   // 底欄不再即時截取底下畫面做模糊（會卡），改為純色背板
+        card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
         card.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         bar = card;
@@ -175,7 +175,7 @@ public class MainActivity extends Activity {
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
         final GlassBar lens = new GlassBar(this, Ui.attr(this, com.google.android.material.R.attr.colorSurface),
                 (onS & 0xFFFFFF) | 0x40000000, (onS & 0xFFFFFF) | 0x55000000, Ui.dp(this, 30), true);
-        lens.setSource(null);   // 透鏡也改為純色，不截取畫面
+        lens.setSource(root);   // 透鏡保留折射與形變
         lens.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
         lens.setClipChildren(false);
