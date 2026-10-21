@@ -233,7 +233,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
-        sh.setFloatUniform("brightBoost", lens ? 0f : 0.03f);   // 透鏡按住時不加邊緣白光
+        sh.setFloatUniform("brightBoost", 0.03f);   // 邊緣白光（會被折射）
     }
 
     @Override
