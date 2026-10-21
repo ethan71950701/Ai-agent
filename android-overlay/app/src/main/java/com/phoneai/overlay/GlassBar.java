@@ -36,6 +36,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float chroma;\n"
             + "uniform float brightBoost;\n"
             + "uniform float edgeLight;\n"
+            + "uniform float droplet;\n"
+            + "uniform float dropThick;\n"
             + "half4 main(float2 p) {\n"
             + "  float2 c = size * 0.5;\n"
             + "  float2 q = abs(p - c) - (c - float2(radius));\n"
@@ -45,15 +47,19 @@ final class GlassBar extends FrameLayout {
             + "  float2 dir = normalize(p - c + float2(0.001));\n"
             + "  float2 z = p;\n"
             + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
-            + "  float2 sp = z - dir * bend * depth * 0.75 * refr * amount;\n"
+            + "  float dd = clamp(-sd / radius, 0.0, 1.0);\n"                                       // 0 = 邊緣，1 = 中心
+            + "  float hp = (1.0 - dd) / max(sqrt(1.0 - (1.0 - dd) * (1.0 - dd)), 0.05);\n"          // 水滴表面（球冠）的斜率
+            + "  float tilt = hp / sqrt(1.0 + hp * hp);\n"                                          // 法線傾斜的正弦
+            + "  float2 sp = droplet > 0.5 ? z - dir * tilt * dropThick * refr : z - dir * bend * depth * 0.75 * refr * amount;\n"
             + "  half4 col = content.eval(sp);\n"
             + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
             + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
             + "  half l = dot(col.rgb, half3(0.299, 0.587, 0.114));\n"
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
-            + "  float2 lightDir = normalize(float2(-0.55, -0.85));\n"
-            + "  float spec = pow(clamp(dot(dir, lightDir), 0.0, 1.0), 30.0) * smoothstep(0.8, 1.0, t) * edgeLight;\n"   // 小水滴的高光：只在左上角的邊緣一小塊
-            + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.7));\n"
+            + "  float3 nrm = normalize(float3(dir * hp, 1.0));\n"                                   // 表面法線
+            + "  float3 hv = normalize(normalize(float3(-0.5, -0.6, 0.8)) + float3(0.0, 0.0, 1.0));\n"  // 光（左上）與視線的半角向量
+            + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 40.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
+            + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.9));\n"
             + "  return col;\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -238,7 +244,9 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("refr", GlassPrefs.refr);
         sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
         sh.setFloatUniform("brightBoost", 0.03f);
-        sh.setFloatUniform("edgeLight", 0f);   // 水滴高光暫時關閉（形狀不對，待重做）
+        sh.setFloatUniform("edgeLight", lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f);   // 按住的透鏡才有高光
+        sh.setFloatUniform("droplet", lens ? 1f : 0f);   // 透鏡用水滴模型（有厚度的表面），底欄不用
+        sh.setFloatUniform("dropThick", Ui.dp(getContext(), 14));   // 水滴的厚度（像素）
     }
 
     @Override
