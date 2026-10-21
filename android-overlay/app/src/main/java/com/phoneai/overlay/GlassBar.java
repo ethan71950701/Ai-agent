@@ -58,7 +58,7 @@ final class GlassBar extends FrameLayout {
             + "  col.rgb = (half3(l) + (col.rgb - half3(l)) * half(1.0 + 0.6 * amount)) + half3(bend * brightBoost * amount) * col.a;\n"   // 只有有內容的地方才加亮（透明處不加，免得出現方塊）   // 比背景亮一點，邊緣更亮
             + "  float3 nrm = normalize(float3(dir * hp, 1.0));\n"                                   // 表面法線
             + "  float3 hv = normalize(normalize(float3(-0.5, -0.6, 0.8)) + float3(0.0, 0.0, 1.0));\n"  // 光（左上）與視線的半角向量
-            + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 40.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
+            + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 300.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
             + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.9));\n"
             + "  return col;\n"
             + "}\n";
