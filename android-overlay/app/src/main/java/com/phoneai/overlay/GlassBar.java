@@ -207,7 +207,7 @@ final class GlassBar extends FrameLayout {
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
         tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x3A000000, (tintColor & 0xFFFFFF) | 0x26000000}   // 靜止時有淡色圓底（像酷安），按住後慢慢消失
-                        : new int[]{(tintColor & 0xFFFFFF) | 0xD0000000, (tintColor & 0xFFFFFF) | 0xD0000000},
+                        : new int[]{(tintColor & 0xFFFFFF) | 0xEB000000, (tintColor & 0xFFFFFF) | 0xEB000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
         bandPaint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(glowColor & 0xFFFFFF) | 0x00000000, (glowColor & 0xFFFFFF) | 0x26000000,
