@@ -65,6 +65,8 @@ public class GuideActivity extends Activity {
 
     private final boolean[] ok = new boolean[N];
     private volatile boolean voiceBusy;
+    private android.widget.ProgressBar voiceBar;
+    private TextView voiceStatus;
     private final String[] label = new String[N];
     private ViewPager2 pager;
     private final View[] dots = new View[N];
@@ -181,7 +183,9 @@ public class GuideActivity extends Activity {
             try {
                 SherpaEngine.download(this, m -> runOnUiThread(() -> {
                     label[6] = m;
-                    pager.getAdapter().notifyDataSetChanged();
+                    java.util.regex.Matcher pm = java.util.regex.Pattern.compile("(\\d+)%").matcher(m);
+                    if (pm.find() && voiceBar != null) voiceBar.setProgress(Integer.parseInt(pm.group(1)));
+                    if (voiceStatus != null) voiceStatus.setText(m);
                 }));
             } catch (Throwable e) {
                 err = String.valueOf(e.getMessage() != null ? e.getMessage() : e);
@@ -250,8 +254,17 @@ public class GuideActivity extends Activity {
                 card.addView(s, sl);
             }
 
+            if (i == 6) {   // 語音模型：下載進度條
+                voiceBar = new android.widget.ProgressBar(a, null, android.R.attr.progressBarStyleHorizontal);
+                voiceBar.setMax(100);
+                voiceBar.setProgress(0);
+                LinearLayout.LayoutParams vbl = new LinearLayout.LayoutParams(-1, Ui.dp(a, 8));
+                vbl.topMargin = Ui.dp(a, 16);
+                col.addView(voiceBar, vbl);
+            }
             TextView st = new TextView(a);
             st.setText(label[i]);
+            if (i == 6) voiceStatus = st;
             st.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleSmall);
             st.setTextColor(Ui.attr(a, ok[i] ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorOnSurfaceVariant));
             st.setGravity(Gravity.CENTER);
@@ -260,6 +273,7 @@ public class GuideActivity extends Activity {
             col.addView(st, stl);
 
             MaterialButton b = Ui.pill(a, BTN[i], !ok[i] || i == N - 1, v -> act(i));
+            b.setVisibility(!ok[i] || i == N - 1 ? View.VISIBLE : View.GONE);   // 已經完成的項目不再顯示按鈕
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, Ui.dp(a, 52));
             bl.topMargin = Ui.dp(a, 12);
             col.addView(b, bl);
@@ -282,14 +296,13 @@ public class GuideActivity extends Activity {
     private void refresh() {
         new Thread(() -> {
             boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");
-            String rootDiag = root ? "" : Maintenance.rootDiag();
             boolean key = new java.io.File(getFilesDir(), "claude_key").length() > 0;
             runOnUiThread(() -> {
                 boolean ov = Settings.canDrawOverlays(this);
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                 boolean a11y = A11yGuard.listed(this);
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                set(0, root, root ? "✓ 已授權" : "尚未授權：請到 root 管理器允許，再按「檢查 root」\n" + rootDiag);
+                set(0, root, root ? "✓ 已授權" : "未授權：請到 root 管理器（KernelSU、Magisk…）給 PhoneAI 超級使用者權限，回來再按「檢查 root」");
                 set(1, ov, ov ? "✓ 已開啟" : "尚未開啟");
                 set(2, nt, nt ? "✓ 已允許" : "尚未允許");
                 set(3, a11y, a11y ? "✓ 已開啟" : "尚未開啟");
