@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
         Anim.cancel(indicator);
         lensTo(1f);
         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X,
-                Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 8)) / 2f)), 380f, 0.7f);
+                Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)), 380f, 0.7f);
     }
 
     private void lensTo(float to) {
@@ -200,9 +200,9 @@ public class MainActivity extends Activity {
             if (w > 0 && w != barItemW) {
                 barItemW = w;
                 android.view.ViewGroup.LayoutParams lp = indicator.getLayoutParams();
-                lp.width = w - Ui.dp(this, 8);
+                lp.width = w - Ui.dp(this, 24);   // 靜止時的圓底比按鈕窄，置中
                 indicator.setLayoutParams(lp);
-                indicator.setTranslationX(barPad + tab * w + Ui.dp(this, 4));
+                indicator.setTranslationX(barPad + tab * w + Ui.dp(this, 12));
             }
         });
         // 點或在底欄上左右滑：圓底跟著手指走，放開後切到最近的分頁
@@ -215,7 +215,7 @@ public class MainActivity extends Activity {
             kickGlass();
             if (barItemW <= 0) return false;
             float ex = e.getX();
-            float min = barPad + Ui.dp(this, 4), max = barPad + 2 * barItemW + Ui.dp(this, 4);
+            float min = barPad + Ui.dp(this, 12), max = barPad + 2 * barItemW + Ui.dp(this, 12);
             int idx = Math.max(0, Math.min(2, (int) ((ex - barPad) / barItemW)));
             switch (e.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
                     }
                     if (!barDragging) return true;
                     Anim.cancel(indicator);
-                    indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 8)) / 2f)));
+                    indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)));
                     return true;
                 }
                 case android.view.MotionEvent.ACTION_UP:
@@ -251,7 +251,7 @@ public class MainActivity extends Activity {
                     barDragging = false;
                     lensTo(GlassBar.REST);
                     if (e.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL || idx == tab) {
-                        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X, barPad + tab * barItemW + Ui.dp(this, 4), 400f, 0.65f);
+                        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X, barPad + tab * barItemW + Ui.dp(this, 12), 400f, 0.65f);
                     } else {
                         showTab(idx);
                     }
@@ -293,7 +293,7 @@ public class MainActivity extends Activity {
         shown = i;
         tab = i;
         if (barItemW > 0) {   // 圓底滑到新位置：位移帶一點回彈，滑動中橫向拉長再縮回
-            float x = barPad + i * barItemW + Ui.dp(this, 4);
+            float x = barPad + i * barItemW + Ui.dp(this, 12);
             if (prev < 0) indicator.setTranslationX(x);
             else {
                 Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X, x, 380f, 0.62f);
