@@ -255,7 +255,7 @@ public class MainActivity extends Activity {
                     }
                     dragX = ex;
                     dragT = nowMs;
-                    float st = Math.min(0.3f, dragV * 0.3f);
+                    float st = Math.min(0.5f, dragV * 0.6f);   // 拖動越快，拉伸與壓扁越明顯
                     Anim.cancel(indicator);
                     indicator.setScaleX(1.2f + st);
                     indicator.setScaleY(1.4f - st * 0.6f);
@@ -284,13 +284,9 @@ public class MainActivity extends Activity {
                     return true;
             }
         });
-        // 往下捲收起、往上捲出現
         androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) ((Object[]) root.getTag())[1];
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> {
-            kickGlass();
-            int dy = y - oy;
-            if (dy > 8) moveNav(Ui.dp(this, 110), 400f, 0.85f);
-            else if (dy < -8 || y == 0) moveNav(0f, 400f, 0.7f);
+            kickGlass();   // 底欄不收起，只讓折射跟著底下的內容更新
         });
         return card;
     }
