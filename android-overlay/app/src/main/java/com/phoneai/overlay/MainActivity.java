@@ -134,6 +134,13 @@ public class MainActivity extends Activity {
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
+        // 底欄底下先鋪一塊近黑的底板（同樣的位置與圓角）：玻璃折射到的底層就是黑的
+        android.view.View plate = new android.view.View(this);
+        android.graphics.drawable.GradientDrawable pg = new android.graphics.drawable.GradientDrawable();
+        pg.setCornerRadius(Ui.dp(this, 34));
+        pg.setColor(0xFF0A0B0C);
+        plate.setBackground(pg);
+        ((android.view.ViewGroup) root).addView(plate, barParams());
         navBar = floatingBar();
         ((android.view.ViewGroup) root).addView(navBar, barParams());
         setContentView(root);
@@ -169,7 +176,7 @@ public class MainActivity extends Activity {
                 0x44FFFFFF, Ui.dp(this, 34), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
-        card.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+        card.setGlowColor(0xFFFFFFFF);   // 玻璃的光用中性白，不跟主題色
         bar = card;
         final LensClip fl = new LensClip(this);
         // 選中的那顆：平常是半透明淡色圓底，按住拖動時變成放大、折射的液態玻璃透鏡
