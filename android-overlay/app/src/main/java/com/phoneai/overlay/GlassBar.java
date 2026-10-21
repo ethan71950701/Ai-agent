@@ -256,7 +256,7 @@ final class GlassBar extends FrameLayout {
         rim.setStrokeWidth(Ui.dp(getContext(), 7));
         rim.setAlpha(Math.round(90 * k));
         canvas.drawPath(clip, rim);
-        rim.setStrokeWidth(Ui.dp(getContext(), 1.5f));
+        rim.setStrokeWidth(1.5f * getResources().getDisplayMetrics().density);
         rim.setAlpha(Math.round(255 * k));
         canvas.drawPath(clip, rim);
         rim.setAlpha(255);
