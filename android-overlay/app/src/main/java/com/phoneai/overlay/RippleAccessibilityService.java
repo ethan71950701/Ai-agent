@@ -38,62 +38,7 @@ public class RippleAccessibilityService extends AccessibilityService {
         return displayId <= 0 ? s.view : s.extraView(displayId);
     }
 
-    /**
-     * 多指／長按／拖曳手勢（在連線執行緒呼叫，會等到手勢做完）。j.fingers = [{x1,y1,x2,y2,ms}]（像素），j.hold = 先按住幾毫秒再移動，j.display = 螢幕編號。
-     * 回傳 "ok"、"nocap"（服務沒有手勢權限：到 設定→無障礙 把 PhoneAI Overlay 關掉再打開一次）、"fail"（被系統取消或逾時）。
-     * 有 hold 又有移動時分兩段：先全部手指按住（willContinue），接著用 continueStroke 接續移動——系統規定接續的筆畫要放在下一次 dispatchGesture。
-     */
-    /**
-     * 列出某個螢幕上看得到的元件（給 tree 指令用）。每筆：{n 編號, t 文字, d 內容描述, id 資源名, c 能不能點, x/y 中心座標（該螢幕像素）}。
-     * 密碼欄位整段不讀；沒有文字、描述、也不能點的元件略過；最多 max 筆。服務沒連上回 null。
-     */
-    static String tree(int displayId, int max) {
-        RippleAccessibilityService s = instance;
-        if (s == null) return null;
-        org.json.JSONArray out = new org.json.JSONArray();
-        StringBuilder seen = new StringBuilder();  // 除錯：系統看得到的視窗（螢幕編號／視窗標題），沒讀到元件時印出來
-        try {
-            java.util.List<android.view.accessibility.AccessibilityWindowInfo> ws = s.getWindows();
-            for (android.view.accessibility.AccessibilityWindowInfo w : ws) {
-                seen.append(L.t(" [螢幕")).append(w.getDisplayId()).append(" ").append(w.getTitle()).append("]");
-                if (w.getDisplayId() != displayId) continue;
-                android.view.accessibility.AccessibilityNodeInfo root = w.getRoot();
-                if (root != null) walk(root, out, max, 0);
-            }
-            if (out.length() == 0) {
-                org.json.JSONObject o = new org.json.JSONObject();
-                o.put("n", 0);
-                o.put("t", L.t("（除錯）看得到的視窗共 ") + ws.size() + L.t(" 個：") + seen);
-                out.put(o);
-            }
-        } catch (Exception e) {
-            Log.e(OverlayService.TAG, "tree", e);
-        }
-        return out.toString();
-    }
-
-    private static void walk(android.view.accessibility.AccessibilityNodeInfo n, org.json.JSONArray out, int max, int depth) throws org.json.JSONException {
-        if (n == null || out.length() >= max || depth > 40 || !n.isVisibleToUser() || n.isPassword()) return;
-        CharSequence text = n.getText(), desc = n.getContentDescription();
-        boolean clickable = n.isClickable();
-        if ((text != null && text.length() > 0) || (desc != null && desc.length() > 0) || clickable) {
-            android.graphics.Rect r = new android.graphics.Rect();
-            n.getBoundsInScreen(r);
-            org.json.JSONObject o = new org.json.JSONObject();
-            o.put("n", out.length());
-            if (text != null && text.length() > 0) o.put("t", text.toString());
-            if (desc != null && desc.length() > 0) o.put("d", desc.toString());
-            String id = n.getViewIdResourceName();
-            if (id != null) o.put("id", id);
-            o.put("c", clickable);
-            o.put("x", r.centerX());
-            o.put("y", r.centerY());
-            out.put(o);
-        }
-        for (int i = 0; i < n.getChildCount(); i++) walk(n.getChild(i), out, max, depth + 1);
-    }
-
-    static String gesture(org.json.JSONObject j) {
+        static String gesture(org.json.JSONObject j) {
         RippleAccessibilityService s = instance;
         if (s == null) return "nosvc";
         try {
@@ -177,15 +122,7 @@ public class RippleAccessibilityService extends AccessibilityService {
         return okFlag[0] ? "ok" : "fail";
     }
 
-    /** 清掉所有螢幕上還在播的漣漪（截圖前用）。 */
-    static void clearAll() {
-        RippleAccessibilityService s = instance;
-        if (s == null) return;
-        if (s.view != null) s.view.clear();
-        for (int i = 0; i < s.extra.size(); i++) s.extra.valueAt(i).clear();
-    }
-
-    private RippleView extraView(int id) {
+        private RippleView extraView(int id) {
         RippleView v = extra.get(id);
         if (v != null && v.isAttachedToWindow()) return v;
         if (v != null) {  // 螢幕被移除又重建過：舊的畫布已經沒用，丟掉重做
@@ -249,12 +186,6 @@ public class RippleAccessibilityService extends AccessibilityService {
         RippleAccessibilityService s = instance;
         if (s != null && s.previewTouch != null) s.previewTouch.armIdle();
     }
-
-    static void hidePreview() {
-        RippleAccessibilityService s = instance;
-        if (s != null) s.closePreview();
-    }
-
     private void openPreview(String sf) {
         if (sf == null || !sf.matches("\\d{1,20}")) return;
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
@@ -341,31 +272,7 @@ public class RippleAccessibilityService extends AccessibilityService {
         RippleAccessibilityService s = instance;
         if (s != null) s.applyFloat();
     }
-
-    static void setFloatSuppressed(boolean v) {
-        RippleAccessibilityService s = instance;
-        if (s != null) { s.suppressed = v; s.applyFloat(); }
-    }
-
-    /** agent 開始/結束時呼叫：開關螢幕四周的光暈（設定裡可關）。 */
-    static void setAgentGlow(boolean on) {
-        RippleAccessibilityService s = instance;
-        if (s != null) { s.glowOn = on; s.refreshGlows(); }
-    }
-
-    /** 截圖前藏起來、截完再顯示（光暈不能被截進畫面，AI 會把它當成畫面內容）。 */
-    static void setGlowVisible(boolean visible) {
-        RippleAccessibilityService s = instance;
-        if (s != null && s.glow != null) s.glow.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
-    }
-
-    /** 預覽開著：光暈畫在預覽卡片邊緣（小、慢）；預覽關著：畫在主螢幕邊緣。兩邊不同時畫。 */
-    static void refreshGlowsNow() {
-        RippleAccessibilityService s = instance;
-        if (s != null) s.refreshGlows();
-    }
-
-    private void refreshGlows() {
+                private void refreshGlows() {
         boolean want = glowOn && getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("glow_on", true);
         if (preview != null) preview.setGlow(want);
         applyGlow(true);

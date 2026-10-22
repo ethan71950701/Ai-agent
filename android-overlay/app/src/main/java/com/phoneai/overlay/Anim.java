@@ -13,9 +13,8 @@ import androidx.dynamicanimation.animation.SpringForce;
 final class Anim {
     private Anim() { }
 
-    static final float STIFF = 420f, BOUNCY = 0.72f, SMOOTH = 1f;
-
     private static final java.util.WeakHashMap<View, java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation>> RUNNING = new java.util.WeakHashMap<>();
+    static final float BOUNCY = 0.72f, SMOOTH = 1f;
 
     static void spring(View v, DynamicAnimation.ViewProperty prop, float to, float stiffness, float damping) {
         // 同一個 View 的同一個屬性只留一個彈簧；舊的沒取消會在新的結束後繼續跑，把值拉回舊目標（按鈕卡在縮小狀態就是這樣來的）

@@ -37,26 +37,7 @@ final class Maintenance {
         return "ERR:" + last;
     }
 
-    /** 診斷用：列出每個 su 路徑實際跑 id 的結果（給使用者回報用）。 */
-    static String rootDiag() {
-        StringBuilder sb = new StringBuilder(L.t("診斷（每個 su 路徑跑 id 的結果）："));
-        String[] paths = {Root.su(), "/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su", "/vendor/bin/su", "su"};
-        for (String p : paths) {
-            try {
-                Process pr = new ProcessBuilder(p, "-c", "id -u").redirectErrorStream(true).start();
-                pr.getOutputStream().close();
-                boolean done = pr.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
-                String out = done ? new String(pr.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim() : L.t("（逾時，可能正在等授權視窗）");
-                if (!done) pr.destroy();
-                sb.append("\n").append(p).append(" → ").append(done ? L.t("結束碼 ") + pr.exitValue() + L.t("：") + out : out);
-            } catch (Exception e) {
-                sb.append("\n").append(p).append(L.t(" → 無法執行（")).append(e.getMessage()).append(L.t("）"));
-            }
-        }
-        return sb.toString();
-    }
-
-    /** 用 root 把 App 需要的權限補回來（等同 overlay_install.sh 裡跟權限有關的部分）；回傳給人看的結果。 */
+        /** 用 root 把 App 需要的權限補回來（等同 overlay_install.sh 裡跟權限有關的部分）；回傳給人看的結果。 */
     static String repairPermissions() {
         final String pkg = "com.phoneai.overlay";
         String svc = pkg + "/" + pkg + ".RippleAccessibilityService";
@@ -114,26 +95,7 @@ final class Maintenance {
 
     // ---------- 串流執行（首次設定用） ----------
 
-    /** 跑 root 腳本並逐行回報輸出；回傳結束碼（-1 = 起不來）。 */
-    static int suStream(String script, java.util.function.Consumer<String> line) {
-        for (String[] cmd : SU) {
-            try {
-                Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
-                p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
-                p.getOutputStream().close();
-                java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
-                String l;
-                while ((l = r.readLine()) != null) line.accept(l);
-                int code = p.waitFor();
-                if (code == 0 || cmd.length == 1) return code;
-            } catch (Exception e) {
-                line.accept(L.t("（執行失敗：") + e + L.t("）"));
-            }
-        }
-        return -1;
-    }
-
-
+    
 
     /** 輸入 Claude API Key 的對話框（主畫面與設定導覽共用）。儲存成功後呼叫 after（在主執行緒）。 */
     static void askKey(final android.app.Activity a, final Runnable after) {

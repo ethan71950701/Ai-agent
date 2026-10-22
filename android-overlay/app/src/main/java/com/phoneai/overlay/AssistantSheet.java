@@ -746,12 +746,7 @@ public class AssistantSheet {
                 .setInterpolator(new DecelerateInterpolator(2.2f)).start();
     }
 
-    /** 這句話要操作手機（或已經做完）：還在等回答的話就把面板收起來；已經顯示回答卡片就不動。 */
-    public void closeIfWaiting() {
-        if (waiting && !replyShown) dismiss();
-    }
-
-    private void setText(String t) {
+        private void setText(String t) {
         programmatic = true;
         input.setText(t);
         input.setSelection(input.getText().length());

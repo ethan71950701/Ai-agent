@@ -179,13 +179,7 @@ final class GlassBar extends FrameLayout {
         bc.restore();
     }
 
-    /** 底欄外圈一道很細的淺色邊（像酷安）。 */
-    private void drawEdge(Canvas canvas) {
-        rim.setStrokeWidth(Ui.dp(getContext(), 1));
-        canvas.drawPath(clip, rim);
-    }
-
-    /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
+        /** 底欄整條發光的強度（按住時由 MainActivity 設定，0 = 不發光）。 */
     private float glowAmount;
 
     void setGlowAmount(float a) {
@@ -221,10 +215,7 @@ final class GlassBar extends FrameLayout {
 
     /** 要放大的那排圖示（和底欄同一個座標系，與 fl 的左上角對齊）。 */
 
-    /** true = 不畫任何底（沒有模糊、底色），只畫裡面的內容。 */
-    void setPlain(boolean p) { plain = p; }
-
-    /** 透鏡的強度 0..1。 */
+        /** 透鏡的強度 0..1。 */
     void setAmount(float a) {
         amount = a;
         kick(1200);

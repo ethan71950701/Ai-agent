@@ -1,5 +1,5 @@
 <resources>
-    <string name="a11y_desc">Draws the tap ripples for the AI on screen, and lets the AI see the buttons and text on screen so it can tap and swipe for you. Screen content is used only on this phone and is not recorded.</string>
+    <string name="a11y_desc">Draws the tap ripples on screen, and lets the app tap and swipe for you. It does not read screen content (the screen is used only as screenshots).</string>
     <string name="tile_label">AI Assistant</string>
     <string name="a11y_label">PhoneAI Ripple</string>
 </resources>

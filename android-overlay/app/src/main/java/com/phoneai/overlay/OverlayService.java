@@ -45,7 +45,6 @@ import java.util.Collections;
  */
 public class OverlayService extends Service {
     static final String TAG = "PhoneAIOverlay";
-    static final int PORT = 47195;
     static final int NOTIF_ID = 7195;
     static final String CHANNEL = "status_low";  // 舊的 "status" 是預設重要性，頻道建立後改不了，所以換新 id
     static final String ACTION_TEST = "com.phoneai.overlay.TEST";
@@ -55,10 +54,7 @@ public class OverlayService extends Service {
     /** Now Bar 上的「接手／完成」按鈕：切換使用者接手背景螢幕。 */
     static final String ACTION_TAKEOVER = "com.phoneai.overlay.TAKEOVER";
     /** 使用者按下送出的瞬間由 App 發出：先顯示 Now Bar「準備中」與光暈，不用等後面的流程（路由、啟動、連線要好幾秒）。 */
-    static final String ACTION_BEGIN = "com.phoneai.overlay.BEGIN";
-    static final long PENDING_MS = 15_000;  // 這麼久都沒有 agent2 連上來就收掉（例如指令立刻就做完了）
     static final int CHIP_COLOR = 0xFF0B6BCB;  // 膠囊底色（藍）
-    static final long IDLE_MS = 60_000;  // 啟動後這麼久都沒有 agent 連上就自己結束
 
     /** 給 MainActivity 顯示用的最後診斷結果 */
     static volatile String lastDiag = L.t("（還沒發過通知）");
@@ -107,35 +103,12 @@ public class OverlayService extends Service {
     private NotificationManager nm;
     private WindowManager wm;
     private RippleView view;
-    private ServerSocket server;
-    private String token;
-    private int clients = 0;
     private String title = L.t("AI 正在操作手機");
     private String lastText = "";
     private int lastStep, lastMax;
+;
 
-    private final Runnable pendingEnd = () -> {
-        if (clients == 0) {
-            agentRunning = false;
-            RippleAccessibilityService.setFloatSuppressed(false);
-            RippleAccessibilityService.setAgentGlow(false);
-            finish();
-        }
-    };
-
-    private void begin() {
-        agentRunning = true;
-        main.removeCallbacks(idleStop);
-        main.removeCallbacks(pendingEnd);
-        RippleAccessibilityService.setFloatSuppressed(true);
-        RippleAccessibilityService.setAgentGlow(true);
-        postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
-        main.postDelayed(pendingEnd, PENDING_MS);
-    }
-
-    private final Runnable idleStop = () -> {
-        if (clients == 0) finish();
-    };
+;
 
     @Override
     public void onCreate() {
@@ -151,14 +124,11 @@ public class OverlayService extends Service {
         ch.setSound(null, null);
         ch.enableVibration(false);
         nm.createNotificationChannel(ch);
-        token = loadToken();
         // 前景服務的類型是 Android 14（API 34）才有的要求；Android 13 不需要也不能傳
         android.app.Notification n0 = build(L.t("PhoneAI 待命中"), L.t("等待 agent2.py 連線"), 0, 0);
         if (android.os.Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, n0, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         else startForeground(NOTIF_ID, n0);
         addOverlay();
-        startServer();
-        main.postDelayed(idleStop, IDLE_MS);
     }
 
     @Override
@@ -167,7 +137,6 @@ public class OverlayService extends Service {
         A11yGuard.ensure(this);
         if (ACTION_TEST.equals(a)) runTest();
         else if (ACTION_STOP.equals(a)) stopAgent();
-        else if (ACTION_BEGIN.equals(a)) begin();
         else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
             applyTakeover(!takeover, "");
@@ -183,7 +152,6 @@ public class OverlayService extends Service {
     public void onDestroy() {
         if (self == this) self = null;
         main.removeCallbacksAndMessages(null);
-        try { if (server != null) server.close(); } catch (Exception ignored) { }
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Exception ignored) { }
         removeOverlay();
         super.onDestroy();
@@ -217,24 +185,6 @@ public class OverlayService extends Service {
     }
 
     // ---------- token：agent2 用 su 讀 files/token，其他 App 讀不到，所以只有 root 端能下指令 ----------
-
-    private String loadToken() {
-        File f = new File(getFilesDir(), "token");
-        try {
-            if (f.exists()) return new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8).trim();
-            byte[] b = new byte[16];
-            new SecureRandom().nextBytes(b);
-            StringBuilder sb = new StringBuilder();
-            for (byte x : b) sb.append(String.format("%02x", x));
-            try (OutputStream o = new FileOutputStream(f)) {
-                o.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            Log.e(TAG, "token", e);
-            return null;
-        }
-    }
 
     // ---------- 懸浮層 ----------
 
@@ -352,181 +302,7 @@ public class OverlayService extends Service {
 
     // ---------- 指令 ----------
 
-    private void startServer() {
-        new Thread(() -> {
-            try {
-                server = new ServerSocket(PORT, 4, InetAddress.getByName("127.0.0.1"));
-                while (true) {
-                    Socket s = server.accept();
-                    new Thread(() -> serve(s)).start();
-                }
-            } catch (Exception e) {
-                Log.i(TAG, "server closed: " + e);
-            }
-        }).start();
-    }
-
-    private void serve(Socket s) {
-        boolean authed = false;
-        try (Socket sock = s;
-             BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream(), StandardCharsets.UTF_8));
-             PrintWriter out = new PrintWriter(sock.getOutputStream(), true)) {
-            String first = in.readLine();
-            if (token == null || first == null || !token.equals(first.trim())) {
-                out.println("denied");
-                return;
-            }
-            authed = true;
-            main.post(() -> {
-                clients++;
-                agentRunning = true;
-                main.removeCallbacks(idleStop);
-                main.removeCallbacks(pendingEnd);
-                RippleAccessibilityService.setFloatSuppressed(true);
-                RippleAccessibilityService.setAgentGlow(true);
-            });
-            out.println("ok");
-            String line;
-            while ((line = in.readLine()) != null) {
-                out.println(handle(new JSONObject(line)));
-            }
-        } catch (Exception e) {
-            Log.i(TAG, "client: " + e);
-        } finally {
-            if (authed) main.post(() -> {
-                if (--clients == 0) {
-                    vdSf = "";
-                    vdId = 0;
-                    takeover = false;
-                    takeoverEnded = false;
-                    RippleAccessibilityService.hidePreview();
-                    agentRunning = false;
-                    RippleAccessibilityService.setFloatSuppressed(false);
-                    RippleAccessibilityService.setAgentGlow(false);
-                    finish();
-                }
-            });
-        }
-    }
-
-    /** 在背景執行緒被呼叫；畫面相關的事丟回主執行緒。 */
-    private String handle(JSONObject j) throws Exception {
-        String cmd = j.optString("cmd");
-        switch (cmd) {
-            case "ripple":
-                main.post(() -> { RippleView v = fx(j.optInt("display")); if (v != null) v.ripple(j.optInt("x"), j.optInt("y")); });
-                return "ok";
-            case "swipe":  // delay = 先等幾毫秒再畫（按住拖曳：按住結束後才畫軌跡）
-                main.post(() -> { RippleView v = fx(j.optInt("display")); if (v != null) v.swipe(j.optInt("x1"), j.optInt("y1"), j.optInt("x2"), j.optInt("y2"), Math.max(0, j.optLong("delay"))); });
-                return "ok";
-            case "hold":  // 長按動畫：一圈慢慢往外，放手時剛好到最外圈
-                main.post(() -> { RippleView v = fx(j.optInt("display")); if (v != null) v.hold(j.optInt("x"), j.optInt("y"), j.optLong("ms", 800)); });
-                return "ok";
-            case "tree": {  // 列出某個螢幕上的元件（文字、位置、能不能點）；回 JSON 陣列，服務沒開回 nosvc
-                String t = RippleAccessibilityService.tree(j.optInt("display", 0), Math.min(300, j.optInt("max", 200)));
-                return t == null ? "nosvc" : t;
-            }
-            case "gesture":  // 多指／長按／拖曳（無障礙服務的 dispatchGesture）；做完才回覆，回 ok / nocap / nosvc / fail
-                return RippleAccessibilityService.gesture(j);
-            case "hide":  // 截圖前：清掉漣漪（光暈不藏：整段任務都要在，AI 的說明裡有交代要忽略它）
-                main.post(() -> {
-                    RippleView v = fx();
-                    if (v != null) v.clear();
-                    if (view != null) view.clear();
-                    RippleAccessibilityService.clearAll();  // 第二螢幕的漣漪也清掉，免得被截進畫面
-                });
-                return "ok";
-            case "show":  // 舊版相容，什麼都不做
-                return "ok";
-            case "vd": {  // 背景虛擬螢幕出現／消失：sf 是截圖編號（只收數字），空字串 = 消失
-                String sf = j.optString("sf");
-                vdSf = sf.matches("\\d{1,20}") ? sf : "";
-                vdId = j.optInt("id", 0);
-                int w = j.optInt("w", 1080), h = j.optInt("h", 2340);
-                if (w >= 200 && w <= 4000 && h >= 200 && h <= 6000) { vdW = w; vdH = h; }
-                if (vdSf.isEmpty()) { vdId = 0; takeover = false; takeoverEnded = false; }
-                main.post(() -> {
-                    if (vdSf.isEmpty()) RippleAccessibilityService.hidePreview();
-                    postStatus(title, lastText, lastStep, lastMax);  // 重發通知，更新「點一下顯示預覽」
-                    RippleAccessibilityService.refreshGlowsNow();  // 背景模式開始／結束：主螢幕光暈跟著開關
-                });
-                return "ok";
-            }
-            case "takeover": {  // agent2 請使用者接手（例如要輸入密碼）：自動打開預覽並進入接手模式；on=false 結束
-                boolean on = j.optBoolean("on");
-                String why = j.optString("why");
-                main.post(() -> {
-                    applyTakeover(on, why);
-                    RippleAccessibilityService.takeoverChanged();
-                });
-                return "ok";
-            }
-            case "paused":  // agent2 每一步開始前問：使用者是不是正在接手？yes = 接手中（AI 等）；done = 剛結束；no = 沒有
-                if (takeover) return "yes";
-                if (takeoverEnded) { takeoverEnded = false; return "done"; }
-                return "no";
-            case "status":
-                if (j.has("title")) title = j.optString("title");
-                main.post(() -> postStatus(title, j.optString("text"), j.optInt("step"), j.optInt("max")));
-                return "ok";
-            case "diag":
-                return diagnose();
-            case "apps": {
-                org.json.JSONArray arr = new org.json.JSONArray();
-                for (String line : AppListExporter.build(this).split("\n")) if (!line.isEmpty()) arr.put(line);
-                return arr.toString();  // 單行 JSON，每個元素是「名稱\t套件」
-            }
-            case "report": {  // agent2 結束時回報一行摘要（任務、步數、用量、估價），主畫面顯示最近幾筆
-                android.content.SharedPreferences sp = getSharedPreferences("cfg", MODE_PRIVATE);
-                org.json.JSONArray old;
-                try { old = new org.json.JSONArray(sp.getString("history", "[]")); } catch (Exception e) { old = new org.json.JSONArray(); }
-                org.json.JSONArray now = new org.json.JSONArray();
-                for (int k = Math.max(0, old.length() - 19); k < old.length(); k++) now.put(old.opt(k));
-                now.put(new JSONObject().put("t", System.currentTimeMillis()).put("text", j.optString("text")));
-                sp.edit().putString("history", now.toString()).apply();
-                return "ok";
-            }
-            case "speak": {  // 朗讀（App 自己用系統語音合成）；使用者在首頁關掉朗讀就回 off
-                if (!getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("tts_on", true)) return "off";
-                final String text = j.optString("text");
-                if (text.isEmpty()) return "ok";
-                main.post(() -> speak(text));
-                return "ok";
-            }
-            case "reply": {  // 助理的文字回答：在主螢幕底部浮出一張卡片（不會自己消失）
-                final String title = j.optString("title"), text = j.optString("text");
-                main.post(() -> {
-                    try {
-                        AssistantSheet sheet = AssistantSheet.current;
-                        if (sheet != null) {  // 面板還開著：光球變成卡片
-                            sheet.showReply(title, text);
-                            return;
-                        }
-                        startActivity(new Intent(this, AskActivity.class)   // 跟電源鍵面板同一個畫面（極光粒子、底邊光、輸入列），顯示回答卡片
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                                .putExtra("voice", false).putExtra("reply_text", text), mainDisplayOptions());
-                    } catch (Exception e) {
-                        Log.e(TAG, "reply start", e);
-                    }
-                });
-                return "ok";
-            }
-            case "sheet_close":  // 助理判斷這句話要操作手機／開 App：把還在等回答的面板收起來
-                main.post(() -> { AssistantSheet sh = AssistantSheet.current; if (sh != null) sh.closeIfWaiting(); });
-                return "ok";
-            case "confirm":
-                return confirm(j.optString("msg"));
-            case "ask_text":  // AI 要問使用者問題：跳出助理面板（語音／打字都行），回 {"text": 回答}；沒回答回空字串；面板沒跳出來回 unavailable
-                return askText(j.optString("question"));
-            case "end":
-                main.post(this::finish);
-                return "ok";
-            default:
-                return "unknown";
-        }
-    }
-
-    /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"。 */
+        /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"。 */
     private String confirm(String msg) {
         java.util.concurrent.CompletableFuture<Boolean> ans = new java.util.concurrent.CompletableFuture<>();
         java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
@@ -551,33 +327,7 @@ public class OverlayService extends Service {
         }
     }
 
-    /** 在連線執行緒呼叫，會等使用者回答（最多 5 分鐘）。 */
-    private String askText(String question) {
-        java.util.concurrent.CompletableFuture<String> ans = new java.util.concurrent.CompletableFuture<>();
-        java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
-        AssistantSheet.questionAnswer = ans;
-        AssistantSheet.questionShown = shown;
-        main.post(() -> {
-            try {
-                startActivity(new Intent(this, AskActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                        .putExtra("question", question), mainDisplayOptions());
-            } catch (Exception e) {
-                Log.e(TAG, "ask_text start", e);
-            }
-        });
-        try {
-            if (!shown.await(6, java.util.concurrent.TimeUnit.SECONDS)) return "unavailable";
-            String t = ans.get(300, java.util.concurrent.TimeUnit.SECONDS);
-            return new org.json.JSONObject().put("text", t).toString();
-        } catch (java.util.concurrent.TimeoutException e) {
-            return "{\"text\":\"\"}";
-        } catch (Exception e) {
-            return "unavailable";
-        }
-    }
-
-    private void finish() {
+        private void finish() {
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
@@ -608,7 +358,6 @@ public class OverlayService extends Service {
 
     /** App 裡的「測試」按鈕：示範通知更新、漣漪與滑動。 */
     private void runTest() {
-        main.removeCallbacks(idleStop);
         int w = getResources().getDisplayMetrics().widthPixels;
         int h = getResources().getDisplayMetrics().heightPixels;
         postStatus(L.t("AI 正在操作手機（測試）"), L.t("第 1/3 步 · 點擊「畫面中央」"), 1, 3);
@@ -621,6 +370,6 @@ public class OverlayService extends Service {
             postStatus(L.t("AI 正在操作手機（測試）"), L.t("第 3/3 步 · 點擊「左上」"), 3, 3);
             RippleView v = fx(); if (v != null) v.ripple(w * 0.25f, h * 0.3f);
         }, 4000);
-        main.postDelayed(() -> { if (clients == 0) finish(); }, 8000);
+        main.postDelayed(this::finish, 8000);
     }
 }

@@ -115,7 +115,7 @@ final class LEn {
         m.put("PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。", "PhoneAI needs root to read system information and perform phone actions (tapping, opening apps, toggling Wi-Fi and so on). Without root most features do not work.");
         m.put("讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。", "Lets the assistant panel, the glow and the floating button appear on top of other apps.");
         m.put("任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。", "While a task runs, a progress capsule appears in the status bar so you know what the AI is doing.");
-        m.put("讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。", "Lets the AI see the buttons and text on screen and tap and swipe for it. The tap ripples at the screen edge depend on it too.");
+        m.put("讓 App 能幫你點擊、滑動、拖曳，並畫出點擊的漣漪。畫面只用截圖，不讀取無障礙的畫面內容。", "Lets the app tap, swipe and drag for you, and draws the tap ripples. The screen is read only from screenshots, not through accessibility.");
         m.put("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。", "Talk to the assistant by voice. Speech recognition runs offline on the phone and your voice is not uploaded.");
         m.put("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。", "The AI needs an Anthropic API key to think. The key is stored only in this app's folder on the phone and is not uploaded anywhere else.");
         m.put("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。", "The speech model (SenseVoice) is downloaded to the phone and then works offline; your voice is not uploaded. About 228 MB, Wi-Fi recommended. Without it you cannot use offline speech recognition; you can come back and download it any time.");
@@ -269,18 +269,12 @@ final class LEn {
         m.put("還有設定沒完成", "Some settings are not finished");
         m.put("助理可以使用", "The assistant is ready");
         m.put("點下面的 ＋ 項目就能設定", "Tap the + items below to set them up");
-        m.put("診斷（每個 su 路徑跑 id 的結果）：", "Diagnostics (result of running id for each su path):\n");
-        m.put("（逾時，可能正在等授權視窗）", "(timed out, possibly waiting for a permission dialog)");
-        m.put("結束碼 ", "exit code ");
-        m.put(" → 無法執行（", " → cannot run (");
-        m.put("權杖格式不對（空的、有換行或引號）", "Token format is wrong (empty, or contains a newline or quote)");
         m.put("存檔失敗：", "Save failed: ");
         m.put("修復失敗：", "Repair failed: ");
         m.put("已補回權限", "Permissions restored");
         m.put("金鑰格式不對（太短、有空白、換行或引號）", "The key format is wrong (too short, or contains spaces, newlines or quotes)");
         m.put("這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」", "This is a personal key (sk-ant-usr-), which returns 401 for this project; recreate the key in the Console: choose \"Unlinked\" for Linked account and \"Default workspace\" for workspace");
         m.put("存檔失敗：無法覆蓋舊的 Key", "Save failed: cannot overwrite the old key");
-        m.put("（執行失敗：", "(run failed: ");
         m.put("貼上 API Key", "Paste API key");
         m.put("Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。", "The key is stored only in this app's private folder on the phone (permission 600); it is never shown, never goes into the repo, and do not paste it to anyone. When creating it in the Console: choose \"Unlinked\" for Linked account and \"Default workspace\" for workspace.");
         m.put("儲存", "Save");
@@ -354,7 +348,6 @@ final class LEn {
         m.put("略過", "Skip");
         m.put("先選一個主題色（之後可以在「設定 → 外觀」再改）", "Pick a theme color first (you can change it later under \"Settings → Appearance\")");
         m.put("（還沒發過通知）", "(no notification sent yet)");
-        m.put("準備中…", "Getting ready…");
         m.put("執行狀態", "Run status");
         m.put("PhoneAI 待命中", "PhoneAI is standing by");
         m.put("等待 agent2.py 連線", "Waiting for agent2.py to connect");
@@ -370,8 +363,6 @@ final class LEn {
         m.put("伺服器回 HTTP ", "Server returned HTTP ");
         m.put("下載不完整（", "Download incomplete (");
         m.put("下載失敗 HTTP ", "Download failed HTTP ");
-        m.put(" [螢幕", " [screen ");
-        m.put("（除錯）看得到的視窗共 ", "(debug) windows visible: ");
         m.put("下載 %s：%d%%（%d／%d MB，%.1f MB/s，%d 條連線）", "Downloading %s: %d%% (%d/%d MB, %.1f MB/s, %d connections)");
         m.put(" 大小不對（", " wrong size (");
         m.put("核對 ", "Verifying ");
@@ -390,12 +381,9 @@ final class LEn {
         m.put("莫奈", "Monet");
         m.put("這會：\n", "This will:\n");
         m.put("• 把長按電源鍵設定還原成原來的值\n", "• restore the power-key long-press setting to its original value\n");
-        m.put("• 刪除 PhoneAI 的腳本、Claude API Key、GitHub 權杖\n", "• delete PhoneAI's scripts, the Claude API key and the GitHub token\n");
-        m.put("• 刪除助理的記憶與待辦（~/memory.json）與備份檔\n", "• delete the assistant's memory and to-dos (~/memory.json) and backups\n");
         m.put("• 最後解除安裝 PhoneAI Overlay 本身\n\n刪除後無法復原。", "• finally uninstall PhoneAI Overlay itself\n\nThis cannot be undone.");
         m.put("解除安裝 PhoneAI", "Uninstall PhoneAI");
         m.put("繼續", "Continue");
-        m.put("確定刪除", "Yes, delete");
         m.put("正在檢查或更新中", "A check or update is already running");
         m.put("檢查更新中…", "Checking for updates…");
         m.put("目前沒有發布的版本，已是最新版本", "No release is published; you are on the latest version");
@@ -561,13 +549,10 @@ final class LEn {
         m.put("）", ")");
         m.put("：", ": ");
         m.put("。", ".");
-        m.put("，", ", ");
         m.put("／", "/");
         m.put("「", "\"");
         m.put("」", "\"");
         m.put("、", ", ");
-        m.put("？", "?");
-        m.put("！", "!");
         m.put("）：", "): ");
         m.put("」？", "\"?");
         m.put("）\n", ")\n");
@@ -577,11 +562,9 @@ final class LEn {
         m.put("%）。", "%).");
         m.put("／255）。", "/255).");
         m.put("／32767\n", "/32767\n");
-        m.put("）。", ").");
         m.put("Android API：", "Android API: ");
         m.put("；", "; ");
         m.put("｜", " | ");
         m.put("・", "- ");
-        m.put("\n）", "\n)");
     }
 }

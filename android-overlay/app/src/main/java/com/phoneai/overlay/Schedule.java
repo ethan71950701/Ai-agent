@@ -41,7 +41,6 @@ final class Schedule {
 
     // 短問題的句型（照搬 intents.py）
     private static final Pattern BATT_RE = Pattern.compile("(電量|电量|電池|电池)|(?i:battery)");
-    private static final Pattern BATT_Q = Pattern.compile("(多少|幾|几|剩|還有|还有|看|查|現在|现在|怎麼樣|怎么样|如何|%|百分)");
     private static final Pattern TIME_RE = Pattern.compile("(現在|现在|目前)?(幾點|几点|時間|时间)(了|是)?|(現在|现在)(是)?(星期|禮拜|礼拜)?幾|今天(星期|禮拜|礼拜)幾|今天几号|今天幾號|(?i:whattime|whatstime|timeisit|currenttime|thetime|whatday|whatdate|todaysdate|whatisthedate|dateistoday)");
     private static final Pattern YEAR_RE = Pattern.compile("(今年|現在|现在|目前)(是)?(西元|公元)?(幾年|几年|哪一年|哪年)|(西元|公元)(幾年|几年)|(今年|現在|现在)(幾|几)年|(?i:whatyear|currentyear|whatyearisit)");
     private static final Pattern ANDROID_RE = Pattern.compile("(安卓|android|Android)(系統)?(版本|幾|几|多少)|(系統|系统)版本|(?i:androidversion|whatandroid|whichandroid)");
@@ -51,7 +50,6 @@ final class Schedule {
     private static final Pattern BRIGHT_RE = Pattern.compile("亮度|(?i:brightness)");
     private static final Pattern WIFI_RE = Pattern.compile("(wifi|wi-fi|無線網路|无线网络)", Pattern.CASE_INSENSITIVE);
     private static final Pattern VOL_RE = Pattern.compile("(音量|聲音大小|声音大小)|(?i:volume)");
-    private static final Pattern Q_RE = Pattern.compile("(多少|幾|几|剩|還有|还有|夠|够|用了|用到|現在|现在|目前|是什麼|是什么|哪|連|连|狀態|状态|名稱|名称)");
 
     private Schedule() { }
 
