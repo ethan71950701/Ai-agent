@@ -76,7 +76,9 @@ public class AssistantSheet {
     private final Runnable waitTimeout = this::dismiss;
 
     /** 錯誤碼 12/13（語言不支援/不可用）時，依序換這幾種語言寫法再試；null = 不指定語言（用系統預設）。 */
-    private static final String[] LANGS = L.en() ? new String[]{"en-US", null} : new String[]{"zh-TW", "cmn-Hant-TW", "zh-Hant-TW", "zh-CN", null};
+    private static String[] langs() {   // 辨識語言的寫法（隨介面語言，不快取，所以切換語言不用重開）
+        return L.en() ? new String[]{"en-US", null} : new String[]{"zh-TW", "cmn-Hant-TW", "zh-Hant-TW", "zh-CN", null};
+    }
     private int langIdx;
     /** 要輪流試的辨識服務（不含我們自己的存根）。排序：先試系統預設（使用者在系統「語音輸入」裡選的，例如三星，有離線包），其餘照系統給的順序。
      *  最後一個位置（svcIdx == size）= 系統預設，會放在最前面試。 */
@@ -424,9 +426,9 @@ public class AssistantSheet {
                     .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                     .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                     .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-            if (LANGS[langIdx] != null) i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, LANGS[langIdx]);
+            if (langs()[langIdx] != null) i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, langs()[langIdx]);
             curSvc = svcIdx < recSvcs.size() ? recSvcs.get(svcIdx).flattenToShortString() : L.t("系統預設");
-            trace(L.t("開始辨識：服務=") + curSvc + L.t("，語言=") + LANGS[langIdx]);
+            trace(L.t("開始辨識：服務=") + curSvc + L.t("，語言=") + langs()[langIdx]);
             recognizer.startListening(i);
             listening = true;
             setText("");
@@ -566,7 +568,7 @@ public class AssistantSheet {
                 idleMessage(L.t("沒聽到聲音，點一下光球再說一次"));
             } else if (e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
                 fallbackDialog();
-            } else if ((e == 12 || e == 13) && langIdx + 1 < LANGS.length) {  // 語言不支援/不可用：換下一種寫法再試
+            } else if ((e == 12 || e == 13) && langIdx + 1 < langs().length) {  // 語言不支援/不可用：換下一種寫法再試
                 langIdx++;
                 setStatus(L.t("換一種語言設定再試…"));
                 beginRecognition();

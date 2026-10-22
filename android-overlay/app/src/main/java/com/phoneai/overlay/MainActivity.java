@@ -154,9 +154,9 @@ public class MainActivity extends Activity {
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
-    private static final String[] TAB_TITLE = {"PhoneAI", L.t("功能"), L.t("設定")};
+    private static final String[] TAB_TITLE = {"PhoneAI", "功能", "設定"};
     private static final String[] TAB_ICON = {"home", "apps", "tune"};
-    private static final String[] TAB_LABEL = {L.t("首頁"), L.t("功能"), L.t("設定")};
+    private static final String[] TAB_LABEL = {"首頁", "功能", "設定"};
 
     @Override
     protected void onCreate(Bundle b) {
@@ -165,7 +165,7 @@ public class MainActivity extends Activity {
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
         LinearLayout[] c = new LinearLayout[1];
-        root = Ui.screen(this, TAB_TITLE[tab], false, c);
+        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c);
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
@@ -334,7 +334,7 @@ public class MainActivity extends Activity {
             item.setGravity(android.view.Gravity.CENTER);
             item.addView(new IconView(this, TAB_ICON[i], color), new LinearLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22)));
             TextView lb = new TextView(this);
-            lb.setText(TAB_LABEL[i]);
+            lb.setText(L.t(TAB_LABEL[i]));
             lb.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_LabelMedium);
             lb.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
             lb.setTextColor(color);
@@ -360,7 +360,7 @@ public class MainActivity extends Activity {
                 Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
             }
         }
-        ((com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0]).setTitle(TAB_TITLE[i]);
+        ((com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0]).setTitle(L.t(TAB_TITLE[i]));
         final float dir = prev < 0 ? 0f : (i > prev ? 1f : -1f);   // 新內容從切換的方向彈進來
         final int tabNow = i;
         final Runnable swap = () -> {
@@ -626,39 +626,37 @@ public class MainActivity extends Activity {
         Maintenance.askKey(this, null);
     }
 
-    /** 語言選項：跟隨系統／繁體中文／English。靜態字串陣列要重新載入，所以選完後重新啟動 App。 */
-    private void chooseLanguage() {
+    /** 語言（可拉開的群組）：選了立刻切換，不用退出 App——重建目前畫面，所有文字用新語言重新產生。 */
+    private void buildLanguageGroup() {
         final String[] values = {"auto", "zh", "en"};
         final String[] labels = {L.t("跟隨系統") + " (Auto)", "繁體中文", "English"};
-        int cur = java.util.Arrays.asList(values).indexOf(L.pref(this));
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle("Language / 語言")
-                .setSingleChoiceItems(labels, Math.max(0, cur), (d, which) -> {
-                    d.dismiss();
-                    if (values[which].equals(L.pref(this))) return;
-                    L.setPref(this, values[which]);
-                    restartApp();
-                })
-                .setNegativeButton(L.t("取消"), null).show();
+        String cur = L.pref(this);
+        int ci = Math.max(0, java.util.Arrays.asList(values).indexOf(cur));
+        LinearLayout lg = Ui.expandGroup(this, box, "list", "Language / 語言", labels[ci], false);
+        for (int k = 0; k < values.length; k++) {
+            final String v = values[k];
+            View check = k == ci ? new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary)) : null;
+            View trailing = check;
+            if (check != null) trailing = wrapIcon(check);
+            Ui.row(this, lg, k, values.length, null, labels[k], null, trailing, x -> {
+                if (v.equals(L.pref(this))) return;
+                L.setPref(this, v);
+                recreate();
+            });
+        }
     }
 
-    private void restartApp() {
-        Intent i = getPackageManager().getLaunchIntentForPackage(getPackageName());
-        if (i == null) return;
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        android.app.PendingIntent pi = android.app.PendingIntent.getActivity(this, 7, i,
-                android.app.PendingIntent.FLAG_CANCEL_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
-        ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 300, pi);
-        finishAffinity();
-        android.os.Process.killProcess(android.os.Process.myPid());
+    private View wrapIcon(View icon) {
+        android.widget.FrameLayout f = new android.widget.FrameLayout(this);
+        f.addView(icon, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24), android.view.Gravity.CENTER));
+        return f;
     }
 
     private void buildSettings() {
         heroBox = null;
         LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
         Ui.themePicker(this, g);
-        String lp = L.pref(this);
-        Ui.row(this, g, 0, 1, "list", "Language / 語言",
-                "zh".equals(lp) ? "繁體中文" : "en".equals(lp) ? "English" : L.t("跟隨系統") + " (Auto)", null, v -> chooseLanguage());
+        buildLanguageGroup();
 
         LinearLayout p = Ui.expandGroup(this, box, "shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
         Ui.row(this, p, 0, 3, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(

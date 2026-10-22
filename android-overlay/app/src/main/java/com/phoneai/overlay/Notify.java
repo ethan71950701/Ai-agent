@@ -54,6 +54,9 @@ final class Notify {
                 }
             });
         }
-        if (ttsReady) tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "assistant");
+        if (ttsReady) {
+            tts.setLanguage(L.en() ? Locale.US : Locale.TRADITIONAL_CHINESE);   // 每次朗讀都跟著目前的介面語言
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "assistant");
+        }
     }
 }

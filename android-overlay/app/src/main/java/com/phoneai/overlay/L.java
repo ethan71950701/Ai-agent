@@ -33,7 +33,7 @@ final class L {
     }
 
     static void setPref(Context c, String v) {
-        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString(PREF, v).apply();
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString(PREF, v).commit();
         init(c);
     }
 

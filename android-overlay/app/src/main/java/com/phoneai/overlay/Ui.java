@@ -466,7 +466,7 @@ final class Ui {
                 View dot = new View(a);
                 dot.setBackground(gd);
                 dot.setAlpha(monet ? 0.45f : 1f);
-                dot.setContentDescription(App.SEED_NAMES[k]);
+                dot.setContentDescription(L.t(App.SEED_NAMES[k]));
                 dot.setOnClickListener(v -> {
                     cfg.edit().putInt("seed_idx", idx).putBoolean("monet_on", false).apply();   // 選顏色就代表不用莫奈
                     a.recreate();

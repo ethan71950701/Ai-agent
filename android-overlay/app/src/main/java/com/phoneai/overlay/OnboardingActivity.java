@@ -15,14 +15,14 @@ import androidx.viewpager2.widget.ViewPager2;
 
 /** 第一次開啟時的教學：左右滑動的分頁，每頁一個循環小動畫；底下的圓點用彈簧動畫拉長。可隨時略過；之後在「功能 → 進階 → 使用教學」重看。 */
 public class OnboardingActivity extends Activity {
-    private static final String[] TITLES = {L.t("歡迎使用 PhoneAI"), L.t("隨時叫出它"), L.t("用說的，或用打的"), L.t("它會自己操作"), L.t("敏感操作先問你"), L.t("最後一步：設定")};
+    private static final String[] TITLES = {"歡迎使用 PhoneAI", "隨時叫出它", "用說的，或用打的", "它會自己操作", "敏感操作先問你", "最後一步：設定"};
     private static final String[] BODIES = {
-            L.t("住在你手機裡的 AI 助手：你說想做什麼，它看著螢幕幫你操作。"),
-            L.t("長按電源鍵（先在系統設定把它設成預設數位助理），或打開螢幕邊緣的浮動按鈕。"),
-            L.t("語音在手機上離線辨識，不會上傳；也可以直接打字。"),
-            L.t("看到畫面後會點擊、輸入、捲動。螢幕邊緣的光暈和點擊漣漪，讓你知道它正在做什麼。"),
-            L.t("付款、轉帳、刪除、傳訊息、登入這類操作，一律先跳出確認框；你沒有回應就是不同意。"),
-            L.t("給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。")};
+            "住在你手機裡的 AI 助手：你說想做什麼，它看著螢幕幫你操作。",
+            "長按電源鍵（先在系統設定把它設成預設數位助理），或打開螢幕邊緣的浮動按鈕。",
+            "語音在手機上離線辨識，不會上傳；也可以直接打字。",
+            "看到畫面後會點擊、輸入、捲動。螢幕邊緣的光暈和點擊漣漪，讓你知道它正在做什麼。",
+            "付款、轉帳、刪除、傳訊息、登入這類操作，一律先跳出確認框；你沒有回應就是不同意。",
+            "給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。"};
     private ViewPager2 pager;
     private final View[] dots = new View[TITLES.length];
     private View next;
@@ -156,7 +156,7 @@ public class OnboardingActivity extends Activity {
             page.addView(demo, new LinearLayout.LayoutParams(-1, 0, 1f));
             Ui.bounceIn(demo);   // 示意圖進場彈一下
             TextView t = new TextView(OnboardingActivity.this);
-            t.setText(TITLES[i]);
+            t.setText(L.t(TITLES[i]));
             t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineMedium);
             t.setTextColor(Ui.attr(OnboardingActivity.this, com.google.android.material.R.attr.colorOnSurface));
             t.setGravity(android.view.Gravity.CENTER);
@@ -164,7 +164,7 @@ public class OnboardingActivity extends Activity {
             tl.topMargin = Ui.dp(OnboardingActivity.this, 24);
             page.addView(t, tl);
             TextView b = new TextView(OnboardingActivity.this);
-            b.setText(BODIES[i]);
+            b.setText(L.t(BODIES[i]));
             b.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
             b.setTextColor(Ui.attr(OnboardingActivity.this, com.google.android.material.R.attr.colorOnSurfaceVariant));
             b.setGravity(android.view.Gravity.CENTER);

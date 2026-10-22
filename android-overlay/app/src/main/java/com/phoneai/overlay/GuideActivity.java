@@ -28,39 +28,39 @@ public class GuideActivity extends Activity {
     private static final int N = 9;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
-            L.t("1. 授權 root"), L.t("2. 懸浮層權限"), L.t("3. 通知權限"), L.t("4. 無障礙服務"), L.t("5. 麥克風權限"),
-            "6. Claude API Key", L.t("7. 離線語音辨識模型"), L.t("8. 長按電源鍵叫出（選用）"), L.t("9. 試試看")};
+            "1. 授權 root", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
+            "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
-            L.t("PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。"),
-            L.t("讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。"),
-            L.t("任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。"),
-            L.t("讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。"),
-            L.t("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。"),
-            L.t("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。"),
-            L.t("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。"),
-            L.t("設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。"),
-            L.t("回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。")};
+            "PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。",
+            "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
+            "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
+            "讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。",
+            "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
+            "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
+            "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
+            "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
+            "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
     private static final String[][] STEPS = {
-            {L.t("第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。"),
-                    L.t("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。"),
-                    L.t("回到這裡，按下面的「檢查 root」。")},
-            {L.t("按「開啟權限頁」。"), L.t("在清單裡找到 PhoneAI Overlay，把開關打開。"), L.t("按返回鍵回到這裡，狀態會自動更新。")},
-            {L.t("按「允許通知」，在系統跳出的視窗按「允許」。")},
-            {L.t("按「開啟無障礙設定」。"),
-                    L.t("找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。"),
-                    L.t("有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。")},
-            {L.t("按「允許麥克風」，在系統視窗按「允許」。")},
-            {L.t("用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。"),
-                    L.t("到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。"),
-                    L.t("到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。"),
-                    L.t("重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。"),
-                    L.t("複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。"),
-                    L.t("不要把 Key 貼給任何人，包括 AI 助手。")},
-            {L.t("按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。"), L.t("下載完成後會自動顯示「已下載」。"), L.t("不想現在下載可以先跳過，之後回到這一頁再按一次即可。")},
-            {L.t("按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。"), L.t("找不到的話，就用上面小米的方法。")},
-            {L.t("有問題就到「功能 → 進階與診斷」看狀態。"), L.t("把畫面文字貼給開發者時，不要貼 API Key。")}};
-    private static final String[] BTN = {L.t("檢查 root"), L.t("開啟權限頁"), L.t("允許通知"), L.t("開啟無障礙設定"), L.t("允許麥克風"),
-            L.t("輸入 API Key"), L.t("下載語音模型"), L.t("開啟語音輸入設定"), L.t("完成，回到 App")};
+            {"第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
+                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
+                    "回到這裡，按下面的「檢查 root」。"},
+            {"按「開啟權限頁」。", "在清單裡找到 PhoneAI Overlay，把開關打開。", "按返回鍵回到這裡，狀態會自動更新。"},
+            {"按「允許通知」，在系統跳出的視窗按「允許」。"},
+            {"按「開啟無障礙設定」。",
+                    "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
+                    "有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。"},
+            {"按「允許麥克風」，在系統視窗按「允許」。"},
+            {"用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
+                    "到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。",
+                    "到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。",
+                    "重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。",
+                    "複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。",
+                    "不要把 Key 貼給任何人，包括 AI 助手。"},
+            {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
+            {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
+            {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
+    private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
+            "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
     private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
@@ -231,14 +231,14 @@ public class GuideActivity extends Activity {
             page.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
 
             TextView t = new TextView(a);
-            t.setText(TITLES[i]);
+            t.setText(L.t(TITLES[i]));
             t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineMedium);
             t.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorOnSurface));
             t.setGravity(Gravity.CENTER);
             col.addView(t, new LinearLayout.LayoutParams(-1, -2));
 
             TextView w = new TextView(a);
-            w.setText(WHY[i]);
+            w.setText(L.t(WHY[i]));
             w.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
             w.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorOnSurfaceVariant));
             w.setGravity(Gravity.CENTER);
@@ -248,7 +248,7 @@ public class GuideActivity extends Activity {
 
             LinearLayout card = Ui.card(a, col);
             for (int k = 0; k < STEPS[i].length; k++) {
-                TextView s = Ui.body(a, (k + 1) + ". " + STEPS[i][k]);
+                TextView s = Ui.body(a, (k + 1) + ". " + L.t(STEPS[i][k]));
                 LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(-1, -2);
                 sl.topMargin = Ui.dp(a, 6);
                 card.addView(s, sl);
@@ -272,7 +272,7 @@ public class GuideActivity extends Activity {
             stl.topMargin = Ui.dp(a, 16);
             col.addView(st, stl);
 
-            MaterialButton b = Ui.pill(a, BTN[i], !ok[i] || i == N - 1, v -> act(i));
+            MaterialButton b = Ui.pill(a, L.t(BTN[i]), !ok[i] || i == N - 1, v -> act(i));
             b.setVisibility(!ok[i] || i == N - 1 ? View.VISIBLE : View.GONE);   // 已經完成的項目不再顯示按鈕
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, Ui.dp(a, 52));
             bl.topMargin = Ui.dp(a, 12);
