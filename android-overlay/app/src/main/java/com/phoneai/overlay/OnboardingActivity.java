@@ -140,26 +140,24 @@ public class OnboardingActivity extends Activity {
 
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int type) {
-            LinearLayout page = new LinearLayout(OnboardingActivity.this);
-            page.setOrientation(LinearLayout.VERTICAL);
+            FrameLayout page = new FrameLayout(OnboardingActivity.this);
             page.setLayoutParams(new RecyclerView.LayoutParams(-1, -1));
             return new RecyclerView.ViewHolder(page) { };
         }
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder h, int i) {
-            LinearLayout page = (LinearLayout) h.itemView;
+            FrameLayout page = (FrameLayout) h.itemView;
             page.removeAllViews();
-            page.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
-            page.setPadding(Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 48), Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
+            // 版面：上面 40% 是示意圖（固定位置）；文字區在「示意圖下方到底部按鈕上方」的正中間，每一頁位置一樣
+            page.setPadding(Ui.dp(OnboardingActivity.this, 32), 0, Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
+            int screenH = getResources().getDisplayMetrics().heightPixels;
             DemoView demo = new DemoView(OnboardingActivity.this, i);
-            page.addView(demo, new LinearLayout.LayoutParams(-1, 0, 1f));
-            // 文字區佔一半高度並置中：標題與說明（welcome 的設定圓點也在這裡）不再貼在下方或偏上
+            page.addView(demo, new FrameLayout.LayoutParams(-1, (int) (screenH * 0.40f), android.view.Gravity.TOP));
             LinearLayout textBox = new LinearLayout(OnboardingActivity.this);
             textBox.setOrientation(LinearLayout.VERTICAL);
             textBox.setGravity(android.view.Gravity.CENTER);
-            textBox.setLayoutParams(new LinearLayout.LayoutParams(-1, 0, 1f));
-            page.addView(textBox);
+            page.addView(textBox, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
             Ui.bounceIn(demo);   // 示意圖進場彈一下
             TextView t = new TextView(OnboardingActivity.this);
             t.setText(L.t(TITLES[i]));
