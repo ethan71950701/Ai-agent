@@ -2,4 +2,8 @@
     <string name="a11y_desc">Draws the tap ripples on screen, and lets the app tap and swipe for you. It does not read screen content (the screen is used only as screenshots).</string>
     <string name="tile_label">AI Assistant</string>
     <string name="a11y_label">PhoneAI Ripple</string>
+    <string name="share_label">Ask PhoneAI</string>
+    <string name="widget_label">PhoneAI Voice</string>
+    <string name="widget_desc">Tap to speak to the assistant</string>
+    <string name="widget_button">🎙 Speak</string>
 </resources>

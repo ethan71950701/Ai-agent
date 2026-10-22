@@ -112,6 +112,11 @@ final class ChatEngine {
 
     /** 送出一則 Messages API 的請求（聊天與自動操作共用）。 */
     static JSONObject post(JSONObject body, String key) throws Exception {
+        Context app = App.ctx;
+        if (app != null) {
+            String over = Usage.overLimit(app);
+            if (over != null) throw new Exception(over);
+        }
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         con.setRequestMethod("POST");
         con.setConnectTimeout(20000);
@@ -125,7 +130,13 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         if (code >= 400) throw new Exception("HTTP " + code + " " + text);
-        return new JSONObject(text);
+        JSONObject r = new JSONObject(text);
+        JSONObject u = r.optJSONObject("usage");
+        if (app != null && u != null) {
+            Usage.add(app, u.optLong("input_tokens") + u.optLong("cache_creation_input_tokens") + u.optLong("cache_read_input_tokens"),
+                    u.optLong("output_tokens"));
+        }
+        return r;
     }
 
     private static byte[] readAll(InputStream in) throws Exception {

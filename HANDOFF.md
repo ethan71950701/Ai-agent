@@ -144,6 +144,11 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | App 點擊漣漪（無障礙懸浮層 `RippleAccessibilityService`） | ✅ | 使用者實測：「設定」前景可見、位置準、不擋點擊。一般懸浮層在「設定」前景會被系統強制隱藏（dumpsys 確認），所以改用無障礙。滑動軌跡單獨測過、agent2 的 swipe 整合未測 |
 | App 常駐通知升級成 Live Update / Now Bar 膠囊 | ✅ | 使用者實測：左上角膠囊出現、`shouldHide()` 回 false。關鍵：不帶 `ongoingActivityNoti.*` + secure `enable_notification_nowbar_test=1`（`overlay_install.sh` 會設；見 ROADMAP 8e）。副作用：其他 App 的可升級通知也可能出現在 Now Bar。使用者實測：鎖定畫面看得到、通知「停止」鈕可中斷 agent2、膠囊文字「AI 步數」跟著步驟變化 |
 | 任務歷史與星星：首頁／問問看送出的任務寫入 `files/tasks.json`（最多 200 筆），「任務過程」頁每筆右側可加星，有星的排最前面；診斷頁「最近的任務」也改讀這份資料 | 🟡 雲端編譯過，手機未測 | 之前「任務過程」讀的 `assistant.log` 沒有任何程式寫入，所以一直是空的；現在改成任務列表。自我檢查（selftest.log）不變 |
+| Claude 用量上限（`Usage`）：每次 API 回應的 token 按日記在 `files/usage.json`；每日、每月上限在「功能 → 維護 → 用量與上限」，超過就不送出 Claude 請求 | 🟡 雲端編譯過，手機未測 | 只記 token 數，不換算金額（價格請對照 Console Usage）；上限為 0 = 不限 |
+| 分享到 PhoneAI（`ShareActivity`）：別的 App 的分享選單選 PhoneAI，文字填進助理面板，不自動送出 | 🟡 雲端編譯過，手機未測 | 只處理文字；圖片分享尚未做 |
+| 記憶搜尋、匯出、匯入（`MemoryActivity`）：匯出到 `/sdcard/Download/phoneai_memory_backup.json`（用 root 寫）；匯入只加入沒有的項目 | 🟡 雲端編譯過，手機未測 | 匯入需要 root 讀下載資料夾，與解除安裝清除的是同一個檔 |
+| 回答卡片 Markdown 排版（`Md`）：粗體、行內程式碼、程式碼區塊、標題、清單 | 🟡 雲端編譯過，手機未測 | 助理提示詞要求不用 Markdown，所以多數回答看不到效果；朗讀仍讀原文 |
+| 桌面小工具「PhoneAI 語音」（`VoiceWidget`）：點一下開助理面板並開始聽 | 🟡 雲端編譯過，手機未測 | 小工具文字跟系統語言，不跟 App 內的語言選項 |
 | App 操作介面：輸入框、語音（倒數 5 秒）、快速設定磁貼、預設數位助理（長按電源鍵）、浮動按鈕 | ✅ | 使用者實測全部可用（2026-10-17）。走 Termux `RUN_COMMAND`（`allow-external-apps`）；root 備援路徑未觸發過 |
 | `agent2.py` 提示詞快取（固定說明放 `system` + `cache_control`，每步只送圖與任務/歷史；結尾印快取讀/寫 token） | ✅ | 實測生效：第 1 步寫 1107、之後每步讀 1107。同任務 4 步：8187 入約 $0.0181 → 8091 入（快取讀 3321）約 $0.0124，約省 31%（價格倍率為估算，請看 Console Usage） |
 | `agent2.py` 聯網搜尋（動作 `search`，`web_search_20250305`，每任務最多 2 次，Sonnet 5.5 代查，回傳摘要寫進歷史；`pause_turn`/錯誤區塊有處理） | ✅ | 使用者實測「查現在台北天氣」可搜尋並回答。官方價每千次 $10（約每次 $0.01，另加 token）；Console 若關閉網頁搜尋會 400（程式會印出並退回畫面操作）。只送模型寫的關鍵字，不送截圖 |
@@ -378,6 +383,8 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 - 還沒做：**原生確認框在手機上的實測**（見第 11 節第 1 項）。
 
 ## 11. 建議下一步（按優先順序）
+
+**目前（2026-10-22）：** 任務歷史、用量上限、分享到助理、記憶搜尋匯出匯入、Markdown 排版、桌面小工具都已合併，狀態表是 🟡，等使用者在手機上實測後再改成 ✅。下面這份清單是較早的 Termux 時期紀錄，參考用。
 
 0. **改完程式先跑離線測試**：`python -m unittest discover -s tests`（21 項，雲端與手機都能跑，不花 API）。
 1. **更便宜的設定**：`AGENT_FIRST=haiku` 已實測（單次）：Haiku 5.5 點擊座標連續點錯、沒完成任務，升級 Sonnet 又因換模型要重寫快取而多花（見 EXPERIMENTS），**不建議**，預設維持 Sonnet。

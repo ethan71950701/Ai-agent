@@ -18,6 +18,8 @@ public class AskActivity extends Activity {
         sheet.enter();
         String preset = getIntent().getStringExtra("text");   // 首頁輸入框送來的文字：直接送出（不自動聽）
         if (preset != null && !preset.isEmpty()) sheet.presetAndSend(preset);
+        String fill = getIntent().getStringExtra("fill");   // 分享過來的文字：只填進輸入框，等使用者送出
+        if (fill != null) sheet.fillText(fill);
         String q = getIntent().getStringExtra("question");
         if (q != null) sheet.setQuestion(q);   // agent2 要問使用者問題（ask_user）：回答問題模式
         String rt = getIntent().getStringExtra("reply_text");
@@ -55,6 +57,8 @@ public class AskActivity extends Activity {
         if (q != null) sheet.setQuestion(q);
         String rt = intent.getStringExtra("reply_text");
         if (rt != null) sheet.showReply("", rt);
+        String fill = intent.getStringExtra("fill");
+        if (fill != null) sheet.fillText(fill);
         if (autoVoice(intent)) sheet.startVoice();
     }
 

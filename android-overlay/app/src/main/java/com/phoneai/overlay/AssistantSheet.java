@@ -279,6 +279,11 @@ public class AssistantSheet {
         submit();
     }
 
+    /** 分享過來的文字：只填進輸入框，等使用者按送出。 */
+    public void fillText(String t) {
+        setText(t);
+    }
+
     public void enter() {
         current = this;
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下

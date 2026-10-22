@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
  * 助理的記憶：看全部待辦與筆記，可以新增、編輯、完成、刪除。資料在 App 自己的資料夾，App 內用 root 讀寫，
@@ -42,6 +43,8 @@ public class MemoryActivity extends Activity {
     private static volatile JSONObject cache;   // 同一次 App 執行中記住上次讀到的資料
     private float d;
     private String diag = "";
+    private String query = "";   // 搜尋框的文字（小寫）；空字串 = 全部顯示
+    private static final String BACKUP = "/sdcard/Download/phoneai_memory_backup.json";
 
     @Override
     protected void onCreate(Bundle b) {
@@ -52,10 +55,28 @@ public class MemoryActivity extends Activity {
         Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
+        com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(this);
+        til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        til.setHint(L.t("搜尋待辦、筆記"));
+        com.google.android.material.textfield.TextInputEditText search = new com.google.android.material.textfield.TextInputEditText(til.getContext());
+        search.setSingleLine(true);
+        search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) { }
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) { }
+            @Override public void afterTextChanged(android.text.Editable e) {
+                query = e.toString().trim().toLowerCase(Locale.ROOT);
+                if (data != null) render();
+            }
+        });
+        til.addView(search);
+        box.addView(til);
         Ui.buttons(this, box,
                 Ui.pill(this, L.t("＋ 待辦"), true, v -> edit(null, "todo")),
                 Ui.pill(this, L.t("＋ 筆記"), false, v -> edit(null, "note")),
                 Ui.pill(this, L.t("重新整理"), false, v -> reload()));
+        Ui.buttons(this, box,
+                Ui.pill(this, L.t("匯出"), false, v -> exportMemory()),
+                Ui.pill(this, L.t("匯入"), false, v -> importMemory()));
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
         box.addView(list);
@@ -164,6 +185,7 @@ public class MemoryActivity extends Activity {
             JSONObject it = items.optJSONObject(i);
             if (it == null || it.optBoolean("deleted") || !kind.equals(it.optString("kind"))) continue;
             if (it.optBoolean("done") != doneOnes) continue;
+            if (!query.isEmpty() && !it.optString("text").toLowerCase(Locale.ROOT).contains(query)) continue;
             hit.add(it);
         }
         Ui.section(this, list, name + L.t("（") + hit.size() + L.t("）"));
@@ -182,6 +204,87 @@ public class MemoryActivity extends Activity {
             Ui.row(this, list, i, hit.size(), icon, it.optString("text"), created.length() >= 10 ? created.substring(5, 10).replace('-', '/') : null, pin, v -> edit(it, kind));
         }
         return hit.size();
+    }
+
+    // ---------- 匯出／匯入（下載資料夾的 phoneai_memory_backup.json，格式就是 items 陣列） ----------
+
+    /** 匯出：待辦、筆記、經驗（不含已刪除的）寫到下載資料夾。用 root 寫，跟 Uninstaller 清的是同一個檔。 */
+    private void exportMemory() {
+        if (data == null) return;
+        JSONObject out = new JSONObject();
+        JSONArray keep = new JSONArray();
+        JSONArray items = data.optJSONArray("items");
+        for (int i = 0; items != null && i < items.length(); i++) {
+            JSONObject it = items.optJSONObject(i);
+            if (it != null && !it.optBoolean("deleted")) keep.put(it);
+        }
+        try {
+            out.put("items", keep);
+        } catch (Exception ignored) { }
+        String json = out.toString();
+        new Thread(() -> {
+            String res = Maintenance.suRun("cat > " + BACKUP + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\n[ -s " + BACKUP + " ] && echo PHONEAI_OK");
+            final boolean ok = res.contains("PHONEAI_OK");
+            runOnUiThread(() -> status.setText(ok ? L.t("已匯出到下載資料夾的 phoneai_memory_backup.json") : L.t("匯出失敗：") + res.trim()));
+        }).start();
+    }
+
+    /** 匯入：讀下載資料夾的備份，確認後只加入還沒有的項目（同類別、同文字就跳過），不刪除、不覆蓋。 */
+    private void importMemory() {
+        new Thread(() -> {
+            JSONArray in = parseItems(Maintenance.suRun("cat " + BACKUP + " 2>/dev/null"));
+            runOnUiThread(() -> {
+                if (in == null) {
+                    status.setText(L.t("找不到可以匯入的備份：先按「匯出」，會存到下載資料夾"));
+                    return;
+                }
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setMessage(String.format(L.t("匯入 %d 則？只會加入還沒有的項目，不會刪除或覆蓋現有的。"), in.length()))
+                        .setPositiveButton(L.t("匯入"), (d2, w2) -> mergeAndSave(in))
+                        .setNegativeButton(L.t("取消"), null).show();
+            });
+        }).start();
+    }
+
+    private static JSONArray parseItems(String raw) {
+        try {
+            String t = raw.trim();
+            if (!t.startsWith("{")) return null;
+            return new JSONObject(t).optJSONArray("items");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void mergeAndSave(JSONArray in) {
+        if (data == null) return;
+        int added = 0;
+        try {
+            JSONArray items = data.getJSONArray("items");
+            for (int i = 0; i < in.length(); i++) {
+                JSONObject it = in.optJSONObject(i);
+                if (it == null) continue;
+                String kind = it.optString("kind"), text = it.optString("text");
+                if (kind.isEmpty() || text.isEmpty() || hasSame(items, kind, text)) continue;
+                int id = data.optInt("next_id", 1);
+                data.put("next_id", id + 1);
+                items.put(new JSONObject(it.toString()).put("id", id).put("deleted", false));
+                added++;
+            }
+        } catch (Exception e) {
+            status.setText(L.t("匯入失敗：") + e.getMessage());
+            return;
+        }
+        android.widget.Toast.makeText(this, L.t("已加入 ") + added + L.t(" 則"), android.widget.Toast.LENGTH_SHORT).show();
+        saveThen(this::render);
+    }
+
+    private static boolean hasSame(JSONArray items, String kind, String text) {
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject it = items.optJSONObject(i);
+            if (it != null && !it.optBoolean("deleted") && kind.equals(it.optString("kind")) && text.equals(it.optString("text"))) return true;
+        }
+        return false;
     }
 
     /** it == null 是新增。 */

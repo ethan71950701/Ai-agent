@@ -601,6 +601,7 @@ public class MainActivity extends Activity {
         Ui.section(this, box, L.t("維護"));
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", "Claude API Key", L.t("只存在這支手機的 App 私有資料夾"), true, v -> askKey()),
+                new Ui.Tile("sparkle", L.t("用量與上限"), L.t("Claude 用了多少 token，可設每日／每月上限"), false, v -> Usage.dialog(this)),
                 new Ui.Tile("download", L.t("檢查並更新"), L.t("按一下：有新版本就自動更新"), false, v -> startUpdate()),
                 new Ui.Tile("power", L.t("解除安裝"), L.t("還原設定、刪除 Key，最後移除本 App"), true, v -> Uninstaller.start(this)),
                 new Ui.Tile("check_circle", L.t("設定導覽"), L.t("逐步檢查 root、權限、Key"), false, v -> startActivity(new Intent(this, GuideActivity.class))));

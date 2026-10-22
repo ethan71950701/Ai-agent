@@ -49,7 +49,7 @@ final class ReplyCard {
         sv.setVerticalScrollBarEnabled(false);
         sv.setPadding((int) (26 * d), (int) (22 * d), (int) (24 * d), (int) (22 * d));
         TextView body = new TextView(act);
-        body.setText(text);
+        body.setText(Md.render(text));
         body.setTextColor(0xFFF4F4F8);
         body.setTextSize(20);
         body.setLineSpacing(0, 1.38f);
