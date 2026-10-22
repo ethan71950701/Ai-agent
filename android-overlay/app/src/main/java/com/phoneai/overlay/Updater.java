@@ -177,15 +177,12 @@ final class Updater {
             if (line.startsWith("commit:")) continue;
             // 雙語條目「中文｜English」：依介面語言只留一半；沒有分隔符的舊說明原樣顯示
             int bar = line.indexOf('｜');
-            if (bar >= 0) {
-                String zh = line.substring(0, bar).trim(), en = line.substring(bar + 1).trim();
-                String head = line.startsWith("- ") ? "- " : "";
-                String pick = L.en() ? en : zh;
-                if (head.length() > 0) pick = pick.replaceFirst("^- ", "");
-                sb.append(head).append(pick).append('\n');
-                continue;
-            }
-            sb.append(line).append('\n');
+            String l = line;
+            if (bar >= 0) l = L.en() ? line.substring(bar + 1).trim() : line.substring(0, bar).trim();
+            // Markdown 符號在一般文字裡會露出來：標題去掉 ##，條列改成「•」
+            if (l.startsWith("## ")) { if (sb.length() > 0) sb.append('\n'); l = l.substring(3).trim(); }
+            else if (l.startsWith("- ")) l = "•  " + l.substring(2).trim();
+            sb.append(l).append('\n');
         }
         String t = sb.toString().trim();
         if (t.isEmpty()) return L.t("（這次沒有更新說明）");
