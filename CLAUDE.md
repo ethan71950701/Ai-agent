@@ -17,6 +17,8 @@
 - 正式 APK 由 GitHub Actions 產生（`.github/workflows/android.yml`），使用者從 Release 下載安裝。
 
 ## 規則
+- 編譯通過的改動**直接合併到 `main`**（使用者已同意，不用每次再問）；GitHub Actions 只在 `main` 自動編譯並發布。
+- 介面有繁體中文與英文：使用者看得到的字串一律寫 `L.t("中文原文")`，並在 `LEn.java` 加對應英文；改完跑 `python android-overlay/tools/check_i18n.py`。語言選項在「設定 → 外觀 → Language / 語言」（跟隨系統：系統語言是中文就用中文，其他用英文）；改語言會重新啟動 App。
 - 使用者用繁體中文，回覆簡短；一次一小步。
 - 不提交截圖、記錄檔、金鑰、模型檔（`.gitignore` 已排除）。
 - 敏感操作（付款、轉帳、刪除、安裝、傳訊息、登入…）一律跳確認框，確認框沒回應 = 不同意。

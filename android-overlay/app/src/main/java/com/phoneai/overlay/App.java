@@ -21,8 +21,8 @@ public class App extends Application {
             R.style.Accent0, R.style.Accent1, R.style.Accent2, R.style.Accent3, R.style.Accent4,
             R.style.Accent5, R.style.Accent6, R.style.Accent7, R.style.Accent8, R.style.Accent9,
             R.style.Accent10, R.style.Accent11, R.style.Accent12, R.style.Accent13, R.style.Accent14};
-    static final String[] SEED_NAMES = {"紅", "粉紅", "紫", "深紫", "靛藍", "藍", "青", "藍綠", "綠", "黃",
-            "琥珀", "橘", "棕", "灰藍", "粉"};
+    static final String[] SEED_NAMES = {L.t("紅"), L.t("粉紅"), L.t("紫"), L.t("深紫"), L.t("靛藍"), L.t("藍"), L.t("青"), L.t("藍綠"), L.t("綠"), L.t("黃"),
+            L.t("琥珀"), L.t("橘"), L.t("棕"), L.t("灰藍"), L.t("粉")};
 
     /** 目前選的主題（莫奈或哪一色）；比對它就知道畫面是不是已經是最新的主題。 */
     static String themeKey(Context c) {
@@ -41,6 +41,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         ctx = this;
+        L.init(this);   // 介面語言要最先決定（靜態字串陣列也用得到）
         GlassPrefs.load(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override

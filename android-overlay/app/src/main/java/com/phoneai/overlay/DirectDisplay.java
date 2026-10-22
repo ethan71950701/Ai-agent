@@ -55,7 +55,7 @@ public final class DirectDisplay {
         Looper.prepareMainLooper();
         Context ctx = fakeContext();
         Surface surface = askSurface(ctx);
-        if (surface == null) throw new IllegalStateException("App 沒給 Surface");
+        if (surface == null) throw new IllegalStateException(L.t("App 沒給 Surface"));
 
         VirtualDisplay vd = createVd(ctx, w, h, dpi, surface);
         int id = vd.getDisplay().getDisplayId();
@@ -160,7 +160,7 @@ public final class DirectDisplay {
                 ex.putBinder("host", hostBinder);
                 ex.putInt("display", id);
                 Bundle res = callProvider(ctx, "register", ex);
-                if (res == null || res.getBinder("app") == null) throw new IllegalStateException("App 沒回應");
+                if (res == null || res.getBinder("app") == null) throw new IllegalStateException(L.t("App 沒回應"));
                 appUid[0] = res.getInt("uid", -1);
                 res.getBinder("app").linkToDeath(() -> {
                     main.post(() -> vd.setSurface(reader.getSurface()));
@@ -257,7 +257,7 @@ public final class DirectDisplay {
         IBinder token = new Binder();
         Method get = am.getClass().getMethod("getContentProviderExternal", String.class, int.class, IBinder.class, String.class);
         Object holder = get.invoke(am, SurfaceProvider.AUTHORITY, 0, token, null);
-        if (holder == null) throw new IllegalStateException("找不到 SurfaceProvider");
+        if (holder == null) throw new IllegalStateException(L.t("找不到 SurfaceProvider"));
         Field pf = holder.getClass().getDeclaredField("provider");
         pf.setAccessible(true);
         Object provider = pf.get(holder);

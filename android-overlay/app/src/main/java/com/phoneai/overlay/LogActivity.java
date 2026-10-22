@@ -26,7 +26,7 @@ public class LogActivity extends Activity {
         super.onCreate(b);
         mode = getIntent().getIntExtra("mode", 0);
         LinearLayout[] c = new LinearLayout[1];
-        setContentView(Ui.screen(this, mode == 4 ? "自我檢查" : "任務過程", true, c));
+        setContentView(Ui.screen(this, mode == 4 ? L.t("自我檢查") : L.t("任務過程"), true, c));
         Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
@@ -63,14 +63,14 @@ public class LogActivity extends Activity {
             runOnUiThread(() -> {
                 boolean finished = t != null && t.contains("=== 結束 ===");
                 if (t == null) {
-                    status.setText("讀不到紀錄（" + dg + "）。可能還沒從面板問過問題，或這支手機沒有 root。");
+                    status.setText(L.t("讀不到紀錄（") + dg + L.t("）。可能還沒從面板問過問題，或這支手機沒有 root。"));
                     body.setText("");
                 } else if (t.trim().isEmpty()) {
-                    status.setText(mode == 4 ? "自我檢查還沒有結果。" : "還沒有從面板送出過任務。");
+                    status.setText(mode == 4 ? L.t("自我檢查還沒有結果。") : L.t("還沒有從面板送出過任務。"));
                     body.setText("");
                 } else {
-                    status.setText(mode == 4 ? (finished ? "自我檢查完成（✓ 正常，✕ 有問題）" : "自我檢查進行中…")
-                            : "上一次任務的完整輸出");
+                    status.setText(mode == 4 ? (finished ? L.t("自我檢查完成（✓ 正常，✕ 有問題）") : L.t("自我檢查進行中…"))
+                            : L.t("上一次任務的完整輸出"));
                     body.setText(t);
                 }
                 // 自我檢查還沒結束就每 2 秒刷新，最多 3 分鐘

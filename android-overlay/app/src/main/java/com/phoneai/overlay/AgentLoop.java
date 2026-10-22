@@ -31,7 +31,8 @@ final class AgentLoop {
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 8;
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
-    private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單"};
+    private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單",
+            "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout"};   // 中文與英文的敏感詞
     private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
     private static final String[] PIPE_OK = {"grep", "head", "tail", "sort", "cut", "wc", "uniq", "tr"};
     private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "multitouch", "scroll", "wait", "back", "home", "enter", "type"};
@@ -54,12 +55,18 @@ final class AgentLoop {
 
     private AgentLoop() { }
 
+    /** 任務文字是否含敏感詞：中文直接比對；英文要整個單字（避免 display 被當成 pay）。 */
+    private static boolean hit(String task, String w) {
+        if (!w.matches("[a-z]+")) return task.contains(w);
+        return java.util.regex.Pattern.compile("\\b" + w + "\\b", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(task).find();
+    }
+
     /** 執行任務；回傳要告訴使用者的文字。 */
     static String run(Context c, String task, Ui ui) {
         for (String w : TASK_BLOCK)
-            if (task.contains(w) && !ui.confirm("任務含「" + w + "」這類敏感操作，要繼續嗎？")) return "已取消，沒有執行。";
+            if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
-        if (key == null || key.isEmpty()) return "還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。";
+        if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
         int[] wh = screenSize();
         State st = new State();
         ui.hide();
@@ -68,17 +75,17 @@ final class AgentLoop {
         String finalSay = null;
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
-                ui.status("第 " + step + "／" + MAX_STEPS + " 步");
+                ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 String img = screenshot();
-                if (img == null) return "截圖失敗：請確認 root 已允許 PhoneAI。";
+                if (img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
                 JSONObject action;
                 try {
                     action = askModel(key, task, history, img, lessons);
                 } catch (Exception e) {
-                    return "連不上 AI：" + e.getMessage();
+                    return L.t("連不上 AI：") + e.getMessage();
                 }
-                if (action == null) return "AI 的回答看不懂，已停止。";
+                if (action == null) return L.t("AI 的回答看不懂，已停止。");
                 double wait = action.optDouble("wait", 1.2);
                 String name = action.optString("action");
                 if (st.dragDown && !name.startsWith("drag_") && !name.equals("wait")) {
@@ -88,18 +95,18 @@ final class AgentLoop {
                 rememberLesson(c, action, st, history);
                 switch (name) {
                     case "done":
-                        finalSay = action.optString("say", "完成了。");
+                        finalSay = action.optString("say", L.t("完成了。"));
                         break;
                     case "fail":
-                        finalSay = "做不到：" + action.optString("say", "（沒有原因）");
+                        finalSay = L.t("做不到：") + action.optString("say", L.t("（沒有原因）"));
                         break;
                     case "ask_user":
-                        finalSay = action.optString("question", "請告訴我你要怎麼做。");
+                        finalSay = action.optString("question", L.t("請告訴我你要怎麼做。"));
                         break;
                     case "ask": {
                         boolean manual = action.optBoolean("manual");
-                        String why = action.optString("why", "這一步需要你確認");
-                        if (!ui.confirm(manual ? why + "\n請自己動手，完成後按確定。" : why + "\n要繼續嗎？")) return "已取消。";
+                        String why = action.optString("why", L.t("這一步需要你確認"));
+                        if (!ui.confirm(manual ? why + L.t("\n請自己動手，完成後按確定。") : why + L.t("\n要繼續嗎？"))) return L.t("已取消。");
                         history.add(step + ". ask 使用者同意（" + why + "）");
                         break;
                     }
@@ -110,7 +117,7 @@ final class AgentLoop {
                             break;
                         }
                         st.searches++;
-                        ui.status("第 " + step + "／" + MAX_STEPS + " 步 · 搜尋網路中");
+                        ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步 · 搜尋網路中"));
                         String ans = webSearch(key, q);
                         history.add(step + ". " + (ans != null ? "搜尋「" + q + "」得到：" + (ans.length() > 300 ? ans.substring(0, 300) : ans)
                                 : "搜尋「" + q + "」失敗，請改用畫面操作"));
@@ -140,7 +147,7 @@ final class AgentLoop {
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
-        return finalSay != null ? finalSay : "已到最大步數（" + MAX_STEPS + "），還沒完成。";
+        return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
     }
 
     // ---------- 螢幕 ----------
@@ -196,6 +203,7 @@ final class AgentLoop {
             for (int i = Math.max(0, history.size() - 8); i < history.size(); i++) text.append(history.get(i)).append('\n');
         }
         text.append("\n請決定下一步，只輸出一行 JSON。");
+        if (L.en()) text.append("\nWrite the say, question and why fields of your JSON in English.");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
         JSONArray messages = new JSONArray().put(new JSONObject().put("role", "user").put("content", content));
         JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 800)
@@ -235,7 +243,7 @@ final class AgentLoop {
             JSONObject tool = new JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 1)
                     .put("user_location", new JSONObject().put("type", "approximate").put("country", "TW").put("timezone", "Asia/Taipei"));
             JSONArray msgs = new JSONArray().put(new JSONObject().put("role", "user")
-                    .put("content", "請用繁體中文回答，根據網路搜尋結果，只講事實，不超過120字：" + query));
+                    .put("content", (L.en() ? "Answer in English based on the web search results; facts only, under 100 words: " : "請用繁體中文回答，根據網路搜尋結果，只講事實，不超過120字：") + query));
             StringBuilder text = new StringBuilder();
             for (int turn = 0; turn < 3; turn++) {
                 JSONObject body = new JSONObject().put("model", SEARCH_MODEL).put("max_tokens", 700)
@@ -266,7 +274,7 @@ final class AgentLoop {
             String app = st.opened.isEmpty() ? null : st.opened.get(0);
             if (Memory.addLesson(c, rem, app)) {
                 st.remembered.add(rem);
-                Notify.notifyText(c, "AI 學到的經驗（可在 App 記憶頁刪除）", rem, 7195);
+                Notify.notifyText(c, L.t("AI 學到的經驗（可在 App 記憶頁刪除）"), rem, 7195);
             }
         } catch (Exception ignored) { }
     }

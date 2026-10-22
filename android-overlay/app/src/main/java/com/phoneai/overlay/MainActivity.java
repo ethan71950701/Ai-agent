@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
     /** 用手指的壓力決定底欄發光的強度（壓越重越亮）。Android 回報的壓力範圍因手機而異，這裡把 0.15～1.0 對應到 0～1。 */
     private void pressureGlow(android.view.MotionEvent e, View v, boolean smooth) {
         float p = e.getPressure();
-        GlassBar.touchInfo = "壓力 " + String.format(java.util.Locale.US, "%.2f", p) + "、接觸面積 " + String.format(java.util.Locale.US, "%.2f", e.getSize());
+        GlassBar.touchInfo = L.t("壓力 ") + String.format(java.util.Locale.US, "%.2f", p) + L.t("、接觸面積 ") + String.format(java.util.Locale.US, "%.2f", e.getSize());
         float target = (p - 0.15f) / 0.85f;
         if (smooth) animatePress(target, 160);
         else if (glass != null) glass.setPressGlow(target);
@@ -154,9 +154,9 @@ public class MainActivity extends Activity {
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
-    private static final String[] TAB_TITLE = {"PhoneAI", "功能", "設定"};
+    private static final String[] TAB_TITLE = {"PhoneAI", L.t("功能"), L.t("設定")};
     private static final String[] TAB_ICON = {"home", "apps", "tune"};
-    private static final String[] TAB_LABEL = {"首頁", "功能", "設定"};
+    private static final String[] TAB_LABEL = {L.t("首頁"), L.t("功能"), L.t("設定")};
 
     @Override
     protected void onCreate(Bundle b) {
@@ -429,7 +429,7 @@ public class MainActivity extends Activity {
         bar.setBackground(gd);
         bar.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
         final android.widget.EditText et = new android.widget.EditText(this);
-        et.setHint("問問看");
+        et.setHint(L.t("問問看"));
         et.setSingleLine(true);
         et.setBackground(null);
         et.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
@@ -475,11 +475,11 @@ public class MainActivity extends Activity {
     private void homeAsk(String t) {
         if (answerView == null) return;
         answerView.setVisibility(View.VISIBLE);
-        answerView.setText("思考中…");
+        answerView.setText(L.t("思考中…"));
         new Thread(() -> {
             String r = Brain.answer(this, t, new AgentLoop.Ui() {
                 @Override public void hide() { }
-                @Override public void status(String s) { Notify.notifyText(MainActivity.this, "AI 正在操作手機", s, 7195); }
+                @Override public void status(String s) { Notify.notifyText(MainActivity.this, L.t("AI 正在操作手機"), s, 7195); }
                 @Override public boolean confirm(String msg) { return Brain.confirm(MainActivity.this, msg); }
             });
             final String fr = r == null ? "" : r;
@@ -499,24 +499,24 @@ public class MainActivity extends Activity {
             return;
         }
         if (!SherpaEngine.ready(this)) {
-            android.widget.Toast.makeText(this, "請先到引導頁下載語音辨識模型", android.widget.Toast.LENGTH_LONG).show();
+            android.widget.Toast.makeText(this, L.t("請先到引導頁下載語音辨識模型"), android.widget.Toast.LENGTH_LONG).show();
             return;
         }
-        if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText("我在聽…"); }
+        if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
         SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { }
             @Override public void onLevel(float v) { }
             @Override public void onDone(short[] pcm) {
-                if (pcm == null) { showAnswer("沒聽到聲音，再按一次麥克風"); return; }
+                if (pcm == null) { showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
                 new Thread(() -> {
                     String text = "";
                     try { text = SherpaEngine.recognize(MainActivity.this, SpeechCapture.toFloat(pcm), SpeechCapture.RATE); }
                     catch (Throwable e) { text = ""; }
                     final String t = text == null ? "" : text.trim();
-                    runOnUiThread(() -> { if (t.isEmpty()) showAnswer("沒聽清楚，再按一次麥克風"); else homeAsk(t); });
+                    runOnUiThread(() -> { if (t.isEmpty()) showAnswer(L.t("沒聽清楚，再按一次麥克風")); else homeAsk(t); });
                 }, "home-voice").start();
             }
-            @Override public void onError(String msg) { showAnswer("錄音失敗：" + msg); }
+            @Override public void onError(String msg) { showAnswer(L.t("錄音失敗：") + msg); }
         });
     }
 
@@ -537,7 +537,7 @@ public class MainActivity extends Activity {
 
     private void buildHome() {
         TextView greet = new TextView(this);
-        greet.setText("你好，需要什麼幫忙？");
+        greet.setText(L.t("你好，需要什麼幫忙？"));
         greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 34);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
@@ -594,20 +594,20 @@ public class MainActivity extends Activity {
 
     private void buildFunctions() {
         heroBox = null;
-        Ui.section(this, box, "資料");
+        Ui.section(this, box, L.t("資料"));
         Ui.tileGrid(this, box,
-                new Ui.Tile("note", "助理的記憶", "待辦與筆記", false, v -> startActivity(new Intent(this, MemoryActivity.class))),
-                new Ui.Tile("clock", "任務過程", "AI 每一步做了什麼", false, v -> startActivity(new Intent(this, LogActivity.class))));
-        Ui.section(this, box, "維護");
+                new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),
+                new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))));
+        Ui.section(this, box, L.t("維護"));
         Ui.tileGrid(this, box,
-                new Ui.Tile("pin", "Claude API Key", "只存在這支手機的 App 私有資料夾", true, v -> askKey()),
-                new Ui.Tile("download", "檢查並更新", "按一下：有新版本就自動更新", false, v -> startUpdate()),
-                new Ui.Tile("power", "解除安裝", "還原設定、刪除 Key，最後移除本 App", true, v -> Uninstaller.start(this)),
-                new Ui.Tile("check_circle", "設定導覽", "逐步檢查 root、權限、Key", false, v -> startActivity(new Intent(this, GuideActivity.class))));
-        Ui.section(this, box, "進階");
+                new Ui.Tile("pin", "Claude API Key", L.t("只存在這支手機的 App 私有資料夾"), true, v -> askKey()),
+                new Ui.Tile("download", L.t("檢查並更新"), L.t("按一下：有新版本就自動更新"), false, v -> startUpdate()),
+                new Ui.Tile("power", L.t("解除安裝"), L.t("還原設定、刪除 Key，最後移除本 App"), true, v -> Uninstaller.start(this)),
+                new Ui.Tile("check_circle", L.t("設定導覽"), L.t("逐步檢查 root、權限、Key"), false, v -> startActivity(new Intent(this, GuideActivity.class))));
+        Ui.section(this, box, L.t("進階"));
         Ui.tileGrid(this, box,
-                new Ui.Tile("terminal", "進階與診斷", "版本、狀態、測試", false, v -> startActivity(new Intent(this, DiagActivity.class))),
-                new Ui.Tile("sparkle", "功能介紹", "再看一次介紹動畫", false, v -> startActivity(new Intent(this, OnboardingActivity.class))));
+                new Ui.Tile("terminal", L.t("進階與診斷"), L.t("版本、狀態、測試"), false, v -> startActivity(new Intent(this, DiagActivity.class))),
+                new Ui.Tile("sparkle", L.t("功能介紹"), L.t("再看一次介紹動畫"), false, v -> startActivity(new Intent(this, OnboardingActivity.class))));
     }
 
     private void startUpdate() {
@@ -615,7 +615,7 @@ public class MainActivity extends Activity {
     }
 
     private void repairPerms() {
-        android.widget.Toast.makeText(this, "修復中…", android.widget.Toast.LENGTH_SHORT).show();
+        android.widget.Toast.makeText(this, L.t("修復中…"), android.widget.Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             final String r = Maintenance.repairPermissions();
             runOnUiThread(() -> { android.widget.Toast.makeText(this, r, android.widget.Toast.LENGTH_LONG).show(); refresh(); });
@@ -626,51 +626,80 @@ public class MainActivity extends Activity {
         Maintenance.askKey(this, null);
     }
 
+    /** 語言選項：跟隨系統／繁體中文／English。靜態字串陣列要重新載入，所以選完後重新啟動 App。 */
+    private void chooseLanguage() {
+        final String[] values = {"auto", "zh", "en"};
+        final String[] labels = {L.t("跟隨系統") + " (Auto)", "繁體中文", "English"};
+        int cur = java.util.Arrays.asList(values).indexOf(L.pref(this));
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle("Language / 語言")
+                .setSingleChoiceItems(labels, Math.max(0, cur), (d, which) -> {
+                    d.dismiss();
+                    if (values[which].equals(L.pref(this))) return;
+                    L.setPref(this, values[which]);
+                    restartApp();
+                })
+                .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    private void restartApp() {
+        Intent i = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (i == null) return;
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        android.app.PendingIntent pi = android.app.PendingIntent.getActivity(this, 7, i,
+                android.app.PendingIntent.FLAG_CANCEL_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+        ((android.app.AlarmManager) getSystemService(ALARM_SERVICE)).set(android.app.AlarmManager.RTC, System.currentTimeMillis() + 300, pi);
+        finishAffinity();
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
     private void buildSettings() {
         heroBox = null;
-        LinearLayout g = Ui.expandGroup(this, box, "droplet", "外觀", "主題色與莫奈取色", true);
+        LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
         Ui.themePicker(this, g);
+        String lp = L.pref(this);
+        Ui.row(this, g, 0, 1, "list", "Language / 語言",
+                "zh".equals(lp) ? "繁體中文" : "en".equals(lp) ? "English" : L.t("跟隨系統") + " (Auto)", null, v -> chooseLanguage());
 
-        LinearLayout p = Ui.expandGroup(this, box, "shield", "權限", "懸浮層、通知、預設數位助理", false);
-        Ui.row(this, p, 0, 3, "layers", "懸浮層", "顯示在其他應用程式上層", null, v -> startActivity(
+        LinearLayout p = Ui.expandGroup(this, box, "shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
+        Ui.row(this, p, 0, 3, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
                 new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
-        Ui.row(this, p, 1, 3, "bell", "通知", "允許通知", null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
-        Ui.row(this, p, 2, 3, "sparkle", "預設數位助理", "長按電源鍵叫出", null, v -> openAssistSettings());
+        Ui.row(this, p, 1, 3, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
+        Ui.row(this, p, 2, 3, "sparkle", L.t("預設數位助理"), L.t("長按電源鍵叫出"), null, v -> openAssistSettings());
 
-        g = Ui.expandGroup(this, box, "sparkle", "底欄玻璃（進階）", "折射、模糊、放大與開關，拖動即時生效", false);
-        glassSlider(g, "折射強度", "邊緣彎曲的程度", 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
-        glassSlider(g, "色散（只有上層透鏡）", "透鏡邊緣的彩色光邊，0 = 沒有", 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
-        glassSlider(g, "模糊程度（dp）", "底欄背景的模糊半徑", 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
-        glassSlider(g, "圖示放大倍率", "按住時圖示放大的量（0.22 ≈ 1.22 倍）", 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
-        glassSlider(g, "按住放大（左右）", "按住時上層按鈕橫向放大的倍數", 1f, 1.6f, GlassPrefs.pressX, GlassPrefs.K_PRESS_X);
-        glassSlider(g, "按住放大（上下）", "按住時上層按鈕直向放大的倍數", 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
-        glassSlider(g, "按住放大（整條底欄）", "按住時整條底欄放大的倍數，1 = 不放大", 1f, 1.2f, GlassPrefs.barPress, GlassPrefs.K_BAR_PRESS);
-        glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
-        glassSwitch(g, 0, 2, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
-        glassSwitch(g, 1, 2, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+        g = Ui.expandGroup(this, box, "sparkle", L.t("底欄玻璃（進階）"), L.t("折射、模糊、放大與開關，拖動即時生效"), false);
+        glassSlider(g, L.t("折射強度"), L.t("邊緣彎曲的程度"), 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
+        glassSlider(g, L.t("色散（只有上層透鏡）"), L.t("透鏡邊緣的彩色光邊，0 = 沒有"), 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
+        glassSlider(g, L.t("模糊程度（dp）"), L.t("底欄背景的模糊半徑"), 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
+        glassSlider(g, L.t("圖示放大倍率"), L.t("按住時圖示放大的量（0.22 ≈ 1.22 倍）"), 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
+        glassSlider(g, L.t("按住放大（左右）"), L.t("按住時上層按鈕橫向放大的倍數"), 1f, 1.6f, GlassPrefs.pressX, GlassPrefs.K_PRESS_X);
+        glassSlider(g, L.t("按住放大（上下）"), L.t("按住時上層按鈕直向放大的倍數"), 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
+        glassSlider(g, L.t("按住放大（整條底欄）"), L.t("按住時整條底欄放大的倍數，1 = 不放大"), 1f, 1.2f, GlassPrefs.barPress, GlassPrefs.K_BAR_PRESS);
+        glassSlider(g, L.t("拖動歪斜量"), L.t("拖動時畫面被拖歪的程度"), 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
+        glassSwitch(g, 0, 2, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
+        glassSwitch(g, 1, 2, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);
-        g.addView(Ui.pill(this, "恢復預設", false, v -> {
+        g.addView(Ui.pill(this, L.t("恢復預設"), false, v -> {
             GlassPrefs.reset(this);
             recreate();
         }), rl);
 
-        g = Ui.expandGroup(this, box, "float", "呼叫方式", "浮動按鈕、電源鍵、預設助理", false);
-        Ui.switchRow(this, g, 0, 3, "float", "浮動按鈕", "螢幕邊緣的 AI 圓鈕，可拖曳", cfg().getBoolean("float_on", false), (v, on) -> {
+        g = Ui.expandGroup(this, box, "float", L.t("呼叫方式"), L.t("浮動按鈕、電源鍵、預設助理"), false);
+        Ui.switchRow(this, g, 0, 3, "float", L.t("浮動按鈕"), L.t("螢幕邊緣的 AI 圓鈕，可拖曳"), cfg().getBoolean("float_on", false), (v, on) -> {
             cfg().edit().putBoolean("float_on", on).apply();
             RippleAccessibilityService.refreshFloat();
         });
-        final MaterialSwitch pkb = Ui.switchRow(this, g, 1, 3, "power", "長按電源鍵叫出助理（小米用）",
-                "需要 root。會把系統自己的長按設成「不做事」，關掉會還原。三星原生長按就能叫助理，請不要開", cfg().getBoolean("powerkey_on", false), null);
+        final MaterialSwitch pkb = Ui.switchRow(this, g, 1, 3, "power", L.t("長按電源鍵叫出助理（小米用）"),
+                L.t("需要 root。會把系統自己的長按設成「不做事」，關掉會還原。三星原生長按就能叫助理，請不要開"), cfg().getBoolean("powerkey_on", false), null);
         final android.widget.CompoundButton.OnCheckedChangeListener[] pkl = new android.widget.CompoundButton.OnCheckedChangeListener[1];
         pkl[0] = (v, on) -> {
             final String cur2 = Settings.Global.getString(getContentResolver(), "power_button_long_press");
             if (on && cur2 != null && !cur2.equals("0") && !cur2.equals("1")) {   // 目前是別的值（例如三星的 103 = 原生語音助理）：先問，免得蓋掉原生長按
                 new android.app.AlertDialog.Builder(this)
-                        .setTitle("確定要開嗎？")
-                        .setMessage("目前系統的長按電源鍵動作是 " + cur2 + "（三星的 103 是原生語音助理）。這項會把它蓋成「不做事」，關掉這項時我會還原成 " + cur2 + "。三星手機建議不要開。")
-                        .setPositiveButton("還是要開", (d, w) -> applyPowerKey(true))
-                        .setNegativeButton("取消", (d, w) -> {
+                        .setTitle(L.t("確定要開嗎？"))
+                        .setMessage(L.t("目前系統的長按電源鍵動作是 ") + cur2 + L.t("（三星的 103 是原生語音助理）。這項會把它蓋成「不做事」，關掉這項時我會還原成 ") + cur2 + L.t("。三星手機建議不要開。"))
+                        .setPositiveButton(L.t("還是要開"), (d, w) -> applyPowerKey(true))
+                        .setNegativeButton(L.t("取消"), (d, w) -> {
                             pkb.setOnCheckedChangeListener(null);
                             pkb.setChecked(false);
                             pkb.setOnCheckedChangeListener(pkl[0]);
@@ -685,22 +714,22 @@ public class MainActivity extends Activity {
             applyPowerKey(on);
         };
         pkb.setOnCheckedChangeListener(pkl[0]);
-        Ui.row(this, g, 2, 3, "sparkle", "預設數位助理", "到系統設定選擇（長按電源鍵叫出）", Ui.chevron(this), v -> openAssistSettings());
+        Ui.row(this, g, 2, 3, "sparkle", L.t("預設數位助理"), L.t("到系統設定選擇（長按電源鍵叫出）"), Ui.chevron(this), v -> openAssistSettings());
 
-        g = Ui.expandGroup(this, box, "wave", "語音", "朗讀、系統語音視窗", false);
-        Ui.switchRow(this, g, 0, 2, "window", "語音一律用系統視窗", "有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉",
+        g = Ui.expandGroup(this, box, "wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
+        Ui.switchRow(this, g, 0, 2, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
                 cfg().getBoolean("voice_sys", false), (v, on) -> cfg().edit().putBoolean("voice_sys", on).apply());
-        Ui.switchRow(this, g, 1, 2, "volume", "朗讀結果", "AI 完成任務後念出來", cfg().getBoolean("tts_on", true),
+        Ui.switchRow(this, g, 1, 2, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
                 (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
 
-        g = Ui.expandGroup(this, box, "sparkle", "執行任務時", "光暈、背景模式、自動修復、實驗", false);
-        Ui.switchRow(this, g, 0, 4, "sun", "呼吸光暈", "任務執行中，螢幕四周顯示光暈", cfg().getBoolean("glow_on", true),
+        g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
+        Ui.switchRow(this, g, 0, 4, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                 (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-        Ui.switchRow(this, g, 1, 4, "monitor", "背景模式（實驗）", "任務在第二螢幕執行，不動目前的畫面", cfg().getBoolean("bg_on", false),
+        Ui.switchRow(this, g, 1, 4, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
                 (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
-        Ui.switchRow(this, g, 2, 4, "shield", "無障礙自動修復", "被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）", A11yGuard.enabled(this),
+        Ui.switchRow(this, g, 2, 4, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
                 (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
-        Ui.switchRow(this, g, 3, 4, "flask", "省錢實驗：元件清單", "不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用",
+        Ui.switchRow(this, g, 3, 4, "flask", L.t("省錢實驗：元件清單"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
                 cfg().getBoolean("tree_on", false), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());
     }
 
@@ -728,7 +757,7 @@ public class MainActivity extends Activity {
         final String cur = Settings.Global.getString(getContentResolver(), "power_button_long_press");
         if (!restore && !sp.contains("plp_orig")) sp.edit().putString("plp_orig", cur == null ? "" : cur).apply();   // "" = 原本沒有這個設定
         if (restore && !sp.contains("plp_orig")) {   // 沒有記錄原值：不要猜（刪除設定不一定等於原本的狀態，三星實測不是），請使用者到系統設定改回去
-            android.widget.Toast.makeText(this, "沒有記錄原本的值，所以不動它。請到「設定」裡改回你要的長按電源鍵動作", android.widget.Toast.LENGTH_LONG).show();
+            android.widget.Toast.makeText(this, L.t("沒有記錄原本的值，所以不動它。請到「設定」裡改回你要的長按電源鍵動作"), android.widget.Toast.LENGTH_LONG).show();
             return;
         }
         final String orig = sp.getString("plp_orig", "");
@@ -770,12 +799,12 @@ public class MainActivity extends Activity {
         LinearLayout tx = new LinearLayout(this);
         tx.setOrientation(LinearLayout.VERTICAL);
         TextView t1 = new TextView(this);
-        t1.setText(ok ? "一切就緒" : "還有設定沒完成");
+        t1.setText(ok ? L.t("一切就緒") : L.t("還有設定沒完成"));
         t1.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
         t1.setTextColor(on);
         tx.addView(t1);
         TextView t2 = new TextView(this);
-        t2.setText(ok ? "助理可以使用" : "點下面的 ＋ 項目就能設定");
+        t2.setText(ok ? L.t("助理可以使用") : L.t("點下面的 ＋ 項目就能設定"));
         t2.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
         t2.setTextColor(on);
         tx.addView(t2);
@@ -786,9 +815,9 @@ public class MainActivity extends Activity {
         heroBox.addView(gap, new LinearLayout.LayoutParams(-1, Ui.dp(this, 16)));
         // 三個權限狀態：兩欄的圓角格子（沒完成的點下去可以設定）
         View[] chips = {
-            chip("懸浮層", ov, on, v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
-            chip("通知", nt, on, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
-            chip("無障礙", a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))};
+            chip(L.t("懸浮層"), ov, on, v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())))),
+            chip(L.t("通知"), nt, on, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1)),
+            chip(L.t("無障礙"), a11y, on, v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)))};
         for (int i = 0; i < chips.length; i += 2) {
             LinearLayout r = new LinearLayout(this);
             r.setOrientation(LinearLayout.HORIZONTAL);

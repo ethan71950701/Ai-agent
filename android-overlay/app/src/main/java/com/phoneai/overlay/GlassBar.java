@@ -105,7 +105,7 @@ final class GlassBar extends FrameLayout {
     static final float REST = 0.4f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
-    static volatile String status = "還沒畫過";
+    static volatile String status = L.t("還沒畫過");
     static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
     private final boolean lens;
@@ -273,7 +273,7 @@ final class GlassBar extends FrameLayout {
             node.setRenderEffect(currentEffect());
         } catch (Throwable e) {
             failed = true;
-            status = "失敗，已退回半透明：" + e;
+            status = L.t("失敗，已退回半透明：") + e;
         }
     }
 
@@ -335,12 +335,12 @@ final class GlassBar extends FrameLayout {
         if (glass) {
             try {
                 drawGlass(canvas, w, h);
-                status = "正常（玻璃效果執行中）";
+                status = L.t("正常（玻璃效果執行中）");
             } catch (Throwable e) {   // 這支手機的玻璃效果不能用：退回半透明底色，不要讓 App 閃退
                 failed = true;
                 capturing = false;
                 anyCapture = false;
-                status = "失敗，已退回半透明：" + e;
+                status = L.t("失敗，已退回半透明：") + e;
                 drawFlat(canvas);
             }
         } else {
@@ -431,7 +431,7 @@ final class GlassBar extends FrameLayout {
         canvas.clipPath(clip);
         canvas.drawRenderNode(node);
         canvas.restore();
-        if (lens) lensInfo = "強度 " + String.format("%.2f", amount) + "、模糊倍率 " + String.format("%.2f", blurFactor) + "、歪斜 " + String.format("%.3f", skewNow);
+        if (lens) lensInfo = L.t("強度 ") + String.format("%.2f", amount) + L.t("、模糊倍率 ") + String.format("%.2f", blurFactor) + L.t("、歪斜 ") + String.format("%.3f", skewNow);
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
     }
 

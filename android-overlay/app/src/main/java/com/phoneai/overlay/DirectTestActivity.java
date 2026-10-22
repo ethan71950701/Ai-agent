@@ -45,14 +45,14 @@ public class DirectTestActivity extends Activity implements TextureView.SurfaceT
         status.setTextColor(Color.WHITE);
         status.setTextSize(15);
         status.setPadding(40, 120, 40, 40);
-        status.setText("直接顯示實驗：啟動中…");
+        status.setText(L.t("直接顯示實驗：啟動中…"));
         root.addView(status, new FrameLayout.LayoutParams(-1, -2, Gravity.TOP));
         setContentView(root);
     }
 
     private void show(String s) {
         Log.i(TAG, "direct test: " + s);
-        runOnUiThread(() -> status.setText("直接顯示實驗：" + s));
+        runOnUiThread(() -> status.setText(L.t("直接顯示實驗：") + s));
     }
 
     @Override
@@ -76,18 +76,18 @@ public class DirectTestActivity extends Activity implements TextureView.SurfaceT
                     Log.i(TAG, "direct test out: " + line);
                     if (line.startsWith("display ")) {
                         displayId = Integer.parseInt(line.substring(8).trim());
-                        show("背景螢幕 " + displayId + " 已建立，正在開設定…（在下面畫面上滑動試試）");
+                        show(L.t("背景螢幕 ") + displayId + L.t(" 已建立，正在開設定…（在下面畫面上滑動試試）"));
                         new ProcessBuilder(Root.su(), "-c", "am start --display " + displayId
                                 + " -n com.android.settings/.Settings").redirectErrorStream(true).start().waitFor();
                     } else if (err.length() < 600) {
                         err.append(line).append('\n');
-                        if (displayId < 0) show("失敗（請截圖或看 logcat）：\n" + err);
+                        if (displayId < 0) show(L.t("失敗（請截圖或看 logcat）：\n") + err);
                     }
                 }
             }
-            show("已結束");
+            show(L.t("已結束"));
         } catch (Exception e) {
-            show("錯誤 " + e);
+            show(L.t("錯誤 ") + e);
         }
     }
 

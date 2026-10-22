@@ -48,14 +48,14 @@ public class MemoryActivity extends Activity {
         super.onCreate(b);
         d = getResources().getDisplayMetrics().density;
         LinearLayout[] c = new LinearLayout[1];
-        setContentView(Ui.screen(this, "助理的記憶", true, c));
+        setContentView(Ui.screen(this, L.t("助理的記憶"), true, c));
         Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
         Ui.buttons(this, box,
-                Ui.pill(this, "＋ 待辦", true, v -> edit(null, "todo")),
-                Ui.pill(this, "＋ 筆記", false, v -> edit(null, "note")),
-                Ui.pill(this, "重新整理", false, v -> reload()));
+                Ui.pill(this, L.t("＋ 待辦"), true, v -> edit(null, "todo")),
+                Ui.pill(this, L.t("＋ 筆記"), false, v -> edit(null, "note")),
+                Ui.pill(this, L.t("重新整理"), false, v -> reload()));
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
         box.addView(list);
@@ -83,15 +83,15 @@ public class MemoryActivity extends Activity {
                 int k = out.indexOf("=====\n");
                 String head = k < 0 ? out.trim() : out.substring(0, k).trim();
                 String body = k < 0 ? "" : out.substring(k + 6).trim();
-                info.append("方式").append(n).append("：結束碼 ").append(code).append("｜").append(head.replace('\n', '｜')).append('\n');
+                info.append(L.t("方式")).append(n).append(L.t("：結束碼 ")).append(code).append(L.t("｜")).append(head.replace('\n', '｜')).append('\n');
                 if (body.startsWith("{")) {
                     got = new JSONObject(body);
                     if (got.optJSONArray("items") == null) got.put("items", new JSONArray());
                     suMode = n;
-                    info.append("→ 用方式").append(n).append("讀到了\n");
+                    info.append(L.t("→ 用方式")).append(n).append(L.t("讀到了\n"));
                 }
             } catch (Exception e) {
-                info.append("方式").append(n).append("：").append(e).append('\n');
+                info.append(L.t("方式")).append(n).append(L.t("：")).append(e).append('\n');
             }
         }
         return got;
@@ -105,11 +105,11 @@ public class MemoryActivity extends Activity {
     }
 
     private void reload() {
-        if (data == null) status.setText("讀取中…");   // 已有上次的資料就先顯示，背景再更新
+        if (data == null) status.setText(L.t("讀取中…"));   // 已有上次的資料就先顯示，背景再更新
         new Thread(() -> {
             StringBuilder sb = new StringBuilder();
             JSONObject got = readMemory(sb);
-            String err = got == null ? "每種 su 寫法都讀不到 memory.json（可能真的還沒有資料，或 root 管理器不支援切換掛載空間）" : "";
+            String err = got == null ? L.t("每種 su 寫法都讀不到 memory.json（可能真的還沒有資料，或 root 管理器不支援切換掛載空間）") : "";
             String info = sb.toString();
             final JSONObject g = got;
             final String e = err, inf = info;
@@ -130,9 +130,9 @@ public class MemoryActivity extends Activity {
                 p.getOutputStream().write(("cat > " + FILE + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\nexit\n").getBytes(StandardCharsets.UTF_8));
                 p.getOutputStream().close();
                 String out = readAll(p.getInputStream());
-                if (p.waitFor() != 0) err = "寫入失敗：" + out;
+                if (p.waitFor() != 0) err = L.t("寫入失敗：") + out;
             } catch (Exception e) {
-                err = "寫入失敗：" + e.getMessage();
+                err = L.t("寫入失敗：") + e.getMessage();
             }
             final String e = err;
             runOnUiThread(() -> { if (e != null) status.setText(e); after.run(); });
@@ -152,10 +152,10 @@ public class MemoryActivity extends Activity {
     private void render() {
         list.removeAllViews();
         JSONArray items = data.optJSONArray("items");
-        int todo = section("待辦", items, "todo", false, "circle"), done = section("已完成", items, "todo", true, "check_circle"),
-                note = section("筆記", items, "note", false, "note");
-        int les = section("AI 學到的經驗（下次做任務會參考）", items, "lesson", false, "sparkle");
-        status.setText("待辦 " + todo + " · 已完成 " + done + " · 筆記 " + note + " · 經驗 " + les + "\n點一項可編輯；有圖釘的是永久記住，AI 不能刪" + (diag.isEmpty() ? "" : "\n" + diag));
+        int todo = section(L.t("待辦"), items, "todo", false, "circle"), done = section(L.t("已完成"), items, "todo", true, "check_circle"),
+                note = section(L.t("筆記"), items, "note", false, "note");
+        int les = section(L.t("AI 學到的經驗（下次做任務會參考）"), items, "lesson", false, "sparkle");
+        status.setText(L.t("待辦 ") + todo + L.t(" · 已完成 ") + done + L.t(" · 筆記 ") + note + L.t(" · 經驗 ") + les + L.t("\n點一項可編輯；有圖釘的是永久記住，AI 不能刪") + (diag.isEmpty() ? "" : "\n" + diag));
     }
 
     private int section(String name, JSONArray items, String kind, boolean doneOnes, String icon) {
@@ -166,9 +166,9 @@ public class MemoryActivity extends Activity {
             if (it.optBoolean("done") != doneOnes) continue;
             hit.add(it);
         }
-        Ui.section(this, list, name + "（" + hit.size() + "）");
+        Ui.section(this, list, name + L.t("（") + hit.size() + L.t("）"));
         if (hit.isEmpty()) {
-            Ui.row(this, list, 0, 1, icon, "沒有項目", null, null, null);
+            Ui.row(this, list, 0, 1, icon, L.t("沒有項目"), null, null, null);
             return 0;
         }
         for (int i = 0; i < hit.size(); i++) {
@@ -188,14 +188,14 @@ public class MemoryActivity extends Activity {
     private void edit(JSONObject it, String kind) {
         final com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(this);
         til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        til.setHint(it == null ? "內容" : "編輯內容");
+        til.setHint(it == null ? L.t("內容") : L.t("編輯內容"));
         final com.google.android.material.textfield.TextInputEditText et = new com.google.android.material.textfield.TextInputEditText(til.getContext());
         et.setText(it == null ? "" : it.optString("text"));
         et.setSelection(et.getText().length());
         et.setMinLines(2);
         til.addView(et);
         final com.google.android.material.materialswitch.MaterialSwitch pin = new com.google.android.material.materialswitch.MaterialSwitch(this);
-        pin.setText("永久記住（沒有期限，AI 不能改或刪，只能在這裡手動刪）");
+        pin.setText(L.t("永久記住（沒有期限，AI 不能改或刪，只能在這裡手動刪）"));
         pin.setChecked(it != null && it.optBoolean("pinned"));
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
@@ -203,8 +203,8 @@ public class MemoryActivity extends Activity {
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(til);
         if (!"lesson".equals(kind)) form.addView(pin);
-        com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(it == null ? "新增" : "編輯").setView(form)
-                .setPositiveButton("儲存", (dlg, w) -> {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(it == null ? L.t("新增") : L.t("編輯")).setView(form)
+                .setPositiveButton(L.t("儲存"), (dlg, w) -> {
                     String t = et.getText().toString().trim();
                     if (t.isEmpty()) return;
                     try {
@@ -221,15 +221,15 @@ public class MemoryActivity extends Activity {
                     } catch (Exception ignored) { }
                     saveThen(this::render);
                 })
-                .setNegativeButton("取消", null);
+                .setNegativeButton(L.t("取消"), null);
         if (it != null) {
-            b.setNeutralButton("刪除", (dlg, w) -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setMessage("刪除「" + it.optString("text") + "」？")
-                    .setPositiveButton("刪除", (d2, w2) -> {
+            b.setNeutralButton(L.t("刪除"), (dlg, w) -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setMessage(L.t("刪除「") + it.optString("text") + L.t("」？"))
+                    .setPositiveButton(L.t("刪除"), (d2, w2) -> {
                         try { it.put("deleted", true); } catch (Exception ignored) { }
                         saveThen(this::render);
-                    }).setNegativeButton("取消", null).show());
+                    }).setNegativeButton(L.t("取消"), null).show());
             if ("todo".equals(kind)) {
-                b.setNegativeButton(it.optBoolean("done") ? "改回未完成" : "標為完成", (dlg, w) -> {
+                b.setNegativeButton(it.optBoolean("done") ? L.t("改回未完成") : L.t("標為完成"), (dlg, w) -> {
                     try {
                         boolean nd = !it.optBoolean("done");
                         it.put("done", nd);

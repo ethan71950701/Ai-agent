@@ -443,7 +443,7 @@ final class Ui {
             grid.addView(row, rl);
             if (r == 0) {
                 TextView mo = new TextView(a);
-                mo.setText("莫奈");
+                mo.setText(L.t("莫奈"));
                 mo.setGravity(android.view.Gravity.CENTER);
                 mo.setTextSize(12);
                 mo.setTextColor(attr(a, monet ? com.google.android.material.R.attr.colorOnSecondaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant));

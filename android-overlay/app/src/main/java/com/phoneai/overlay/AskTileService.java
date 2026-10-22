@@ -12,7 +12,7 @@ public class AskTileService extends TileService {
         Tile t = getQsTile();
         if (t != null) {
             t.setState(Tile.STATE_INACTIVE);
-            t.setLabel("AI 助手");
+            t.setLabel(L.t("AI 助手"));
             t.updateTile();
         }
     }

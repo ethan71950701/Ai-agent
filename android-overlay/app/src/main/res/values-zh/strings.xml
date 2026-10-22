@@ -1,0 +1,5 @@
+<resources>
+    <string name="a11y_desc">用來在螢幕上畫 AI 點擊的漣漪，並讓 AI 看得到畫面上的按鈕與文字、幫它點擊與滑動。畫面內容只在本機使用，不會記錄。</string>
+    <string name="tile_label">AI 助手</string>
+    <string name="a11y_label">PhoneAI 漣漪</string>
+</resources>

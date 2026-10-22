@@ -55,7 +55,7 @@ public class RippleAccessibilityService extends AccessibilityService {
         try {
             java.util.List<android.view.accessibility.AccessibilityWindowInfo> ws = s.getWindows();
             for (android.view.accessibility.AccessibilityWindowInfo w : ws) {
-                seen.append(" [螢幕").append(w.getDisplayId()).append(" ").append(w.getTitle()).append("]");
+                seen.append(L.t(" [螢幕")).append(w.getDisplayId()).append(" ").append(w.getTitle()).append("]");
                 if (w.getDisplayId() != displayId) continue;
                 android.view.accessibility.AccessibilityNodeInfo root = w.getRoot();
                 if (root != null) walk(root, out, max, 0);
@@ -63,7 +63,7 @@ public class RippleAccessibilityService extends AccessibilityService {
             if (out.length() == 0) {
                 org.json.JSONObject o = new org.json.JSONObject();
                 o.put("n", 0);
-                o.put("t", "（除錯）看得到的視窗共 " + ws.size() + " 個：" + seen);
+                o.put("t", L.t("（除錯）看得到的視窗共 ") + ws.size() + L.t(" 個：") + seen);
                 out.put(o);
             }
         } catch (Exception e) {

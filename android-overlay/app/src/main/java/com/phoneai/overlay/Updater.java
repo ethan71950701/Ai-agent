@@ -31,15 +31,15 @@ final class Updater {
 
     /** 按一次「檢查並更新」：檢查 → 有新版本才問 → 下載（通知列顯示進度）→ 安裝。 */
     static void start(final Activity a) {
-        if (busy) { toast(a, "正在檢查或更新中"); return; }
+        if (busy) { toast(a, L.t("正在檢查或更新中")); return; }
         busy = true;
-        toast(a, "檢查更新中…");
+        toast(a, L.t("檢查更新中…"));
         new Thread(() -> {
             try {
                 String scriptMsg = "";   // 腳本已經不需要：所有功能都在 App 裡
                 JSONObject rel = latest();
                 if (rel == null) {
-                    done(a, "目前沒有發布的版本，已是最新版本");
+                    done(a, L.t("目前沒有發布的版本，已是最新版本"));
                     return;
                 }
                 String sha = commitOf(rel);
@@ -49,7 +49,7 @@ final class Updater {
                 boolean newer = remote > 0 ? remote > BuildConfig.VERSION_CODE
                         : !(installed != null && !installed.equals("dev") && !sha.isEmpty() && sha.startsWith(installed));
                 if (!newer) {
-                    done(a, "已是最新版本（1.0." + BuildConfig.VERSION_CODE + "）");
+                    done(a, L.t("已是最新版本（1.0.") + BuildConfig.VERSION_CODE + L.t("）"));
                     return;
                 }
                 String url = null; long size = 0; String name = "";
@@ -63,26 +63,26 @@ final class Updater {
                         break;
                     }
                 }
-                if (url == null) { done(a, "最新版本沒有 APK，稍後再試"); return; }
+                if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
                 final String v = shown;
                 final String apkUrl = url; final long apkSize = size; final String apkName = name;
                 a.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
-                        .setTitle("有新版本 " + v)
-                        .setMessage("目前是 1.0." + BuildConfig.VERSION_CODE + "，最新是 " + v + "。\n\n" + notesOf(rel)
-                                + "\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。")
-                        .setPositiveButton("更新", (d, w) -> new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start())
-                        .setNegativeButton("稍後", (d, w) -> busy = false)
+                        .setTitle(L.t("有新版本 ") + v)
+                        .setMessage(L.t("目前是 1.0.") + BuildConfig.VERSION_CODE + L.t("，最新是 ") + v + L.t("。\n\n") + notesOf(rel)
+                                + L.t("\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。"))
+                        .setPositiveButton(L.t("更新"), (d, w) -> new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start())
+                        .setNegativeButton(L.t("稍後"), (d, w) -> busy = false)
                         .setOnCancelListener(d -> busy = false)
                         .show());
             } catch (Exception e) {
-                done(a, "檢查失敗：" + e.getMessage());
+                done(a, L.t("檢查失敗：") + e.getMessage());
             }
         }).start();
     }
 
     private static void download(Activity a, String url, long size, String name, String v) {
         NotificationManager nm = a.getSystemService(NotificationManager.class);
-        nm.createNotificationChannel(new NotificationChannel(CH, "App 更新", NotificationManager.IMPORTANCE_LOW));
+        nm.createNotificationChannel(new NotificationChannel(CH, L.t("App 更新"), NotificationManager.IMPORTANCE_LOW));
         File out = new File(a.getCacheDir(), "update.apk");
         try {
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
@@ -102,26 +102,26 @@ final class Updater {
                     int pct = total > 0 ? (int) (got * 100 / total) : 0;
                     if (pct != lastPct) {
                         lastPct = pct;
-                        nm.notify(NOTE, progress(a, "下載 " + v + "：" + pct + "%", pct, false));
+                        nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
                     }
                 }
             }
-            nm.notify(NOTE, progress(a, "安裝 " + v + " 中…", 100, true));
+            nm.notify(NOTE, progress(a, L.t("安裝 ") + v + L.t(" 中…"), 100, true));
             String r = Maintenance.suOnce("cp '" + out.getAbsolutePath() + "' /data/local/tmp/phoneai_update.apk && chmod 644 /data/local/tmp/phoneai_update.apk\n"
                     + "pm install -r --user 0 -i com.google.android.packageinstaller /data/local/tmp/phoneai_update.apk 2>&1\n"
                     + "rm -f /data/local/tmp/phoneai_update.apk");
             out.delete();
             nm.cancel(NOTE);
             if (r.contains("Success")) {
-                done(a, "已更新到 " + v + "，App 會重新開啟");
+                done(a, L.t("已更新到 ") + v + L.t("，App 會重新開啟"));
             } else if (r.contains("UPDATE_INCOMPATIBLE") || r.contains("SIGNATURE")) {
-                done(a, "簽章不同，無法直接覆蓋（請看「設定導覽」的說明）");
+                done(a, L.t("簽章不同，無法直接覆蓋（請看「設定導覽」的說明）"));
             } else {
-                done(a, "安裝失敗：" + r.trim());
+                done(a, L.t("安裝失敗：") + r.trim());
             }
         } catch (Exception e) {
             nm.cancel(NOTE);
-            done(a, "下載失敗：" + e.getMessage());
+            done(a, L.t("下載失敗：") + e.getMessage());
         }
     }
 
@@ -129,7 +129,7 @@ final class Updater {
     private static Notification progress(Context c, String text, int pct, boolean indeterminate) {
         Notification.Builder b = new Notification.Builder(c, CH)
                 .setSmallIcon(R.drawable.ic_stat)
-                .setContentTitle("PhoneAI 更新")
+                .setContentTitle(L.t("PhoneAI 更新"))
                 .setContentText(text)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setOngoing(true)
@@ -140,7 +140,7 @@ final class Updater {
         ex.putBoolean("android.requestPromotedOngoing", true);   // 同 OverlayService：要求 Now Bar／Live Update
         b.addExtras(ex);
         if (android.os.Build.VERSION.SDK_INT >= 36) {
-            b.setShortCriticalText(indeterminate ? "安裝" : pct + "%");
+            b.setShortCriticalText(indeterminate ? L.t("安裝") : pct + "%");
         }
         return b.build();
     }
@@ -162,8 +162,8 @@ final class Updater {
         c.setRequestProperty("Accept", "application/vnd.github+json");
         c.setRequestProperty("User-Agent", "PhoneAI-Update");
         if (c.getResponseCode() == 404)   // repo 是私人的時候，沒有權杖就看不到 Release，會回 404
-            throw new java.io.IOException("找不到發布版本（404）：repo 是私人的，App 沒有權杖就查不到");
-        if (c.getResponseCode() != 200) throw new java.io.IOException("GitHub 回應 " + c.getResponseCode());
+            throw new java.io.IOException(L.t("找不到發布版本（404）：repo 是私人的，App 沒有權杖就查不到"));
+        if (c.getResponseCode() != 200) throw new java.io.IOException(L.t("GitHub 回應 ") + c.getResponseCode());
         try (InputStream in = c.getInputStream()) {
             return new JSONObject(new String(in.readAllBytes(), "UTF-8"));
         }
@@ -178,7 +178,7 @@ final class Updater {
             sb.append(line).append('\n');
         }
         String t = sb.toString().trim();
-        if (t.isEmpty()) return "（這次沒有更新說明）";
+        if (t.isEmpty()) return L.t("（這次沒有更新說明）");
         return t.length() > 600 ? t.substring(0, 600) + "…" : t;
     }
 

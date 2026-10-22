@@ -28,39 +28,39 @@ public class GuideActivity extends Activity {
     private static final int N = 9;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
-            "1. 授權 root", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
-            "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
+            L.t("1. 授權 root"), L.t("2. 懸浮層權限"), L.t("3. 通知權限"), L.t("4. 無障礙服務"), L.t("5. 麥克風權限"),
+            "6. Claude API Key", L.t("7. 離線語音辨識模型"), L.t("8. 長按電源鍵叫出（選用）"), L.t("9. 試試看")};
     private static final String[] WHY = {
-            "PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。",
-            "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
-            "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
-            "讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。",
-            "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
-            "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
-            "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
-            "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
-            "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
+            L.t("PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。"),
+            L.t("讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。"),
+            L.t("任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。"),
+            L.t("讓 AI 看得到畫面上的按鈕與文字，並幫它點擊、滑動。螢幕邊緣的點擊漣漪也是靠它。"),
+            L.t("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。"),
+            L.t("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。"),
+            L.t("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。"),
+            L.t("設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。"),
+            L.t("回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。")};
     private static final String[][] STEPS = {
-            {"第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
-                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
-                    "回到這裡，按下面的「檢查 root」。"},
-            {"按「開啟權限頁」。", "在清單裡找到 PhoneAI Overlay，把開關打開。", "按返回鍵回到這裡，狀態會自動更新。"},
-            {"按「允許通知」，在系統跳出的視窗按「允許」。"},
-            {"按「開啟無障礙設定」。",
-                    "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
-                    "有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。"},
-            {"按「允許麥克風」，在系統視窗按「允許」。"},
-            {"用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
-                    "到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。",
-                    "到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。",
-                    "重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。",
-                    "複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。",
-                    "不要把 Key 貼給任何人，包括 AI 助手。"},
-            {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
-            {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
-            {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
-    private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
-            "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
+            {L.t("第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。"),
+                    L.t("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。"),
+                    L.t("回到這裡，按下面的「檢查 root」。")},
+            {L.t("按「開啟權限頁」。"), L.t("在清單裡找到 PhoneAI Overlay，把開關打開。"), L.t("按返回鍵回到這裡，狀態會自動更新。")},
+            {L.t("按「允許通知」，在系統跳出的視窗按「允許」。")},
+            {L.t("按「開啟無障礙設定」。"),
+                    L.t("找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。"),
+                    L.t("有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。")},
+            {L.t("按「允許麥克風」，在系統視窗按「允許」。")},
+            {L.t("用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。"),
+                    L.t("到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。"),
+                    L.t("到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。"),
+                    L.t("重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。"),
+                    L.t("複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。"),
+                    L.t("不要把 Key 貼給任何人，包括 AI 助手。")},
+            {L.t("按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。"), L.t("下載完成後會自動顯示「已下載」。"), L.t("不想現在下載可以先跳過，之後回到這一頁再按一次即可。")},
+            {L.t("按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。"), L.t("找不到的話，就用上面小米的方法。")},
+            {L.t("有問題就到「功能 → 進階與診斷」看狀態。"), L.t("把畫面文字貼給開發者時，不要貼 API Key。")}};
+    private static final String[] BTN = {L.t("檢查 root"), L.t("開啟權限頁"), L.t("允許通知"), L.t("開啟無障礙設定"), L.t("允許麥克風"),
+            L.t("輸入 API Key"), L.t("下載語音模型"), L.t("開啟語音輸入設定"), L.t("完成，回到 App")};
     private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
@@ -76,7 +76,7 @@ public class GuideActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        for (int i = 0; i < N; i++) label[i] = "檢查中…";
+        for (int i = 0; i < N; i++) label[i] = L.t("檢查中…");
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Ui.attr(this, com.google.android.material.R.attr.colorSurface));
         root.setFitsSystemWindows(true);
@@ -109,7 +109,7 @@ public class GuideActivity extends Activity {
         bottom.addView(dotRow, new LinearLayout.LayoutParams(-1, -2));
         // 第二排：左邊「上一步」，中間是箭頭按鈕（最後一頁同樣是箭頭，按下完成）
         FrameLayout actions = new FrameLayout(this);
-        prev = Ui.body(this, "上一步");
+        prev = Ui.body(this, L.t("上一步"));
         prev.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
         prev.setOnClickListener(v -> pager.setCurrentItem(Math.max(0, pager.getCurrentItem() - 1), true));
         actions.addView(prev, new FrameLayout.LayoutParams(-2, -2, Gravity.START | Gravity.CENTER_VERTICAL));
@@ -195,7 +195,7 @@ public class GuideActivity extends Activity {
             runOnUiThread(() -> {
                 voiceBusy = false;
                 refresh();
-                if (e2 != null) android.widget.Toast.makeText(this, "下載失敗：" + e2 + "（可以再按一次）", android.widget.Toast.LENGTH_LONG).show();
+                if (e2 != null) android.widget.Toast.makeText(this, L.t("下載失敗：") + e2 + L.t("（可以再按一次）"), android.widget.Toast.LENGTH_LONG).show();
             });
         }, "sensevoice-dl").start();
     }
@@ -302,16 +302,16 @@ public class GuideActivity extends Activity {
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                 boolean a11y = A11yGuard.listed(this);
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                set(0, root, root ? "✓ 已授權" : "未授權：請到 root 管理器（KernelSU、Magisk…）給 PhoneAI 超級使用者權限，回來再按「檢查 root」");
-                set(1, ov, ov ? "✓ 已開啟" : "尚未開啟");
-                set(2, nt, nt ? "✓ 已允許" : "尚未允許");
-                set(3, a11y, a11y ? "✓ 已開啟" : "尚未開啟");
-                set(4, mic, mic ? "✓ 已允許" : "尚未允許");
-                set(5, key, key ? "✓ 已設定" : "尚未設定");
+                set(0, root, root ? L.t("✓ 已授權") : L.t("未授權：請到 root 管理器（KernelSU、Magisk…）給 PhoneAI 超級使用者權限，回來再按「檢查 root」"));
+                set(1, ov, ov ? L.t("✓ 已開啟") : L.t("尚未開啟"));
+                set(2, nt, nt ? L.t("✓ 已允許") : L.t("尚未允許"));
+                set(3, a11y, a11y ? L.t("✓ 已開啟") : L.t("尚未開啟"));
+                set(4, mic, mic ? L.t("✓ 已允許") : L.t("尚未允許"));
+                set(5, key, key ? L.t("✓ 已設定") : L.t("尚未設定"));
                 boolean voice = SherpaEngine.ready(this);
-                set(6, voice, voice ? "✓ 已下載" : "尚未下載（可以先跳過）");
-                set(7, false, "請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）");
-                set(8, false, "做完這一步就可以開始用了");
+                set(6, voice, voice ? L.t("✓ 已下載") : L.t("尚未下載（可以先跳過）"));
+                set(7, false, L.t("請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）"));
+                set(8, false, L.t("做完這一步就可以開始用了"));
                 pager.getAdapter().notifyDataSetChanged();
             });
         }).start();

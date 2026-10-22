@@ -18,11 +18,11 @@ public class ConfirmActivity extends Activity {
         setShowWhenLocked(true);
         String msg = getIntent().getStringExtra("msg");
         new AlertDialog.Builder(this)
-                .setTitle("需要你確認")
+                .setTitle(L.t("需要你確認"))
                 .setMessage(msg)
                 .setCancelable(false)
-                .setPositiveButton("是", (d, w) -> done(true))
-                .setNegativeButton("否", (d, w) -> done(false))
+                .setPositiveButton(L.t("是"), (d, w) -> done(true))
+                .setNegativeButton(L.t("否"), (d, w) -> done(false))
                 .show();
         CountDownLatch l = shown;
         if (l != null) l.countDown();

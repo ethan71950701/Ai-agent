@@ -255,7 +255,7 @@ final class DemoView extends View {
     }
 
     private void checklist(Canvas c, float cx, float cy) {
-        String[] names = {"懸浮層", "通知", "無障礙", "API Key"};
+        String[] names = {L.t("懸浮層"), L.t("通知"), L.t("無障礙"), "API Key"};
         for (int i = 0; i < 4; i++) {
             float y = cy - 66 * d + i * 44 * d;
             float k = seg(t, 0.1f + i * 0.18f, 0.25f + i * 0.18f) * (1f - seg(t, 0.92f, 1f));
@@ -412,7 +412,7 @@ final class DemoView extends View {
         float ok = seg(t, 0.62f, 0.75f);
         if (ok > 0) {
             p.setColor(cPrimary);
-            c.drawText("✓ 完成", r.left + 12 * d, cy + 18 * d, p);
+            c.drawText(L.t("✓ 完成"), r.left + 12 * d, cy + 18 * d, p);
         }
         p.setTypeface(null);
     }

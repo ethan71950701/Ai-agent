@@ -61,7 +61,7 @@ public class OverlayService extends Service {
     static final long IDLE_MS = 60_000;  // 啟動後這麼久都沒有 agent 連上就自己結束
 
     /** 給 MainActivity 顯示用的最後診斷結果 */
-    static volatile String lastDiag = "（還沒發過通知）";
+    static volatile String lastDiag = L.t("（還沒發過通知）");
     /** 有 agent2 連著 = 正在執行任務（助理面板用它決定要不要顯示「停止」）。 */
     static volatile boolean agentRunning;
     /** 背景虛擬螢幕的 SurfaceFlinger 編號（agent2 用 vd 指令告知）；空字串 = 沒有背景螢幕。 */
@@ -110,7 +110,7 @@ public class OverlayService extends Service {
     private ServerSocket server;
     private String token;
     private int clients = 0;
-    private String title = "AI 正在操作手機";
+    private String title = L.t("AI 正在操作手機");
     private String lastText = "";
     private int lastStep, lastMax;
 
@@ -129,7 +129,7 @@ public class OverlayService extends Service {
         main.removeCallbacks(pendingEnd);
         RippleAccessibilityService.setFloatSuppressed(true);
         RippleAccessibilityService.setAgentGlow(true);
-        postStatus("AI 正在操作手機", "準備中…", 0, 0);
+        postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
         main.postDelayed(pendingEnd, PENDING_MS);
     }
 
@@ -145,7 +145,7 @@ public class OverlayService extends Service {
         wm = getSystemService(WindowManager.class);
         nm.deleteNotificationChannel("status");
         // 比照 LiveBridge：低重要性、鎖定畫面可見（它的通知頻道 importance=2 能進 Now Bar；我們的預設重要性 3 沒進，原因是推測）
-        NotificationChannel ch = new NotificationChannel(CHANNEL, "執行狀態", NotificationManager.IMPORTANCE_LOW);
+        NotificationChannel ch = new NotificationChannel(CHANNEL, L.t("執行狀態"), NotificationManager.IMPORTANCE_LOW);
         ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
         ch.setShowBadge(false);
         ch.setSound(null, null);
@@ -153,7 +153,7 @@ public class OverlayService extends Service {
         nm.createNotificationChannel(ch);
         token = loadToken();
         // 前景服務的類型是 Android 14（API 34）才有的要求；Android 13 不需要也不能傳
-        android.app.Notification n0 = build("PhoneAI 待命中", "等待 agent2.py 連線", 0, 0);
+        android.app.Notification n0 = build(L.t("PhoneAI 待命中"), L.t("等待 agent2.py 連線"), 0, 0);
         if (android.os.Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, n0, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         else startForeground(NOTIF_ID, n0);
         addOverlay();
@@ -306,11 +306,11 @@ public class OverlayService extends Service {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
-                .addAction(new Notification.Action.Builder(icon, "停止", pi).build());
+                .addAction(new Notification.Action.Builder(icon, L.t("停止"), pi).build());
         if (vd) {  // 有背景虛擬螢幕：Now Bar 上只有「停止」和「接手／完成」；要預覽就點通知本身
             PendingIntent take = PendingIntent.getService(this, 3, new Intent(this, OverlayService.class).setAction(ACTION_TAKEOVER),
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-            b.addAction(new Notification.Action.Builder(icon, takeover ? "完成" : "接手", take).build());
+            b.addAction(new Notification.Action.Builder(icon, takeover ? L.t("完成") : L.t("接手"), take).build());
         }
         // 要求升級成 Live Update（等同 AndroidX 的 setRequestPromotedOngoing）
         Bundle ex = new Bundle();
@@ -584,7 +584,7 @@ public class OverlayService extends Service {
 
     /** 通知上的「停止」：用 root 結束 agent2.py（第一次會跳 Magisk 授權）。agent2 收到 SIGTERM 會自己清理。 */
     private void stopAgent() {
-        postStatus(title, "正在停止…", 0, 0);
+        postStatus(title, L.t("正在停止…"), 0, 0);
         new Thread(() -> {
             boolean ok;
             try {
@@ -601,7 +601,7 @@ public class OverlayService extends Service {
             final boolean done = ok;
             main.post(() -> {
                 if (done) finish();
-                else postStatus(title, "停止失敗：請允許 PhoneAI Overlay 使用 root", 0, 0);
+                else postStatus(title, L.t("停止失敗：請允許 PhoneAI Overlay 使用 root"), 0, 0);
             });
         }).start();
     }
@@ -611,14 +611,14 @@ public class OverlayService extends Service {
         main.removeCallbacks(idleStop);
         int w = getResources().getDisplayMetrics().widthPixels;
         int h = getResources().getDisplayMetrics().heightPixels;
-        postStatus("AI 正在操作手機（測試）", "第 1/3 步 · 點擊「畫面中央」", 1, 3);
+        postStatus(L.t("AI 正在操作手機（測試）"), L.t("第 1/3 步 · 點擊「畫面中央」"), 1, 3);
         main.postDelayed(() -> { RippleView v = fx(); if (v != null) v.ripple(w / 2f, h / 2f); }, 300);
         main.postDelayed(() -> {
-            postStatus("AI 正在操作手機（測試）", "第 2/3 步 · 滑動", 2, 3);
+            postStatus(L.t("AI 正在操作手機（測試）"), L.t("第 2/3 步 · 滑動"), 2, 3);
             RippleView v = fx(); if (v != null) v.swipe(w * 0.8f, h * 0.6f, w * 0.2f, h * 0.6f);
         }, 2000);
         main.postDelayed(() -> {
-            postStatus("AI 正在操作手機（測試）", "第 3/3 步 · 點擊「左上」", 3, 3);
+            postStatus(L.t("AI 正在操作手機（測試）"), L.t("第 3/3 步 · 點擊「左上」"), 3, 3);
             RippleView v = fx(); if (v != null) v.ripple(w * 0.25f, h * 0.3f);
         }, 4000);
         main.postDelayed(() -> { if (clients == 0) finish(); }, 8000);

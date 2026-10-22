@@ -45,14 +45,14 @@ final class A11yGuard {
                 p.getInputStream().readAllBytes();
                 int rc = p.waitFor();
                 boolean ok = rc == 0 && listed(app);
-                Log.w(OverlayService.TAG, "a11y 自動修復 rc=" + rc + " ok=" + ok);
+                Log.w(OverlayService.TAG, L.t("a11y 自動修復 rc=") + rc + " ok=" + ok);
                 if (ok) {
                     SharedPreferences sp = app.getSharedPreferences("cfg", Context.MODE_PRIVATE);
                     sp.edit().putInt("a11y_fixes", sp.getInt("a11y_fixes", 0) + 1)
                             .putString("a11y_last", new java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.US).format(new java.util.Date())).apply();
                 }
             } catch (Exception e) {
-                Log.w(OverlayService.TAG, "a11y 自動修復失敗: " + e);
+                Log.w(OverlayService.TAG, L.t("a11y 自動修復失敗: ") + e);
             }
         }, "a11y-guard").start();
     }

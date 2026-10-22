@@ -42,12 +42,12 @@ public class TakeoverInputActivity extends Activity {
         box.setPadding(pad, pad, pad, pad);
 
         TextView title = new TextView(this);
-        title.setText("輸入到背景畫面");
+        title.setText(L.t("輸入到背景畫面"));
         title.setTextSize(18);
         title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         box.addView(title);
         TextView hint = new TextView(this);
-        hint.setText("先在背景畫面點好要輸入的欄位，再來這裡打字。");
+        hint.setText(L.t("先在背景畫面點好要輸入的欄位，再來這裡打字。"));
         hint.setTextSize(13);
         hint.setPadding(0, (int) (4 * d), 0, (int) (8 * d));
         box.addView(hint);
@@ -58,7 +58,7 @@ public class TakeoverInputActivity extends Activity {
         box.addView(et, new LinearLayout.LayoutParams(-1, -2));
 
         com.google.android.material.materialswitch.MaterialSwitch show = new com.google.android.material.materialswitch.MaterialSwitch(this);
-        show.setText("顯示文字");
+        show.setText(L.t("顯示文字"));
         show.setOnCheckedChangeListener((v, on) -> {
             et.setInputType(InputType.TYPE_CLASS_TEXT | (on ? InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                     : InputType.TYPE_TEXT_VARIATION_PASSWORD));
@@ -69,13 +69,13 @@ public class TakeoverInputActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.END);
         Button cancel = new com.google.android.material.button.MaterialButton(this);
-        cancel.setText("取消");
+        cancel.setText(L.t("取消"));
         cancel.setOnClickListener(v -> finish());
         paste = new com.google.android.material.button.MaterialButton(this);
-        paste.setText("貼上");
+        paste.setText(L.t("貼上"));
         paste.setOnClickListener(v -> send(false));
         pasteEnter = new com.google.android.material.button.MaterialButton(this);
-        pasteEnter.setText("貼上並 Enter");
+        pasteEnter.setText(L.t("貼上並 Enter"));
         pasteEnter.setOnClickListener(v -> send(true));
         row.addView(cancel);
         row.addView(paste);
@@ -90,7 +90,7 @@ public class TakeoverInputActivity extends Activity {
         int display = OverlayService.vdId;
         if (t.isEmpty()) return;
         if (display <= 0) {
-            Toast.makeText(this, "找不到背景螢幕", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, L.t("找不到背景螢幕"), Toast.LENGTH_SHORT).show();
             return;
         }
         paste.setEnabled(false);

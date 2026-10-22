@@ -23,7 +23,7 @@ public class BgIconView extends View {
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeCap(Paint.Cap.ROUND);
         line.setStrokeJoin(Paint.Join.ROUND);
-        setContentDescription("背景模式");
+        setContentDescription(L.t("背景模式"));
     }
 
     public void setOn(boolean v) {

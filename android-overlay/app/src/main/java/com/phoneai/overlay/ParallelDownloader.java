@@ -49,7 +49,7 @@ final class ParallelDownloader {
                     try (RandomAccessFile raf = new RandomAccessFile(dest, "rw")) {
                         HttpURLConnection c = open(url, "GET", "bytes=" + pos + "-" + end);
                         try {
-                            if (c.getResponseCode() != 206) throw new Exception("伺服器回 HTTP " + c.getResponseCode());
+                            if (c.getResponseCode() != 206) throw new Exception(L.t("伺服器回 HTTP ") + c.getResponseCode());
                             raf.seek(pos);
                             byte[] buf = new byte[65536];
                             try (InputStream in = c.getInputStream()) {
@@ -85,14 +85,14 @@ final class ParallelDownloader {
             if (fail.get() != null) break;
         }
         for (Thread t : ts) t.join(3000);
-        if (fail.get() != null) throw new Exception("下載失敗：" + fail.get());
-        if (got.get() < total) throw new Exception("下載不完整（" + got.get() + "／" + total + "）");
+        if (fail.get() != null) throw new Exception(L.t("下載失敗：") + fail.get());
+        if (got.get() < total) throw new Exception(L.t("下載不完整（") + got.get() + L.t("／") + total + L.t("）"));
     }
 
     private static void single(String url, File dest, long total, Progress p) throws Exception {
         HttpURLConnection h = open(url, "GET", null);
         try {
-            if (h.getResponseCode() != 200) throw new Exception("下載失敗 HTTP " + h.getResponseCode());
+            if (h.getResponseCode() != 200) throw new Exception(L.t("下載失敗 HTTP ") + h.getResponseCode());
             if (total <= 0) total = h.getContentLengthLong();
             long got = 0, lastT = System.currentTimeMillis(), lastG = 0;
             try (InputStream in = h.getInputStream(); java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {

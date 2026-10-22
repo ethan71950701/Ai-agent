@@ -41,18 +41,18 @@ final class Maintenance {
 
     /** 診斷用：列出每個 su 路徑實際跑 id 的結果（給使用者回報用）。 */
     static String rootDiag() {
-        StringBuilder sb = new StringBuilder("診斷（每個 su 路徑跑 id 的結果）：");
+        StringBuilder sb = new StringBuilder(L.t("診斷（每個 su 路徑跑 id 的結果）："));
         String[] paths = {Root.su(), "/system/bin/su", "/system/xbin/su", "/sbin/su", "/su/bin/su", "/data/adb/ksu/bin/su", "/debug_ramdisk/su", "/vendor/bin/su", "su"};
         for (String p : paths) {
             try {
                 Process pr = new ProcessBuilder(p, "-c", "id -u").redirectErrorStream(true).start();
                 pr.getOutputStream().close();
                 boolean done = pr.waitFor(8, java.util.concurrent.TimeUnit.SECONDS);
-                String out = done ? new String(pr.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim() : "（逾時，可能正在等授權視窗）";
+                String out = done ? new String(pr.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim() : L.t("（逾時，可能正在等授權視窗）");
                 if (!done) pr.destroy();
-                sb.append("\n").append(p).append(" → ").append(done ? "結束碼 " + pr.exitValue() + "：" + out : out);
+                sb.append("\n").append(p).append(" → ").append(done ? L.t("結束碼 ") + pr.exitValue() + L.t("：") + out : out);
             } catch (Exception e) {
-                sb.append("\n").append(p).append(" → 無法執行（").append(e.getMessage()).append("）");
+                sb.append("\n").append(p).append(L.t(" → 無法執行（")).append(e.getMessage()).append(L.t("）"));
             }
         }
         return sb.toString();
@@ -66,11 +66,11 @@ final class Maintenance {
     /** 把權杖存到 Termux 的 ~/.gh_token（擁有者設成 Termux、權限 600）。權杖只經過標準輸入，不印出、不存進 App。 */
     static String saveToken(String token) {
         token = token == null ? "" : token.trim();
-        if (token.isEmpty() || token.contains("\n") || token.contains("'")) return "權杖格式不對（空的、有換行或引號）";
+        if (token.isEmpty() || token.contains("\n") || token.contains("'")) return L.t("權杖格式不對（空的、有換行或引號）");
         String r = suRun("U=$(stat -c %u /data/data/com.termux)\n"
                 + "printf %s '" + token + "' > " + TOKEN + "\n"
                 + "chown $U:$U " + TOKEN + "; chmod 600 " + TOKEN + "\n[ -s " + TOKEN + " ] && echo saved");
-        return r.contains("saved") ? null : "存檔失敗：" + (r.startsWith("ERR:") ? r.substring(4).trim() : r.trim());
+        return r.contains("saved") ? null : L.t("存檔失敗：") + (r.startsWith("ERR:") ? r.substring(4).trim() : r.trim());
     }
 
     /** 用 root 把 App 需要的權限補回來（等同 overlay_install.sh 裡跟權限有關的部分）；回傳給人看的結果。 */
@@ -92,8 +92,8 @@ final class Maintenance {
                 + "grep -q '^allow-external-apps *= *true' $P 2>/dev/null || { sed -i '/^#\\? *allow-external-apps/d' $P 2>/dev/null; echo 'allow-external-apps=true' >> $P; chown $U:$U $P; echo TERMUX_PROP_CHANGED; }\n"
                 + "echo done";
         String r = suRun(script);
-        if (r.startsWith("ERR:") || !r.contains("done")) return "修復失敗：" + r.replace("ERR:", "").trim();
-        return "已補回權限" + (r.contains("TERMUX_PROP_CHANGED") ? "（Termux 設定有更新，請把 Termux 完全關掉再開一次才會生效）" : "");
+        if (r.startsWith("ERR:") || !r.contains("done")) return L.t("修復失敗：") + r.replace("ERR:", "").trim();
+        return L.t("已補回權限") + (r.contains("TERMUX_PROP_CHANGED") ? L.t("（Termux 設定有更新，請把 Termux 完全關掉再開一次才會生效）") : "");
     }
 
     /** 只用第一個找到的 su 跑一次（不重試，避免同一個指令被執行好幾次）；不管結束碼，回傳輸出。 */
@@ -124,8 +124,8 @@ final class Maintenance {
     /** 存 API Key 到 App 私有資料夾的 claude_key（權限 600）。不印出、不寫 log。 */
     static String saveKey(String key) {
         key = key == null ? "" : key.trim();
-        if (key.length() < 20 || key.contains("\n") || key.contains("'") || key.contains(" ")) return "金鑰格式不對（太短、有空白、換行或引號）";
-        if (key.startsWith("sk-ant-usr-")) return "這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」";
+        if (key.length() < 20 || key.contains("\n") || key.contains("'") || key.contains(" ")) return L.t("金鑰格式不對（太短、有空白、換行或引號）");
+        if (key.startsWith("sk-ant-usr-")) return L.t("這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」");
         try {
             java.io.File f = new java.io.File(App.ctx.getFilesDir(), "claude_key"), tmp = new java.io.File(f.getPath() + ".tmp");
             try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) { out.write(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
@@ -133,10 +133,10 @@ final class Maintenance {
             tmp.setReadable(true, true);
             tmp.setWritable(false, false);
             tmp.setWritable(true, true);
-            if (!tmp.renameTo(f)) return "存檔失敗：無法覆蓋舊的 Key";
+            if (!tmp.renameTo(f)) return L.t("存檔失敗：無法覆蓋舊的 Key");
             return null;
         } catch (Exception e) {
-            return "存檔失敗：" + e.getMessage();
+            return L.t("存檔失敗：") + e.getMessage();
         }
     }
 
@@ -155,7 +155,7 @@ final class Maintenance {
                 int code = p.waitFor();
                 if (code == 0 || cmd.length == 1) return code;
             } catch (Exception e) {
-                line.accept("（執行失敗：" + e + "）");
+                line.accept(L.t("（執行失敗：") + e + L.t("）"));
             }
         }
         return -1;
@@ -167,7 +167,7 @@ final class Maintenance {
     static void askKey(final android.app.Activity a, final Runnable after) {
         final com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(a);
         til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
-        til.setHint("貼上 API Key");
+        til.setHint(L.t("貼上 API Key"));
         til.setEndIconMode(com.google.android.material.textfield.TextInputLayout.END_ICON_PASSWORD_TOGGLE);
         final com.google.android.material.textfield.TextInputEditText et = new com.google.android.material.textfield.TextInputEditText(til.getContext());
         et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
@@ -176,18 +176,18 @@ final class Maintenance {
         form.setOrientation(android.widget.LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, "Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。"));
+        form.addView(Ui.body(a, L.t("Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。")));
         form.addView(til);
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle("Claude API Key").setView(form)
-                .setPositiveButton("儲存", (d, w) -> {
+                .setPositiveButton(L.t("儲存"), (d, w) -> {
                     final String k = et.getText().toString();
                     new Thread(() -> {
                         final String r = saveKey(k);
                         a.runOnUiThread(() -> {
-                            android.widget.Toast.makeText(a, r == null ? "已儲存" : r, android.widget.Toast.LENGTH_LONG).show();
+                            android.widget.Toast.makeText(a, r == null ? L.t("已儲存") : r, android.widget.Toast.LENGTH_LONG).show();
                             if (r == null && after != null) after.run();
                         });
                     }).start();
-                }).setNegativeButton("取消", null).show();
+                }).setNegativeButton(L.t("取消"), null).show();
     }
 }

@@ -19,8 +19,8 @@ final class Brain {
         final boolean[] ok = {false};
         act.runOnUiThread(() -> new MaterialAlertDialogBuilder(act)
                 .setMessage(msg)
-                .setPositiveButton("確定", (d, w) -> { ok[0] = true; latch.countDown(); })
-                .setNegativeButton("取消", (d, w) -> latch.countDown())
+                .setPositiveButton(L.t("確定"), (d, w) -> { ok[0] = true; latch.countDown(); })
+                .setNegativeButton(L.t("取消"), (d, w) -> latch.countDown())
                 .setOnCancelListener(d -> latch.countDown())
                 .show());
         try { latch.await(); } catch (InterruptedException e) { return false; }
@@ -37,19 +37,19 @@ final class Brain {
                 return runFixed(act, Assist.fixed(d.cmdIndex));
             case Router.APP:
                 Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
-                return "已開啟 App";
+                return L.t("已開啟 App");
             case Router.AGENT:
                 return AgentLoop.run(act, t, ui);
             default: {
                 String reply = localAnswer(act, t);
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
-                return reply != null ? reply : "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
+                return reply != null ? reply : L.t("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。");
             }
         }
     }
 
     static String runFixed(Activity act, Assist.Route r) {
-        if (r.confirm && !confirm(act, "這會開關飛航模式，可能會斷網，要繼續嗎？")) return "已取消";
+        if (r.confirm && !confirm(act, L.t("這會開關飛航模式，可能會斷網，要繼續嗎？"))) return L.t("已取消");
         Maintenance.suRun(r.cmd);
         return r.reply;
     }
@@ -60,7 +60,7 @@ final class Brain {
             String s = Schedule.handle(act, t, msg -> confirm(act, msg));
             if (s != null) return s;
         } catch (Exception e) {
-            return "定時任務出錯：" + e.getMessage();
+            return L.t("定時任務出錯：") + e.getMessage();
         }
         return Schedule.quickAnswer(act, t);
     }

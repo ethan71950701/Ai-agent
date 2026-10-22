@@ -1,3 +1,5 @@
 <resources>
-    <string name="a11y_desc">只用來在螢幕上畫 AI 點擊的漣漪，不會讀取或記錄畫面內容。</string>
+    <string name="a11y_desc">Draws the tap ripples for the AI on screen, and lets the AI see the buttons and text on screen so it can tap and swipe for you. Screen content is used only on this phone and is not recorded.</string>
+    <string name="tile_label">AI Assistant</string>
+    <string name="a11y_label">PhoneAI Ripple</string>
 </resources>

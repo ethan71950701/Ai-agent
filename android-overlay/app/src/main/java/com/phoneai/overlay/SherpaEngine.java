@@ -55,15 +55,15 @@ final class SherpaEngine {
             for (String host : HOSTS) {   // 官方連不上或太慢就換鏡像
                 try {
                     ParallelDownloader.download(host + "/" + REPO + "/resolve/main/" + name, tmp, 4, (got, total, bps, conns) -> {
-                        final String m = String.format(java.util.Locale.US, "下載 %s：%d%%（%d／%d MB，%.1f MB/s，%d 條連線）",
+                        final String m = String.format(java.util.Locale.US, L.t("下載 %s：%d%%（%d／%d MB，%.1f MB/s，%d 條連線）"),
                                 name, total > 0 ? got * 100 / total : 0, got >> 20, total >> 20, bps / 1048576.0, conns);
                         say.accept(m);
                     });
                     int idx = i;
-                    if (tmp.length() != SIZES[idx]) throw new Exception(name + " 大小不對（" + tmp.length() + "／" + SIZES[idx] + "）");
-                    say.accept("核對 " + name + " 的校驗碼…");
-                    if (!sha256(tmp).equalsIgnoreCase(SHA[idx])) throw new Exception(name + " 校驗碼不符（不是預期的檔案，已丟棄）");
-                    if (!tmp.renameTo(dest)) throw new Exception("搬移檔案失敗");
+                    if (tmp.length() != SIZES[idx]) throw new Exception(name + L.t(" 大小不對（") + tmp.length() + L.t("／") + SIZES[idx] + L.t("）"));
+                    say.accept(L.t("核對 ") + name + L.t(" 的校驗碼…"));
+                    if (!sha256(tmp).equalsIgnoreCase(SHA[idx])) throw new Exception(name + L.t(" 校驗碼不符（不是預期的檔案，已丟棄）"));
+                    if (!tmp.renameTo(dest)) throw new Exception(L.t("搬移檔案失敗"));
                     ok = true;
                     break;
                 } catch (Exception e) {
@@ -71,7 +71,7 @@ final class SherpaEngine {
                     tmp.delete();
                 }
             }
-            if (!ok) throw last != null ? last : new Exception("下載失敗");
+            if (!ok) throw last != null ? last : new Exception(L.t("下載失敗"));
         }
         new File(d, ".ok").createNewFile();
     }

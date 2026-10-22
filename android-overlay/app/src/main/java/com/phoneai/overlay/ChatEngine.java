@@ -139,6 +139,8 @@ final class ChatEngine {
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
             String system = SYSTEM + "\n今天是 " + today + "。\n待辦（未完成）：" + Memory.promptRows(mem, "todo")
                     + "\n筆記：" + Memory.promptRows(mem, "note");
+            if (L.en()) system = system.replace("1. 一律用繁體中文，", "1. Always reply in English, ")
+                    + "\n(The user's interface language is English: always answer in English, short and conversational.)";
             JSONArray msgs = loadHistory(c);
             msgs.put(new JSONObject().put("role", "user").put("content", text));
             String reply = null;
@@ -172,7 +174,7 @@ final class ChatEngine {
             saveHistory(c, keep, System.currentTimeMillis());
             return reply;
         } catch (Exception e) {
-            android.util.Log.w("ChatEngine", "聊天失敗: " + e);
+            android.util.Log.w("ChatEngine", L.t("聊天失敗: ") + e);
             return null;
         }
     }

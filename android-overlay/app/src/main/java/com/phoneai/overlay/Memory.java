@@ -171,7 +171,7 @@ final class Memory {
                     }
                     if (hit.isEmpty()) return locked.isEmpty() ? "錯誤：找不到這些 id" : "錯誤：永久記憶只能在 App 的「助理的記憶」頁手動刪除";
                     if (hit.size() > 3) {
-                        StringBuilder m = new StringBuilder("要刪除這 " + hit.size() + " 項嗎？\n");
+                        StringBuilder m = new StringBuilder(L.t("要刪除這 ") + hit.size() + L.t(" 項嗎？\n"));
                         for (int i = 0; i < hit.size() && i < 8; i++) m.append("・").append(hit.get(i).optString("text")).append('\n');
                         if (confirm == null || !confirm.ask(m.toString())) return "使用者沒有同意，沒有刪除";
                     }
@@ -186,8 +186,8 @@ final class Memory {
                     int n = 0;
                     for (JSONObject it : items(d))
                         if (!it.optBoolean("deleted") && !it.optBoolean("pinned") && (scope.equals("all") || scope.equals(it.optString("kind")))) n++;
-                    if (confirm == null || !confirm.ask("要刪除" + (scope.equals("all") ? "全部" : scope.equals("todo") ? "全部待辦" : "全部筆記")
-                            + "（" + n + " 項，永久記憶不會刪）嗎？")) return "使用者沒有同意，沒有刪除";
+                    if (confirm == null || !confirm.ask(L.t("要刪除") + (scope.equals("all") ? L.t("全部") : scope.equals("todo") ? L.t("全部待辦") : L.t("全部筆記"))
+                            + L.t("（") + n + L.t(" 項，永久記憶不會刪）嗎？"))) return "使用者沒有同意，沒有刪除";
                     for (JSONObject it : items(d))
                         if (!it.optBoolean("pinned") && (scope.equals("all") || scope.equals(it.optString("kind")))) it.put("deleted", true);
                     save(c, d);

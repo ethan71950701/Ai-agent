@@ -76,7 +76,7 @@ public class AssistantSheet {
     private final Runnable waitTimeout = this::dismiss;
 
     /** 錯誤碼 12/13（語言不支援/不可用）時，依序換這幾種語言寫法再試；null = 不指定語言（用系統預設）。 */
-    private static final String[] LANGS = {"zh-TW", "cmn-Hant-TW", "zh-Hant-TW", "zh-CN", null};
+    private static final String[] LANGS = L.en() ? new String[]{"en-US", null} : new String[]{"zh-TW", "cmn-Hant-TW", "zh-Hant-TW", "zh-CN", null};
     private int langIdx;
     /** 要輪流試的辨識服務（不含我們自己的存根）。排序：先試系統預設（使用者在系統「語音輸入」裡選的，例如三星，有離線包），其餘照系統給的順序。
      *  最後一個位置（svcIdx == size）= 系統預設，會放在最前面試。 */
@@ -111,7 +111,7 @@ public class AssistantSheet {
 
         if (OverlayService.agentRunning) {  // 任務正在執行：面板上直接給「停止」，不用去拉通知欄
             TextView stop = new TextView(a);
-            stop.setText("■  停止目前的任務");
+            stop.setText(L.t("■  停止目前的任務"));
             stop.setTextColor(0xFFFFFFFF);
             stop.setTextSize(14);
             stop.setGravity(Gravity.CENTER);
@@ -230,7 +230,7 @@ public class AssistantSheet {
         content.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> updateGlowY());
 
         refreshAction();
-        setStatus("直接說話，或在這裡打字");
+        setStatus(L.t("直接說話，或在這裡打字"));
     }
 
     public View view() { return root; }
@@ -248,7 +248,7 @@ public class AssistantSheet {
         row.setTranslationY(0f);
         row.setEnabled(true);
         orb.setState(OrbView.IDLE);
-        setStatus("說出或打字你的回答");
+        setStatus(L.t("說出或打字你的回答"));
         java.util.concurrent.CountDownLatch l = questionShown;
         if (l != null) l.countDown();
     }
@@ -334,7 +334,7 @@ public class AssistantSheet {
         cancelCountdown();
         if (act.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             act.requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC);
-            setStatus("需要麥克風權限");
+            setStatus(L.t("需要麥克風權限"));
             return;
         }
         if (SherpaEngine.ready(act)) {   // 已下載 SenseVoice：App 自己錄音、自己辨識（三星與小米都用這條），不需要網路
@@ -342,12 +342,12 @@ public class AssistantSheet {
             return;
         }
         if (act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getBoolean("voice_sys", false)) {
-            trace("直接用系統語音視窗（主畫面勾選，或先前 App 內辨識都失敗而自動記住）");
+            trace(L.t("直接用系統語音視窗（主畫面勾選，或先前 App 內辨識都失敗而自動記住）"));
             fallbackDialog(false);
             return;
         }
         recSvcs = pickRecognizers();
-        trace("可用辨識服務 " + recSvcs.size() + " 個：" + recSvcs);
+        trace(L.t("可用辨識服務 ") + recSvcs.size() + L.t(" 個：") + recSvcs);
         svcIdx = recSvcs.size();  // 從「系統預設」開始；失敗才往前面的其他服務走
         langIdx = 0;
         beginRecognition();
@@ -357,10 +357,10 @@ public class AssistantSheet {
     private void startSherpa() {
         stopRecognizer();
         final int gen = ++voiceGen;
-        trace("使用 SenseVoice（App 內離線辨識）");
+        trace(L.t("使用 SenseVoice（App 內離線辨識）"));
         listening = true;
         setText("");
-        setStatus("我在聽…");
+        setStatus(L.t("我在聽…"));
         orb.setState(OrbView.LISTENING);
         refreshAction();
         capture = SpeechCapture.start(new SpeechCapture.Cb() {
@@ -374,9 +374,9 @@ public class AssistantSheet {
                 if (gen != voiceGen) return;
                 capture = null;
                 listening = false;
-                if (pcm == null) { idleMessage("沒聽到聲音，點一下光球再說一次"); return; }
+                if (pcm == null) { idleMessage(L.t("沒聽到聲音，點一下光球再說一次")); return; }
                 orb.setState(OrbView.THINKING);
-                setStatus("辨識中…");
+                setStatus(L.t("辨識中…"));
                 final float[] f = SpeechCapture.toFloat(pcm);
                 new Thread(() -> {
                     String text = null, err = null;
@@ -388,8 +388,8 @@ public class AssistantSheet {
                     final String t = text, e2 = err;
                     act.runOnUiThread(() -> {
                         if (gen != voiceGen) return;
-                        if (e2 != null) { trace("SenseVoice 錯誤：" + e2); idleMessage("語音辨識失敗（" + e2 + "），可以改用打字"); }
-                        else if (t == null || t.isEmpty()) idleMessage("沒聽清楚，點一下光球再說一次");
+                        if (e2 != null) { trace(L.t("SenseVoice 錯誤：") + e2); idleMessage(L.t("語音辨識失敗（") + e2 + L.t("），可以改用打字")); }
+                        else if (t == null || t.isEmpty()) idleMessage(L.t("沒聽清楚，點一下光球再說一次"));
                         else gotText(t);
                     });
                 }, "sensevoice").start();
@@ -398,8 +398,8 @@ public class AssistantSheet {
                 if (gen != voiceGen) return;
                 capture = null;
                 listening = false;
-                trace("錄音錯誤：" + msg);
-                idleMessage("錄音失敗（" + msg + "）");
+                trace(L.t("錄音錯誤：") + msg);
+                idleMessage(L.t("錄音失敗（") + msg + L.t("）"));
             }
         });
     }
@@ -409,7 +409,7 @@ public class AssistantSheet {
         svcIdx = svcIdx == recSvcs.size() ? 0 : svcIdx + 1;  // 系統預設失敗 → 其他服務；其他都試過 → 退回系統視窗
         langIdx = 0;
         if (svcIdx >= recSvcs.size()) { fallbackDialog(); return; }
-        setStatus(why + "，換另一個辨識服務…");
+        setStatus(why + L.t("，換另一個辨識服務…"));
         beginRecognition();
     }
 
@@ -425,17 +425,17 @@ public class AssistantSheet {
                     .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                     .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
             if (LANGS[langIdx] != null) i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, LANGS[langIdx]);
-            curSvc = svcIdx < recSvcs.size() ? recSvcs.get(svcIdx).flattenToShortString() : "系統預設";
-            trace("開始辨識：服務=" + curSvc + "，語言=" + LANGS[langIdx]);
+            curSvc = svcIdx < recSvcs.size() ? recSvcs.get(svcIdx).flattenToShortString() : L.t("系統預設");
+            trace(L.t("開始辨識：服務=") + curSvc + L.t("，語言=") + LANGS[langIdx]);
             recognizer.startListening(i);
             listening = true;
             setText("");
-            setStatus("我在聽…");
+            setStatus(L.t("我在聽…"));
             orb.setState(OrbView.LISTENING);
             refreshAction();
         } catch (Exception e) {
-            trace("啟動失敗：" + e);
-            nextService("辨識服務啟動失敗");
+            trace(L.t("啟動失敗：") + e);
+            nextService(L.t("辨識服務啟動失敗"));
         }
     }
 
@@ -483,16 +483,16 @@ public class AssistantSheet {
             android.content.SharedPreferences.Editor ed = sp.edit().putInt("voice_fail", n);
             if (n >= 3) ed.putBoolean("voice_sys", true);
             ed.apply();
-            trace("App 內辨識失敗（連續第 " + n + " 次）" + (n >= 3 ? "，之後改用系統視窗" : "，還會再試 App 內辨識"));
+            trace(L.t("App 內辨識失敗（連續第 ") + n + L.t(" 次）") + (n >= 3 ? L.t("，之後改用系統視窗") : L.t("，還會再試 App 內辨識")));
         }
-        trace("退回系統語音視窗");
+        trace(L.t("退回系統語音視窗"));
         try {
             act.startActivityForResult(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                     .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-TW")
-                    .putExtra(RecognizerIntent.EXTRA_PROMPT, "請說要做什麼"), REQ_FALLBACK);
+                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, L.en() ? "en-US" : "zh-TW")
+                    .putExtra(RecognizerIntent.EXTRA_PROMPT, L.t("請說要做什麼")), REQ_FALLBACK);
         } catch (ActivityNotFoundException e) {
-            setStatus("這支手機沒有語音辨識，請用下面的輸入框打字");
+            setStatus(L.t("這支手機沒有語音辨識，請用下面的輸入框打字"));
             orb.setState(OrbView.IDLE);
         }
     }
@@ -515,7 +515,7 @@ public class AssistantSheet {
         if (capture != null) capture.stop();   // SenseVoice：立刻結束錄音，交出目前聽到的再辨識
         if (recognizer != null) recognizer.stopListening();
         orb.setState(OrbView.THINKING);
-        setStatus("辨識中…");
+        setStatus(L.t("辨識中…"));
     }
 
     private void stopRecognizer() {
@@ -544,7 +544,7 @@ public class AssistantSheet {
         @Override public void onEndOfSpeech() {
             listening = false;
             orb.setState(OrbView.THINKING);
-            setStatus("辨識中…");
+            setStatus(L.t("辨識中…"));
         }
 
         @Override public void onPartialResults(Bundle b) {
@@ -556,22 +556,22 @@ public class AssistantSheet {
             listening = false;
             ArrayList<String> r = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             if (r != null && !r.isEmpty()) gotText(r.get(0));
-            else idleMessage("沒聽清楚，點一下光球再說一次");
+            else idleMessage(L.t("沒聽清楚，點一下光球再說一次"));
         }
 
         @Override public void onError(int e) {
             listening = false;
-            trace("錯誤 " + errName(e) + "，服務=" + curSvc);
+            trace(L.t("錯誤 ") + errName(e) + L.t("，服務=") + curSvc);
             if (e == SpeechRecognizer.ERROR_NO_MATCH || e == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
-                idleMessage("沒聽到聲音，點一下光球再說一次");
+                idleMessage(L.t("沒聽到聲音，點一下光球再說一次"));
             } else if (e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
                 fallbackDialog();
             } else if ((e == 12 || e == 13) && langIdx + 1 < LANGS.length) {  // 語言不支援/不可用：換下一種寫法再試
                 langIdx++;
-                setStatus("換一種語言設定再試…");
+                setStatus(L.t("換一種語言設定再試…"));
                 beginRecognition();
             } else if (e == 8) {
-                idleMessage("辨識服務忙碌（8），稍後點光球再試");
+                idleMessage(L.t("辨識服務忙碌（8），稍後點光球再試"));
             } else {
                 nextService(errName(e));  // 連不上/語言都不行/其他錯誤：換下一個辨識服務，全部失敗會退回系統語音視窗
             }
@@ -580,17 +580,17 @@ public class AssistantSheet {
 
     private static String errName(int e) {
         switch (e) {
-            case 1: return "網路逾時（1）";
-            case 2: return "網路錯誤（2）";
-            case 3: return "麥克風錯誤（3）";
-            case 4: return "辨識服務錯誤（4）";
-            case 5: return "用戶端錯誤（5）";
-            case 8: return "辨識服務忙碌（8）";
-            case 10: return "請求太多（10）";
-            case 11: return "辨識服務中斷（11）";
-            case 12: return "語言不支援（12）";
-            case 13: return "語言不可用（13）";
-            default: return "代碼 " + e;
+            case 1: return L.t("網路逾時（1）");
+            case 2: return L.t("網路錯誤（2）");
+            case 3: return L.t("麥克風錯誤（3）");
+            case 4: return L.t("辨識服務錯誤（4）");
+            case 5: return L.t("用戶端錯誤（5）");
+            case 8: return L.t("辨識服務忙碌（8）");
+            case 10: return L.t("請求太多（10）");
+            case 11: return L.t("辨識服務中斷（11）");
+            case 12: return L.t("語言不支援（12）");
+            case 13: return L.t("語言不可用（13）");
+            default: return L.t("代碼 ") + e;
         }
     }
 
@@ -632,7 +632,7 @@ public class AssistantSheet {
         stopRecognizer();
         orb.setState(OrbView.IDLE);
         orb.setLevel(0f);
-        setStatus("打好按右邊的送出");
+        setStatus(L.t("打好按右邊的送出"));
         refreshAction();
     }
 
@@ -656,7 +656,7 @@ public class AssistantSheet {
             row.setEnabled(false);
             input.setEnabled(false);
             row.animate().alpha(0.5f).setDuration(200).start();
-            setStatus("思考中…");
+            setStatus(L.t("思考中…"));
             orb.setState(OrbView.THINKING);
             root.postDelayed(waitTimeout, 30000);
             return;
@@ -684,7 +684,7 @@ public class AssistantSheet {
     }
 
     private String runFixed(Assist.Route r) {
-        if (r.confirm && !confirmOnUi("這會開關飛航模式，可能會斷網，要繼續嗎？")) return "已取消";
+        if (r.confirm && !confirmOnUi(L.t("這會開關飛航模式，可能會斷網，要繼續嗎？"))) return L.t("已取消");
         Maintenance.suRun(r.cmd);
         return r.reply;
     }
@@ -698,17 +698,17 @@ public class AssistantSheet {
                 return runFixed(Assist.fixed(d.cmdIndex));
             case Router.APP:
                 Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
-                return "已開啟 App";
+                return L.t("已開啟 App");
             case Router.AGENT:
                 return AgentLoop.run(act, t, new AgentLoop.Ui() {
                     @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
-                    @Override public void status(String s) { Notify.notifyText(act, "AI 正在操作手機", s, 7195); }
+                    @Override public void status(String s) { Notify.notifyText(act, L.t("AI 正在操作手機"), s, 7195); }
                     @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
                 });
             default: {
                 String reply = localAnswer(t);
                 if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
-                return reply != null ? reply : "連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。";
+                return reply != null ? reply : L.t("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。");
             }
         }
     }
@@ -719,7 +719,7 @@ public class AssistantSheet {
             String s = Schedule.handle(act, t, this::confirmOnUi);
             if (s != null) return s;
         } catch (Exception e) {
-            return "定時任務出錯：" + e.getMessage();
+            return L.t("定時任務出錯：") + e.getMessage();
         }
         return Schedule.quickAnswer(act, t);
     }
@@ -730,8 +730,8 @@ public class AssistantSheet {
         final boolean[] ok = {false};
         act.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(act)
                 .setMessage(msg)
-                .setPositiveButton("確定", (d, w) -> { ok[0] = true; latch.countDown(); })
-                .setNegativeButton("取消", (d, w) -> latch.countDown())
+                .setPositiveButton(L.t("確定"), (d, w) -> { ok[0] = true; latch.countDown(); })
+                .setNegativeButton(L.t("取消"), (d, w) -> latch.countDown())
                 .setOnCancelListener(d -> latch.countDown())
                 .show());
         try { latch.await(); } catch (InterruptedException e) { return false; }
@@ -765,7 +765,7 @@ public class AssistantSheet {
         row.setTranslationY(0f);
         input.setEnabled(true);
         setText("");
-        setStatus("繼續問…");
+        setStatus(L.t("繼續問…"));
         aurora.setEnergy(0.45f);
         final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss);
         replyCard = card;

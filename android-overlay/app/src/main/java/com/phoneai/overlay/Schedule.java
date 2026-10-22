@@ -40,17 +40,17 @@ final class Schedule {
             "^每天\\s*(早上|早晨|上午|中午|下午|傍晚|晚上|半夜|凌晨)?\\s*([0-9]{1,2}|[零〇一二兩两三四五六七八九十]{1,3})\\s*(?:點|点|時|时|:|：)\\s*(半|[0-9]{1,2}|[零〇一二兩两三四五六七八九十]{1,3})?\\s*分?\\s*[，,、。\\s]*(?:幫我|帮我|請|请|要|提醒我)?\\s*(.+)$");
 
     // 短問題的句型（照搬 intents.py）
-    private static final Pattern BATT_RE = Pattern.compile("(電量|电量|電池|电池)");
+    private static final Pattern BATT_RE = Pattern.compile("(電量|电量|電池|电池)|(?i:battery)");
     private static final Pattern BATT_Q = Pattern.compile("(多少|幾|几|剩|還有|还有|看|查|現在|现在|怎麼樣|怎么样|如何|%|百分)");
-    private static final Pattern TIME_RE = Pattern.compile("(現在|现在|目前)?(幾點|几点|時間|时间)(了|是)?|(現在|现在)(是)?(星期|禮拜|礼拜)?幾|今天(星期|禮拜|礼拜)幾|今天几号|今天幾號");
-    private static final Pattern YEAR_RE = Pattern.compile("(今年|現在|现在|目前)(是)?(西元|公元)?(幾年|几年|哪一年|哪年)|(西元|公元)(幾年|几年)|(今年|現在|现在)(幾|几)年");
-    private static final Pattern ANDROID_RE = Pattern.compile("(安卓|android|Android)(系統)?(版本|幾|几|多少)|(系統|系统)版本");
-    private static final Pattern STORE_RE = Pattern.compile("(儲存|存儲|存储|容量|硬碟|硬盘|空間|空间)");
-    private static final Pattern MEM_RE = Pattern.compile("(記憶體|内存|內存|ram)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern MODEL_RE = Pattern.compile("(型號|型号|機型|机型|什麼手機|什么手机|哪一支手機|哪支手机)");
-    private static final Pattern BRIGHT_RE = Pattern.compile("亮度");
+    private static final Pattern TIME_RE = Pattern.compile("(現在|现在|目前)?(幾點|几点|時間|时间)(了|是)?|(現在|现在)(是)?(星期|禮拜|礼拜)?幾|今天(星期|禮拜|礼拜)幾|今天几号|今天幾號|(?i:whattime|whatstime|timeisit|currenttime|thetime|whatday|whatdate|todaysdate|whatisthedate|dateistoday)");
+    private static final Pattern YEAR_RE = Pattern.compile("(今年|現在|现在|目前)(是)?(西元|公元)?(幾年|几年|哪一年|哪年)|(西元|公元)(幾年|几年)|(今年|現在|现在)(幾|几)年|(?i:whatyear|currentyear|whatyearisit)");
+    private static final Pattern ANDROID_RE = Pattern.compile("(安卓|android|Android)(系統)?(版本|幾|几|多少)|(系統|系统)版本|(?i:androidversion|whatandroid|whichandroid)");
+    private static final Pattern STORE_RE = Pattern.compile("(儲存|存儲|存储|容量|硬碟|硬盘|空間|空间)|(?i:storage|diskspace|freespace|howmuchspace)");
+    private static final Pattern MEM_RE = Pattern.compile("(記憶體|内存|內存|ram)|(?i:phonememory|howmuchmemory|freememory|availablememory|memoryusage)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MODEL_RE = Pattern.compile("(型號|型号|機型|机型|什麼手機|什么手机|哪一支手機|哪支手机)|(?i:phonemodel|devicemodel|whatphone|whichphone|whatdevice)");
+    private static final Pattern BRIGHT_RE = Pattern.compile("亮度|(?i:brightness)");
     private static final Pattern WIFI_RE = Pattern.compile("(wifi|wi-fi|無線網路|无线网络)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern VOL_RE = Pattern.compile("(音量|聲音大小|声音大小)");
+    private static final Pattern VOL_RE = Pattern.compile("(音量|聲音大小|声音大小)|(?i:volume)");
     private static final Pattern Q_RE = Pattern.compile("(多少|幾|几|剩|還有|还有|夠|够|用了|用到|現在|现在|目前|是什麼|是什么|哪|連|连|狀態|状态|名稱|名称)");
 
     private Schedule() { }
@@ -71,9 +71,24 @@ final class Schedule {
         Files.write(store(c).toPath(), items.toString(1).getBytes(StandardCharsets.UTF_8));
     }
 
+    private static final Pattern PAT_EN = Pattern.compile(
+            "^(?:every\\s*day|daily|each\\s*day)\\s*(?:at)?\\s*([0-9]{1,2})(?::([0-9]{2}))?\\s*(a\\.?m\\.?|p\\.?m\\.?)?\\s*[,.]?\\s*(.+)$", Pattern.CASE_INSENSITIVE);
+
     /** 「每天晚上 10 點半查儲存空間」→ {h, m, task}；不是這個句型回 null。 */
     static int[] parseTime(String text, String[] taskOut) {
-        Matcher m = PAT.matcher((text == null ? "" : text).trim());
+        String raw = (text == null ? "" : text).trim();
+        Matcher en = PAT_EN.matcher(raw);
+        if (en.matches()) {   // "every day at 8:30 pm check battery"
+            int eh = Integer.parseInt(en.group(1)), emi = en.group(2) == null ? 0 : Integer.parseInt(en.group(2));
+            String ap = en.group(3) == null ? "" : en.group(3).toLowerCase(java.util.Locale.ROOT).replace(".", "");
+            if (ap.equals("pm") && eh < 12) eh += 12;
+            if (ap.equals("am") && eh == 12) eh = 0;
+            String etask = en.group(4).replaceAll("^[\\s,.]+|[\\s,.]+$", "");
+            if (eh > 23 || emi > 59 || etask.isEmpty()) return null;
+            taskOut[0] = etask;
+            return new int[]{eh, emi};
+        }
+        Matcher m = PAT.matcher(raw);
         if (!m.matches()) return null;
         String period = m.group(1), hs = m.group(2), ms = m.group(3);
         Integer h = cnInt(hs);
@@ -116,7 +131,7 @@ final class Schedule {
     }
 
     private static String fmt(JSONObject it) {
-        return it.optInt("id") + ". 每天 " + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m")) + " " + it.optString("task");
+        return it.optInt("id") + L.t(". 每天 ") + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m")) + " " + it.optString("task");
     }
 
     /**
@@ -125,40 +140,47 @@ final class Schedule {
      */
     static String handle(Context c, String text, Memory.Confirm confirm) throws Exception {
         String t = (text == null ? "" : text).replaceAll("\\s+", "");
-        if (t.matches("^(我的定時|有哪些定時|定時清單|定時列表|看定時).*")) {
+        String tl = t.toLowerCase(java.util.Locale.ROOT);
+        if (t.matches("^(我的定時|有哪些定時|定時清單|定時列表|看定時).*") || tl.matches("^(my|show|list|whatare|whataremy)?(scheduledtasks|schedules|schedulelist).*")) {
             JSONArray items = load(c);
-            if (items.length() == 0) return "目前沒有定時任務。";
-            StringBuilder sb = new StringBuilder("目前定時：");
+            if (items.length() == 0) return L.t("目前沒有定時任務。");
+            StringBuilder sb = new StringBuilder(L.t("目前定時："));
             for (int i = 0; i < items.length(); i++) sb.append('\n').append(fmt(items.getJSONObject(i)));
             return sb.toString();
         }
-        if (t.matches("^(取消|刪除|删除)(全部|所有)定時.*")) {
+        if (t.matches("^(取消|刪除|删除)(全部|所有)定時.*") || tl.matches("^(cancel|delete|remove)(all|every)(my)?(scheduledtasks|schedules).*")) {
             save(c, new JSONArray());
-            return "已取消全部定時任務。";
+            return L.t("已取消全部定時任務。");
         }
         Matcher m = Pattern.compile("^(取消|刪除|删除)定時(?:第)?([0-9一二三四五六七八九十]+)").matcher(t);
-        if (m.find()) {
-            Integer n = cnInt(m.group(2));
+        boolean found = m.find();
+        String numTxt = found ? m.group(2) : null;
+        if (!found) {
+            Matcher me = Pattern.compile("^(cancel|delete|remove)(scheduledtask|schedule)(?:number|no\\.?|#)?([0-9]+)").matcher(tl);
+            if (me.find()) { found = true; numTxt = me.group(3); }
+        }
+        if (found) {
+            Integer n = cnInt(numTxt);
             JSONArray items = load(c), keep = new JSONArray();
             for (int i = 0; i < items.length(); i++) if (items.getJSONObject(i).optInt("id") != (n == null ? -1 : n)) keep.put(items.getJSONObject(i));
-            if (keep.length() == items.length()) return "找不到定時 " + m.group(2) + "。";
+            if (keep.length() == items.length()) return L.t("找不到定時 ") + numTxt + L.t("。");
             save(c, keep);
-            return "已取消定時 " + m.group(2) + "。";
+            return L.t("已取消定時 ") + numTxt + L.t("。");
         }
         String[] task = new String[1];
         int[] hm = parseTime(text, task);
         if (hm == null) return null;
-        if (!isQuickQuestion(task[0])) return "定時任務目前只支援純查詢（電量、儲存空間、記憶體、現在幾點、Wi-Fi、亮度…）。沒人看著的時候我不會自己操作螢幕。";
-        if (!confirm.ask(String.format(java.util.Locale.US, "每天 %02d:%02d 自動「%s」並用通知告訴你（時間誤差最多約 15 分鐘）。要建立嗎？", hm[0], hm[1], task[0])))
-            return "已取消，沒有建立定時。";
+        if (!isQuickQuestion(task[0])) return L.t("定時任務目前只支援純查詢（電量、儲存空間、記憶體、現在幾點、Wi-Fi、亮度…）。沒人看著的時候我不會自己操作螢幕。");
+        if (!confirm.ask(String.format(java.util.Locale.US, L.t("每天 %02d:%02d 自動「%s」並用通知告訴你（時間誤差最多約 15 分鐘）。要建立嗎？"), hm[0], hm[1], task[0])))
+            return L.t("已取消，沒有建立定時。");
         JSONArray items = load(c);
         int nid = 1;
         for (int i = 0; i < items.length(); i++) nid = Math.max(nid, items.getJSONObject(i).optInt("id") + 1);
         items.put(new JSONObject().put("id", nid).put("h", hm[0]).put("m", hm[1]).put("task", task[0]).put("last", ""));
         save(c, items);
         boolean ok = ensureJob(c);
-        return "已建立定時 " + nid + "：每天 " + String.format(java.util.Locale.US, "%02d:%02d", hm[0], hm[1]) + " " + task[0] + "。"
-                + (ok ? "" : "（排程註冊失敗，請再試一次）");
+        return L.t("已建立定時 ") + nid + L.t("：每天 ") + String.format(java.util.Locale.US, "%02d:%02d", hm[0], hm[1]) + " " + task[0] + L.t("。")
+                + (ok ? "" : L.t("（排程註冊失敗，請再試一次）"));
     }
 
     /** 註冊每 15 分鐘一次的排程（重複註冊會覆蓋，不會變兩個）。 */
@@ -186,7 +208,7 @@ final class Schedule {
             if (today.equals(it.optString("last")) || late < 0 || late > MAX_LATE_MS) continue;
             String ans = quickAnswer(c, it.optString("task"));
             it.put("last", today);
-            if (ans != null) notify(c, "定時：" + it.optString("task"), ans, 7197 + it.optInt("id"));
+            if (ans != null) notify(c, L.t("定時：") + it.optString("task"), ans, 7197 + it.optInt("id"));
         }
         save(c, items);
     }
@@ -199,8 +221,8 @@ final class Schedule {
 
     static boolean isQuickQuestion(String text) {
         String t = (text == null ? "" : text).replaceAll("[\\s，。,.？?！!]", "");
-        if (t.isEmpty() || t.length() > 18 || t.toLowerCase().startsWith("ai")) return false;
-        if (t.matches("^(開|關|打開|關閉|开|关|打开|关闭|調|调|設|设).*")) return false;
+        if (t.isEmpty() || t.length() > (t.matches("\\p{ASCII}+") ? 40 : 18) || t.toLowerCase().startsWith("ai")) return false;
+        if (t.matches("^((開|關|打開|關閉|开|关|打开|关闭|調|调|設|设)|(?i:turn|enable|disable|switch|open|close|set)).*")) return false;
         // 只要句子裡有主題詞就算查詢（「告訴我電量」「看一下儲存空間」都可以）；動作類的已在上面排除
         if (BATT_RE.matcher(t).find() || ANDROID_RE.matcher(t).find() || YEAR_RE.matcher(t).find() || TIME_RE.matcher(t).find()) return true;
         return STORE_RE.matcher(t).find() || MEM_RE.matcher(t).find() || MODEL_RE.matcher(t).find()
@@ -210,23 +232,24 @@ final class Schedule {
     /** 能直接回答的短問題，回傳答案；不是這類問題回 null（不呼叫 AI）。 */
     static String quickAnswer(Context c, String text) {
         String t = (text == null ? "" : text).replaceAll("[\\s，。,.？?！!]", "");
-        if (t.isEmpty() || t.length() > 18 || t.toLowerCase().startsWith("ai")) return null;
+        if (t.isEmpty() || t.length() > (t.matches("\\p{ASCII}+") ? 40 : 18) || t.toLowerCase().startsWith("ai")) return null;
         try {
             if (BATT_RE.matcher(t).find()) return battery(c);
-            if (!t.matches("^(開|關|打開|關閉|开|关|打开|关闭|調|调|設|设).*")) {
+            if (!t.matches("^((開|關|打開|關閉|开|关|打开|关闭|調|调|設|设)|(?i:turn|enable|disable|switch|open|close|set)).*")) {
                 String r = system(c, t);
                 if (r != null) return r;
             }
-            if (ANDROID_RE.matcher(t).find()) return "這支手機的 Android 版本是 " + Build.VERSION.RELEASE + "。";
+            if (ANDROID_RE.matcher(t).find()) return L.t("這支手機的 Android 版本是 ") + Build.VERSION.RELEASE + L.t("。");
             if (YEAR_RE.matcher(t).find()) {
                 int y = Calendar.getInstance().get(Calendar.YEAR);
-                return "今年是西元 " + y + " 年（民國 " + (y - 1911) + " 年）。";
+                return L.t("今年是西元 ") + y + L.t(" 年（民國 ") + (y - 1911) + L.t(" 年）。");
             }
             if (TIME_RE.matcher(t).find()) {
                 Calendar n = Calendar.getInstance();
+                if (L.en()) return String.format(java.util.Locale.US, "It is %1$tA, %1$tB %1$td, %1$tH:%1$tM.", n);
                 String[] wd = {"日", "一", "二", "三", "四", "五", "六"};
                 return "現在是 " + (n.get(Calendar.MONTH) + 1) + " 月 " + n.get(Calendar.DAY_OF_MONTH) + " 日（星期"
-                        + wd[n.get(Calendar.DAY_OF_WEEK) - 1] + "）" + String.format(java.util.Locale.US, "%02d:%02d", n.get(Calendar.HOUR_OF_DAY), n.get(Calendar.MINUTE)) + "。";
+                        + wd[n.get(Calendar.DAY_OF_WEEK) - 1] + L.t("）") + String.format(java.util.Locale.US, "%02d:%02d", n.get(Calendar.HOUR_OF_DAY), n.get(Calendar.MINUTE)) + L.t("。");
             }
         } catch (Exception e) {
             return null;
@@ -242,46 +265,46 @@ final class Schedule {
         boolean charging = status == android.os.BatteryManager.BATTERY_STATUS_CHARGING || status == android.os.BatteryManager.BATTERY_STATUS_FULL;
         int pct = Math.round(100f * level / scale);
         int temp = bi.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, -1);
-        return "目前電量 " + pct + "%" + (charging ? "，充電中" : "，沒有在充電") + (temp > 0 ? "，電池溫度約 " + String.format(java.util.Locale.US, "%.1f", temp / 10f) + "°C" : "") + "。";
+        return L.t("目前電量 ") + pct + "%" + (charging ? L.t("，充電中") : L.t("，沒有在充電")) + (temp > 0 ? L.t("，電池溫度約 ") + String.format(java.util.Locale.US, "%.1f", temp / 10f) + "°C" : "") + L.t("。");
     }
 
     private static String system(Context c, String t) {
         if (STORE_RE.matcher(t).find()) {
             StatFs s = new StatFs(Environment.getDataDirectory().getPath());
             double total = s.getTotalBytes() / 1e9, free = s.getAvailableBytes() / 1e9;
-            return String.format(java.util.Locale.US, "儲存空間：已用 %.1f GB／共 %.1f GB，剩 %.1f GB。", total - free, total, free);
+            return String.format(java.util.Locale.US, L.t("儲存空間：已用 %.1f GB／共 %.1f GB，剩 %.1f GB。"), total - free, total, free);
         }
         if (MEM_RE.matcher(t).find()) {
             ActivityManager am = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
             ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
             am.getMemoryInfo(mi);
             double total = mi.totalMem / 1e9, avail = mi.availMem / 1e9;
-            return String.format(java.util.Locale.US, "記憶體：共 %.1f GB，目前可用 %.1f GB（已用約 %d%%）。", total, avail, Math.round(100 * (total - avail) / total));
+            return String.format(java.util.Locale.US, L.t("記憶體：共 %.1f GB，目前可用 %.1f GB（已用約 %d%%）。"), total, avail, Math.round(100 * (total - avail) / total));
         }
         if (MODEL_RE.matcher(t).find()) {
-            return "這支手機是 " + (Build.MANUFACTURER.isEmpty() ? "" : Build.MANUFACTURER + " ") + Build.MODEL + "。";
+            return L.t("這支手機是 ") + (Build.MANUFACTURER.isEmpty() ? "" : Build.MANUFACTURER + " ") + Build.MODEL + L.t("。");
         }
         if (BRIGHT_RE.matcher(t).find()) {
             try {
                 int v = Settings.System.getInt(c.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
-                return "目前螢幕亮度約 " + Math.round(100 * v / 255f) + "%（系統值 " + v + "／255）。";
+                return L.t("目前螢幕亮度約 ") + Math.round(100 * v / 255f) + L.t("%（系統值 ") + v + L.t("／255）。");
             } catch (Settings.SettingNotFoundException e) {
                 return null;
             }
         }
         if (WIFI_RE.matcher(t).find()) {
             String out = Maintenance.suRun("cmd wifi status");
-            if (out.matches("(?s).*wifi is disabled.*")) return "Wi-Fi 目前是關閉的。";
+            if (out.matches("(?s).*wifi is disabled.*")) return L.t("Wi-Fi 目前是關閉的。");
             Matcher m = Pattern.compile("SSID:\\s*\"?([^\",\\n]+)\"?").matcher(out);
             if (m.find() && !m.group(1).trim().equals("<unknown ssid>") && !m.group(1).trim().equals("unknown"))
-                return "Wi-Fi 已開啟，連線中的網路是「" + m.group(1).trim() + "」。";
-            if (out.matches("(?s).*wifi is enabled.*")) return "Wi-Fi 已開啟（讀不到目前連的網路名稱）。";
+                return L.t("Wi-Fi 已開啟，連線中的網路是「") + m.group(1).trim() + L.t("」。");
+            if (out.matches("(?s).*wifi is enabled.*")) return L.t("Wi-Fi 已開啟（讀不到目前連的網路名稱）。");
         }
         if (VOL_RE.matcher(t).find()) {
             Matcher m = Pattern.compile("volume is (\\d+) in range \\[(\\d+)\\.\\.(\\d+)\\]").matcher(Maintenance.suRun("cmd media_session volume --get --stream 3"));
             if (m.find()) {
                 int cur = Integer.parseInt(m.group(1)), lo = Integer.parseInt(m.group(2)), hi = Integer.parseInt(m.group(3));
-                return "目前媒體音量 " + cur + "／" + hi + "（約 " + Math.round(100f * (cur - lo) / Math.max(1, hi - lo)) + "%）。";
+                return L.t("目前媒體音量 ") + cur + L.t("／") + hi + L.t("（約 ") + Math.round(100f * (cur - lo) / Math.max(1, hi - lo)) + L.t("%）。");
             }
         }
         return null;

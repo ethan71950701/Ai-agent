@@ -53,7 +53,7 @@ final class SpeechCapture {
         try {
             int min = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
             ar = new AudioRecord(MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, Math.max(min, 16384));
-            if (ar.getState() != AudioRecord.STATE_INITIALIZED) throw new Exception("麥克風開不起來");
+            if (ar.getState() != AudioRecord.STATE_INITIALIZED) throw new Exception(L.t("麥克風開不起來"));
             ar.startRecording();
             UI.post(cb::onListening);
             ArrayList<short[]> chunks = new ArrayList<>();
@@ -63,7 +63,7 @@ final class SpeechCapture {
             boolean spoke = false;
             while (!cancel) {
                 int n = ar.read(buf, 0, buf.length);
-                if (n < 0) throw new Exception("讀麥克風失敗（" + n + "）");
+                if (n < 0) throw new Exception(L.t("讀麥克風失敗（") + n + L.t("）"));
                 long sq = 0;
                 for (int i = 0; i < n; i++) sq += (long) buf[i] * buf[i];
                 double rms = Math.sqrt((double) sq / Math.max(1, n));

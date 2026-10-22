@@ -22,30 +22,30 @@ final class Uninstaller {
     }
 
     private static void confirm(Activity a, boolean termux) {
-        String msg = "這會：\n"
-                + "• 把長按電源鍵設定還原成原來的值\n"
-                + "• 刪除 PhoneAI 的腳本、Claude API Key、GitHub 權杖\n"
-                + "• 刪除助理的記憶與待辦（~/memory.json）與備份檔\n"
-                + "• 最後解除安裝 PhoneAI Overlay 本身\n\n刪除後無法復原。";
-        new MaterialAlertDialogBuilder(a).setTitle("解除安裝 PhoneAI").setMessage(msg)
-                .setPositiveButton("繼續", (d, w) -> { if (termux) askTermux(a); else run(a, false); })
-                .setNegativeButton("取消", null).show();
+        String msg = L.t("這會：\n")
+                + L.t("• 把長按電源鍵設定還原成原來的值\n")
+                + L.t("• 刪除 PhoneAI 的腳本、Claude API Key、GitHub 權杖\n")
+                + L.t("• 刪除助理的記憶與待辦（~/memory.json）與備份檔\n")
+                + L.t("• 最後解除安裝 PhoneAI Overlay 本身\n\n刪除後無法復原。");
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("解除安裝 PhoneAI")).setMessage(msg)
+                .setPositiveButton(L.t("繼續"), (d, w) -> { if (termux) askTermux(a); else run(a, false); })
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     /** 手機上原本就有 Termux 時才問：它可能有你自己的東西，所以要另外問、而且刪除前再確認一次。 */
     private static void askTermux(Activity a) {
-        new MaterialAlertDialogBuilder(a).setTitle("手機上的 Termux 要一起刪嗎？")
-                .setMessage("Termux 與 Termux:API 可能還有你自己的檔案或設定。\n\n「刪除」會把兩個 App 連同所有資料解除安裝；「保留」只刪 PhoneAI 的東西。")
-                .setPositiveButton("刪除 Termux", (d, w) -> confirmDeleteTermux(a))
-                .setNeutralButton("保留 Termux", (d, w) -> run(a, false))
-                .setNegativeButton("取消", null).show();
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("手機上的 Termux 要一起刪嗎？"))
+                .setMessage(L.t("Termux 與 Termux:API 可能還有你自己的檔案或設定。\n\n「刪除」會把兩個 App 連同所有資料解除安裝；「保留」只刪 PhoneAI 的東西。"))
+                .setPositiveButton(L.t("刪除 Termux"), (d, w) -> confirmDeleteTermux(a))
+                .setNeutralButton(L.t("保留 Termux"), (d, w) -> run(a, false))
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void confirmDeleteTermux(Activity a) {
-        new MaterialAlertDialogBuilder(a).setTitle("真的要刪除 Termux 嗎？")
-                .setMessage("Termux 與 Termux:API 會連同所有資料一起刪除，無法復原。")
-                .setPositiveButton("確定刪除", (d, w) -> run(a, true))
-                .setNegativeButton("取消", null).show();
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("真的要刪除 Termux 嗎？"))
+                .setMessage(L.t("Termux 與 Termux:API 會連同所有資料一起刪除，無法復原。"))
+                .setPositiveButton(L.t("確定刪除"), (d, w) -> run(a, true))
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void run(Activity a, boolean deleteTermux) {

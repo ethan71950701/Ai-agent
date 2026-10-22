@@ -124,7 +124,7 @@ final class H264Stream implements TextureView.SurfaceTextureListener {
                     len -= consumed;
                 }
             }
-            fail("串流結束");
+            fail(L.t("串流結束"));
         } catch (Exception e) {
             Log.i(OverlayService.TAG, "h264 stream: " + e);
             fail(String.valueOf(e));
