@@ -104,6 +104,8 @@ final class GlassBar extends FrameLayout {
     private static boolean anyCapture;
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
+    /** 透鏡按住時底色保留的最低比例（靜止時是 1）；太低拖動時透鏡會跟背景融在一起。 */
+    private static final float LENS_TINT_FLOOR = 0.6f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
@@ -397,7 +399,9 @@ final class GlassBar extends FrameLayout {
             drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
-            tint.setAlpha(Math.round(255 * Math.max(0f, Math.min(1f, 1f - (amount - REST) / (1f - REST)))));
+            // 按住時底色也保留一層（像酷安的選中膠囊），不會完全消失，拖動時透鏡範圍一直看得到
+            float fade = Math.max(0f, Math.min(1f, 1f - (amount - REST) / (1f - REST)));
+            tint.setAlpha(Math.round(255 * (LENS_TINT_FLOOR + (1f - LENS_TINT_FLOOR) * fade)));
             canvas.drawPath(clip, tint);
             tint.setAlpha(255);
             canvas.restore();
