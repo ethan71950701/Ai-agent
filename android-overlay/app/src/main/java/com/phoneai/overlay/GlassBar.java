@@ -88,12 +88,12 @@ final class GlassBar extends FrameLayout {
             + "    float secondaryLight = 0.4 * pow(max(dot(n, -light), 0.0), 3.0);\n"
             + "    float outer = 1.0 - smoothstep(0.25 * density, density, depth);\n"
             + "    float inner = 1.0 - smoothstep(0.15 * density, 0.7 * density, abs(depth - 1.7 * density));\n"
-            + "    float rim = (0.10 + 0.35 * mainLight + 0.35 * secondaryLight)\n"
+            + "    float rim = (0.04 + 1.0 * mainLight + 0.55 * secondaryLight)\n"
             + "        * (outer + 0.4 * inner) * highlightAlpha;\n"
             + "    float shadowRadius = max(0.001, 8.0 * density * progress);\n"
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
-            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.65));\n"
+            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.9));\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -298,11 +298,11 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("center", w / 2f, h / 2f);
         sh.setFloatUniform("halfSize", w / 2f, h / 2f);
         sh.setFloatUniform("radius", radius);
-        sh.setFloatUniform("density", 3f * dp);                              // 邊緣光的寬度尺度（約 3dp；太小就看不到）
+        sh.setFloatUniform("density", 4f * dp);                              // 邊緣光的寬度尺度（約 3dp；太小就看不到）
         sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
-        sh.setFloatUniform("highlightAlpha", lens ? 0.85f + 0.15f * progress : 0.75f);   // 邊緣光強度
+        sh.setFloatUniform("highlightAlpha", lens ? progress : 0f);   // 邊緣光強度
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）

@@ -59,14 +59,14 @@ public class MainActivity extends Activity {
                 float dt = Math.min(0.033f, Math.max(0.001f, (now - lastTick) / 1000f));
                 lastTick = now;
                 pressP += (1f - pressP) * Math.min(1f, dt * 14f);
-                float force = 1500f * accExt;                                  // 加速度越大，推動形變的力越大
+                float force = 9000f * accExt;                                  // 加速度越大，推動形變的力越大
                 accExt *= (float) Math.pow(0.8, dt * 60);                       // 沒有新的移動事件，加速度很快歸零
-                float k = 220f, c = 14f;                                        // 彈簧與阻尼：會回彈（果凍感）
+                float k = 170f, c = 10f;                                        // 彈簧與阻尼：會回彈（果凍感）
                 stretchV += (force - k * stretchD - c * stretchV) * dt;
                 stretchD += stretchV * dt;
-                float d = Math.max(-0.3f, Math.min(0.9f, stretchD));
+                float d = Math.max(-0.5f, Math.min(1.4f, stretchD));
                 indicator.setScaleX(1f + (GlassPrefs.pressX - 1f) * pressP + d);
-                indicator.setScaleY(Math.max(1f, 1f + (GlassPrefs.pressY - 1f) * pressP - 0.45f * d));
+                indicator.setScaleY(Math.max(1f, 1f + (GlassPrefs.pressY - 1f) * pressP - 0.7f * d));
                 bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP + 0.08f * d);
                 bar.setScaleY(1f + (GlassPrefs.barPress - 1f) * pressP);
                 indicator.postOnAnimation(this);
@@ -283,7 +283,7 @@ public class MainActivity extends Activity {
                         dragV = dragV * 0.7f + vel * 0.3f;                                               // 平滑後的速度
                         float acc = (dragV - lastVel) / dtMs;                                            // 加速度 dp/ms²
                         lastVel = dragV;
-                        accExt = Math.min(0.4f, accExt * 0.5f + Math.abs(acc) * 0.5f);
+                        accExt = Math.min(0.3f, accExt * 0.5f + Math.abs(acc) * 0.5f);
                     }
                     dragX = ex;
                     dragT = nowMs;
