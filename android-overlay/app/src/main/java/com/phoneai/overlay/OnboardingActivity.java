@@ -149,16 +149,36 @@ public class OnboardingActivity extends Activity {
         public void onBindViewHolder(RecyclerView.ViewHolder h, int i) {
             FrameLayout page = (FrameLayout) h.itemView;
             page.removeAllViews();
-            // 版面：上面 40% 是示意圖（固定位置）；文字區在「示意圖下方到底部按鈕上方」的正中間，每一頁位置一樣
-            page.setPadding(Ui.dp(OnboardingActivity.this, 32), 0, Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
             int screenH = getResources().getDisplayMetrics().heightPixels;
+            if (i == 0) {
+                // 歡迎頁：維持原本的版面（示意圖占剩下的空間，標題與說明接在下面）
+                LinearLayout col = new LinearLayout(OnboardingActivity.this);
+                col.setOrientation(LinearLayout.VERTICAL);
+                col.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+                col.setPadding(Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 48), Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
+                DemoView demo = new DemoView(OnboardingActivity.this, i);
+                col.addView(demo, new LinearLayout.LayoutParams(-1, 0, 1f));
+                Ui.bounceIn(demo);   // 示意圖進場彈一下
+                addTitleBody(col, i);
+                addThemePicker(OnboardingActivity.this, col);
+                page.addView(col, new FrameLayout.LayoutParams(-1, -1));
+                return;
+            }
+            // 其他頁：示意圖固定在上方 40%；文字區在示意圖下方到底部按鈕上方的正中間（每頁位置一樣）
+            page.setPadding(Ui.dp(OnboardingActivity.this, 32), 0, Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
             DemoView demo = new DemoView(OnboardingActivity.this, i);
             page.addView(demo, new FrameLayout.LayoutParams(-1, (int) (screenH * 0.40f), android.view.Gravity.TOP));
+            Ui.bounceIn(demo);
             LinearLayout textBox = new LinearLayout(OnboardingActivity.this);
             textBox.setOrientation(LinearLayout.VERTICAL);
             textBox.setGravity(android.view.Gravity.CENTER);
-            page.addView(textBox, new FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
-            Ui.bounceIn(demo);   // 示意圖進場彈一下
+            FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(-1, -1);
+            tp.topMargin = (int) (screenH * 0.40f);
+            page.addView(textBox, tp);
+            addTitleBody(textBox, i);
+        }
+
+        private void addTitleBody(LinearLayout box, int i) {
             TextView t = new TextView(OnboardingActivity.this);
             t.setText(L.t(TITLES[i]));
             t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineMedium);
@@ -166,7 +186,7 @@ public class OnboardingActivity extends Activity {
             t.setGravity(android.view.Gravity.CENTER);
             LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, -2);
             tl.topMargin = Ui.dp(OnboardingActivity.this, 24);
-            textBox.addView(t, tl);
+            box.addView(t, tl);
             TextView b = new TextView(OnboardingActivity.this);
             b.setText(L.t(BODIES[i]));
             b.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
@@ -174,8 +194,7 @@ public class OnboardingActivity extends Activity {
             b.setGravity(android.view.Gravity.CENTER);
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, -2);
             bl.topMargin = Ui.dp(OnboardingActivity.this, 12);
-            textBox.addView(b, bl);
-            if (i == 0) addThemePicker(OnboardingActivity.this, textBox);
+            box.addView(b, bl);
         }
     }
 }
