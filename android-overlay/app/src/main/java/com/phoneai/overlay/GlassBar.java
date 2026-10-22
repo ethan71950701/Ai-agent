@@ -42,6 +42,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float dispersion;\n"
             + "uniform float surface;\n"
             + "uniform float skew;\n"
+            + "uniform float2 viewScale;\n"
             + "float sd(float2 p, float r) {\n"
             + "    float2 q = abs(p) - halfSize + float2(r);\n"
             + "    return length(max(q, float2(0))) + min(max(q.x, q.y), 0.0) - r;\n"
@@ -81,7 +82,7 @@ final class GlassBar extends FrameLayout {
             + "        color = mix(color, mask, 0.1 * (1.0 - progress));\n"
             + "        color *= 1.0 - 0.03 * progress;\n"
             + "    }\n"
-            + "    float2 n = gradient(p, radius);\n"
+            + "    float2 n = normalize(gradient(p, radius) / viewScale);\n"   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
             + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
             + "    float mainLight = pow(max(dot(n, light), 0.0), 3.0);\n"
             + "    float secondaryLight = 0.4 * pow(max(dot(n, -light), 0.0), 3.0);\n"
@@ -268,6 +269,27 @@ final class GlassBar extends FrameLayout {
         }
     }
 
+    /** 虛擬光源：固定在視窗左上方外側的一個點。回傳 {從玻璃中心指向光源的角度, 累計 X 縮放, 累計 Y 縮放}；玻璃移動、放大時，反光位置跟著正確改變。 */
+    private float[] virtualLight() {
+        int[] loc = new int[2];
+        getLocationInWindow(loc);
+        float sx = 1f, sy = 1f;
+        android.view.ViewParent p = getParent();
+        sx *= getScaleX();
+        sy *= getScaleY();
+        while (p instanceof View) {
+            sx *= ((View) p).getScaleX();
+            sy *= ((View) p).getScaleY();
+            p = p.getParent();
+        }
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float cx = loc[0] + getWidth() * getScaleX() / 2f, cy = loc[1] + getHeight() * getScaleY() / 2f;
+        float lx = dm.widthPixels * 0.2f, ly = -dm.heightPixels * 0.35f;   // 光源在畫面左上方、螢幕外
+        float ang = (float) Math.atan2(ly - cy, lx - cx);
+        ang -= skewNow * 0.6f;   // 移動時反光隨歪斜一起偏移
+        return new float[]{ang, Math.max(0.3f, sx), Math.max(0.3f, sy)};
+    }
+
     private void configure(RuntimeShader sh, float skewValue) {
         float w = getWidth(), h = getHeight();
         float dp = getResources().getDisplayMetrics().density;
@@ -281,7 +303,9 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
         sh.setFloatUniform("highlightAlpha", lens ? 0.6f + 0.4f * progress : 0.55f);   // 邊緣光強度
-        sh.setFloatUniform("lightAngle", -2.356f);                            // 主光源在左上、次光源在右下
+        float[] lp = virtualLight();
+        sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
+        sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
