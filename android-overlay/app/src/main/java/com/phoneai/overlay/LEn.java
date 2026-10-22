@@ -207,7 +207,7 @@ final class LEn {
         m.put("功能介紹", "Feature tour");
         m.put("再看一次介紹動畫", "Watch the intro animation again");
         m.put("外觀", "Appearance");
-        m.put("主題色與莫奈取色", "Theme colour and Monet colours");
+        m.put("主題色與莫奈取色", "Theme color and Monet colors");
         m.put("權限", "Permissions");
         m.put("懸浮層、通知、預設數位助理", "Overlay, notifications, default assistant");
         m.put("顯示在其他應用程式上層", "Display over other apps");
@@ -218,7 +218,7 @@ final class LEn {
         m.put("折射強度", "Refraction strength");
         m.put("邊緣彎曲的程度", "How much the edges bend");
         m.put("色散（只有上層透鏡）", "Dispersion (lens only)");
-        m.put("透鏡邊緣的彩色光邊，0 = 沒有", "Coloured fringes at the lens edge; 0 = none");
+        m.put("透鏡邊緣的彩色光邊，0 = 沒有", "Colored fringes at the lens edge; 0 = none");
         m.put("模糊程度（dp）", "Blur (dp)");
         m.put("底欄背景的模糊半徑", "Blur radius of the bottom bar background");
         m.put("圖示放大倍率", "Icon magnification");
@@ -346,12 +346,12 @@ final class LEn {
         m.put("最後一步：設定", "Last step: setup");
         m.put("住在你手機裡的 AI 助手：你說想做什麼，它看著螢幕幫你操作。", "An AI assistant that lives on your phone: tell it what you want and it operates the screen for you.");
         m.put("長按電源鍵（先在系統設定把它設成預設數位助理），或打開螢幕邊緣的浮動按鈕。", "Long-press the power key (first set it as the default digital assistant in system settings), or turn on the floating button at the screen edge.");
-        m.put("語音在手機上離線辨識，不會上傳；也可以直接打字。", "Speech is recognised offline on the phone and not uploaded; you can also just type.");
+        m.put("語音在手機上離線辨識，不會上傳；也可以直接打字。", "Speech is recognized offline on the phone and not uploaded; you can also just type.");
         m.put("看到畫面後會點擊、輸入、捲動。螢幕邊緣的光暈和點擊漣漪，讓你知道它正在做什麼。", "After it sees the screen it taps, types and scrolls. The glow at the screen edge and the tap ripples show you what it is doing.");
         m.put("付款、轉帳、刪除、傳訊息、登入這類操作，一律先跳出確認框；你沒有回應就是不同意。", "Payments, transfers, deletion, messaging and login always show a confirmation dialog first; no response counts as \"no\".");
         m.put("給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。", "Give the app the permissions it needs and set the API key. You can redo this any time under \"Features → Maintenance\".");
         m.put("略過", "Skip");
-        m.put("先選一個主題色（之後可以在「設定 → 外觀」再改）", "Pick a theme colour first (you can change it later under \"Settings → Appearance\")");
+        m.put("先選一個主題色（之後可以在「設定 → 外觀」再改）", "Pick a theme color first (you can change it later under \"Settings → Appearance\")");
         m.put("（還沒發過通知）", "(no notification sent yet)");
         m.put("準備中…", "Getting ready…");
         m.put("執行狀態", "Run status");
@@ -363,7 +363,7 @@ final class LEn {
         m.put("正在停止…", "Stopping…");
         m.put("停止失敗：請允許 PhoneAI Overlay 使用 root", "Stop failed: please allow PhoneAI Overlay to use root");
         m.put("AI 正在操作手機（測試）", "AI is operating your phone (test)");
-        m.put("第 1/3 步 · 點擊「畫面中央」", "Step 1/3 · tap \"screen centre\"");
+        m.put("第 1/3 步 · 點擊「畫面中央」", "Step 1/3 · tap \"screen center\"");
         m.put("第 2/3 步 · 滑動", "Step 2/3 · swipe");
         m.put("第 3/3 步 · 點擊「左上」", "Step 3/3 · tap \"top left\"");
         m.put("伺服器回 HTTP ", "Server returned HTTP ");
@@ -477,7 +477,7 @@ final class LEn {
         m.put("可用辨識服務 ", "Available recognition services ");
         m.put("使用 SenseVoice（App 內離線辨識）", "Using SenseVoice (offline recognition inside the app)");
         m.put("沒聽到聲音，點一下光球再說一次", "No sound heard; tap the orb and speak again");
-        m.put("辨識中…", "Recognising…");
+        m.put("辨識中…", "Recognizing…");
         m.put("SenseVoice 錯誤：", "SenseVoice error: ");
         m.put("語音辨識失敗（", "Speech recognition failed (");
         m.put("），可以改用打字", "); you can type instead");
