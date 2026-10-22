@@ -93,6 +93,7 @@ final class GlassBar extends FrameLayout {
             + "    float shadowRadius = max(0.001, 8.0 * density * progress);\n"
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
+            + "    color *= 1.0 - 0.12 * indicator * edge * edge;\n"   // 透鏡邊緣稍微變暗（玻璃的厚度感），背景平的時候也看得出邊界；不加亮線
             + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.9));\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
