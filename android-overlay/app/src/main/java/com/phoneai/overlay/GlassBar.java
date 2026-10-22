@@ -43,6 +43,9 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
+            + "uniform float edgeLine;\n"       // 透鏡邊緣線的強度（0 = 不畫）
+            + "uniform float edgeWidth;\n"      // 邊緣線的寬度（像素）
+            + "uniform float3 edgeColor;\n"     // 邊緣線的顏色
             + "float sd(float2 p, float r) {\n"
             + "    float2 q = abs(p) - halfSize + float2(r);\n"
             + "    return length(max(q, float2(0))) + min(max(q.x, q.y), 0.0) - r;\n"
@@ -94,6 +97,9 @@ final class GlassBar extends FrameLayout {
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
             + "    color *= 1.0 - 0.12 * indicator * edge * edge;\n"   // 透鏡邊緣稍微變暗（玻璃的厚度感），背景平的時候也看得出邊界；不加亮線
+            + "    float ring = edgeLine * (1.0 - smoothstep(0.0, edgeWidth, depth));\n"   // 邊緣線：貼著邊界一圈，左上較亮、右下淡出
+            + "    ring *= 0.4 + 0.6 * clamp(dot(n, light) * 0.5 + 0.5, 0.0, 1.0);\n"
+            + "    color = mix(color, half3(edgeColor), clamp(ring, 0.0, 1.0));\n"
             + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.9));\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
@@ -106,6 +112,8 @@ final class GlassBar extends FrameLayout {
     static final float REST = 0.4f;
     /** 透鏡按住時底色保留的最低比例（靜止時是 1）；太低拖動時透鏡會跟背景融在一起。 */
     private static final float LENS_TINT_FLOOR = 0.6f;
+    /** 透鏡邊緣線的強度（0 = 不畫）；顏色是主題色往白色偏一半。想要更明顯就調大，想淡一點就調小。 */
+    private static final float EDGE_LINE = 0.35f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
@@ -312,6 +320,12 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("dark", 1f);
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
         sh.setFloatUniform("surface", 0.06f);
+        sh.setFloatUniform("edgeLine", lens ? EDGE_LINE : 0f);
+        sh.setFloatUniform("edgeWidth", 1.5f * dp);
+        sh.setFloatUniform("edgeColor",
+                (android.graphics.Color.red(tintColor) / 255f + 1f) / 2f,
+                (android.graphics.Color.green(tintColor) / 255f + 1f) / 2f,
+                (android.graphics.Color.blue(tintColor) / 255f + 1f) / 2f);
         sh.setFloatUniform("skew", skewValue);
     }
 
