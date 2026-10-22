@@ -101,10 +101,9 @@ jobs:
             echo "## 這次更新了什麼｜What's new"
             if [ -n "$CL" ]; then
               echo "$CL"
-            elif [ -n "$PREV_SHA" ] && git cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
-              git log --no-merges --format='- %s' "${PREV_SHA}..${GITHUB_SHA}"
             else
-              git log --no-merges -n 15 --format='- %s' "${GITHUB_SHA}"
+              # 沒有新的使用者可見改動：不退回 commit 標題（那是中文），只用雙語的固定說明
+              echo "- 小修正與內部改進｜Minor fixes and internal improvements"
             fi
             echo
             echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）｜Automatically built APK, signed with the project's fixed key; it installs over the previous version."
