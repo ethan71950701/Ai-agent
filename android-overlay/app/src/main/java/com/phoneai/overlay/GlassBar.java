@@ -88,12 +88,8 @@ final class GlassBar extends FrameLayout {
             + "        base = half4(half3(acc / max(wsum, float3(0.001))), half(alphaSum / 7.0));\n"
             + "    }\n"
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
-            + "    if (indicator < 0.5) color = mix(color, half3(surface), 0.06);\n"
-            + "    else {\n"
-            + "        half3 mask = dark > 0.5 ? half3(1.0) : half3(0.0);\n"
-            + "        color = mix(color, mask, 0.1 * (1.0 - progress));\n"
-            + "        color *= 1.0 - 0.03 * progress;\n"
-            + "    }\n"
+            + "    if (indicator < 0.5) color = mix(color, half3(surface), 0.06);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
+
             + "    float2 n = normalize(gradient(p, radius) / viewScale);\n"   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
             + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
             + "    float mainLight = pow(max(dot(n, light), 0.0), 3.0);\n"
@@ -119,8 +115,6 @@ final class GlassBar extends FrameLayout {
     private static boolean anyCapture;
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
-    /** 透鏡按住時底色保留的最低比例（靜止時是 1）；太低拖動時透鏡會跟背景融在一起。 */
-    private static final float LENS_TINT_FLOOR = 0.6f;
     /** 透鏡邊緣線的強度（0 = 不畫）；顏色是主題色往白色偏一半。想要更明顯就調大，想淡一點就調小。 */
     private static final float EDGE_LINE = 0f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
@@ -270,7 +264,7 @@ final class GlassBar extends FrameLayout {
         clip.addRoundRect(rect, radius, radius, Path.Direction.CW);
         node.setPosition(0, 0, w, h);
         iconNode.setPosition(0, 0, w, h);
-        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{(tintColor & 0xFFFFFF) | 0x3A000000, (tintColor & 0xFFFFFF) | 0x26000000}   // 靜止時有淡色圓底（像酷安），按住後慢慢消失
+        tint.setShader(new LinearGradient(0, 0, 0, h, lens ? new int[]{0x00000000, 0x00000000}   // 透鏡不畫底色
                         : new int[]{(tintColor & 0xFFFFFF) | 0xEB000000, (tintColor & 0xFFFFFF) | 0xEB000000},
                 null, Shader.TileMode.CLAMP));
         // 柔和的光帶：中間略亮、主題色為主，邊緣完全淡出（不用純白，避免太刺眼）
@@ -328,7 +322,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
-        sh.setFloatUniform("surface", 0.06f);
+        sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE : 0f);
         sh.setFloatUniform("edgeWidth", 1.5f * dp);
         sh.setFloatUniform("edgeColor",
@@ -422,11 +416,6 @@ final class GlassBar extends FrameLayout {
             drawUnderLens(canvas);
             canvas.save();
             canvas.clipPath(clip);
-            // 按住時底色也保留一層（像酷安的選中膠囊），不會完全消失，拖動時透鏡範圍一直看得到
-            float fade = Math.max(0f, Math.min(1f, 1f - (amount - REST) / (1f - REST)));
-            tint.setAlpha(Math.round(255 * (LENS_TINT_FLOOR + (1f - LENS_TINT_FLOOR) * fade)));
-            canvas.drawPath(clip, tint);
-            tint.setAlpha(255);
             canvas.restore();
             return;
         }
@@ -503,6 +492,7 @@ final class GlassBar extends FrameLayout {
         iconSource.draw(rc);
         iconNode.endRecording();
         configure(iconShader, skewNow);
+        iconShader.setFloatUniform("dispersion", 0f);   // 圖示不要彩虹色散，才看得清楚（透鏡邊緣的色散只給透鏡本身）
         iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
         canvas.save();
         canvas.clipPath(clip);
