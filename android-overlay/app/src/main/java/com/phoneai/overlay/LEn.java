@@ -566,6 +566,23 @@ final class LEn {
         m.put("Android API：", "Android API: ");
         m.put("；", "; ");
         m.put("｜", " | ");
+        m.put("今天的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "Today's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
+        m.put("這個月的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "This month's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
+        m.put("今天：%,d token（輸入 %,d、輸出 %,d）\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。", "Today: %,d tokens (input %,d, output %,d)\nThis month: %,d tokens (input %,d, output %,d)\n\nThese are token counts, not money; check amounts on the Usage page of the Anthropic Console. Limits are in thousands of tokens; 0 or empty = no limit.");
+        m.put("每日上限（千 token）", "Daily limit (thousand tokens)");
+        m.put("每月上限（千 token）", "Monthly limit (thousand tokens)");
+        m.put("用量與上限", "Usage and limits");
+        m.put("Claude 用了多少 token，可設每日／每月上限", "How many Claude tokens you have used; you can set daily and monthly limits");
+        m.put("搜尋待辦、筆記", "Search to-dos and notes");
+        m.put("匯出", "Export");
+        m.put("匯入", "Import");
+        m.put("已匯出到下載資料夾的 phoneai_memory_backup.json", "Exported to the Downloads folder as phoneai_memory_backup.json");
+        m.put("匯出失敗：", "Export failed: ");
+        m.put("找不到可以匯入的備份：先按「匯出」，會存到下載資料夾", "No backup to import: tap Export first; it is saved to the Downloads folder");
+        m.put("匯入 %d 則？只會加入還沒有的項目，不會刪除或覆蓋現有的。", "Import %d items? Only items you don't have yet are added; nothing is deleted or overwritten.");
+        m.put("匯入失敗：", "Import failed: ");
+        m.put("已加入 ", "Added ");
+        m.put(" 則", " items");
         m.put("・", "- ");
     }
 }
