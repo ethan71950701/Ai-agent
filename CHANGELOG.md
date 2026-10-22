@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1196
+
 - 關掉透鏡的主題色邊緣線（只保留彩虹色散的邊界）｜Turned off the theme-colored lens edge line; the rainbow dispersion alone marks the boundary
+
 ## 1.0.1194
 
 - 透鏡的色散改成沿紅到紫的 7 點光譜取樣，邊緣的彩虹線更接近酷安｜Lens dispersion now samples 7 spectral points from red to violet, so the rainbow edge is closer to Coolapk
