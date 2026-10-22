@@ -122,7 +122,7 @@ final class GlassBar extends FrameLayout {
     /** 透鏡按住時底色保留的最低比例（靜止時是 1）；太低拖動時透鏡會跟背景融在一起。 */
     private static final float LENS_TINT_FLOOR = 0.6f;
     /** 透鏡邊緣線的強度（0 = 不畫）；顏色是主題色往白色偏一半。想要更明顯就調大，想淡一點就調小。 */
-    private static final float EDGE_LINE = 0.35f;
+    private static final float EDGE_LINE = 0f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
