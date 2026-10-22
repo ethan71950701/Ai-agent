@@ -2,6 +2,10 @@
 
 > 最後更新：2026-10-17（Now Bar、漣漪、App 操作介面、搜尋、快取都已實測；README/SETUP 已同步）。**接手後每做完一件事，請更新第 6 節「狀態表」與第 11 節「下一步」。**
 
+> ⚠️ **現況（2026-10-22）：App 已經是全部，不再需要 Termux 與 Python 腳本。** `scripts/`、`install.sh`、`tests/` 都已刪除，助理面板、路由、操作畫面迴圈（`AgentLoop`）、記憶、排程、通知與朗讀、語音辨識都在 `android-overlay/` 裡。
+> 現行架構與規則請看 [`CLAUDE.md`](CLAUDE.md)。**本文件下面提到 Termux、`assistant.py`、`agent2.py`、`~/.claude_key`、`update_app.py` 的段落都是歷史紀錄**（當時的實測結果仍有參考價值，但指令與路徑已經不存在）。
+> 底欄／透鏡液態玻璃：著色器移植自使用者的 Samsung Glass 模組（設計參考 KernelSU 的 FloatingBottomBar／Lens），在 `GlassBar.java`；按住時透鏡與底欄放大、加速度驅動的彈簧形變、圖示只在透鏡下變色。使用者在手機上確認過效果。
+
 ## 0. TL;DR（English）
 
 A beginner user is building a Gemini-like phone assistant on a **rooted Samsung S25+ (12 GB, Android 16 / One UI)**.
@@ -137,6 +141,8 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | `agent2.py` ask 動作（非 manual，敏感步驟前跳確認框） | ✅ | 使用者實測（2026-10-18）：任務「點登入按鈕」，AI 發現已登入、換帳號要先登出（敏感），用 `ask` 跳出確認框並說明原因；按否沒有動作 |
 | `agent2.py` 點擊層級確認框（`what` 含送出/登入/安裝等字才跳） | 🟡 | 還沒觸發過（上面那次 AI 先走了 `ask`）；程式碼與 `ask` 共用同一個 `confirm()`，風險低；要測需要一個畫面上真的有「送出/傳送/同意」按鈕又無害的情境 |
 | PhoneAI Overlay App（`android-overlay/`）編譯與安裝 | ✅ | GitHub Actions 編譯（只在 `main` 觸發）、固定簽名可覆蓋安裝；使用者長期使用中。雲端也能用 Android SDK 36 + Gradle 先編譯確認（見 11b） |
+| 底欄／透鏡液態玻璃（`GlassBar`，移植 Samsung Glass 模組的膠囊著色器）：折射、按住時透鏡與整條底欄放大、加速度驅動的彈簧形變、透鏡下圖示變主題色、色散可調 | ✅ | 使用者實測（2026-10-22）：效果確認可以。已移除：邊緣白邊、反光點（試過邊緣光與球面高光，使用者都不要）。注意：圖示折射用過獨立著色器會出現綠／洋紅斑，已改成圖示畫進透鏡背景一起折射 |
+| 介面文字去 Termux、底欄玻璃設定清理（移除過時開關）、底欄重畫改為首頁持續更新／其他頁只在碰觸捲動後更新（省電）、功能／設定頁標題區縮小（116dp） | 🟡 雲端編譯過，手機未測 | 首頁有極光動畫所以持續重畫；其他頁若發現折射沒跟著底下內容更新，是漏了 `kickGlass()` 的觸發點 |
 | App 點擊漣漪（無障礙懸浮層 `RippleAccessibilityService`） | ✅ | 使用者實測：「設定」前景可見、位置準、不擋點擊。一般懸浮層在「設定」前景會被系統強制隱藏（dumpsys 確認），所以改用無障礙。滑動軌跡單獨測過、agent2 的 swipe 整合未測 |
 | App 常駐通知升級成 Live Update / Now Bar 膠囊 | ✅ | 使用者實測：左上角膠囊出現、`shouldHide()` 回 false。關鍵：不帶 `ongoingActivityNoti.*` + secure `enable_notification_nowbar_test=1`（`overlay_install.sh` 會設；見 ROADMAP 8e）。副作用：其他 App 的可升級通知也可能出現在 Now Bar。使用者實測：鎖定畫面看得到、通知「停止」鈕可中斷 agent2、膠囊文字「AI 步數」跟著步驟變化 |
 | App 操作介面：輸入框、語音（倒數 5 秒）、快速設定磁貼、預設數位助理（長按電源鍵）、浮動按鈕 | ✅ | 使用者實測全部可用（2026-10-17）。走 Termux `RUN_COMMAND`（`allow-external-apps`）；root 備援路徑未觸發過 |

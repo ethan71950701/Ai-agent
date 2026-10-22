@@ -121,7 +121,7 @@ final class Maintenance {
         return suRun("[ -s " + KEY + " ] && echo yes").contains("yes");
     }
 
-    /** 存 API Key 到 ~/.claude_key（擁有者 Termux、權限 600）。只經標準輸入；不印出、不存進 App、不寫 log。 */
+    /** 存 API Key 到 App 私有資料夾的 claude_key（權限 600）。不印出、不寫 log。 */
     static String saveKey(String key) {
         key = key == null ? "" : key.trim();
         if (key.length() < 20 || key.contains("\n") || key.contains("'") || key.contains(" ")) return "金鑰格式不對（太短、有空白、換行或引號）";
@@ -176,7 +176,7 @@ final class Maintenance {
         form.setOrientation(android.widget.LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, "Key 只存在這支手機 Termux 的 ~/.claude_key（權限 600），不會顯示、不存進 App、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。"));
+        form.addView(Ui.body(a, "Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。"));
         form.addView(til);
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle("Claude API Key").setView(form)
                 .setPositiveButton("儲存", (d, w) -> {

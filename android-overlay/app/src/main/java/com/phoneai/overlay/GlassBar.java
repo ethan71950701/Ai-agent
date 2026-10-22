@@ -238,6 +238,14 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 接下來 ms 毫秒內每個畫格都重新抓背景（捲動、動畫、點擊時呼叫）。 */
+    private boolean live;
+
+    /** 底欄後面有一直在動的畫面（首頁的極光）時開啟：每一幀都更新。 */
+    void setLive(boolean on) {
+        live = on;
+        if (on) invalidate();
+    }
+
     void kick(long ms) {
         until = Math.max(until, SystemClock.uptimeMillis() + ms);
         invalidate();
@@ -339,7 +347,7 @@ final class GlassBar extends FrameLayout {
             drawFlat(canvas);
         }
         super.dispatchDraw(canvas);
-        postInvalidateOnAnimation();   // 每一幀都重新抓背景：底下的頁面一動，折射就跟著動（以前只在 kick 後約一秒更新，所以會停住）
+        if (live || SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();   // 首頁有動畫背景要一直更新；其他頁只在碰觸、捲動、切頁後的一小段時間更新（省電）
     }
 
     private float lastTx, skewNow;
@@ -392,7 +400,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
-        if (lens && parentBar != null && GlassPrefs.lensBg) {
+        if (lens && parentBar != null) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             drawUnderLens(canvas);
             canvas.save();

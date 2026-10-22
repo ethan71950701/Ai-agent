@@ -1,3 +1,7 @@
+> ⚠️ **現況（2026-10-22）：App 已經是全部，不再需要 Termux 與 Python 腳本。** `scripts/`、`install.sh`、`tests/` 都已刪除，助理面板、路由、操作畫面迴圈（`AgentLoop`）、記憶、排程、通知與朗讀、語音辨識都在 `android-overlay/` 裡。
+> 現行架構與規則請看 [`CLAUDE.md`](../CLAUDE.md)。**本文件下面提到 Termux、`assistant.py`、`agent2.py`、`~/.claude_key`、`update_app.py` 的段落都是歷史紀錄**（當時的實測結果仍有參考價值，但指令與路徑已經不存在）。
+> 底欄／透鏡液態玻璃：著色器移植自使用者的 Samsung Glass 模組（設計參考 KernelSU 的 FloatingBottomBar／Lens），在 `GlassBar.java`；按住時透鏡與底欄放大、加速度驅動的彈簧形變、圖示只在透鏡下變色。使用者在手機上確認過效果。
+
 # 從零安裝（在已 root 的 Android 手機的 Termux 上）
 
 > 以下是使用者實際走過的流程整理。每個指令一次貼一行/一段，貼之前看一下沒有重複。

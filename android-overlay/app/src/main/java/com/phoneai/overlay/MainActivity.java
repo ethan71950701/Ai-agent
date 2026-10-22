@@ -172,6 +172,7 @@ public class MainActivity extends Activity {
         navBar = floatingBar();
         ((android.view.ViewGroup) root).addView(navBar, barParams());
         setContentView(root);
+        root.getViewTreeObserver().addOnScrollChangedListener(this::kickGlass);   // 頁面捲動時，底欄的折射要跟著更新
         showTab(tab);
         if (b == null && !cfg().getBoolean("onboarded", false)) startActivity(new Intent(this, OnboardingActivity.class));   // 第一次開啟：先看教學
     }
@@ -209,6 +210,7 @@ public class MainActivity extends Activity {
                 0x44FFFFFF, Ui.dp(this, 29), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
+        card.setLive(tab == 0);
         card.setGlowColor(0xFFFFFFFF);   // 玻璃的光用中性白，不跟主題色
         bar = card;
         final LensClip fl = new LensClip(this);
@@ -347,6 +349,8 @@ public class MainActivity extends Activity {
         final int prev = shown;
         shown = i;
         tab = i;
+        if (glass != null) glass.setLive(i == 0);
+        if (indicator instanceof GlassBar) ((GlassBar) indicator).setLive(i == 0);
         if (barItemW > 0) {   // 圓底滑到新位置：位移帶一點回彈，滑動中橫向拉長再縮回
             float x = barPad + i * barItemW + Ui.dp(this, 12);
             if (prev < 0) indicator.setTranslationX(x);
@@ -398,10 +402,13 @@ public class MainActivity extends Activity {
         if (bar instanceof com.google.android.material.appbar.AppBarLayout)
             for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
                 View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
-                if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams)
+                if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams) {
+                    c.getLayoutParams().height = Ui.dp(this, on ? 116 : 160);   // 功能／設定頁的標題區縮小，首頁維持原樣
                     ((com.google.android.material.appbar.AppBarLayout.LayoutParams) c.getLayoutParams()).setScrollFlags(
                             on ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                                | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED : 0);
+                    c.requestLayout();
+                }
             }
         if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
             androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
@@ -591,11 +598,11 @@ public class MainActivity extends Activity {
         Ui.tileGrid(this, box,
                 new Ui.Tile("note", "助理的記憶", "待辦與筆記", false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                 new Ui.Tile("clock", "任務過程", "AI 每一步做了什麼", false, v -> startActivity(new Intent(this, LogActivity.class))));
-        Ui.section(this, box, "維護（不用開 Termux）");
+        Ui.section(this, box, "維護");
         Ui.tileGrid(this, box,
-                new Ui.Tile("pin", "Claude API Key", "存到 Termux 的 ~/.claude_key", true, v -> askKey()),
+                new Ui.Tile("pin", "Claude API Key", "只存在這支手機的 App 私有資料夾", true, v -> askKey()),
                 new Ui.Tile("download", "檢查並更新", "按一下：有新版本就自動更新", false, v -> startUpdate()),
-                new Ui.Tile("power", "解除安裝", "還原設定、刪除腳本與 Key，最後移除本 App", true, v -> Uninstaller.start(this)),
+                new Ui.Tile("power", "解除安裝", "還原設定、刪除 Key，最後移除本 App", true, v -> Uninstaller.start(this)),
                 new Ui.Tile("check_circle", "設定導覽", "逐步檢查 root、權限、Key", false, v -> startActivity(new Intent(this, GuideActivity.class))));
         Ui.section(this, box, "進階");
         Ui.tileGrid(this, box,
@@ -639,10 +646,8 @@ public class MainActivity extends Activity {
         glassSlider(g, "按住放大（上下）", "按住時上層按鈕直向放大的倍數", 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
         glassSlider(g, "按住放大（整條底欄）", "按住時整條底欄放大的倍數，1 = 不放大", 1f, 1.2f, GlassPrefs.barPress, GlassPrefs.K_BAR_PRESS);
         glassSlider(g, "拖動歪斜量", "拖動時畫面被拖歪的程度", 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
-        glassSwitch(g, 0, 5, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
-        glassSwitch(g, 1, 5, "wave", "圖示經過折射（實驗）", GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
-        glassSwitch(g, 2, 5, "target", "透鏡底下用底欄背景（會出現半透明方塊，先關）", GlassPrefs.lensBg, GlassPrefs.K_LENS_BG);
-        glassSwitch(g, 3, 5, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+        glassSwitch(g, 0, 2, "image", "按住時放大圖示", GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
+        glassSwitch(g, 1, 2, "sun", "拖動歪斜", GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);
         g.addView(Ui.pill(this, "恢復預設", false, v -> {
