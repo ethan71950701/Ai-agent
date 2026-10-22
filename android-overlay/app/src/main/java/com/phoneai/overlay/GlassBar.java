@@ -25,46 +25,75 @@ import android.widget.FrameLayout;
  * 沒有變動的時候不重畫（kick() 之後約一秒多內每個畫格更新）。需要 API 33（RuntimeShader／RenderEffect），本 App minSdk 34。
  */
 final class GlassBar extends FrameLayout {
+    // 膠囊玻璃著色器：移植自使用者的 Samsung Glass 模組（MIT；折射剖面與邊緣光的設計參考 KernelSU 的 FloatingBottomBar / Lens、Kyant AndroidLiquidGlass）
     private static final String COMMON =
-            "uniform shader content;\n"
-            + "uniform float2 size;\n"
+            "uniform shader backdrop;\n"
+            + "uniform float2 center;\n"
+            + "uniform float2 halfSize;\n"
             + "uniform float radius;\n"
-            + "uniform float depth;\n"
+            + "uniform float density;\n"
+            + "uniform float band;\n"
             + "uniform float amount;\n"
+            + "uniform float progress;\n"
+            + "uniform float highlightAlpha;\n"
+            + "uniform float lightAngle;\n"
+            + "uniform float indicator;\n"
+            + "uniform float dark;\n"
+            + "uniform float dispersion;\n"
+            + "uniform float surface;\n"
             + "uniform float skew;\n"
-            + "uniform float refr;\n"
-            + "uniform float chroma;\n"
-            + "uniform float brightBoost;\n"
-            + "uniform float edgeLight;\n"
-            + "uniform float droplet;\n"
-            + "uniform float dropThick;\n"
-            + "half4 main(float2 p) {\n"
-            + "  float2 c = size * 0.5;\n"
-            + "  float2 q = abs(p - c) - (c - float2(radius));\n"
-            + "  float sd = length(max(q, float2(0.0))) + min(max(q.x, q.y), 0.0) - radius;\n"   // 到圓角矩形邊的距離，內側為負
-            + "  float t = clamp(-sd / depth, 0.0, 1.0);\n"
-            + "  float bend = (1.0 - t) * (1.0 - t);\n"                                          // 越靠邊折射越強
-            + "  float2 dir = normalize(p - c + float2(0.001));\n"
-            + "  float2 z = p;\n"
-            + "  z.x += skew * (p.y - c.y);\n"                                                     // 移動時畫面被拖得歪斜（液體的拖曳感）
-            + "  float dd = clamp(-sd / radius, 0.0, 1.0);\n"                                       // 0 = 邊緣，1 = 中心
-            + "  float hp = (1.0 - dd) / max(sqrt(1.0 - (1.0 - dd) * (1.0 - dd)), 0.05);\n"          // 水滴表面（球冠）的斜率
-            + "  float tilt = hp / sqrt(1.0 + hp * hp);\n"                                          // 法線傾斜的正弦
-            + "  float2 sp = droplet > 0.5 ? z - dir * tilt * dropThick * refr : z - dir * bend * depth * 0.75 * refr * amount;\n"
-            + "  half4 col = content.eval(sp);\n"
-            + "  col.b = content.eval(z - dir * bend * depth * 1.0 * refr * chroma * amount).b;\n"              // 紅藍取樣點不同＝邊緣色散（只有上層透鏡有）
-            + "  col.r = content.eval(z - dir * bend * depth * 0.5 * refr * chroma * amount).r;\n"
-            + "  half ca = max(col.a, half(0.001));\n"
-            + "  half3 slin = pow(max(col.rgb / ca, half3(0.0)), half3(2.2));\n"                     // 先還原成一般顏色（預乘的顏色直接做次方會超出 alpha，產生綠、洋紅斑），再在線性空間調飽和度
-            + "  half sy = dot(slin, half3(0.2126, 0.7152, 0.0722));\n"
-            + "  slin = mix(half3(sy), slin, half(1.0 + 0.6 * amount));\n"
-            + "  half3 sout = pow(clamp(slin, half3(0.0), half3(1.0)), half3(1.0 / 2.2));\n"
-            + "  col.rgb = clamp(sout * col.a + half3(bend * brightBoost * amount) * col.a, half3(0.0), half3(1.0));\n"   // 再乘回 alpha，alpha 本身不動
-            + "  float3 nrm = normalize(float3(dir * hp, 1.0));\n"                                   // 表面法線
-            + "  float3 hv = normalize(normalize(float3(-0.5, -0.6, 0.8)) + float3(0.0, 0.0, 1.0));\n"  // 光（左上）與視線的半角向量
-            + "  float spec = pow(clamp(dot(nrm, hv), 0.0, 1.0), 300.0) * edgeLight * step(0.5, droplet);\n"  // 法線對準光源的地方才亮
-            + "  col.rgb = mix(col.rgb, half3(1.0), half(spec * 0.9));\n"
-            + "  return col;\n"
+            + "float sd(float2 p, float r) {\n"
+            + "    float2 q = abs(p) - halfSize + float2(r);\n"
+            + "    return length(max(q, float2(0))) + min(max(q.x, q.y), 0.0) - r;\n"
+            + "}\n"
+            + "float2 gradient(float2 p, float r) {\n"
+            + "    float2 q = abs(p) - halfSize + float2(r);\n"
+            + "    float2 outside = max(q, float2(0));\n"
+            + "    if (length(outside) > 0.001) return sign(p) * normalize(outside);\n"
+            + "    return q.x > q.y ? float2(sign(p.x), 0) : float2(0, sign(p.y));\n"
+            + "}\n"
+            + "half4 main(float2 xy) {\n"
+            + "    float2 p = xy - center;\n"
+            + "    float distance = sd(p, radius);\n"
+            + "    if (distance > 0.0) return half4(0.0);\n"
+            + "    float depth = -distance;\n"
+            + "    float edge = clamp(1.0 - depth / max(band, 0.001), 0.0, 1.0);\n"
+            + "    float circleMap = 1.0 - sqrt(max(0.0, 1.0 - edge * edge));\n"
+            + "    float2 normal = gradient(p, min(radius * 1.5, min(halfSize.x, halfSize.y)));\n"
+            + "    if (indicator > 0.5 && length(p) > 0.001) {\n"
+            + "        float2 v = normal + normalize(p);\n"
+            + "        if (length(v) > 0.001) normal = normalize(v);\n"
+            + "    }\n"
+            + "    float2 offset = -normal * circleMap * amount;\n"
+            + "    float2 refracted = xy + offset + float2(skew * p.y, 0.0);\n"
+            + "    half4 base = backdrop.eval(refracted);\n"
+            + "    float factor = dispersion * (p.x * p.y) / max(halfSize.x * halfSize.y, 1.0);\n"
+            + "    if (dispersion > 0.0 && edge > 0.0) {\n"
+            + "        float2 separated = offset * factor;\n"
+            + "        half4 red = backdrop.eval(refracted + separated);\n"
+            + "        half4 blue = backdrop.eval(refracted - separated);\n"
+            + "        base = half4(red.r, base.g, blue.b, (red.a + base.a + blue.a) / 3.0);\n"
+            + "    }\n"
+            + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
+            + "    if (indicator < 0.5) color = mix(color, half3(surface), 0.06);\n"
+            + "    else {\n"
+            + "        half3 mask = dark > 0.5 ? half3(1.0) : half3(0.0);\n"
+            + "        color = mix(color, mask, 0.1 * (1.0 - progress));\n"
+            + "        color *= 1.0 - 0.03 * progress;\n"
+            + "    }\n"
+            + "    float2 n = gradient(p, radius);\n"
+            + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
+            + "    float mainLight = pow(max(dot(n, light), 0.0), 3.0);\n"
+            + "    float secondaryLight = 0.4 * pow(max(dot(n, -light), 0.0), 3.0);\n"
+            + "    float outer = 1.0 - smoothstep(0.25 * density, density, depth);\n"
+            + "    float inner = 1.0 - smoothstep(0.15 * density, 0.7 * density, abs(depth - 1.7 * density));\n"
+            + "    float rim = (0.10 + 0.35 * mainLight + 0.35 * secondaryLight)\n"
+            + "        * (outer + 0.4 * inner) * highlightAlpha;\n"
+            + "    float shadowRadius = max(0.001, 8.0 * density * progress);\n"
+            + "    float shadow = indicator * 0.15 * progress\n"
+            + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
+            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.65));\n"
+            + "    return half4(color, 1.0);\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
     private static final String AGSL_LENS = COMMON;
@@ -240,17 +269,24 @@ final class GlassBar extends FrameLayout {
     }
 
     private void configure(RuntimeShader sh, float skewValue) {
-        sh.setFloatUniform("size", getWidth(), getHeight());
+        float w = getWidth(), h = getHeight();
+        float dp = getResources().getDisplayMetrics().density;
+        float progress = lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f;   // 按住的程度（底欄恆為 0）
+        float push = lens ? amount : 1f;
+        sh.setFloatUniform("center", w / 2f, h / 2f);
+        sh.setFloatUniform("halfSize", w / 2f, h / 2f);
         sh.setFloatUniform("radius", radius);
-        sh.setFloatUniform("depth", Ui.dp(getContext(), lens ? 12 : 18));
-        sh.setFloatUniform("amount", amount);
+        sh.setFloatUniform("density", dp);
+        sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
+        sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
+        sh.setFloatUniform("progress", progress);
+        sh.setFloatUniform("highlightAlpha", lens ? 0.6f + 0.4f * progress : 0.55f);   // 邊緣光強度
+        sh.setFloatUniform("lightAngle", -2.356f);                            // 主光源在左上、次光源在右下
+        sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
+        sh.setFloatUniform("dark", 1f);
+        sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
+        sh.setFloatUniform("surface", 0.06f);
         sh.setFloatUniform("skew", skewValue);
-        sh.setFloatUniform("refr", GlassPrefs.refr);
-        sh.setFloatUniform("chroma", lens ? GlassPrefs.chroma : 0f);   // 色散只給上層的透鏡，底欄不要
-        sh.setFloatUniform("brightBoost", 0.03f);
-        sh.setFloatUniform("edgeLight", lens ? Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))) : 0f);   // 按住的透鏡才有高光
-        sh.setFloatUniform("droplet", lens ? 1f : 0f);   // 透鏡用水滴模型（有厚度的表面），底欄不用
-        sh.setFloatUniform("dropThick", Ui.dp(getContext(), 14));   // 水滴的厚度（像素）
     }
 
     @Override
@@ -417,7 +453,7 @@ final class GlassBar extends FrameLayout {
         iconSource.draw(rc);
         iconNode.endRecording();
         configure(iconShader, skewNow);
-        iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "content"));
+        iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
         canvas.save();
         canvas.clipPath(clip);
         canvas.drawRenderNode(iconNode);
@@ -425,7 +461,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private RenderEffect currentEffect() {
-        RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "content");
+        RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "backdrop");
         // 按住時模糊降到很小（但不為 0）：永遠走同一條 chain 效果，避免只剩著色器時折射消失
         float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor);
         return RenderEffect.createChainEffect(fx, RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
