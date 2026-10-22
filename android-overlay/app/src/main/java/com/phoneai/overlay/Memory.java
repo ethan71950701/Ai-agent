@@ -63,20 +63,6 @@ final class Memory {
         return out;
     }
 
-    /** 第一次執行：把 Termux 裡的 ~/memory.json、~/chat_history.json 用 root 複製到 App 的資料夾（只做一次），然後執行 after。 */
-    static void migrateFromTermux(Context c, Runnable after) {
-        android.content.SharedPreferences sp = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
-        if (sp.getBoolean("mem_moved", false)) { after.run(); return; }
-        new Thread(() -> {
-            String d = c.getFilesDir().getPath(), h = Maintenance.HOME;
-            Maintenance.suRun("[ -f " + h + "/memory.json ] && cp " + h + "/memory.json " + d + "/memory.json; "
-                    + "[ -f " + h + "/chat_history.json ] && cp " + h + "/chat_history.json " + d + "/chat_history.json; "
-                    + "chown $(stat -c %u " + d + ") " + d + "/memory.json " + d + "/chat_history.json 2>/dev/null; echo done");
-            sp.edit().putBoolean("mem_moved", true).apply();
-            after.run();
-        }, "memory-migrate").start();
-    }
-
     /** 記下一則經驗（沒有期限，重複的不再存）。app = 經驗適用的 App 套件，null = 通用。回傳 true = 新增。 */
     static synchronized boolean addLesson(Context c, String text, String app) throws Exception {
         text = text == null ? "" : text.trim();

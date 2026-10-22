@@ -94,13 +94,9 @@ final class ChatEngine {
         if (!tmp.renameTo(f)) throw new Exception("寫入對話紀錄失敗");
     }
 
-    /** API 金鑰：App 自己的檔案；第一次用的時候從 Termux 把 ~/.claude_key 複製過來（用 root 複製，不把內容印出來）。 */
+    /** API 金鑰：只讀 App 自己的檔案（設定時用「功能 → 維護 → Claude API Key」存進來）。 */
     static String key(Context c) {
         File k = new File(c.getFilesDir(), "claude_key");
-        if (!k.exists()) {
-            String path = k.getPath();
-            Maintenance.suRun("cp " + Maintenance.KEY + " " + path + " 2>/dev/null; chown $(stat -c %u " + c.getFilesDir().getPath() + ") " + path + " 2>/dev/null; echo done");
-        }
         try {
             return new String(Files.readAllBytes(k.toPath()), StandardCharsets.UTF_8).trim();
         } catch (Exception e) {

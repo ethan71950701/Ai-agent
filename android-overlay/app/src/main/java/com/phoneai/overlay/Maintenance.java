@@ -13,8 +13,6 @@ import java.nio.charset.StandardCharsets;
 final class Maintenance {
     private Maintenance() { }
 
-    static final String HOME = "/data/data/com.termux/files/home";   // 舊的 Termux 家目錄（只用來搬移資料）
-    static final String TOKEN = HOME + "/.gh_token";
     private static final String[][] SU = {{Root.su(), "-mm"}, {Root.su(), "-M"}, {Root.su()}};
 
     /** 用 root 跑腳本（標準輸入餵進去）；回傳輸出。依序試幾種 su 寫法，第一個「結束碼 0」的就用。 */
@@ -58,21 +56,6 @@ final class Maintenance {
         return sb.toString();
     }
 
-    static boolean tokenSet() {
-        String r = suRun("[ -s " + TOKEN + " ] && echo yes");
-        return r.contains("yes");
-    }
-
-    /** 把權杖存到 Termux 的 ~/.gh_token（擁有者設成 Termux、權限 600）。權杖只經過標準輸入，不印出、不存進 App。 */
-    static String saveToken(String token) {
-        token = token == null ? "" : token.trim();
-        if (token.isEmpty() || token.contains("\n") || token.contains("'")) return L.t("權杖格式不對（空的、有換行或引號）");
-        String r = suRun("U=$(stat -c %u /data/data/com.termux)\n"
-                + "printf %s '" + token + "' > " + TOKEN + "\n"
-                + "chown $U:$U " + TOKEN + "; chmod 600 " + TOKEN + "\n[ -s " + TOKEN + " ] && echo saved");
-        return r.contains("saved") ? null : L.t("存檔失敗：") + (r.startsWith("ERR:") ? r.substring(4).trim() : r.trim());
-    }
-
     /** 用 root 把 App 需要的權限補回來（等同 overlay_install.sh 裡跟權限有關的部分）；回傳給人看的結果。 */
     static String repairPermissions() {
         final String pkg = "com.phoneai.overlay";
@@ -81,19 +64,14 @@ final class Maintenance {
                 + "appops set $PKG SYSTEM_ALERT_WINDOW allow\n"
                 + "pm grant $PKG android.permission.POST_NOTIFICATIONS 2>/dev/null\n"
                 + "pm grant $PKG android.permission.RECORD_AUDIO 2>/dev/null\n"
-                + "pm grant $PKG com.termux.permission.RUN_COMMAND 2>/dev/null\n"
                 + "CUR=$(settings get secure enabled_accessibility_services | tr -d '\\r')\n"
                 + "case \"$CUR\" in *\"$SVC\"*) ;; null|\"\") settings put secure enabled_accessibility_services $SVC ;; *) settings put secure enabled_accessibility_services \"$CUR:$SVC\" ;; esac\n"
                 + "settings put secure accessibility_enabled 1\n"
                 + "settings put secure enable_notification_nowbar_test 1\n"
-                + "U=$(stat -c %u /data/data/com.termux)\n"
-                + "P=" + HOME + "/.termux/termux.properties\n"
-                + "mkdir -p " + HOME + "/.termux\n"
-                + "grep -q '^allow-external-apps *= *true' $P 2>/dev/null || { sed -i '/^#\\? *allow-external-apps/d' $P 2>/dev/null; echo 'allow-external-apps=true' >> $P; chown $U:$U $P; echo TERMUX_PROP_CHANGED; }\n"
                 + "echo done";
         String r = suRun(script);
         if (r.startsWith("ERR:") || !r.contains("done")) return L.t("修復失敗：") + r.replace("ERR:", "").trim();
-        return L.t("已補回權限") + (r.contains("TERMUX_PROP_CHANGED") ? L.t("（Termux 設定有更新，請把 Termux 完全關掉再開一次才會生效）") : "");
+        return L.t("已補回權限");
     }
 
     /** 只用第一個找到的 su 跑一次（不重試，避免同一個指令被執行好幾次）；不管結束碼，回傳輸出。 */
@@ -115,12 +93,6 @@ final class Maintenance {
 
 
     // ---------- API Key ----------
-    static final String KEY = HOME + "/.claude_key";
-
-    static boolean keySet() {
-        return suRun("[ -s " + KEY + " ] && echo yes").contains("yes");
-    }
-
     /** 存 API Key 到 App 私有資料夾的 claude_key（權限 600）。不印出、不寫 log。 */
     static String saveKey(String key) {
         key = key == null ? "" : key.trim();

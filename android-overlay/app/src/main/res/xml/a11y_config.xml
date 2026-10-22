@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 取得「無障礙懸浮層」視窗；canRetrieveWindowContent：讀取畫面元件（文字、位置、能不能點），只給 Termux 端的 tree 指令用，密碼欄位不讀；不接收事件。
-     canPerformGestures：讓 AI 能做多指、長按、拖曳等手勢（只有持 token 的 Termux 端能下指令） -->
+<!-- 取得「無障礙懸浮層」視窗；canRetrieveWindowContent：讀取畫面元件（文字、位置、能不能點），密碼欄位不讀；不接收事件。
+     canPerformGestures：讓 App 能做多指、長按、拖曳等手勢。 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagRetrieveInteractiveWindows"
