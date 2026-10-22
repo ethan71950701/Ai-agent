@@ -98,8 +98,8 @@ final class GlassBar extends FrameLayout {
             + "    float hz = sqrt(max(0.0, 1.0 - clamp(dot(qd, qd), 0.0, 1.0)));\n"                       // 凸透鏡（球面）的高度
             + "    float3 nd = normalize(float3(qd / viewScale * 0.9, hz + 0.15));\n"                        // 表面法線；被拉伸時 x、y 的傾斜要除以縮放
             + "    float3 hv = normalize(normalize(lightVec) + float3(0.0, 0.0, 1.0));\n"                    // 光源與視線的半角向量
-            + "    float spec = pow(max(dot(nd, hv), 0.0), 28.0) * indicator * progress;\n"                  // 法線對準半角向量的地方亮：高光點落在透鏡內部，位置隨光源、拉伸改變
-            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim + 0.85 * spec, 0.0, 0.9));\n"
+            + "    float spec = smoothstep(0.9955, 0.9995, dot(nd, hv)) * indicator * progress;\n"                  // 法線對準半角向量的地方亮：高光點落在透鏡內部，位置隨光源、拉伸改變
+            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim + 0.9 * spec, 0.0, 0.9));\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
