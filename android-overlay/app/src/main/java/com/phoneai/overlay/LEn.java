@@ -222,7 +222,7 @@ final class LEn {
         m.put("模糊程度（dp）", "Blur (dp)");
         m.put("底欄背景的模糊半徑", "Blur radius of the bottom bar background");
         m.put("圖示放大倍率", "Icon magnification");
-        m.put("按住時圖示放大的量（0.22 ≈ 1.22 倍）", "How much icons grow while pressed (0.22 ≈ 1.22×)");
+        m.put("按住時圖示放大的量（預設 0.19 ≈ 1.19 倍）", "How much icons grow while pressed (0.22 ≈ 1.22×)");
         m.put("按住放大（左右）", "Press scale (horizontal)");
         m.put("按住時上層按鈕橫向放大的倍數", "How much the lens button grows horizontally while pressed");
         m.put("按住放大（上下）", "Press scale (vertical)");

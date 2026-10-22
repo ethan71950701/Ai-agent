@@ -203,11 +203,10 @@ final class AgentLoop {
             for (int i = Math.max(0, history.size() - 8); i < history.size(); i++) text.append(history.get(i)).append('\n');
         }
         text.append("\n請決定下一步，只輸出一行 JSON。");
-        if (L.en()) text.append("\nWrite the say, question and why fields of your JSON in English.");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
         JSONArray messages = new JSONArray().put(new JSONObject().put("role", "user").put("content", content));
         JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 800)
-                .put("system", AgentPrompt.SYSTEM).put("messages", messages);
+                .put("system", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM).put("messages", messages);
         JSONObject r = ChatEngine.post(body, key);
         JSONArray out = r.optJSONArray("content");
         if (out == null) return null;

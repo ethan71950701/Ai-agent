@@ -115,3 +115,28 @@ jobs:
           gh release list --limit 100 --json tagName --jq '.[10:][].tagName' | while read -r old; do
             [ -n "$old" ] && gh release delete "$old" --cleanup-tag --yes || true
           done
+      # 把已發布的 Unreleased 移到版本標題底下，下一版只列新改動（commit 回 main，[skip ci] 不會再觸發編譯）
+      - name: Archive released changelog
+        if: github.ref == 'refs/heads/main' && steps.signing.outputs.signed == 'true'
+        run: |
+          set -euo pipefail
+          V="1.0.$((GITHUB_RUN_NUMBER + 1000))"
+          python3 - "$V" <<'PY'
+          import re, sys
+          v = sys.argv[1]
+          p = 'CHANGELOG.md'
+          s = open(p, encoding='utf-8').read()
+          m = re.search(r'^## Unreleased\n(.*?)(?=^## |\Z)', s, re.S | re.M)
+          if not m or not m.group(1).strip():
+              sys.exit(0)
+          body = m.group(1).strip() + "\n\n"
+          s = s[:m.start()] + "## Unreleased\n\n## " + v + "\n\n" + body + s[m.end():]
+          open(p, 'w', encoding='utf-8').write(s)
+          PY
+          if ! git diff --quiet -- CHANGELOG.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md
+            git commit -m "Archive changelog for $V [skip ci]"
+            git push origin HEAD:main || echo "push failed; archive CHANGELOG.md by hand"
+          fi

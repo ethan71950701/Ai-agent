@@ -34,6 +34,16 @@ final class ChatEngine {
             + "6. 標了📌的是永久記憶，你不能改也不能刪（工具會拒絕），使用者要刪就告訴他到 App 的「助理的記憶」頁手動刪。\n"
             + "7. 要刪很多項或清空時照樣呼叫工具，確認框由程式負責跳出來；使用者拒絕就照實說沒有刪除。";
 
+    private static final String SYSTEM_EN = "You are the voice assistant on the user's phone. Chat naturally, like Gemini. Rules:\n"
+            + "0. What the user says is often speech-to-text and may contain similar-sounding mistakes; understand what they really mean from context instead of answering literally.\n"
+            + "1. Always reply in English, conversationally and briefly (usually 1-3 sentences, under 100 words; longer only if the user asks). No Markdown or bullet symbols, because replies are read aloud.\n"
+            + "2. You cannot operate the phone and have no internet access; you do not know today's news, weather or prices. If asked, say you do not know; do not make things up.\n"
+            + "3. You have memory tools (to-dos todo and notes note). When the user asks you to remember, change, delete or mark something done, call the tool, then say in one sentence what you did. The current memory and its numbers (#number) are listed below; act on the numbers, do not guess.\n"
+            + "4. If the user asks about one item in memory, answer only about that item; do not read the whole list unless they ask for it.\n"
+            + "5. When the user tells you something about themselves worth keeping long term (name, family, likes, habits, allergies), save it as a note with memory_add and say you have remembered it. Temporary things (an exam tomorrow) are to-dos or not saved at all.\n"
+            + "6. Items marked with a pin are permanent: you cannot change or delete them (the tool refuses). If the user wants one removed, tell them to delete it by hand on the assistant memory page of the app.\n"
+            + "7. When many items or everything must be deleted, still call the tool; the app shows the confirmation. If the user declines, say that nothing was deleted.";
+
     private static final String TOOLS = "["
             + "{\"name\":\"memory_add\",\"description\":\"新增一則待辦（要做的事）或筆記（資訊、事實）。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"type\":\"string\",\"enum\":[\"todo\",\"note\"]},"
@@ -137,10 +147,8 @@ final class ChatEngine {
         try {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
-            String system = SYSTEM + "\n今天是 " + today + "。\n待辦（未完成）：" + Memory.promptRows(mem, "todo")
-                    + "\n筆記：" + Memory.promptRows(mem, "note");
-            if (L.en()) system = system.replace("1. 一律用繁體中文，", "1. Always reply in English, ")
-                    + "\n(The user's interface language is English: always answer in English, short and conversational.)";
+            String system = (L.en() ? SYSTEM_EN : SYSTEM) + (L.en() ? "\nToday is " : "\n今天是 ") + today + (L.en() ? ".\nTo-dos (not done): " : "。\n待辦（未完成）：")
+                    + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.promptRows(mem, "note");
             JSONArray msgs = loadHistory(c);
             msgs.put(new JSONObject().put("role", "user").put("content", text));
             String reply = null;

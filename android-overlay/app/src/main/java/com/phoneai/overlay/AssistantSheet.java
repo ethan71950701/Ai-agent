@@ -673,57 +673,19 @@ public class AssistantSheet {
     }
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，光球收掉；下面留著縮小的光球和輸入列，可以接續對話。 */
-    /** 固定指令（root 直接執行）或聊天（Claude API）：在背景做，回答到了用回答卡片顯示。 */
-    /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做，回答到了用回答卡片顯示並唸出來。 */
+    /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
-            String reply = r.kind == Assist.FIXED ? runFixed(r) : routeAndRun(t);
-            if (reply == null) return;   // Termux 自己會回報（操作手機時）
+            String reply = Brain.answer(act, t, new AgentLoop.Ui() {
+                @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
+                @Override public void status(String s) { Notify.notifyText(act, L.t("AI 正在操作手機"), s, 7195); }
+                @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+            });
+            if (reply == null) return;   // 沒有回覆（不該發生）
             final String fr = reply;
             Notify.say(act, fr);
             root.post(() -> showReply("", fr));
         }, "local-reply").start();
-    }
-
-    private String runFixed(Assist.Route r) {
-        if (r.confirm && !confirmOnUi(L.t("這會開關飛航模式，可能會斷網，要繼續嗎？"))) return L.t("已取消");
-        Maintenance.suRun(r.cmd);
-        return r.reply;
-    }
-
-    /** Haiku 判斷這句話是指令、開 App、聊天還是操作畫面，再分派。判斷失敗就當聊天（聊天會回報連不上的原因）。 */
-    private String routeAndRun(String t) {
-        Router.Decision d = Router.decide(act, t);
-        String kind = d == null ? Router.CHAT : d.kind;
-        switch (kind) {
-            case Router.CMD:
-                return runFixed(Assist.fixed(d.cmdIndex));
-            case Router.APP:
-                Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
-                return L.t("已開啟 App");
-            case Router.AGENT:
-                return AgentLoop.run(act, t, new AgentLoop.Ui() {
-                    @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
-                    @Override public void status(String s) { Notify.notifyText(act, L.t("AI 正在操作手機"), s, 7195); }
-                    @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
-                });
-            default: {
-                String reply = localAnswer(t);
-                if (reply == null) reply = ChatEngine.ask(act, t, this::confirmOnUi);
-                return reply != null ? reply : L.t("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。");
-            }
-        }
-    }
-
-    /** 定時任務（建立、列出、取消）或能直接回答的短問題（電量、幾點…）；都不是回 null。 */
-    private String localAnswer(String t) {
-        try {
-            String s = Schedule.handle(act, t, this::confirmOnUi);
-            if (s != null) return s;
-        } catch (Exception e) {
-            return L.t("定時任務出錯：") + e.getMessage();
-        }
-        return Schedule.quickAnswer(act, t);
     }
 
     /** 在主執行緒跳確認框，背景執行緒等使用者按完。 */

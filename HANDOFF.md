@@ -8,16 +8,11 @@
 
 ## 0. TL;DR（English）
 
-A beginner user is building a Gemini-like phone assistant on a **rooted Samsung S25+ (12 GB, Android 16 / One UI)**.
-The brain runs in **Termux** (Python); a small Android app, **PhoneAI Overlay** (`android-overlay/`, built by GitHub Actions because the user has no PC),
-is the front end: text box, voice (Google speech dialog, 5 s countdown before sending), quick-settings tile, default-assistant (power button) and a floating button.
-Typed commands go to `assistant.py`: whitelisted root commands (`svc bluetooth`, `input keyevent`, launch any app by name from `~/apps.tsv`) or the **Claude API**
-(`agent2.py`: Sonnet 5.5 screenshot→action loop, escalates to Opus 5.5 when stuck, optional web search, sensitive actions need user confirmation).
-While it runs: Samsung Now Bar chip ("AI 3/8"; works via standard Live Update + the hidden secure setting `enable_notification_nowbar_test=1`, found by reading SystemUI),
-tap ripples (accessibility overlay), notification with a Stop button, and per-task token/cost history in the app. The local VLM path (Qwen3-VL-2B) is **off by default** (phone gets hot).
-Everything above is verified on the device except the app's native confirm dialog. See section 6 for the status table and section 11 for next steps.
-The user continues with **Claude Code** (see `CLAUDE.md`).
-The user is a non-expert who needs **one small step at a time, in Traditional Chinese** (see section 3).
+A beginner user uses a **personal AI phone assistant app, PhoneAI Overlay** (`android-overlay/`, Java and Gradle) on a **rooted Android phone**. The app is the whole product: no Termux, no Python scripts.
+Text or voice input (SenseVoice offline speech recognition, or the system recognizer) goes through a router. Fixed root commands run directly; "open app" and chat are handled locally; screen tasks run an automation loop (screenshot, Claude Sonnet 5.5 picks the next action, root executes tap, swipe, drag, multi-touch, typing). Sensitive actions always show a confirmation dialog.
+Other parts: a glass bottom bar (`GlassBar`, a capsule shader ported from the user's Samsung Glass module), memory and to-dos, simple scheduled questions, notifications and text-to-speech, in-app updates from GitHub Releases, and a Chinese and English interface (`L.t` plus `LEn`).
+Releases are built by GitHub Actions on `main` (the user has no PC). `CHANGELOG.md` holds the bilingual release notes.
+The user is a non-expert who needs **one small step at a time**, and speaks Traditional Chinese (see section 3).
 
 ## 1. 專案目標
 
@@ -143,7 +138,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | PhoneAI Overlay App（`android-overlay/`）編譯與安裝 | ✅ | GitHub Actions 編譯（只在 `main` 觸發）、固定簽名可覆蓋安裝；使用者長期使用中。雲端也能用 Android SDK 36 + Gradle 先編譯確認（見 11b） |
 | 底欄／透鏡液態玻璃（`GlassBar`，移植 Samsung Glass 模組的膠囊著色器）：折射、按住時透鏡與整條底欄放大、加速度驅動的彈簧形變、透鏡下圖示變主題色、色散可調 | ✅ | 使用者實測（2026-10-22）：效果確認可以。已移除：邊緣白邊、反光點（試過邊緣光與球面高光，使用者都不要）。注意：圖示折射用過獨立著色器會出現綠／洋紅斑，已改成圖示畫進透鏡背景一起折射 |
 | 英文介面與語言選項（`L.t` + `LEn` 字典約 580 條；設定 → 外觀 → Language 可即時切換，不用退出 App；系統語言不是中文時預設英文；英文版 README）、英文指令（固定指令、快速問答、定時）、助理回覆與朗讀語言跟著介面語言 | 🟡 英文介面待使用者實測（自述應該正常）；英文語音辨識 ✅ 使用者實測（2026-10-22） | 通知列上已顯示的通知不會即時換語言；系統層級名稱（快速設定磁貼、無障礙服務名稱）跟系統語言；Claude 提示詞仍是中文，英文模式只加一句「用英文回答」 |
-| 更新說明雙語（顯示時去掉 Markdown 的 ## 與 -，改成純文字標題與「•」）：`CHANGELOG.md` 的 Unreleased 每條寫成「中文｜English」，Release 說明用它；App 更新視窗依介面語言只顯示對應那一半，舊版沒有分隔符的說明原樣顯示 | 🟡 雲端編譯過，手機未測 | 新增改動要記得寫進 CHANGELOG 的 Unreleased（且中英並列）；發布後要把 Unreleased 移到版本標題底下（例如 `## 1.0.1183`），否則下一版會重複列出；沒有新條目時說明為雙語的「小修正與內部改進」 |
+| 更新說明雙語（顯示時去掉 Markdown 的 ## 與 -，改成純文字標題與「•」）：`CHANGELOG.md` 的 Unreleased 每條寫成「中文｜English」，Release 說明用它；App 更新視窗依介面語言只顯示對應那一半，舊版沒有分隔符的說明原樣顯示 | 🟡 雲端編譯過，手機未測 | 新增改動要記得寫進 CHANGELOG 的 Unreleased（且中英並列）；發布時 CI 會自動把 Unreleased 移到版本標題底下（`## 1.0.N`），下一版只列新改動；沒有新條目時說明為雙語的「小修正與內部改進」 |
 | 介面文字去 Termux、底欄玻璃設定清理（移除過時開關）、底欄重畫改為首頁持續更新／其他頁只在碰觸捲動後更新（省電）、功能／設定頁標題區縮小（116dp） | 🟡 雲端編譯過，手機未測 | 首頁有極光動畫所以持續重畫；其他頁若發現折射沒跟著底下內容更新，是漏了 `kickGlass()` 的觸發點 |
 | App 點擊漣漪（無障礙懸浮層 `RippleAccessibilityService`） | ✅ | 使用者實測：「設定」前景可見、位置準、不擋點擊。一般懸浮層在「設定」前景會被系統強制隱藏（dumpsys 確認），所以改用無障礙。滑動軌跡單獨測過、agent2 的 swipe 整合未測 |
 | App 常駐通知升級成 Live Update / Now Bar 膠囊 | ✅ | 使用者實測：左上角膠囊出現、`shouldHide()` 回 false。關鍵：不帶 `ongoingActivityNoti.*` + secure `enable_notification_nowbar_test=1`（`overlay_install.sh` 會設；見 ROADMAP 8e）。副作用：其他 App 的可升級通知也可能出現在 Now Bar。使用者實測：鎖定畫面看得到、通知「停止」鈕可中斷 agent2、膠囊文字「AI 步數」跟著步驟變化 |
