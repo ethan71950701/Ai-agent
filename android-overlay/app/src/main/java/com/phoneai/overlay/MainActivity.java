@@ -36,7 +36,43 @@ public class MainActivity extends Activity {
     private View indicator;
     private GlassBar glass;
     private long dragT;
-    private float dragX, dragV;
+    private float dragX, dragV, lastVel, accExt, stretchD, stretchV, pressP;
+    private long lastTick;
+    private boolean stretching;
+
+    /** 按住時每一幀更新透鏡與底欄的縮放：按住放大逐漸到位（pressP），再加上由手指加速度驅動的彈簧阻尼形變（d）。 */
+    private void startStretch() {
+        if (stretching) return;
+        stretching = true;
+        stretchD = 0;
+        stretchV = 0;
+        pressP = 0;
+        lastTick = android.os.SystemClock.uptimeMillis();
+        indicator.postOnAnimation(new Runnable() {
+            @Override
+            public void run() {
+                if (!barDragging) {
+                    stretching = false;
+                    return;
+                }
+                long now = android.os.SystemClock.uptimeMillis();
+                float dt = Math.min(0.033f, Math.max(0.001f, (now - lastTick) / 1000f));
+                lastTick = now;
+                pressP += (1f - pressP) * Math.min(1f, dt * 14f);
+                float force = 1500f * accExt;                                  // 加速度越大，推動形變的力越大
+                accExt *= (float) Math.pow(0.8, dt * 60);                       // 沒有新的移動事件，加速度很快歸零
+                float k = 220f, c = 14f;                                        // 彈簧與阻尼：會回彈（果凍感）
+                stretchV += (force - k * stretchD - c * stretchV) * dt;
+                stretchD += stretchV * dt;
+                float d = Math.max(-0.3f, Math.min(0.9f, stretchD));
+                indicator.setScaleX(1f + (GlassPrefs.pressX - 1f) * pressP + d);
+                indicator.setScaleY(Math.max(1f, 1f + (GlassPrefs.pressY - 1f) * pressP - 0.45f * d));
+                bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP + 0.08f * d);
+                bar.setScaleY(1f + (GlassPrefs.barPress - 1f) * pressP);
+                indicator.postOnAnimation(this);
+            }
+        });
+    }
     private android.animation.ValueAnimator lensAnim;
     /** 透鏡強度淡入／淡出（按住拖動時 1，放開 0）。 */
     /** 底欄玻璃的一條滑桿：拖動即時寫入 cfg 並套用。 */
@@ -92,10 +128,7 @@ public class MainActivity extends Activity {
         if (barDragging) return;
         barDragging = true;
         Anim.cancel(indicator);
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.pressX, 500f, 0.6f);   // 按住時上層按鈕放大（倍數在設定頁調）
-        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, GlassPrefs.pressY, 500f, 0.6f);
-        Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.barPress, 400f, 0.7f);   // 按住時整條底欄也放大（像 Samsung Glass 模組）
-        Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, GlassPrefs.barPress, 400f, 0.7f);
+        startStretch();   // 按住放大＋加速度形變由這個彈簧阻尼模型每一幀更新
         lensTo(1f);
         Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X,
                 Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)), 380f, 0.7f);
@@ -215,7 +248,6 @@ public class MainActivity extends Activity {
         final android.os.Handler holdLoop = new android.os.Handler(getMainLooper());
         final float slop = Ui.dp(this, 8);
         final Runnable[] hold = new Runnable[1];
-        final Runnable[] decay = new Runnable[1];   // 手指停住時，拉伸要慢慢回到按住的大小
         card.setOnTouchListener((v, e) -> {
             kickGlass();
             if (barItemW <= 0) return false;
@@ -227,6 +259,8 @@ public class MainActivity extends Activity {
                     pressureGlow(e, v, true);
                     dragT = 0;
                     dragV = 0;
+                    lastVel = 0;
+                    accExt = 0;
                     barDragging = false;
                     barDownX = ex;
                     barDownIdx = idx;
@@ -241,26 +275,18 @@ public class MainActivity extends Activity {
                         enterDrag(ex, min, max);
                     }
                     if (!barDragging) return true;
-                    // 液體形變：拖得越快，按鈕沿移動方向被拉長、上下被壓扁（像 Samsung Glass 模組的彈簧拖曳）
+                    // 形變跟「加速度」有關：起步、急停、轉向時形變最大，等速移動時回復（彈簧阻尼模型見 startStretch）
                     long nowMs = android.os.SystemClock.uptimeMillis();
                     if (dragT != 0 && nowMs > dragT) {
-                        float vDp = Math.abs(ex - dragX) / getResources().getDisplayMetrics().density / (nowMs - dragT);
-                        dragV = dragV * 0.6f + vDp * 0.4f;
+                        float dtMs = nowMs - dragT;
+                        float vel = (ex - dragX) / getResources().getDisplayMetrics().density / dtMs;   // dp/ms
+                        dragV = dragV * 0.7f + vel * 0.3f;                                               // 平滑後的速度
+                        float acc = (dragV - lastVel) / dtMs;                                            // 加速度 dp/ms²
+                        lastVel = dragV;
+                        accExt = Math.min(0.4f, accExt * 0.5f + Math.abs(acc) * 0.5f);
                     }
                     dragX = ex;
                     dragT = nowMs;
-                    float st = Math.min(0.9f, dragV * 1.2f);
-                    Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.pressX + st, 600f, 0.5f);
-                    Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, Math.max(1f, GlassPrefs.pressY - st * 0.45f), 600f, 0.5f);
-                    Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.barPress + st * 0.08f, 500f, 0.6f);
-                    holdLoop.removeCallbacks(decay[0]);
-                    decay[0] = () -> {
-                        dragV = 0;
-                        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.pressX, 500f, 0.6f);
-                        Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, GlassPrefs.pressY, 500f, 0.6f);
-                        Anim.spring(bar, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, GlassPrefs.barPress, 500f, 0.6f);
-                    };
-                    holdLoop.postDelayed(decay[0], 90);
                     Anim.cancel(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X);   // 只停位移，放大的彈簧不能被取消
                     indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)));
                     return true;
@@ -268,7 +294,6 @@ public class MainActivity extends Activity {
                 case android.view.MotionEvent.ACTION_UP:
                 case android.view.MotionEvent.ACTION_CANCEL:
                     holdLoop.removeCallbacks(hold[0]);
-                    holdLoop.removeCallbacks(decay[0]);
                     animatePress(0f, 320);
                     if (!barDragging) {   // 短按：切換分頁（showTab 會做彈跳的圓底與圖示動畫）
                         if (e.getActionMasked() == android.view.MotionEvent.ACTION_UP && barDownIdx != tab) showTab(barDownIdx);

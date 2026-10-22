@@ -54,17 +54,8 @@ final class LensClip extends FrameLayout {
 
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        if (child != overlay || region == null) return super.drawChild(canvas, child, drawingTime);
-        r.set(0, 0, region.getWidth(), region.getHeight());
-        region.getMatrix().mapRect(r);                                       // 這個矩陣已經包含縮放（以 pivot 為中心）與位移（translation）；不能再加一次位移，否則會偏到右邊
-        r.offset(region.getLeft(), region.getTop());
-        path.reset();
-        float rad = r.height() / 2f;
-        path.addRoundRect(r, rad, rad, Path.Direction.CW);
-        canvas.save();
-        canvas.clipOutPath(path);   // 按鈕範圍內不畫原大小的圖示（放大的版本由透鏡畫）
-        boolean b = super.drawChild(canvas, child, drawingTime);
-        canvas.restore();
-        return b;
+        // 主色圖示只在透鏡範圍內出現（GlassBar 把它畫進透鏡裡）；底欄其他地方維持暗色圖示，所以透鏡經過時圖示才變色
+        if (child == overlay) return false;
+        return super.drawChild(canvas, child, drawingTime);
     }
 }
