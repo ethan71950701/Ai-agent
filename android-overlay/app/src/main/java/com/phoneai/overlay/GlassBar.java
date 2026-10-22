@@ -43,6 +43,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
+            + "uniform float3 lightVec;\n"
             + "float sd(float2 p, float r) {\n"
             + "    float2 q = abs(p) - halfSize + float2(r);\n"
             + "    return length(max(q, float2(0))) + min(max(q.x, q.y), 0.0) - r;\n"
@@ -93,7 +94,12 @@ final class GlassBar extends FrameLayout {
             + "    float shadowRadius = max(0.001, 8.0 * density * progress);\n"
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
-            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.9));\n"
+            + "    float2 qd = p / halfSize;\n"
+            + "    float hz = sqrt(max(0.0, 1.0 - clamp(dot(qd, qd), 0.0, 1.0)));\n"                       // 凸透鏡（球面）的高度
+            + "    float3 nd = normalize(float3(qd / viewScale * 0.9, hz + 0.15));\n"                        // 表面法線；被拉伸時 x、y 的傾斜要除以縮放
+            + "    float3 hv = normalize(normalize(lightVec) + float3(0.0, 0.0, 1.0));\n"                    // 光源與視線的半角向量
+            + "    float spec = pow(max(dot(nd, hv), 0.0), 28.0) * indicator * progress;\n"                  // 法線對準半角向量的地方亮：高光點落在透鏡內部，位置隨光源、拉伸改變
+            + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim + 0.85 * spec, 0.0, 0.9));\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -269,14 +275,12 @@ final class GlassBar extends FrameLayout {
         }
     }
 
-    /** 虛擬光源：固定在視窗左上方外側的一個點。回傳 {從玻璃中心指向光源的角度, 累計 X 縮放, 累計 Y 縮放}；玻璃移動、放大時，反光位置跟著正確改變。 */
+    /** 虛擬光源：固定在視窗左上方的一個點。回傳 {角度, 累計 X 縮放, 累計 Y 縮放, 光向量 x, y}；玻璃移動、拉伸時，高光點在透鏡裡的位置跟著改變。 */
     private float[] virtualLight() {
         int[] loc = new int[2];
         getLocationInWindow(loc);
-        float sx = 1f, sy = 1f;
+        float sx = getScaleX(), sy = getScaleY();
         android.view.ViewParent p = getParent();
-        sx *= getScaleX();
-        sy *= getScaleY();
         while (p instanceof View) {
             sx *= ((View) p).getScaleX();
             sy *= ((View) p).getScaleY();
@@ -284,10 +288,12 @@ final class GlassBar extends FrameLayout {
         }
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         float cx = loc[0] + getWidth() * getScaleX() / 2f, cy = loc[1] + getHeight() * getScaleY() / 2f;
-        float lx = dm.widthPixels * 0.2f, ly = -dm.heightPixels * 0.35f;   // 光源在畫面左上方、螢幕外
-        float ang = (float) Math.atan2(ly - cy, lx - cx);
-        ang -= skewNow * 0.6f;   // 移動時反光隨歪斜一起偏移
-        return new float[]{ang, Math.max(0.3f, sx), Math.max(0.3f, sy)};
+        float lx = dm.widthPixels * 0.3f, ly = -dm.heightPixels * 0.35f;
+        float ang = (float) Math.atan2(ly - cy, lx - cx) - skewNow * 0.6f;
+        // 光源在鏡頭左上方：水平方向隨玻璃位置改變（玻璃越往右，光越從左邊斜射進來），垂直方向只略偏上，所以高光落在透鏡中間附近
+        float tx = Math.max(-0.7f, Math.min(0.7f, (lx - cx) / (0.9f * dm.widthPixels))) - skewNow * 0.8f;
+        float ty = -0.22f;
+        return new float[]{ang, Math.max(0.3f, sx), Math.max(0.3f, sy), tx, ty};
     }
 
     private void configure(RuntimeShader sh, float skewValue) {
@@ -302,10 +308,11 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
-        sh.setFloatUniform("highlightAlpha", lens ? progress : 0f);   // 邊緣光強度
+        sh.setFloatUniform("highlightAlpha", 0f);   // 邊緣光強度
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
-        sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
+        sh.setFloatUniform("viewScale", lp[1], lp[2]);
+        sh.setFloatUniform("lightVec", lp[3], lp[4], 1.0f);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
