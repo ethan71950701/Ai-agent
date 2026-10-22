@@ -298,11 +298,11 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("center", w / 2f, h / 2f);
         sh.setFloatUniform("halfSize", w / 2f, h / 2f);
         sh.setFloatUniform("radius", radius);
-        sh.setFloatUniform("density", dp);
+        sh.setFloatUniform("density", 3f * dp);                              // 邊緣光的寬度尺度（約 3dp；太小就看不到）
         sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
-        sh.setFloatUniform("highlightAlpha", lens ? 0.6f + 0.4f * progress : 0.55f);   // 邊緣光強度
+        sh.setFloatUniform("highlightAlpha", lens ? 0.85f + 0.15f * progress : 0.75f);   // 邊緣光強度
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
@@ -352,7 +352,7 @@ final class GlassBar extends FrameLayout {
         float tx = getTranslationX();
         if (lastT != 0 && now > lastT) {
             float vDpMs = (tx - lastTx) / getResources().getDisplayMetrics().density / (now - lastT);   // dp/ms
-            float target = Math.max(-0.6f, Math.min(0.6f, -vDpMs * 0.6f)) * GlassPrefs.skew;
+            float target = Math.max(-1.0f, Math.min(1.0f, -vDpMs * 1.0f)) * GlassPrefs.skew;
             skewNow = skewNow * 0.6f + target * 0.4f;
             if (!GlassPrefs.skewOn) skewNow = 0f;
         }
