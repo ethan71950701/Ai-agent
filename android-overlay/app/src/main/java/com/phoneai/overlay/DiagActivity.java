@@ -93,12 +93,12 @@ public class DiagActivity extends Activity {
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
         sb.append(L.t("\n最近的任務（含用量估價）：\n"));
         try {
-            org.json.JSONArray h = new org.json.JSONArray(getSharedPreferences("cfg", MODE_PRIVATE).getString("history", "[]"));
+            org.json.JSONArray h = TaskLog.list(this);
             if (h.length() == 0) sb.append(L.t("（還沒有紀錄）\n"));
             java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.TAIWAN);
-            for (int k = h.length() - 1; k >= Math.max(0, h.length() - 5); k--) {
+            for (int k = 0; k < Math.min(5, h.length()); k++) {
                 org.json.JSONObject o = h.getJSONObject(k);
-                sb.append(f.format(new java.util.Date(o.getLong("t")))).append("  ").append(o.getString("text")).append("\n");
+                sb.append(f.format(new java.util.Date(o.getLong("id")))).append("  ").append(o.getString("text")).append("\n");
             }
         } catch (Exception e) { sb.append(L.t("（讀取紀錄失敗）\n")); }
         sb.append(L.t("\n語音辨識除錯（最近）：\n"));

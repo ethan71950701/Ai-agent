@@ -2,24 +2,31 @@ package com.phoneai.overlay;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
- * 任務過程（mode 0：assistant.log）與自我檢查結果（mode 4：selftest.log）。
- * 沒有按鈕：進來就讀一次；自我檢查還在跑（沒看到結束標記）時每 2 秒自動刷新。
+ * 任務過程（mode 0：任務歷史，可加星星、有星的排前面）與自我檢查結果（mode 4：selftest.log）。
+ * 任務歷史進來就讀一次；自我檢查還在跑（沒看到結束標記）時每 2 秒自動刷新。
  */
 public class LogActivity extends Activity {
-    private static final String FILE = "/data/data/com.phoneai.overlay/files/assistant.log";   // 任務過程紀錄（App 內的自動操作迴圈還沒寫入，目前會顯示「沒有紀錄」）
     private static final String SELFTEST = "/data/data/com.phoneai.overlay/files/selftest.log";
     private static final int MAX_CHARS = 60000;   // 太長的紀錄只留最後一段，免得畫面卡
     private int mode;
     private boolean visible;
     private final long startedAt = System.currentTimeMillis();
     private TextView body, status;
+    private LinearLayout taskBox;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -30,7 +37,13 @@ public class LogActivity extends Activity {
         Ui.enterSpring(this);
         LinearLayout box = c[0];
         status = Ui.infoCard(this, box, 13, false, true);
-        body = Ui.infoCard(this, box, 12, true, true);   // 長按可選取、複製（貼給人看用）
+        if (mode == 4) {
+            body = Ui.infoCard(this, box, 12, true, true);   // 長按可選取、複製（貼給人看用）
+        } else {
+            taskBox = new LinearLayout(this);
+            taskBox.setOrientation(LinearLayout.VERTICAL);
+            box.addView(taskBox);
+        }
     }
 
     @Override
@@ -43,7 +56,67 @@ public class LogActivity extends Activity {
     protected void onResume() {
         super.onResume();
         visible = true;
-        reload();
+        if (mode == 4) reload();
+        else reloadTasks();
+    }
+
+    private void reloadTasks() {
+        new Thread(() -> {
+            JSONArray list = TaskLog.list(this);
+            runOnUiThread(() -> showTasks(list));
+        }).start();
+    }
+
+    private void showTasks(JSONArray list) {
+        taskBox.removeAllViews();
+        if (list.length() == 0) {
+            status.setText(L.t("還沒有任務紀錄。在首頁或問問看送出一句話後，會出現在這裡。"));
+            return;
+        }
+        status.setText(L.t("點 ☆ 可以加星星，有星的會排在最前面。"));
+        SimpleDateFormat f = new SimpleDateFormat("MM/dd HH:mm", Locale.TAIWAN);
+        for (int k = 0; k < list.length(); k++) {
+            try {
+                JSONObject o = list.getJSONObject(k);
+                final long id = o.getLong("id");
+                final boolean starred = o.optBoolean("star");
+                LinearLayout card = Ui.card(this, taskBox);
+
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+
+                LinearLayout col = new LinearLayout(this);
+                col.setOrientation(LinearLayout.VERTICAL);
+                TextView time = Ui.body(this, f.format(new Date(id)));
+                TextView text = new TextView(this);
+                text.setText(o.getString("text"));
+                text.setTextSize(15);
+                text.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                text.setTextIsSelectable(true);
+                String reply = o.optString("reply", "");
+                col.addView(time);
+                col.addView(text);
+                if (!reply.isEmpty()) col.addView(Ui.body(this, reply));
+                row.addView(col, new LinearLayout.LayoutParams(0, -2, 1f));
+
+                TextView star = new TextView(this);
+                star.setText(starred ? "★" : "☆");
+                star.setTextSize(26);
+                star.setTextColor(Ui.attr(this, starred ? com.google.android.material.R.attr.colorPrimary
+                        : com.google.android.material.R.attr.colorOnSurfaceVariant));
+                star.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+                star.setOnClickListener(v -> new Thread(() -> {
+                    TaskLog.setStar(this, id, !starred);
+                    runOnUiThread(this::reloadTasks);
+                }).start());
+                row.addView(star);
+
+                card.addView(row);
+            } catch (Exception ignored) {
+                // 壞掉的一筆跳過，其他照常顯示
+            }
+        }
     }
 
     private void reload() {
@@ -51,7 +124,7 @@ public class LogActivity extends Activity {
             String text = null, diag = "";
             for (int k = 0; k < 3 && text == null; k++) {
                 try {
-                    Process p = new ProcessBuilder(Root.su(), "-c", "tail -c " + MAX_CHARS + " " + (mode == 4 ? SELFTEST : FILE)).redirectErrorStream(true).start();
+                    Process p = new ProcessBuilder(Root.su(), "-c", "tail -c " + MAX_CHARS + " " + SELFTEST).redirectErrorStream(true).start();
                     String out = readAll(p.getInputStream());
                     if (p.waitFor() == 0) text = out;
                     else diag = out.trim();
@@ -66,15 +139,14 @@ public class LogActivity extends Activity {
                     status.setText(L.t("讀不到紀錄（") + dg + L.t("）。可能還沒從面板問過問題，或這支手機沒有 root。"));
                     body.setText("");
                 } else if (t.trim().isEmpty()) {
-                    status.setText(mode == 4 ? L.t("自我檢查還沒有結果。") : L.t("還沒有從面板送出過任務。"));
+                    status.setText(L.t("自我檢查還沒有結果。"));
                     body.setText("");
                 } else {
-                    status.setText(mode == 4 ? (finished ? L.t("自我檢查完成（✓ 正常，✕ 有問題）") : L.t("自我檢查進行中…"))
-                            : L.t("上一次任務的完整輸出"));
+                    status.setText(finished ? L.t("自我檢查完成（✓ 正常，✕ 有問題）") : L.t("自我檢查進行中…"));
                     body.setText(t);
                 }
                 // 自我檢查還沒結束就每 2 秒刷新，最多 3 分鐘
-                if (mode == 4 && visible && !finished && System.currentTimeMillis() - startedAt < 180_000L)
+                if (visible && !finished && System.currentTimeMillis() - startedAt < 180_000L)
                     body.postDelayed(this::reload, 2000);
             });
         }).start();

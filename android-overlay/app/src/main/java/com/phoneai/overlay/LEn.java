@@ -180,7 +180,8 @@ final class LEn {
         m.put("還沒有從面板送出過任務。", "No task has been sent from the panel yet.");
         m.put("自我檢查完成（✓ 正常，✕ 有問題）", "Self-check finished (✓ OK, ✕ problem)");
         m.put("自我檢查進行中…", "Self-check running…");
-        m.put("上一次任務的完整輸出", "Full output of the last task");
+        m.put("還沒有任務紀錄。在首頁或問問看送出一句話後，會出現在這裡。", "No tasks yet. After you send a request from the home screen or the assistant panel, it shows up here.");
+        m.put("點 ☆ 可以加星星，有星的會排在最前面。", "Tap ☆ to star a task; starred tasks stay at the top.");
         m.put("壓力 ", "Pressure ");
         m.put("、接觸面積 ", ", contact size ");
         m.put("功能", "Features");
