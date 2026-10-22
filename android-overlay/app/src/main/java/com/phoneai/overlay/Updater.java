@@ -175,6 +175,16 @@ final class Updater {
         StringBuilder sb = new StringBuilder();
         for (String line : body.split("\n")) {
             if (line.startsWith("commit:")) continue;
+            // 雙語條目「中文｜English」：依介面語言只留一半；沒有分隔符的舊說明原樣顯示
+            int bar = line.indexOf('｜');
+            if (bar >= 0) {
+                String zh = line.substring(0, bar).trim(), en = line.substring(bar + 1).trim();
+                String head = line.startsWith("- ") ? "- " : "";
+                String pick = L.en() ? en : zh;
+                if (head.length() > 0) pick = pick.replaceFirst("^- ", "");
+                sb.append(head).append(pick).append('\n');
+                continue;
+            }
             sb.append(line).append('\n');
         }
         String t = sb.toString().trim();

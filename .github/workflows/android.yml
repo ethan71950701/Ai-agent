@@ -96,14 +96,18 @@ jobs:
           {
             echo "commit: ${GITHUB_SHA}"
             echo
-            echo "## 這次更新了什麼"
-            if [ -n "$PREV_SHA" ] && git cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
+            # 優先用 CHANGELOG.md 的 Unreleased（中文｜English 雙語）；沒有才退回 commit 標題
+            CL=$(git show "${GITHUB_SHA}:CHANGELOG.md" 2>/dev/null | awk '/^## Unreleased/{f=1;next} /^## /{f=0} f' | sed '/^[[:space:]]*$/d' || true)
+            echo "## 這次更新了什麼｜What's new"
+            if [ -n "$CL" ]; then
+              echo "$CL"
+            elif [ -n "$PREV_SHA" ] && git cat-file -e "${PREV_SHA}^{commit}" 2>/dev/null; then
               git log --no-merges --format='- %s' "${PREV_SHA}..${GITHUB_SHA}"
             else
               git log --no-merges -n 15 --format='- %s' "${GITHUB_SHA}"
             fi
             echo
-            echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）。"
+            echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）｜Automatically built APK, signed with the project's fixed key; it installs over the previous version."
           } > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" android-overlay/app/build/outputs/apk/debug/app-debug.apk \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
