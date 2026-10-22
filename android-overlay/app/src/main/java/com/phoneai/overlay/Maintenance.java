@@ -7,8 +7,8 @@ import android.content.pm.PackageManager;
 import java.nio.charset.StandardCharsets;
 
 /**
- * 原本要在 Termux 打指令的維護工作，改成 App 內按鈕：更新、存 GitHub 權杖、修復權限、自我檢查。
- * 需要 root 的部分用 su 從標準輸入餵腳本（內容不出現在指令列）；Termux 的檔案要用「跳到全域掛載空間」的 su 寫法才看得到（跟記憶頁一樣）。
+ * 維護工作（App 內按鈕）：檢查並更新、修復權限、自我檢查。
+ * 需要 root 的部分用 su 從標準輸入餵腳本（內容不出現在指令列）。
  */
 final class Maintenance {
     private Maintenance() { }

@@ -28,8 +28,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 定時任務（只支援純查詢）＋「能直接回答的短問題」。照搬 scripts/schedule.py 與 intents.py 的 quick_answer。
- * 排程用系統的 JobScheduler（每 15 分鐘，最小間隔），不再需要 Termux:API。清單存在 App 的 files/schedules.json。
+ * 定時任務（只支援純查詢）＋「能直接回答的短問題」。短問題的句型沿用舊版的 quick_answer 規則。
+ * 排程用系統的 JobScheduler（每 15 分鐘，最小間隔）。清單存在 App 的 files/schedules.json。
  */
 final class Schedule {
     private static final int JOB_ID = 7198;

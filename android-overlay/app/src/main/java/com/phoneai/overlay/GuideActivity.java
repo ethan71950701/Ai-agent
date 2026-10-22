@@ -292,7 +292,7 @@ public class GuideActivity extends Activity {
         refresh();
     }
 
-    /** 逐項檢查；root、Termux、Key 要用 su，放在背景執行，結果回到主執行緒更新各頁。 */
+    /** 逐項檢查；root、Key 要用 su，放在背景執行，結果回到主執行緒更新各頁。 */
     private void refresh() {
         new Thread(() -> {
             boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");

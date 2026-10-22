@@ -44,7 +44,7 @@ public class RippleAccessibilityService extends AccessibilityService {
      * 有 hold 又有移動時分兩段：先全部手指按住（willContinue），接著用 continueStroke 接續移動——系統規定接續的筆畫要放在下一次 dispatchGesture。
      */
     /**
-     * 列出某個螢幕上看得到的元件（給 Termux 的 tree 指令）。每筆：{n 編號, t 文字, d 內容描述, id 資源名, c 能不能點, x/y 中心座標（該螢幕像素）}。
+     * 列出某個螢幕上看得到的元件（給 tree 指令用）。每筆：{n 編號, t 文字, d 內容描述, id 資源名, c 能不能點, x/y 中心座標（該螢幕像素）}。
      * 密碼欄位整段不讀；沒有文字、描述、也不能點的元件略過；最多 max 筆。服務沒連上回 null。
      */
     static String tree(int displayId, int max) {

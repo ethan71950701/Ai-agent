@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 /**
- * 聊天（問問看）：直接呼叫 Claude API（Haiku 5.5），會用記憶工具。照搬 scripts/chat.py 的提示與規則，不經過 Termux。
+ * 聊天（問問看）：直接呼叫 Claude API（Haiku 5.5），會用記憶工具。
  * 對話紀錄存在 App 自己的資料夾（files/chat_history.json，最多 20 則、24 小時）。
  */
 final class ChatEngine {

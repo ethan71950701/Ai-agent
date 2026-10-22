@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 /**
- * 任務過程（mode 0：Termux 的 assistant.log）與自我檢查結果（mode 4：selftest.log）。
+ * 任務過程（mode 0：assistant.log）與自我檢查結果（mode 4：selftest.log）。
  * 沒有按鈕：進來就讀一次；自我檢查還在跑（沒看到結束標記）時每 2 秒自動刷新。
  */
 public class LogActivity extends Activity {

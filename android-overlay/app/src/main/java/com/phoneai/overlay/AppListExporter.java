@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * 讀出桌面上有圖示的 App「顯示名稱<TAB>套件名稱」。Termux 讀不到別的 App 的顯示名稱，所以由本 App 用 PackageManager 讀，
- * Termux 端（applist.py）經由 OverlayService 的連線（cmd "apps"）取得，再自己存成 ~/apps.tsv。
- * （早先版本由 App 用 root 寫 Termux 家目錄，實測沒寫出檔案、原因未查明，已移除。）
+ * 讀出桌面上有圖示的 App「顯示名稱<TAB>套件名稱」，由本 App 用 PackageManager 讀。
  */
 public final class AppListExporter {
     private AppListExporter() { }

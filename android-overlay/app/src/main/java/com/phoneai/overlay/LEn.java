@@ -10,6 +10,8 @@ final class LEn {
     private LEn() { }
 
     static void fill(HashMap<String, String> m) {
+        m.put("• 刪除 Downloads 裡的記憶備份檔\n", "• Delete the memory backup file in Downloads\n");
+        m.put("• 刪除 PhoneAI 的 Claude API Key、記憶與紀錄（隨 App 一起刪除）\n", "• Delete PhoneAI's Claude API key, memory and logs (removed together with the app)\n");
         m.put("a11y 自動修復 rc=", "a11y auto-repair rc=");
         m.put("a11y 自動修復失敗: ", "a11y auto-repair failed: ");
         m.put("刪除", "Delete");
@@ -275,7 +277,6 @@ final class LEn {
         m.put("存檔失敗：", "Save failed: ");
         m.put("修復失敗：", "Repair failed: ");
         m.put("已補回權限", "Permissions restored");
-        m.put("（Termux 設定有更新，請把 Termux 完全關掉再開一次才會生效）", " (Termux settings changed; fully close Termux and reopen it for them to take effect)");
         m.put("金鑰格式不對（太短、有空白、換行或引號）", "The key format is wrong (too short, or contains spaces, newlines or quotes)");
         m.put("這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」", "This is a personal key (sk-ant-usr-), which returns 401 for this project; recreate the key in the Console: choose \"Unlinked\" for Linked account and \"Default workspace\" for workspace");
         m.put("存檔失敗：無法覆蓋舊的 Key", "Save failed: cannot overwrite the old key");
@@ -394,12 +395,6 @@ final class LEn {
         m.put("• 最後解除安裝 PhoneAI Overlay 本身\n\n刪除後無法復原。", "• finally uninstall PhoneAI Overlay itself\n\nThis cannot be undone.");
         m.put("解除安裝 PhoneAI", "Uninstall PhoneAI");
         m.put("繼續", "Continue");
-        m.put("手機上的 Termux 要一起刪嗎？", "Delete Termux on this phone too?");
-        m.put("Termux 與 Termux:API 可能還有你自己的檔案或設定。\n\n「刪除」會把兩個 App 連同所有資料解除安裝；「保留」只刪 PhoneAI 的東西。", "Termux and Termux:API may hold your own files or settings.\n\n\"Delete\" uninstalls both apps with all their data; \"Keep\" only removes PhoneAI's things.");
-        m.put("刪除 Termux", "Delete Termux");
-        m.put("保留 Termux", "Keep Termux");
-        m.put("真的要刪除 Termux 嗎？", "Really delete Termux?");
-        m.put("Termux 與 Termux:API 會連同所有資料一起刪除，無法復原。", "Termux and Termux:API will be deleted with all their data and this cannot be undone.");
         m.put("確定刪除", "Yes, delete");
         m.put("正在檢查或更新中", "A check or update is already running");
         m.put("檢查更新中…", "Checking for updates…");

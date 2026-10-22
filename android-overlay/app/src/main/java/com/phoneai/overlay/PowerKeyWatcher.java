@@ -16,9 +16,9 @@ import java.util.regex.Pattern;
 /**
  * 長按電源鍵叫出助理面板（給長按電源鍵被系統綁死的手機，例如小米）。
  * 用 root 跑 `getevent -lt <電源鍵裝置>`，按住超過 HOLD_MS 就開 AskActivity（不自動開始聽）。
- * 為什麼放在 App 的無障礙服務裡、不用 Termux 的 powerkey.py：實測 Termux 在背景會被 HyperOS 凍結好幾秒，凍結期間按的電源鍵沒有即時反應；
+ * 為什麼放在 App 的無障礙服務裡：背景的程式在部分手機上會被系統凍結好幾秒，凍結期間按的電源鍵沒有即時反應；
  * 無障礙服務是系統認定的重要服務，不會被凍結，開機後也會自己啟動。
- * 裝置選擇規則跟 scripts/powerkey.py 一樣：名稱含 pwrkey 的優先；排除 bark（小米 13 的 pmic_pwrkey_bark）與 goodix（指紋，也登記了 KEY_POWER）。
+ * 裝置選擇規則：名稱含 pwrkey 的優先；排除 bark（小米 13 的 pmic_pwrkey_bark）與 goodix（指紋，也登記了 KEY_POWER）。
  * 要先讓系統自己的長按什麼都不做（settings put global power_button_long_press 0），否則系統的電源選單／小愛會一起跳；主畫面的開關會幫你設。
  */
 final class PowerKeyWatcher {

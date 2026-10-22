@@ -1,8 +1,7 @@
 package com.phoneai.overlay;
 
 /**
- * 助理面板的路由（App 內）：固定指令用 root 直接執行；操作手機的交給原本的 Termux 迴圈（CommandSender）；其餘是聊天（ChatEngine）。
- * 固定指令清單照搬 scripts/assistant.py 的 COMMANDS。
+ * 助理面板的路由（App 內）：固定指令用 root 直接執行；操作手機與聊天分別交給 Brain 的流程（AgentLoop、ChatEngine）。
  */
 final class Assist {
     static final int FIXED = 1, NONE = 2;

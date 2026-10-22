@@ -18,7 +18,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 /**
- * 【實驗】直接顯示背景螢幕：不經過 scrcpy、影片壓縮與 Termux 轉送。
+ * 【實驗】直接顯示背景螢幕：不經過 scrcpy 與影片壓縮。
  * 開啟後用 root 啟動 DirectDisplay 建立虛擬螢幕（輸出 = 這頁的 TextureView），在上面開「設定」，觸控即時送過去。
  * 啟動：su -c "am start -n com.phoneai.overlay/.DirectTestActivity"；離開這頁就收掉虛擬螢幕。
  */

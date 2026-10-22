@@ -54,7 +54,7 @@ public class OverlayService extends Service {
     static final String ACTION_PREVIEW = "com.phoneai.overlay.PREVIEW";
     /** Now Bar 上的「接手／完成」按鈕：切換使用者接手背景螢幕。 */
     static final String ACTION_TAKEOVER = "com.phoneai.overlay.TAKEOVER";
-    /** 使用者按下送出的瞬間由 App 發出：先顯示 Now Bar「準備中」與光暈，不用等 Termux 那邊（route + 啟動 agent2 + 連線要好幾秒）。 */
+    /** 使用者按下送出的瞬間由 App 發出：先顯示 Now Bar「準備中」與光暈，不用等後面的流程（路由、啟動、連線要好幾秒）。 */
     static final String ACTION_BEGIN = "com.phoneai.overlay.BEGIN";
     static final long PENDING_MS = 15_000;  // 這麼久都沒有 agent2 連上來就收掉（例如指令立刻就做完了）
     static final int CHIP_COLOR = 0xFF0B6BCB;  // 膠囊底色（藍）
@@ -486,7 +486,7 @@ public class OverlayService extends Service {
                 sp.edit().putString("history", now.toString()).apply();
                 return "ok";
             }
-            case "speak": {  // 朗讀（App 自己用系統語音合成，不靠 Termux 的 termux-tts-speak）；使用者在首頁關掉朗讀就回 off
+            case "speak": {  // 朗讀（App 自己用系統語音合成）；使用者在首頁關掉朗讀就回 off
                 if (!getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("tts_on", true)) return "off";
                 final String text = j.optString("text");
                 if (text.isEmpty()) return "ok";
@@ -526,7 +526,7 @@ public class OverlayService extends Service {
         }
     }
 
-    /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"，agent2 會改用 termux-dialog。 */
+    /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"。 */
     private String confirm(String msg) {
         java.util.concurrent.CompletableFuture<Boolean> ans = new java.util.concurrent.CompletableFuture<>();
         java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
@@ -606,7 +606,7 @@ public class OverlayService extends Service {
         }).start();
     }
 
-    /** App 裡的「測試」按鈕：不需要 Termux，示範通知更新、漣漪與滑動。 */
+    /** App 裡的「測試」按鈕：示範通知更新、漣漪與滑動。 */
     private void runTest() {
         main.removeCallbacks(idleStop);
         int w = getResources().getDisplayMetrics().widthPixels;

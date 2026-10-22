@@ -59,7 +59,7 @@ public class AssistantSheet {
     private final EditText input;
     private final SendIconView send;
     private final LinearLayout row;
-    /** 目前開著的面板（OverlayService 收到 Termux 的 reply／sheet_close 指令時用）。只在主執行緒讀寫。 */
+    /** 目前開著的面板（OverlayService 收到 reply／sheet_close 指令時用）。只在主執行緒讀寫。 */
     static AssistantSheet current;
     /** AI 要問使用者問題時（agent2 的 ask_user）：問題顯示在光球上方；左邊的背景模式鈕藏起來；送出後答案交還給 agent2，不是當成新任務。 */
     static volatile java.util.concurrent.CompletableFuture<String> questionAnswer;
@@ -664,7 +664,7 @@ public class AssistantSheet {
             return;
         }
         // 送出後面板不關：輸入列淡出，光球留著轉（思考中）。助理如果是用文字回答，光球會直接變成回答卡片；
-        // 如果是要操作手機或開 App，Termux 會通知 App 把面板收起來。30 秒都沒消息就自己收起來。
+        // 如果是要操作手機或開 App，操作開始時會把面板收起來。30 秒都沒消息就自己收起來。
         orb.setState(OrbView.THINKING);
         row.animate().alpha(0f).translationY(30 * d).setDuration(240).start();
         row.setEnabled(false);
@@ -746,7 +746,7 @@ public class AssistantSheet {
                 .setInterpolator(new DecelerateInterpolator(2.2f)).start();
     }
 
-    /** Termux 說這句話要操作手機（或已經做完）：還在等回答的話就把面板收起來；已經顯示回答卡片就不動。 */
+    /** 這句話要操作手機（或已經做完）：還在等回答的話就把面板收起來；已經顯示回答卡片就不動。 */
     public void closeIfWaiting() {
         if (waiting && !replyShown) dismiss();
     }

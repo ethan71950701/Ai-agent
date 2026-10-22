@@ -11,8 +11,8 @@ import android.speech.tts.TextToSpeech;
 import java.util.Locale;
 
 /**
- * 助理的通知與朗讀（取代 Termux:API 的 termux-notification、termux-tts-speak）。
- * 通知會顯示完整文字（聲音關掉也看得到）；朗讀用媒體音量，跟原本 `termux-tts-speak -s MUSIC` 一樣。
+ * 助理的通知與朗讀（系統通知與系統朗讀）。
+ * 通知會顯示完整文字（聲音關掉也看得到）；朗讀用媒體音量。
  * 朗讀開關是「設定 → 語音 → 朗讀結果」（cfg 的 tts_on）。
  */
 final class Notify {

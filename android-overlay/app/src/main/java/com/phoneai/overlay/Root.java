@@ -6,14 +6,14 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * 找到能用的 su。App 直接執行 /system/bin/su 在 KernelSU 上會失敗（KernelSU 是在 execve 時攔截，不是真的有檔案）。
- * 解法跟 Termux 的 su 一樣：先跑一個 shell 腳本，由 shell 去執行 su。這個腳本放在 App 自己的資料夾裡。
+ * 做法：先跑一個 shell 腳本，由 shell 去執行 su。這個腳本放在 App 自己的資料夾裡。
  */
 final class Root {
     private Root() { }
 
     private static String found;
 
-    /** 放在 App 資料夾裡的 su 包裝腳本（內容與 Termux 的 su 相同的邏輯）。 */
+    /** 放在 App 資料夾裡的 su 包裝腳本。 */
     private static final String WRAPPER =
             "#!/system/bin/sh\n"
             + "unset LD_LIBRARY_PATH LD_PRELOAD\n"

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 助理的記憶（待辦與筆記）：檔案在 App 自己的資料夾（files/memory.json），格式跟原本 Termux 的 ~/memory.json 一樣。
+ * 助理的記憶（待辦與筆記）：檔案在 App 自己的資料夾（files/memory.json），格式與舊版的 memory.json 相同。
  * 聊天模型透過 runTool 操作它；安全規則照搬 scripts/memory.py：永久記憶不能改刪、刪除是標記、
  * 一次刪超過 3 項或清空都要使用者按確認。
  */
