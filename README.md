@@ -1,65 +1,71 @@
-# phone-ai-agent
+# PhoneAI Overlay
 
-在**已 root 的 Android 手機（Samsung S25+）**上，用 **Termux** 做一個類似 Gemini 的手機助手：
-說（目前是打字）一句話，AI 或 root 指令幫你操作手機。全部在手機上跑，不需要電腦。
+[English](README.en.md) | 繁體中文
 
-> ⚠️ **現況（2026-10-22）：App 已經是全部，不再需要 Termux 與 Python 腳本。** `scripts/`、`install.sh`、`tests/` 都已刪除，助理面板、路由、操作畫面迴圈（`AgentLoop`）、記憶、排程、通知與朗讀、語音辨識都在 `android-overlay/` 裡。
-> 現行架構與規則請看 [`CLAUDE.md`](CLAUDE.md)。**本文件下面提到 Termux、`assistant.py`、`agent2.py`、`~/.claude_key`、`update_app.py` 的段落都是歷史紀錄**（當時的實測結果仍有參考價值，但指令與路徑已經不存在）。
-> 底欄／透鏡液態玻璃：著色器移植自使用者的 Samsung Glass 模組（設計參考 KernelSU 的 FloatingBottomBar／Lens），在 `GlassBar.java`；按住時透鏡與底欄放大、加速度驅動的彈簧形變、圖示只在透鏡下變色。使用者在手機上確認過效果。
+在**已 root 的 Android 手機**上，用一個 App 做出的 AI 手機助手：用說的或打字下指令，它就能幫你開 App、開關設定、看著螢幕自己點擊、滑動、輸入，需要時還能上網搜尋回答。
 
-> 這是個人實驗專案，作者是新手；很多部分「在作者手機上驗證過」但不保證在你的機型能用。
-> **接手/繼續開發請先讀 [`HANDOFF.md`](HANDOFF.md)。**
+整個專案就是一個 App，**不需要電腦、不需要 Termux、不需要 Python**。
+
+> 這是個人實驗專案，很多功能只在作者自己的手機上驗證過，不保證每台機型都能用。**接手或繼續開發請先讀 [`CLAUDE.md`](CLAUDE.md) 與 [`HANDOFF.md`](HANDOFF.md)。**
 
 ## 它能做什麼
 
-用一個小 Android App（**PhoneAI Overlay**，`android-overlay/`）當操作介面，Termux 裡的 Python 當大腦：
-
-| 怎麼叫出來 | 說明 |
+| 功能 | 說明 |
 |---|---|
-| App 主畫面的輸入框 | 打字，或按「🎤 語音」（辨識完倒數 5 秒才送出，期間可修改） |
-| 快速設定磁貼「AI 助手」 | 下拉面板點一下，跳出輸入視窗 |
-| 長按電源鍵 | 把 App 設成「預設數位助理」（三星要不要改側邊鍵設定視機型而定） |
-| 螢幕邊緣的浮動「AI」圓鈕 | App 主畫面勾選；可拖曳 |
+| 助理面板 | 打字或語音輸入。可從 App 主畫面、快速設定磁貼、長按電源鍵（設為預設數位助理）或螢幕邊緣的浮動按鈕叫出 |
+| 固定指令（root，瞬間） | 開關 Wi-Fi／藍牙、返回、音量、用名稱開任何 App |
+| 聊天與查詢 | 直接問問題；電量、儲存空間、時間等簡單問題在本機回答，不用網路 |
+| 自動操作畫面 | Claude 看著截圖，一步一步點擊、滑動、拖曳、輸入，完成你交代的事（最多 8 步，卡住會升級到更強的模型） |
+| 聯網搜尋 | 需要最新資訊時由 Claude 搜尋（每個任務有次數上限） |
+| 記憶與定時 | 待辦與筆記、「每天早上 8 點提醒我…」這類定時任務 |
+| 語音辨識 | 離線的 SenseVoice 模型（在 App 內下載），辨識完倒數幾秒才送出，期間可修改 |
+| 執行時的提示 | 每次點擊處會有漣漪、通知上有「停止」鈕；三星手機還會出現 Now Bar 膠囊（選用） |
+| 底欄與玻璃效果 | 液態玻璃風格的底欄與透鏡按鈕，主題色與介面語言可在設定調整 |
 
-送出的句子由 `assistant.py` 分流：
+## 需求
 
-| 方式 | 例子 | 速度 | 需要網路/API |
-|---|---|---|---|
-| root 直接指令 / 用名稱開任何 App | 開關藍牙/Wi-Fi、返回、音量、「開相機」「開B站」 | 瞬間 | 否 |
-| Claude 自動迴圈 `agent2.py`（Sonnet 5.5，卡住升 Opus 5.5 做一步後降回；看截圖點擊、滑動、輸入；必要時**聯網搜尋**，每任務最多 2 次） | 「打開 Chrome 搜尋今天天氣」「進入Wi-Fi頁面」 | 約 2 秒/步 | 是 |
-| Haiku 5.5 路由 | 「藍芽打開」（錯字也行）-> 指令表；其餘交給 Claude 迴圈 | 約 1 秒 | 是 |
-| 本地模型點螢幕（Qwen3-VL-2B） | **預設關閉**（手機會很燙、約 20 秒/步）；`ASSIST_LOCAL=1` 才啟用 | 慢 | 否 |
+- 已 root 的 Android 13 以上手機
+- 一組 [Anthropic API Key](https://console.anthropic.com/)（Key 只存在手機上 App 的私有資料夾，不進 repo）
+- 無障礙服務與懸浮視窗權限（App 內的「設定導覽」會一步一步帶你檢查）
 
-執行時：左上角 **Now Bar 膠囊**（「AI 3/8」）、鎖定畫面通知、每次點擊處的**藍色漣漪**、通知上的「停止」鈕。
-App 主畫面會列出最近 5 筆任務的步數、token、搜尋次數與**估價**。
+## 安裝
 
-狀態：以上都在作者的 Samsung S25+（Android 16 / One UI）上實測過，唯一還沒實測的是 App 的原生確認框；細節見 [`HANDOFF.md`](HANDOFF.md) 第 6 節狀態表。
-成本：同一個「進入 Wi-Fi 頁面」任務（4 步）約 $0.012（提示詞快取後，估算；以 Anthropic Console 的 Usage 為準）。
+1. 到本 repo 的 **Releases** 下載最新的 `app-debug.apk` 並安裝（APK 使用固定金鑰簽名，之後可直接覆蓋安裝；App 內的「功能 → 維護 → 檢查並更新」也能一鍵更新）。
+2. 打開 App，跟著「設定導覽」完成：root 授權、懸浮視窗、無障礙服務、通知權限。
+3. 到「功能 → 維護 → Claude API Key」貼上你的 Key。
+4. 在首頁輸入框送出「開藍牙」或「進入設定裡的 Wi-Fi 頁面」試試看。
 
-## 快速開始
-1. 依 [`docs/SETUP.md`](docs/SETUP.md) 安裝 Termux（本地模型是選用，不裝也能用 Claude 版）。
-2. `bash install.sh` 把腳本複製到 `~`。
-3. 把 Anthropic API Key 存到 `~/.claude_key`（**不要提交進 git**，做法見 SETUP 第 6 節）。
-4. 安裝 App：到 GitHub 的 Actions 下載最新的 `phoneai-overlay-apk`（zip，解壓出 `app-debug.apk`），再在 Termux 跑 `bash ~/overlay_install.sh`
-   （步驟與踩坑見 SETUP 第 10 節）。
-5. 打開 App，在輸入框送「開藍牙」或「進入設定的Wi-Fi頁面」。
-6. 遇到問題看 [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)。
+## 安全與隱私
 
-## 目錄
-```
-CLAUDE.md               給 Claude Code 的專案說明（指向 HANDOFF.md）
-HANDOFF.md              給接手 AI/人的完整交接（目標、架構、狀態、決策、下一步）
-android-overlay/        PhoneAI Overlay App（Java，無 AndroidX）：漣漪、Now Bar 通知、輸入/語音/磁貼/浮動按鈕、確認框
-.github/workflows/      GitHub Actions：雲端編譯 APK（使用者沒有電腦）
-docs/                   SETUP（安裝）、TROUBLESHOOTING（問題與解法）、EXPERIMENTS（實測數據）、ROADMAP_OVERLAY（Now Bar/漣漪/App 的研究與決策紀錄）
-scripts/                assistant.py（分流）、agent2.py（Claude 迴圈）、overlay.py / applist.py（跟 App 溝通）、path.py（本地模型，預設關）...
-install.sh              複製腳本到 ~
+- 會用 root 權限點擊螢幕。App 沒有對外網路入口；內部只有一個只連 127.0.0.1 的本機連線，而且需要只有 root 讀得到的 token 才能下指令。
+- 付款、轉帳、刪除、安裝、傳訊息、登入、密碼等**敏感操作一律跳確認框**，沒回應就視為不同意。
+- 自動操作每一步會把**截圖傳到 Anthropic**；不要在銀行、私訊或含個資的畫面使用。
+- API Key 絕對不要貼到聊天或提交進 git。截圖、紀錄檔、模型檔都已在 `.gitignore` 排除。
+
+## 自己編譯
+
+```bash
+cd android-overlay
+gradle assembleDebug          # 需要 Android SDK 36 與 Gradle 8.14 以上
 ```
 
-## 安全
-- 會用 root 權限點擊螢幕，App 也被授權 root（用於「停止」鈕）。App 沒有任何對外開放、能收指令的入口（Termux 到 App 的連線只開在手機內部，且要有只有 root 讀得到的 token）。只放行白名單指令；付款/轉帳/刪除/安裝等敏感操作一律跳確認框由你決定（不是直接拒絕）；有最大步數、卡住偵測，通知上有「停止」鈕。
-- Claude 版每一步會把**截圖傳到 Anthropic**；不要在銀行、私訊、含個資的畫面使用。
-- 不要提交 Key、截圖、紀錄檔（`.gitignore` 已排除）。
+正式 APK 由 GitHub Actions（`.github/workflows/android.yml`）編譯並發布到 Releases。
+
+## 專案結構
+
+```
+CLAUDE.md          給 Claude Code 的專案說明（先讀這個）
+HANDOFF.md         完整交接：目標、狀態表、決策、下一步
+android-overlay/   App 原始碼（Java、Gradle）
+.github/workflows/ 雲端編譯 APK
+docs/              研究與決策紀錄、疑難排解（部分是 Termux 時期的歷史紀錄）
+```
+
+## 致謝
+
+- 離線語音辨識：[sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) 與 SenseVoice。
+- 底欄玻璃效果的設計參考了 KernelSU 管理器的 FloatingBottomBar／Lens 與 Kyant 的 AndroidLiquidGlass（只參考設計，沒有複製它們的程式碼）。
 
 ## 授權
+
 Apache License 2.0，見 [`LICENSE`](LICENSE)。
