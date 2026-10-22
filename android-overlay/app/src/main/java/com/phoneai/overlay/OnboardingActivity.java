@@ -154,6 +154,12 @@ public class OnboardingActivity extends Activity {
             page.setPadding(Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 48), Ui.dp(OnboardingActivity.this, 32), Ui.dp(OnboardingActivity.this, 120));
             DemoView demo = new DemoView(OnboardingActivity.this, i);
             page.addView(demo, new LinearLayout.LayoutParams(-1, 0, 1f));
+            // 文字區佔一半高度並置中：標題與說明（welcome 的設定圓點也在這裡）不再貼在下方或偏上
+            LinearLayout textBox = new LinearLayout(OnboardingActivity.this);
+            textBox.setOrientation(LinearLayout.VERTICAL);
+            textBox.setGravity(android.view.Gravity.CENTER);
+            textBox.setLayoutParams(new LinearLayout.LayoutParams(-1, 0, 1f));
+            page.addView(textBox);
             Ui.bounceIn(demo);   // 示意圖進場彈一下
             TextView t = new TextView(OnboardingActivity.this);
             t.setText(L.t(TITLES[i]));
@@ -162,7 +168,7 @@ public class OnboardingActivity extends Activity {
             t.setGravity(android.view.Gravity.CENTER);
             LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, -2);
             tl.topMargin = Ui.dp(OnboardingActivity.this, 24);
-            page.addView(t, tl);
+            textBox.addView(t, tl);
             TextView b = new TextView(OnboardingActivity.this);
             b.setText(L.t(BODIES[i]));
             b.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
@@ -170,8 +176,8 @@ public class OnboardingActivity extends Activity {
             b.setGravity(android.view.Gravity.CENTER);
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, -2);
             bl.topMargin = Ui.dp(OnboardingActivity.this, 12);
-            page.addView(b, bl);
-            if (i == 0) addThemePicker(OnboardingActivity.this, page);
+            textBox.addView(b, bl);
+            if (i == 0) addThemePicker(OnboardingActivity.this, textBox);
         }
     }
 }
