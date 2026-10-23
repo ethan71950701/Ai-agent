@@ -135,7 +135,6 @@ public class FileSearchActivity extends Activity {
         for (String[] r : rows) {
             final boolean isFile = "F".equals(r[0]);
             LinearLayout card = Ui.card(this, results);
-            card.setMinimumHeight(Ui.dp(this, 64));
             if (isFile) {
                 card.setClickable(true);
                 card.setBackground(rippleBackground());
