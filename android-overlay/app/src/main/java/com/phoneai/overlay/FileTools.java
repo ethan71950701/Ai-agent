@@ -238,6 +238,16 @@ final class FileTools {
 
     /** 找到這台已配對裝置現在的位址，回傳可用的客戶端。 */
     static TransferClient clientFor(Context c, TransferStore.Peer p) throws Exception {
+        // 先試記住的位址（外網 Tailscale 或固定 IP 時最快）；不通才用區網搜尋
+        if (p.ip != null && p.port > 0) {
+            TransferClient known = new TransferClient(p.ip, p.port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+            try {
+                known.ping();
+                return known;
+            } catch (Exception ignored) {
+                // 記住的位址連不上：往下用區網搜尋
+            }
+        }
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 2500, TransferDiscovery.PORT, extra(one)).get(p.id);

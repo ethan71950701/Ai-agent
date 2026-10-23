@@ -70,10 +70,10 @@ class Store:
     def peers(self):
         return [dict(p) for p in self._cfg.get("peers", [])]
 
-    def add_peer(self, peer_id, name, key):
+    def add_peer(self, peer_id, name, key, ip=None, port=None):
         with self._lock:
             peers = [p for p in self._cfg.get("peers", []) if p["id"] != peer_id]
-            peers.append({"id": peer_id, "name": name, "key": crypto.hexs(key)})
+            peers.append({"id": peer_id, "name": name, "key": crypto.hexs(key), "ip": ip, "port": port})
             self._cfg["peers"] = peers
             self._save()
 
@@ -91,6 +91,15 @@ class Store:
     def key_of(self, peer_id):
         p = self.peer(peer_id)
         return crypto.unhex(p["key"]) if p else None
+
+    def update_peer_address(self, peer_id, ip, port):
+        """記住對方最後一次的位址（區網或 Tailscale），下次區網搜不到時直接用它。"""
+        with self._lock:
+            for p in self._cfg.get("peers", []):
+                if p["id"] == peer_id and (p.get("ip"), p.get("port")) != (ip, port):
+                    p["ip"], p["port"] = ip, port
+                    self._save()
+                    return
 
     def update_peer_name(self, peer_id, name):
         with self._lock:

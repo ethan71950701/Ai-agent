@@ -106,6 +106,11 @@ class ServiceFlow(unittest.TestCase):
         self.assertFalse(os.path.exists(dest))
         self.assertFalse(os.path.exists(dest + ".part"))
 
+    def test_tailscale_address_is_allowed(self):
+        self.assertTrue(net._allowed("100.81.45.68"))     # Tailscale
+        self.assertTrue(net._allowed("192.168.1.10"))     # 區網
+        self.assertFalse(net._allowed("8.8.8.8"))         # 一般的外網位址不接受
+
     def test_store_peers_and_log(self):
         s = Store(os.path.join(self.tmp, "s"), inbox=os.path.join(self.tmp, "s", "inbox"))
         s.add_peer("p1", "手機", os.urandom(32))

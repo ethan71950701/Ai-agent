@@ -137,7 +137,7 @@ class Service:
             except OSError:
                 state = "none"
         if state == "accepted":
-            self.store.add_peer(offer.peer_id, offer.peer_name, offer.key)
+            self.store.add_peer(offer.peer_id, offer.peer_name, offer.key, ip, port)
             self.store.log(f"已配對 {offer.peer_name}")
             return True
         return False
@@ -162,11 +162,21 @@ class Service:
         p = self.store.peer(peer_id)
         if not p:
             raise IOError("這台裝置還沒配對")
+        key = crypto_key(p)
+        # 先試記住的位址（外網或固定 IP 時最快）；不通才用區網搜尋
+        if p.get("ip") and p.get("port"):
+            c = net.Client(p["ip"], p["port"], self.my_id(), self.my_name(), key)
+            try:
+                c.ping()
+                return c
+            except OSError:
+                pass
         f = net.scan(peer_id, timeout=2.5).get(peer_id)
         if not f:
-            raise IOError(f"找不到「{p['name']}」：可能沒開機、沒開互傳，或不在同一個網路")
+            raise IOError(f"找不到「{p['name']}」：可能沒開機、沒開互傳，或不在同一個網路（外網請確認 Tailscale 都在線）")
         self.store.update_peer_name(peer_id, f.name)
-        return net.Client(f.ip, f.port, self.my_id(), self.my_name(), crypto_key(p))
+        self.store.update_peer_address(peer_id, f.ip, f.port)
+        return net.Client(f.ip, f.port, self.my_id(), self.my_name(), key)
 
     def send_file(self, peer_id, path):
         self._stop.clear()

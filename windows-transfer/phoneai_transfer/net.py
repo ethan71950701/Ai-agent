@@ -31,10 +31,13 @@ def _local_ips():
     return ips
 
 
+TAILNET = ipaddress.ip_network("100.64.0.0/10")   # Tailscale 的位址範圍（也是 CGNAT 範圍，Python 不算 private）
+
+
 def _allowed(ip):
-    """只服務區網（跟手機版一樣）。"""
+    """只服務區網與 Tailscale（外網連線）；其他位址一律拒絕。"""
     a = ipaddress.ip_address(ip)
-    return a.is_private or a.is_loopback or a.is_link_local
+    return a.is_private or a.is_loopback or a.is_link_local or a in TAILNET
 
 
 class HttpError(IOError):

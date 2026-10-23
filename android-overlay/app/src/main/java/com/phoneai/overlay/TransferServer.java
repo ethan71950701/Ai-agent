@@ -100,13 +100,20 @@ final class TransferServer {
         }
     }
 
+    /** 區網、本機、link-local，以及 Tailscale 的位址範圍（100.64.0.0/10，Java 不把它算成區網）。 */
+    static boolean allowed(InetAddress a) {
+        if (a.isSiteLocalAddress() || a.isLoopbackAddress() || a.isLinkLocalAddress()) return true;
+        byte[] b = a.getAddress();
+        return b.length == 4 && (b[0] & 255) == 100 && (b[1] & 0xC0) == 64;
+    }
+
     // ---------- 連線處理 ----------
 
     private void serve(Socket sock) {
         try (Socket s = sock) {
             s.setSoTimeout(20000);
             InetAddress a = s.getInetAddress();
-            if (!(a.isSiteLocalAddress() || a.isLoopbackAddress() || a.isLinkLocalAddress())) return;   // 只服務區網
+            if (!allowed(a)) return;   // 只服務區網與 Tailscale（100.64.0.0/10）
             String ip = a.getHostAddress();
             InputStream in = new BufferedInputStream(s.getInputStream());
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
