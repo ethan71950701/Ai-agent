@@ -5,6 +5,12 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
+try:   # 拖曳檔案進視窗需要 tkinterdnd2；沒有的話仍可以用按鈕傳檔案
+    from tkinterdnd2 import DND_FILES, TkinterDnD
+    HAS_DND = True
+except ImportError:
+    HAS_DND = False
+
 from . import net, updater, version
 from .service import Service, Stopped, _size
 
@@ -96,7 +102,7 @@ class App:
     def __init__(self):
         updater.cleanup_old()
         self.svc = Service()
-        self.root = tk.Tk()
+        self.root = TkinterDnD.Tk() if HAS_DND else tk.Tk()
         self.root.title("PhoneAI 互傳檔案")
         self.root.geometry("460x720")
         self.root.minsize(420, 600)
@@ -113,6 +119,10 @@ class App:
         pad = {"padx": 12, "pady": 6}
         top = ttk.Frame(self.root)
         top.pack(fill="x", **pad)
+        if HAS_DND:
+            self.root.drop_target_register(DND_FILES)
+            self.root.dnd_bind("<<Drop>>", self._on_drop)
+            ttk.Label(self.root, text="可以把檔案直接拖進這個視窗，再選要傳給哪一台").pack(anchor="w", padx=12)
         ttk.Checkbutton(top, text="開啟互傳檔案", variable=self.enabled, command=lambda: self._set_enabled(self.enabled.get())).pack(side="left")
         self.state_label = ttk.Label(top, text="")
         self.state_label.pack(side="right")
@@ -186,6 +196,35 @@ class App:
         self.log.delete("1.0", "end")
         self.log.insert("end", "\n".join(self.svc.store.recent(15)))
         self.log.config(state="disabled")
+
+    # ---- 拖曳檔案進來：選裝置後傳出去 ----
+    def _on_drop(self, event):
+        paths = [p for p in self.root.tk.splitlist(event.data) if os.path.isfile(p)]
+        if not paths:
+            return event.action
+        peers = self.svc.store.peers()
+        if not peers:
+            messagebox.showinfo("傳檔案", "還沒有配對過的裝置。", parent=self.root)
+            return event.action
+        win = tk.Toplevel(self.root)
+        win.title(f"傳給哪一台（{len(paths)} 個檔案）")
+        win.geometry("360x260")
+        lb = tk.Listbox(win)
+        lb.pack(fill="both", expand=True, padx=12, pady=12)
+        for p in peers:
+            lb.insert("end", p["name"])
+        lb.selection_set(0)
+
+        def send():
+            sel = lb.curselection()
+            if not sel:
+                return
+            peer = peers[sel[0]]
+            win.destroy()
+            self._run(lambda: [self.svc.send_file(peer["id"], p) for p in paths])
+
+        ttk.Button(win, text="傳送", command=send).pack(pady=8)
+        return event.action
 
     # ---- 手動搜尋 ----
     def _search_local(self):
