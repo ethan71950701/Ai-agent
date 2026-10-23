@@ -588,6 +588,8 @@ final class LEn {
         m.put("模型：聊天與路由 ", "Models: chat and routing ");
         m.put("；自動操作 ", "; automatic actions ");
         m.put("；搜尋 ", "; search ");
+        m.put("開面板時自動聽", "Listen when the panel opens");
+        m.put("叫出助理面板就開始聽；關掉就要自己點光球", "Start listening as soon as the assistant panel opens; turn off to tap the orb yourself");
         m.put("・", "- ");
     }
 }

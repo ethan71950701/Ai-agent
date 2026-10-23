@@ -731,10 +731,12 @@ public class MainActivity extends Activity {
         Ui.row(this, g, 2, 3, "sparkle", L.t("預設數位助理"), L.t("到系統設定選擇（長按電源鍵叫出）"), Ui.chevron(this), v -> openAssistSettings());
 
         g = Ui.expandGroup(this, box, "wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
-        Ui.switchRow(this, g, 0, 2, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
+        Ui.switchRow(this, g, 0, 3, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
                 cfg().getBoolean("voice_sys", false), (v, on) -> cfg().edit().putBoolean("voice_sys", on).apply());
-        Ui.switchRow(this, g, 1, 2, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
+        Ui.switchRow(this, g, 1, 3, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
                 (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
+        Ui.switchRow(this, g, 2, 3, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點光球"), cfg().getBoolean("voice_auto", true),
+                (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
 
         g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
         Ui.switchRow(this, g, 0, 4, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),

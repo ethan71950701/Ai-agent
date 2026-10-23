@@ -18,7 +18,7 @@ final class ReplyCard {
 
     private ReplyCard() { }
 
-    static FrameLayout build(Activity act, String title, String text, Runnable close) {
+    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) {
         final float d = act.getResources().getDisplayMetrics().density;
         FrameLayout card = new FrameLayout(act);
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});
@@ -39,7 +39,7 @@ final class ReplyCard {
         card.addView(glowBox, new FrameLayout.LayoutParams(-1, glowH, Gravity.BOTTOM));
         card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> aurora.setGlowY(glowH - 16 * d));
 
-        final int maxH = (int) (act.getResources().getDisplayMetrics().heightPixels * 0.55f);
+        final int maxH = maxHeightPx;   // 呼叫端依畫面實際可用的高度算好（卡片從上方排起，長文在裡面捲動，不會超出螢幕）
         ScrollView sv = new ScrollView(act) {
             @Override
             protected void onMeasure(int w, int h) {

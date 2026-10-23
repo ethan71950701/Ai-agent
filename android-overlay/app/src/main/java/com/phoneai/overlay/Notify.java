@@ -26,8 +26,9 @@ final class Notify {
     /** 唸出來，同時用通知顯示。 */
     static void say(Context c, String text) {
         if (text == null || text.isEmpty()) return;
-        notifyText(c, L.t("AI 助手"), text, ID);
-        if (c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tts_on", true)) speak(c, text);
+        String plain = Md.plain(text);   // 朗讀與通知不要出現「星號、井字」這類符號
+        notifyText(c, L.t("AI 助手"), plain, ID);
+        if (c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tts_on", true)) speak(c, plain);
     }
 
     static void notifyText(Context c, String title, String text, int id) {

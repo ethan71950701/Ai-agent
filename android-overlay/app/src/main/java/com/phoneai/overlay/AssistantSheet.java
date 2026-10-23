@@ -761,18 +761,20 @@ public class AssistantSheet {
         setText("");
         setStatus(L.t("繼續問…"));
         aurora.setEnergy(0.45f);
-        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss);
+        final int topPad = (int) (56 * d), botPad = (int) (240 * d) + bottomInset;
+        final int maxH = Math.max((int) (160 * d), root.getHeight() - topPad - botPad);   // 狀態列下面到輸入列上面之間能用的高度
+        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH);
         replyCard = card;
         // 卡片放在「狀態列下面」到「輸入列上面」這一段的中間偏上，不要貼著底部（使用者回報太偏下）
-        final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL);
-        cp.setMargins((int) (14 * d), (int) (40 * d), (int) (14 * d), (int) (240 * d) + bottomInset);
+        final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
+        cp.setMargins((int) (14 * d), topPad, (int) (14 * d), botPad);
         card.setLayoutParams(cp);
         card.setAlpha(0f);
-        card.setTranslationY(36 * d - 0.04f * root.getHeight());
+        card.setTranslationY(36 * d);
         card.setScaleX(0.97f);
         card.setScaleY(0.97f);
         root.addView(card, cp);
-        card.animate().alpha(1f).translationY(-0.04f * root.getHeight()).scaleX(1f).scaleY(1f).setDuration(400)
+        card.animate().alpha(1f).translationY(0f).scaleX(1f).scaleY(1f).setDuration(400)
                 .setInterpolator(new DecelerateInterpolator(2.2f)).start();
     }
 

@@ -46,7 +46,7 @@ public class AskActivity extends Activity {
      *  只能用系統視窗的手機自動聽只會跳出醜視窗，所以那種不自動聽；裝了離線辨識就不會跳視窗，可以直接聽。 */
     private boolean autoVoice(Intent i) {
         boolean sysOnly = getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("voice_sys", false) && !SherpaEngine.ready(this);
-        return i.getBooleanExtra("voice", true) && !sysOnly;
+        return i.getBooleanExtra("voice", true) && getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("voice_auto", true) && !sysOnly;
     }
 
     @Override

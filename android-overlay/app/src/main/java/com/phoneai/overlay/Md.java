@@ -18,6 +18,17 @@ final class Md {
 
     private Md() { }
 
+    /** 朗讀與通知用的純文字：拿掉 Markdown 符號（粗體、標題、清單符號、程式碼標記；連結只留文字）。 */
+    static String plain(String s) {
+        if (s == null) return "";
+        String t = s.replaceAll("(?m)^\\s*```.*$", "");
+        t = t.replaceAll("\\[([^\\]]+)\\]\\([^)]*\\)", "$1");
+        t = t.replaceAll("(?m)^#+\\s*", "");
+        t = t.replaceAll("(?m)^\\s*[-*•]\\s+", "");
+        t = t.replace("**", "").replace("__", "").replace("`", "").replace("*", "");
+        return t.replaceAll("\\n{3,}", "\n\n").trim();
+    }
+
     static SpannableStringBuilder render(String s) {
         SpannableStringBuilder out = new SpannableStringBuilder();
         String[] lines = s.split("\n", -1);
