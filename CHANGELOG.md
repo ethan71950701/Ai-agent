@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1244
+
 - 瀏覽與找檔案頁套用主題色；磁碟（C:、D:）名稱會正確顯示｜Browse and find-files pages use the theme color; drive names (C:, D:) now show correctly
 
 - 修正電腦版「檢查更新」找不到檔案：GitHub 會去掉檔名中的中文，改用英文檔名 PhoneAI.exe 上傳｜Fix: Windows app update check could not find the file (GitHub strips Chinese from file names), so the file is now uploaded as PhoneAI.exe
