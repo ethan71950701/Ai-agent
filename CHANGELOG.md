@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 手機可以從其他 App 的「分享」選 PhoneAI 傳檔案，挑裝置後傳出去；電腦版的按鈕改成「傳送過去」和「接收」，移除改成雙擊裝置名字｜Phone: share a file from any app to PhoneAI and pick the device to send it to; Computer app: buttons are now Send and Receive, and remove is double-clicking the device name
 
+## 1.0.1241
+
 - 互傳檔案頁：「找檔案」改放在每台裝置旁邊（直接搜那台）；移除改成點裝置名字｜Transfer page: Find files now sits next to each device (searches that device); remove by tapping the device name
 
 - 電腦版加上「檢查更新」一鍵更新：從 GitHub 的 windows-latest 預發行版下載新的 exe，替換後自動重新開啟｜The Windows app has a Check for updates button: it downloads the new exe from the windows-latest pre-release, replaces itself and restarts
