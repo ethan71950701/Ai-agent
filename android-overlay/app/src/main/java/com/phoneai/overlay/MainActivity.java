@@ -39,6 +39,8 @@ public class MainActivity extends Activity {
     private float dragX, dragV, lastVel, accExt, stretchD, stretchV, pressP;
     private long lastTick;
     private boolean stretching;
+    /** 形變的門檻：加速度低於 ACC_DEAD（dp/ms²）、速度低於 VEL_DEAD（dp/ms）的抖動不形變，免得輕微碰一下畫面就抖。數字可依實測調整。 */
+    private static final float ACC_DEAD = 0.004f, VEL_DEAD = 0.02f;
 
     /** 按住時每一幀更新透鏡與底欄的縮放：按住放大逐漸到位（pressP），再加上由手指加速度驅動的彈簧阻尼形變（d）。 */
     private void startStretch() {
@@ -285,7 +287,9 @@ public class MainActivity extends Activity {
                         dragV = dragV * 0.7f + vel * 0.3f;                                               // 平滑後的速度
                         float acc = (dragV - lastVel) / dtMs;                                            // 加速度 dp/ms²
                         lastVel = dragV;
-                        accExt = Math.min(0.3f, accExt * 0.5f + Math.abs(acc) * 0.5f);
+                        float jerk = Math.max(0f, Math.abs(acc) - ACC_DEAD);                             // 扣掉手指微抖的加速度，輕微晃動不形變
+                        if (Math.abs(dragV) < VEL_DEAD) jerk = 0f;                                       // 幾乎沒在移動時不形變
+                        accExt = Math.min(0.3f, accExt * 0.5f + jerk * 0.5f);
                     }
                     dragX = ex;
                     dragT = nowMs;

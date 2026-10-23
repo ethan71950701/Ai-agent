@@ -329,7 +329,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
-        sh.setFloatUniform("edgeWidth", 1.5f * dp);
+        sh.setFloatUniform("edgeWidth", 1.0f * dp);   // 彩虹環細一點（1dp），跟酷安一樣是細線
         sh.setFloatUniform("skew", skewValue);
     }
 
