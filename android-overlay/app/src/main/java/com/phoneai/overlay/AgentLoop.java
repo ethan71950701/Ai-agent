@@ -587,13 +587,46 @@ final class AgentLoop {
         if (clear) { sh("input keycombination 113 29"); sh("input keyevent 67"); }
         if (text == null) text = "";
         if (text.matches("[A-Za-z0-9 ]*")) {
-            if (!text.isEmpty()) sh("input text " + text.replace(" ", "%s"));
+            if (!text.isEmpty()) {
+                // 中文鍵盤打英文會變成注音或拼音候選字：先切到英文鍵盤，輸完再切回原本的
+                String prev = asciiKeyboard();
+                if (prev == null) return "目前是中文鍵盤，沒辦法直接輸入英文，請改用 open_url 開網址";
+                try {
+                    sh("input text " + text.replace(" ", "%s"));
+                    sleep(300);
+                } finally {
+                    restoreKeyboard(prev);
+                }
+            }
         } else if (!text.isEmpty()) {
             if (!paste(c, text)) return "沒辦法輸入「" + text + "」：剪貼簿寫不進去（Android 的限制），不要再試貼上，改用 open_url 開網址";
             sh("input keyevent 279");   // KEYCODE_PASTE
         }
         if (enter) sh("input keyevent 66");
         return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+    }
+
+    /** 切到英文鍵盤（有的話）；回傳原本的鍵盤 id，之後要切回去。找不到英文鍵盤回傳 null（呼叫端就不輸入）。 */
+    private static String asciiKeyboard() {
+        String prev = sh("settings get secure default_input_method").trim();
+        for (String line : sh("ime list -s").split("\n")) {
+            String id = line.trim();
+            if (id.isEmpty() || id.equals(prev)) continue;
+            String low = id.toLowerCase(java.util.Locale.ROOT);
+            if (low.contains("latin") || low.contains("english") || low.contains("qwerty")) {
+                sh("ime set " + id);
+                sleep(300);
+                return prev.isEmpty() ? "" : prev;
+            }
+        }
+        // 目前這個就是英文鍵盤（沒有別的選擇時）：不用切
+        String low = prev.toLowerCase(java.util.Locale.ROOT);
+        if (!prev.isEmpty() && (low.contains("latin") || low.contains("english") || low.contains("qwerty"))) return prev;
+        return null;
+    }
+
+    private static void restoreKeyboard(String prev) {
+        if (prev != null && !prev.isEmpty()) sh("ime set " + prev);
     }
 
     /** 把文字放進剪貼簿（Android 10 以後背景 App 可能寫不進去；實測時若失敗，之後改用 root 寫剪貼簿）。 */
