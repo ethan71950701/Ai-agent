@@ -37,7 +37,7 @@ final class TransferStore {
     /** 總開關：開了才會啟動伺服器（並在通知列顯示）。 */
     static void setEnabled(Context c, boolean on) {
         cfg(c).edit().putBoolean("transfer_on", on).apply();
-        if (on) TransferService.start(c);
+        if (on) { TransferService.lastError = ""; TransferService.start(c); }
         else TransferService.stop(c);
     }
 

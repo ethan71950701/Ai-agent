@@ -26,12 +26,13 @@ public class TransferActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private LinearLayout box;
     private String shownPending = "";
-    private boolean visible;
+    private boolean visible, lastRunning;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
             if (!visible) return;
+            if (TransferService.running != lastRunning) { lastRunning = TransferService.running; render(); }
             if (TransferStore.enabled(TransferActivity.this) && TransferService.running) TransferService.keepPairing();
             TransferService.Pending p = TransferService.pending;
             String key = p == null ? "" : p.peerId + p.state;
@@ -57,6 +58,7 @@ public class TransferActivity extends Activity {
     protected void onResume() {
         super.onResume();
         visible = true;
+        if (TransferStore.enabled(this) && !TransferService.running) TransferService.start(this);   // 開關是開的但服務沒在跑（例如 App 被系統結束過）
         render();
         ui.postDelayed(tick, 1000);
     }
@@ -96,7 +98,7 @@ public class TransferActivity extends Activity {
         Ui.section(this, box, L.t("這台裝置"));
         LinearLayout me = Ui.card(this, box);
         me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("收到的檔案會放在：下載/PhoneAI")));
-        me.addView(Ui.body(this, (TransferService.running ? L.t("狀態：運作中") : L.t("狀態：沒有在運作（關掉再開一次試試）")) + "\n" + L.t("本機位址：") + localIps()));
+        me.addView(Ui.body(this, (TransferService.running ? L.t("狀態：運作中") : L.t("狀態：沒有在運作") + (TransferService.lastError.isEmpty() ? "" : "\n" + L.t("原因：") + TransferService.lastError)) + "\n" + L.t("本機位址：") + localIps()));
         me.addView(Ui.tonal(this, L.t("改名稱"), v -> rename()));
 
         Ui.section(this, box, L.t("配對"));

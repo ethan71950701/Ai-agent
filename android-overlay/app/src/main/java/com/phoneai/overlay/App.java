@@ -43,6 +43,7 @@ public class App extends Application {
         ctx = this;
         L.init(this);   // 介面語言要最先決定（靜態字串陣列也用得到）
         GlassPrefs.load(this);
+        if (TransferStore.enabled(this)) TransferService.start(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
             public void onActivityPreCreated(Activity a, Bundle b) {

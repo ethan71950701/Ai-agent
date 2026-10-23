@@ -32,6 +32,7 @@ public class TransferService extends Service {
 
     static volatile Pending pending;
     static volatile boolean running;
+    static volatile String lastError = "";
 
     private android.net.wifi.WifiManager.MulticastLock mlock;
     private TransferServer server;
@@ -40,7 +41,9 @@ public class TransferService extends Service {
     static void start(Context c) {
         try {
             c.startForegroundService(new Intent(c, TransferService.class));
-        } catch (Exception ignored) { }
+        } catch (Throwable t) {
+            lastError = t.toString();
+        }
     }
 
     static void stop(Context c) {
@@ -83,6 +86,17 @@ public class TransferService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        try {
+            return startUp();
+        } catch (Throwable t) {
+            lastError = t.toString();
+            TransferStore.log(this, L.t("傳檔案伺服器啟動失敗：") + t);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+    }
+
+    private int startUp() {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("傳檔案"), NotificationManager.IMPORTANCE_LOW));
         Notification n = new Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_sys_upload_done)
@@ -159,8 +173,10 @@ public class TransferService extends Service {
                 mlock.acquire();
             } catch (Exception ignored) { }
             running = true;
-        } catch (Exception e) {
-            TransferStore.log(c, L.t("傳檔案伺服器啟動失敗：") + e.getMessage());
+            lastError = "";
+        } catch (Throwable e) {
+            lastError = e.toString();
+            TransferStore.log(c, L.t("傳檔案伺服器啟動失敗：") + e);
             stopSelf();
         }
     }
