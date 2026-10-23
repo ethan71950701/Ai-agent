@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1227
+
 - Claude API Key 移到「資料」區最上面｜The Claude API Key moved to the top of the Data section
 
 ## 1.0.1226
