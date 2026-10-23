@@ -1,7 +1,8 @@
 package com.phoneai.overlay;
 
 import android.app.Activity;
-import android.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -96,7 +97,7 @@ public class TransferActivity extends Activity {
         me.addView(Ui.body(this, TransferStore.myName(this) + "　·　" + state));
         me.addView(Ui.body(this, L.t("位址：") + localIps()
                 + (TransferService.lastError.isEmpty() ? "" : "\n" + L.t("原因：") + TransferService.lastError)));
-        me.addView(Ui.tonal(this, L.t("改名稱"), v -> rename()));
+        me.addView(Ui.button(this, L.t("改名稱"), v -> rename()));
 
         LinearLayout pair = Ui.card(this, box);
         pair.addView(Ui.body(this, L.t("兩台都打開這一頁，在任一台按下面的按鈕，選對方即可配對。")));
@@ -106,8 +107,12 @@ public class TransferActivity extends Activity {
         if (!peers.isEmpty()) {
             Ui.section(this, box, L.t("已配對的裝置"));
             LinearLayout list = Ui.card(this, box);
+            list.addView(Ui.body(this, L.t("點名稱可以移除")));
             for (TransferStore.Peer p : peers) {
-                list.addView(Ui.tonal(this, p.name, v -> removeDialog(p)));
+                android.widget.TextView row = Ui.body(this, p.name);
+                row.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+                row.setOnClickListener(v -> removeDialog(p));
+                list.addView(row);
             }
         }
 
@@ -119,22 +124,24 @@ public class TransferActivity extends Activity {
         }
     }
 
+    /** 移除用跟 App 其他確認一樣的對話框（ConfirmActivity），會等使用者按，所以放在背景執行緒。 */
     private void removeDialog(TransferStore.Peer p) {
-        tint(new AlertDialog.Builder(this).setMessage(L.t("移除「") + p.name + L.t("」？移除後不能再取檔案，要重新配對。"))
-                .setPositiveButton(L.t("移除"), (d, w) -> { TransferStore.removePeer(this, p.id); render(); })
-                .setNegativeButton(L.t("取消"), null)).show();
+        new Thread(() -> {
+            boolean yes = ConfirmActivity.ask(this, L.t("移除「") + p.name + L.t("」？移除後不能再取檔案，要重新配對。"));
+            if (yes) ui.post(() -> { TransferStore.removePeer(this, p.id); render(); });
+        }).start();
     }
 
     private void rename() {
         final EditText e = new EditText(this);
         e.setText(TransferStore.myName(this));
-        tint(new AlertDialog.Builder(this).setTitle(L.t("這台裝置的名稱")).setView(e)
+        tint(new MaterialAlertDialogBuilder(this).setTitle(L.t("這台裝置的名稱")).setView(e)
                 .setPositiveButton(L.t("儲存"), (d, w) -> { TransferStore.setMyName(this, e.getText().toString()); render(); })
                 .setNegativeButton(L.t("取消"), null)).show();
     }
 
-    /** 對話框的按鈕用主題色（預設是系統的紫色）。 */
-    private AlertDialog tint(AlertDialog.Builder b) {
+    /** 對話框的按鈕用主題色。 */
+    private AlertDialog tint(MaterialAlertDialogBuilder b) {
         AlertDialog d = b.create();
         d.setOnShowListener(x -> {
             int col = Ui.attr(this, com.google.android.material.R.attr.colorPrimary);
@@ -147,7 +154,7 @@ public class TransferActivity extends Activity {
     // ---------- 我是被配對的一方：核對確認碼 ----------
 
     private void askMatch(TransferService.Pending p) {
-        tint(new AlertDialog.Builder(this).setCancelable(false)
+        tint(new MaterialAlertDialogBuilder(this).setCancelable(false)
                 .setTitle(L.t("確認碼：") + p.sas)
                 .setMessage(L.t("「") + p.name + L.t("」想配對。對方的畫面上是同一組數字嗎？"))
                 .setPositiveButton(L.t("相符"), (d, w) -> { TransferService.acceptPending(this); shownPending = ""; render(); })
@@ -172,7 +179,7 @@ public class TransferActivity extends Activity {
         final String[] items = new String[l.size() + 1];
         for (int i = 0; i < l.size(); i++) items[i] = l.get(i).name + "（" + l.get(i).ip + "）";
         items[l.size()] = L.t("找不到？手動輸入 IP");
-        tint(new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟互傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
+        tint(new MaterialAlertDialogBuilder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟互傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
                 .setItems(items, (d, i) -> {
                     if (i < l.size()) startPair(l.get(i).ip, l.get(i).port);
                     else askIp();
@@ -183,7 +190,7 @@ public class TransferActivity extends Activity {
         final EditText e = new EditText(this);
         e.setInputType(InputType.TYPE_CLASS_PHONE);
         e.setHint("192.168.1.23");
-        tint(new AlertDialog.Builder(this).setTitle(L.t("對方的 IP")).setView(e)
+        tint(new MaterialAlertDialogBuilder(this).setTitle(L.t("對方的 IP")).setView(e)
                 .setPositiveButton(L.t("配對"), (d, w) -> startPair(e.getText().toString().trim(), TransferServer.PORT))
                 .setNegativeButton(L.t("取消"), null)).show();
     }
@@ -192,7 +199,7 @@ public class TransferActivity extends Activity {
         new Thread(() -> {
             try {
                 final TransferClient.Offer o = TransferClient.pairStart(ip, port, TransferStore.myId(this), TransferStore.myName(this));
-                ui.post(() -> tint(new AlertDialog.Builder(this).setCancelable(false)
+                ui.post(() -> tint(new MaterialAlertDialogBuilder(this).setCancelable(false)
                         .setTitle(L.t("確認碼：") + o.sas)
                         .setMessage(L.t("對方（") + o.peerName + L.t("）的畫面上是同一組數字嗎？相符再按「相符」，然後請對方也按「相符」。"))
                         .setPositiveButton(L.t("相符"), (d, w) -> waitAccepted(ip, port, o))

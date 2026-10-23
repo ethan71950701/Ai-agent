@@ -677,5 +677,6 @@ final class LEn {
         m.put("移除「", "Remove \"");
         m.put("運作中", "Running");
         m.put("需要「所有檔案存取」權限，才能找到並讀寫檔案。", "\"All files access\" permission is needed to find and read/write files.");
+        m.put("點名稱可以移除", "Tap a name to remove it");
     }
 }
