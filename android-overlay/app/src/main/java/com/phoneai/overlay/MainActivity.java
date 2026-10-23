@@ -683,7 +683,7 @@ public class MainActivity extends Activity {
         glassSlider(g, L.t("折射強度"), L.t("邊緣彎曲的程度"), 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
         glassSlider(g, L.t("色散（只有上層透鏡）"), L.t("透鏡邊緣的彩色光邊，0 = 沒有"), 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
         glassSlider(g, L.t("模糊程度（dp）"), L.t("底欄背景的模糊半徑"), 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
-        glassSlider(g, L.t("圖示放大倍率"), L.t("按住時圖示放大的量（預設 0.19 ≈ 1.19 倍）"), 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
+        glassSlider(g, L.t("圖示放大倍率"), L.t("按住時圖示放大的量（預設 0.08 ≈ 1.08 倍）"), 0f, 0.5f, GlassPrefs.zoom, GlassPrefs.K_ZOOM);
         glassSlider(g, L.t("按住放大（左右）"), L.t("按住時上層按鈕橫向放大的倍數"), 1f, 1.6f, GlassPrefs.pressX, GlassPrefs.K_PRESS_X);
         glassSlider(g, L.t("按住放大（上下）"), L.t("按住時上層按鈕直向放大的倍數"), 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
         glassSlider(g, L.t("按住放大（整條底欄）"), L.t("按住時整條底欄放大的倍數，1 = 不放大"), 1f, 1.2f, GlassPrefs.barPress, GlassPrefs.K_BAR_PRESS);
