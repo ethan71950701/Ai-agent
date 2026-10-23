@@ -658,5 +658,6 @@ final class LEn {
         m.put("狀態：沒有在運作", "Status: not running");
         m.put("原因：", "Reason: ");
         m.put("本機位址：", "This device's address: ");
+        m.put("刪除 ", "Deleted ");
     }
 }

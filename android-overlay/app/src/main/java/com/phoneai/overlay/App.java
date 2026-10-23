@@ -32,7 +32,7 @@ public class App extends Application {
 
     private static boolean themed(Activity a) {
         return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof DiagActivity || a instanceof MemoryActivity
-                || a instanceof LogActivity || a instanceof MicTestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity;
+                || a instanceof LogActivity || a instanceof MicTestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity || a instanceof TransferActivity;
     }
 
     static android.content.Context ctx;   // 給 Root 找 App 資料夾用

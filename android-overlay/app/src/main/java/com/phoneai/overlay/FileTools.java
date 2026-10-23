@@ -22,7 +22,7 @@ final class FileTools {
 
     static boolean handles(String name) {
         return name.equals("device_list") || name.equals("file_find") || name.equals("file_list")
-                || name.equals("file_get") || name.equals("file_send");
+                || name.equals("file_get") || name.equals("file_send") || name.equals("file_delete");
     }
 
     static String run(Context c, String name, JSONObject a) {
@@ -30,6 +30,7 @@ final class FileTools {
             if (!TransferStore.enabled(c)) return "錯誤：傳檔案功能還沒開。請使用者到「設定 → 傳檔案」打開，並和另一台裝置配對。";
             if (!TransferStore.hasAllFiles()) return "錯誤：還沒有「所有檔案存取」權限。請使用者到「設定 → 傳檔案」授權。";
             if (name.equals("device_list")) return deviceList(c);
+            if (name.equals("file_delete")) return delete(c, a.optString("path"));
             String dev = a.optString("device").trim();
             boolean local = dev.isEmpty() || dev.equals("this") || dev.equals("本機") || dev.equals("這支手機");
             switch (name) {
@@ -77,6 +78,28 @@ final class FileTools {
         } catch (Exception e) {
             return "錯誤：" + e.getMessage();
         }
+    }
+
+    /** 只能刪「下載/PhoneAI」（收件匣）裡的檔案，不管路徑怎麼寫都不能跳出這個資料夾；使用者已同意助理不必再確認。 */
+    private static String delete(Context c, String path) throws Exception {
+        String p = path == null ? "" : path.trim().replace('\\', '/');
+        for (String pre : new String[]{"/sdcard/", "Download/PhoneAI/", "PhoneAI/"}) if (p.startsWith(pre)) p = p.substring(pre.length());
+        while (p.startsWith("/")) p = p.substring(1);
+        if (p.isEmpty()) return "錯誤：要給檔名";
+        File inbox = TransferStore.inbox().getCanonicalFile();
+        File f = new File(inbox, p).getCanonicalFile();
+        if (!f.getPath().startsWith(inbox.getPath() + File.separator)) return "錯誤：只能刪除 下載/PhoneAI 裡的檔案";
+        if (!f.exists()) return "錯誤：找不到 " + p;
+        long n = f.isFile() ? f.length() : 0;
+        if (!deleteTree(f)) return "錯誤：刪除失敗 " + p;
+        TransferStore.log(c, L.t("刪除 ") + p);
+        return "已刪除 下載/PhoneAI/" + p + (n > 0 ? "（" + TransferStore.size(n) + "）" : "");
+    }
+
+    private static boolean deleteTree(File f) {
+        File[] kids = f.isDirectory() ? f.listFiles() : null;
+        if (kids != null) for (File k : kids) deleteTree(k);
+        return f.delete();
     }
 
     private static String deviceList(Context c) {

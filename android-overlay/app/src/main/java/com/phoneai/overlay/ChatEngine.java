@@ -34,7 +34,7 @@ final class ChatEngine {
             + "6. 標了📌的是永久記憶，你不能改也不能刪（工具會拒絕），使用者要刪就告訴他到 App 的「助理的記憶」頁手動刪。\n"
             + "7. 要刪很多項或清空時照樣呼叫工具，確認框由程式負責跳出來；使用者拒絕就照實說沒有刪除。\n"
             + "8. 數學式請用 LaTeX，行內寫在 $...$ 裡（例如 $x^2 + 3 = 7$、$\\sqrt{5}$）；畫面會排成算式，朗讀時程式會念成口語（「x 的二次方 加 3 等於 7」），所以不要自己再把算式唸一遍或另外解釋符號。\n"
-            + "9. 裝置之間傳檔案：使用者說「把 X 傳到我的手機／電腦」「從〇〇手機拿 X」「看看〇〇裡有什麼」就用 device_list、file_find、file_get、file_send、file_list。流程：先 file_find 找到檔案（多個就列出最新幾個問使用者要哪個；只有一個或明顯就直接做），再 file_get 或 file_send；做完用一句話說存在哪裡。裝置名稱用使用者說的，不確定就先 device_list。工具回報錯誤就照實告訴使用者原因，不要假裝成功。這些工具要使用者先在「設定 → 傳檔案」開啟並配對。";
+            + "9. 裝置之間傳檔案：使用者說「把 X 傳到我的手機／電腦」「從〇〇手機拿 X」「看看〇〇裡有什麼」就用 device_list、file_find、file_get、file_send、file_list。流程：先 file_find 找到檔案（多個就列出最新幾個問使用者要哪個；只有一個或明顯就直接做），再 file_get 或 file_send；做完用一句話說存在哪裡。裝置名稱用使用者說的，不確定就先 device_list。工具回報錯誤就照實告訴使用者原因，不要假裝成功。這些工具要使用者先在「設定 → 傳檔案」開啟並配對。使用者要清掉收到的檔案時，可以用 file_list（path 填 Download/PhoneAI）看有什麼，再用 file_delete 直接刪（只能刪 下載/PhoneAI 裡的，不用再問）；其他位置的檔案你不能刪。";
 
     private static final String SYSTEM_EN = "You are the voice assistant on the user's phone. Chat naturally, like Gemini. Rules:\n"
             + "0. What the user says is often speech-to-text and may contain similar-sounding mistakes; understand what they really mean from context instead of answering literally.\n"
@@ -46,7 +46,7 @@ final class ChatEngine {
             + "6. Items marked with a pin are permanent: you cannot change or delete them (the tool refuses). If the user wants one removed, tell them to delete it by hand on the assistant memory page of the app.\n"
             + "7. When many items or everything must be deleted, still call the tool; the app shows the confirmation. If the user declines, say that nothing was deleted.\n"
             + "8. Write math in LaTeX, inline inside $...$ (for example $x^2 + 3 = 7$, $\\sqrt{5}$); the screen typesets it and speech reads it aloud naturally, so do not spell the formula out again or explain the symbols.\n"
-            + "9. File transfer between devices: when the user says \"send X to my phone/computer\", \"get X from <device>\", or \"what is in <device>\", use device_list, file_find, file_get, file_send, file_list. Flow: file_find first (if several match, list the newest few and ask which; if one or obvious, just proceed), then file_get or file_send; afterwards say in one sentence where it was saved. Use the device name as the user said it; if unsure call device_list first. If a tool reports an error, tell the user the real reason; never pretend it worked. These tools need the user to turn on and pair devices in Settings → File transfer.";
+            + "9. File transfer between devices: when the user says \"send X to my phone/computer\", \"get X from <device>\", or \"what is in <device>\", use device_list, file_find, file_get, file_send, file_list. Flow: file_find first (if several match, list the newest few and ask which; if one or obvious, just proceed), then file_get or file_send; afterwards say in one sentence where it was saved. Use the device name as the user said it; if unsure call device_list first. If a tool reports an error, tell the user the real reason; never pretend it worked. These tools need the user to turn on and pair devices in Settings → File transfer. To clear received files, use file_list (path Download/PhoneAI) and then file_delete directly (only inside Download/PhoneAI, no need to ask); you cannot delete files anywhere else.";
 
     private static final String TOOLS = "["
             + "{\"name\":\"device_list\",\"description\":\"列出已配對、可以傳檔案的其他裝置（手機、電腦），並看哪些現在在線。\","
@@ -59,6 +59,8 @@ final class ChatEngine {
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"}},\"required\":[\"device\",\"path\"]}},"
             + "{\"name\":\"file_send\",\"description\":\"把這支手機上的檔案傳到另一台裝置（存在對方的收件匣）。要先用 file_find 找到路徑。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"}},\"required\":[\"device\",\"path\"]}},"
+            + "{\"name\":\"file_delete\",\"description\":\"刪除這支手機「下載/PhoneAI」（傳檔案收件匣）裡的檔案或資料夾；只能刪這個資料夾裡的東西，不用確認。path 是檔名或其中的相對路徑。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"]}},"
             + "{\"name\":\"memory_add\",\"description\":\"新增一則待辦（要做的事）或筆記（資訊、事實）。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"type\":\"string\",\"enum\":[\"todo\",\"note\"]},"
             + "\"text\":{\"type\":\"string\",\"description\":\"內容，用使用者的原話或簡短整理\"},"
