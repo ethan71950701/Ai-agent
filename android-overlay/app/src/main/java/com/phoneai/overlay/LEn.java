@@ -583,6 +583,8 @@ final class LEn {
         m.put("匯入失敗：", "Import failed: ");
         m.put("已加入 ", "Added ");
         m.put(" 則", " items");
+        m.put("已停止。", "Stopped.");
+        m.put("準備中…", "Preparing…");
         m.put("・", "- ");
     }
 }

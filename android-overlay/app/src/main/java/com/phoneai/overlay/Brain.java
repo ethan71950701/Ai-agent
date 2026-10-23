@@ -15,16 +15,7 @@ final class Brain {
 
     /** 在主執行緒跳確認框，背景執行緒等使用者按完。 */
     static boolean confirm(Activity act, String msg) {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] ok = {false};
-        act.runOnUiThread(() -> new MaterialAlertDialogBuilder(act)
-                .setMessage(msg)
-                .setPositiveButton(L.t("確定"), (d, w) -> { ok[0] = true; latch.countDown(); })
-                .setNegativeButton(L.t("取消"), (d, w) -> latch.countDown())
-                .setOnCancelListener(d -> latch.countDown())
-                .show());
-        try { latch.await(); } catch (InterruptedException e) { return false; }
-        return ok[0];
+        return ConfirmActivity.ask(act, msg);   // 不再用 MaterialAlertDialogBuilder(act)：助理面板的主題不是 Material，會直接閃退
     }
 
     static String answer(Activity act, String t, AgentLoop.Ui ui) {

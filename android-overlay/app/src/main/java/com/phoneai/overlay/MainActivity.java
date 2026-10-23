@@ -493,8 +493,9 @@ public class MainActivity extends Activity {
         new Thread(() -> {
             String r = Brain.answer(this, t, new AgentLoop.Ui() {
                 @Override public void hide() { }
-                @Override public void status(String s) { Notify.notifyText(MainActivity.this, L.t("AI 正在操作手機"), s, 7195); }
+                @Override public void status(String s) { }   // 進度由 Now Bar 顯示
                 @Override public boolean confirm(String msg) { return Brain.confirm(MainActivity.this, msg); }
+                @Override public String ask(String q) { return AssistantSheet.askUser(getApplicationContext(), q); }
             });
             final String fr = r == null ? "" : r;
             runOnUiThread(() -> {

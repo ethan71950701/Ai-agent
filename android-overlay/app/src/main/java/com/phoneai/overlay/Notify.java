@@ -39,6 +39,11 @@ final class Notify {
         nm.notify(id, b.build());
     }
 
+    /** 打斷正在唸的朗讀（使用者要說話、按停止、關面板時）。 */
+    static synchronized void stopSpeaking() {
+        if (tts != null && ttsReady) tts.stop();
+    }
+
     static synchronized void speak(Context c, String text) {
         Context app = c.getApplicationContext();
         if (tts == null) {

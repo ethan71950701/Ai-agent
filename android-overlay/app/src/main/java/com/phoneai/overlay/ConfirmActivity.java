@@ -2,6 +2,8 @@ package com.phoneai.overlay;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +13,31 @@ import java.util.concurrent.CountDownLatch;
 public class ConfirmActivity extends Activity {
     static volatile CompletableFuture<Boolean> answer;
     static volatile CountDownLatch shown;
+
+    /** 在背景執行緒呼叫，會等使用者按是／否（最多 120 秒）；逾時、對話框沒跳出來、使用者沒按都當「否」。任何主題的 Activity 都能用（不靠 Material 主題）。 */
+    static boolean ask(Context c, String msg) {
+        final Context app = c.getApplicationContext();
+        CompletableFuture<Boolean> ans = new CompletableFuture<>();
+        CountDownLatch shownLatch = new CountDownLatch(1);
+        answer = ans;
+        shown = shownLatch;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            try {
+                app.startActivity(new Intent(app, ConfirmActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                        .putExtra("msg", msg));
+            } catch (Exception e) {
+                shownLatch.countDown();
+                ans.complete(false);
+            }
+        });
+        try {
+            if (!shownLatch.await(4, java.util.concurrent.TimeUnit.SECONDS)) return false;
+            return ans.get(120, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle b) {

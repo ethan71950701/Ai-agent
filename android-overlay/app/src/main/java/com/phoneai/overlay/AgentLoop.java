@@ -42,7 +42,16 @@ final class AgentLoop {
         void hide();                    // 收起助理面板，讓畫面可以操作
         void status(String text);       // 通知列上的進度文字
         boolean confirm(String msg);    // 敏感操作的確認框（在背景執行緒呼叫，會等使用者按）
+        /** 問使用者一個問題，回傳他的回答；null = 這個介面沒辦法問；空字串 = 使用者取消。在背景執行緒呼叫。 */
+        default String ask(String question) { return null; }
     }
+
+    private static volatile boolean cancelled;
+    /** 這一輪自動操作的結果是不是要用回答卡片顯示（搜尋結果或較長的回答）；「完成了」這類短的只通知。 */
+    static volatile boolean showCard;
+
+    /** 使用者按了通知上的「停止」：下一個檢查點就結束這一輪。 */
+    static void cancel() { cancelled = true; }
 
     /** 這一次任務的狀態：開過哪些 App、量測次數、記了幾則經驗、搜尋次數、拖曳手指是否還按著。 */
     private static final class State {
@@ -61,8 +70,18 @@ final class AgentLoop {
         return java.util.regex.Pattern.compile("\\b" + w + "\\b", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(task).find();
     }
 
-    /** 執行任務；回傳要告訴使用者的文字。 */
+    /** 執行任務；回傳要告訴使用者的文字。結束時收掉 Now Bar。 */
     static String run(Context c, String task, Ui ui) {
+        cancelled = false;
+        showCard = false;
+        try {
+            return runInner(c, task, ui);
+        } finally {
+            OverlayService.endSteps(c);
+        }
+    }
+
+    private static String runInner(Context c, String task, Ui ui) {
         for (String w : TASK_BLOCK)
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
@@ -75,6 +94,7 @@ final class AgentLoop {
         String finalSay = null;
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
+                if (cancelled) return L.t("已停止。");
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
                 String img = screenshot();
@@ -87,6 +107,7 @@ final class AgentLoop {
                     return L.t("連不上 AI：") + e.getMessage();
                 }
                 if (action == null) return L.t("AI 的回答看不懂，已停止。");
+                if (cancelled) return L.t("已停止。");
                 double wait = action.optDouble("wait", 1.2);
                 String name = action.optString("action");
                 if (st.dragDown && !name.startsWith("drag_") && !name.equals("wait")) {
@@ -101,9 +122,14 @@ final class AgentLoop {
                     case "fail":
                         finalSay = L.t("做不到：") + action.optString("say", L.t("（沒有原因）"));
                         break;
-                    case "ask_user":
-                        finalSay = action.optString("question", L.t("請告訴我你要怎麼做。"));
+                    case "ask_user": {
+                        String q = action.optString("question", L.t("請告訴我你要怎麼做。"));
+                        String ans = ui.ask(q);
+                        if (ans == null) { finalSay = q; break; }   // 這個介面沒辦法問：把問題當成回答
+                        if (ans.trim().isEmpty()) return L.t("已取消。");
+                        history.add(step + ". ask_user 問「" + q + "」，使用者回答：" + ans);
                         break;
+                    }
                     case "ask": {
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
@@ -148,6 +174,7 @@ final class AgentLoop {
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
+        if (finalSay != null) showCard = st.searches > 0 || finalSay.length() > 30;   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
         return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
     }
 

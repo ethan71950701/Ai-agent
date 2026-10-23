@@ -161,6 +161,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | 用量對話框顯示快取寫入／讀取（`Usage` 分開記 cw、cr） | 🟡 雲端編譯過，手機未測 | 數字來自 API 回應的 usage 欄位，可用來確認快取有沒有命中，不必看 Console |
 | 自動操作的漣漪與 Now Bar 步數（`AgentLoop` 呼叫 `RippleAccessibilityService` 與 `OverlayService.showStep`）：清理舊橋接程式時斷掉，這次接回來 | 🟡 雲端編譯過，手機未測 | 使用者實測：測試按鈕正常，自動操作沒有漣漪也沒有 Now Bar，原因是 d0107a9 刪掉了觸發路徑 |
 | 路由補救（`Assist.looksLikeAction`／`refusesToOperate`，`Brain`）：Haiku 判成聊天但話裡有明顯操作詞，或聊天回答「不能操作手機」，就改走自動操作 | 🟡 雲端編譯過，手機未測 | 使用者實測：同一句「打開設定的 Wi-Fi 頁面」有時被當聊天；關鍵字表（動作詞加畫面／項目詞）是估的，誤判或漏判再調 |
+| 確認框／AI 提問／停止鈕修正：`ConfirmActivity.ask` 取代 `MaterialAlertDialogBuilder(act)`（助理面板主題不是 Material，會閃退）；`AgentLoop.cancel()` 取代舊的 `pkill agent2.py`；`Ui.ask` 讓 AI 能問使用者；`OverlayService.endSteps` 結束時收 Now Bar；搜尋回答用回答卡片 | 🟡 雲端編譯過，手機未測 | 使用者實測發現：刪除所有待辦閃退、停止無效、問使用者不出輸入框、搜尋結果沒有回答卡 |
 | App 操作介面：輸入框、語音（倒數 5 秒）、快速設定磁貼、預設數位助理（長按電源鍵）、浮動按鈕 | ✅ | 使用者實測全部可用（2026-10-17）。走 Termux `RUN_COMMAND`（`allow-external-apps`）；root 備援路徑未觸發過 |
 | `agent2.py` 提示詞快取（固定說明放 `system` + `cache_control`，每步只送圖與任務/歷史；結尾印快取讀/寫 token） | ✅ | 實測生效：第 1 步寫 1107、之後每步讀 1107。同任務 4 步：8187 入約 $0.0181 → 8091 入（快取讀 3321）約 $0.0124，約省 31%（價格倍率為估算，請看 Console Usage） |
 | `agent2.py` 聯網搜尋（動作 `search`，`web_search_20250305`，每任務最多 2 次，Sonnet 5.5 代查，回傳摘要寫進歷史；`pause_turn`/錯誤區塊有處理） | ✅ | 使用者實測「查現在台北天氣」可搜尋並回答。官方價每千次 $10（約每次 $0.01，另加 token）；Console 若關閉網頁搜尋會 400（程式會印出並退回畫面操作）。只送模型寫的關鍵字，不送截圖 |

@@ -274,6 +274,31 @@ public class AssistantSheet {
 
     /** 開場：先從螢幕最上方放出光波、灑下光點（AuroraView.playIntro），波過去後光球和輸入列再浮上來。 */
     /** 首頁輸入框送來的文字：直接填進面板並送出。 */
+    /** AI 要問使用者問題：叫出面板顯示問題（語音或打字都可以），等回答。回 null = 叫不出面板；空字串 = 使用者取消。在背景執行緒呼叫。 */
+    static String askUser(android.content.Context app, String question) {
+        java.util.concurrent.CompletableFuture<String> f = new java.util.concurrent.CompletableFuture<>();
+        java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
+        questionAnswer = f;
+        questionShown = shown;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            try {
+                app.startActivity(new Intent(app, AskActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("question", question));
+            } catch (Exception e) {
+                shown.countDown();
+                f.complete(null);
+            }
+        });
+        try {
+            if (!shown.await(5, java.util.concurrent.TimeUnit.SECONDS)) return null;
+            return f.get(180, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception e) {
+            return null;
+        } finally {
+            questionAnswer = null;
+            questionShown = null;
+        }
+    }
+
     public void presetAndSend(String t) {
         setText(t);
         submit();
@@ -303,6 +328,7 @@ public class AssistantSheet {
     }
 
     public void dismiss() {
+        Notify.stopSpeaking();
         if (dismissing) return;
         dismissing = true;
         cancelQuestion();
@@ -336,6 +362,7 @@ public class AssistantSheet {
 
     public void startVoice() {
         if (dismissing) return;
+        Notify.stopSpeaking();   // 要說話就先打斷朗讀
         typing = false;
         hideKeyboard();
         cancelCountdown();
@@ -644,6 +671,7 @@ public class AssistantSheet {
     }
 
     private void submit() {
+        Notify.stopSpeaking();
         cancelCountdown();
         String t = input.getText().toString().trim();
         if (t.isEmpty()) return;
@@ -683,28 +711,25 @@ public class AssistantSheet {
         new Thread(() -> {
             String reply = Brain.answer(act, t, new AgentLoop.Ui() {
                 @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
-                @Override public void status(String s) { Notify.notifyText(act, L.t("AI 正在操作手機"), s, 7195); }
+                @Override public void status(String s) { }   // 進度由 Now Bar 顯示（OverlayService.showStep）；不要再發同編號的一般通知把它蓋掉
                 @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+                @Override public String ask(String q) { return askUser(act.getApplicationContext(), q); }
             });
             if (reply == null) return;   // 沒有回覆（不該發生）
             final String fr = reply;
             Notify.say(act, fr);
-            root.post(() -> showReply("", fr));
+            act.runOnUiThread(() -> {
+                if (!dismissing) { showReply("", fr); return; }
+                // 面板已經收起來（自動操作時會收）：搜尋結果這類較長的回答，重新叫出面板顯示回答卡片
+                if (AgentLoop.showCard) act.getApplicationContext().startActivity(new Intent(act.getApplicationContext(), AskActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("reply_text", fr).putExtra("voice", false));
+            });
         }, "local-reply").start();
     }
 
     /** 在主執行緒跳確認框，背景執行緒等使用者按完。 */
     private boolean confirmOnUi(String msg) {
-        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-        final boolean[] ok = {false};
-        act.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(act)
-                .setMessage(msg)
-                .setPositiveButton(L.t("確定"), (d, w) -> { ok[0] = true; latch.countDown(); })
-                .setNegativeButton(L.t("取消"), (d, w) -> latch.countDown())
-                .setOnCancelListener(d -> latch.countDown())
-                .show());
-        try { latch.await(); } catch (InterruptedException e) { return false; }
-        return ok[0];
+        return ConfirmActivity.ask(act, msg);
     }
 
     public void showReply(String title, String text) {

@@ -54,6 +54,12 @@ public class OverlayService extends Service {
     static volatile OverlayService instance;
 
     /** App 內的自動操作每一步呼叫：更新 Now Bar 的文字與步數；服務沒在跑就先啟動。 */
+    /** 自動操作結束：收掉 Now Bar（前景服務與它的通知）。 */
+    static void endSteps(android.content.Context c) {
+        OverlayService s = instance;
+        if (s != null) s.main.post(s::finish);
+    }
+
     static void showStep(android.content.Context c, String text, int step, int max) {
         OverlayService s = instance;
         if (s == null) {
@@ -350,26 +356,10 @@ public class OverlayService extends Service {
 
     /** 通知上的「停止」：用 root 結束 agent2.py（第一次會跳 Magisk 授權）。agent2 收到 SIGTERM 會自己清理。 */
     private void stopAgent() {
+        AgentLoop.cancel();        // App 內的自動操作迴圈在下一個檢查點結束
+        Notify.stopSpeaking();
         postStatus(title, L.t("正在停止…"), 0, 0);
-        new Thread(() -> {
-            boolean ok;
-            try {
-                // pkill 找不到行程時回傳 1（任務其實已經結束），這不是 root 的問題，所以先用 id -u 確認 root，再看有沒有東西被停掉。
-                // 比對字串寫成 [a]gent2 是為了不要比對到 su 自己那一行指令。
-                Process p = new ProcessBuilder(Root.su(), "-c", "id -u; pkill -f '[a]gent2\\.py'; pkill -f '[a]ssistant\\.py'; exit 0")
-                        .redirectErrorStream(true).start();
-                String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-                p.waitFor();
-                ok = out.startsWith("0");
-            } catch (Exception e) {
-                ok = false;
-            }
-            final boolean done = ok;
-            main.post(() -> {
-                if (done) finish();
-                else postStatus(title, L.t("停止失敗：請允許 PhoneAI Overlay 使用 root"), 0, 0);
-            });
-        }).start();
+        main.postDelayed(this::finish, 800);
     }
 
     /** App 裡的「測試」按鈕：示範通知更新、漣漪與滑動。 */
