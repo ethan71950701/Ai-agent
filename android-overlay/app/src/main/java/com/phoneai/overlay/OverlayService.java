@@ -49,6 +49,19 @@ public class OverlayService extends Service {
     static final String CHANNEL = "status_low";  // 舊的 "status" 是預設重要性，頻道建立後改不了，所以換新 id
     static final String ACTION_TEST = "com.phoneai.overlay.TEST";
     static final String ACTION_STOP = "com.phoneai.overlay.STOP";
+    static final String ACTION_BEGIN = "com.phoneai.overlay.BEGIN";
+    /** 目前執行中的服務（給 App 內的自動操作更新 Now Bar 用）；沒在跑就是 null。 */
+    static volatile OverlayService instance;
+
+    /** App 內的自動操作每一步呼叫：更新 Now Bar 的文字與步數；服務沒在跑就先啟動。 */
+    static void showStep(android.content.Context c, String text, int step, int max) {
+        OverlayService s = instance;
+        if (s == null) {
+            c.startForegroundService(new Intent(c, OverlayService.class).setAction(ACTION_BEGIN));
+            return;
+        }
+        s.main.post(() -> s.postStatus(L.t("AI 正在操作手機"), text, step, max));
+    }
     /** 點 Now Bar（背景虛擬螢幕存在時）：顯示／關閉預覽小視窗。 */
     static final String ACTION_PREVIEW = "com.phoneai.overlay.PREVIEW";
     /** Now Bar 上的「接手／完成」按鈕：切換使用者接手背景螢幕。 */
@@ -113,6 +126,7 @@ public class OverlayService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         self = this;
         nm = getSystemService(NotificationManager.class);
         wm = getSystemService(WindowManager.class);
@@ -137,6 +151,7 @@ public class OverlayService extends Service {
         A11yGuard.ensure(this);
         if (ACTION_TEST.equals(a)) runTest();
         else if (ACTION_STOP.equals(a)) stopAgent();
+        else if (ACTION_BEGIN.equals(a)) postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
         else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
             applyTakeover(!takeover, "");
@@ -150,6 +165,7 @@ public class OverlayService extends Service {
 
     @Override
     public void onDestroy() {
+        if (instance == this) instance = null;
         if (self == this) self = null;
         main.removeCallbacksAndMessages(null);
         try { if (tts != null) { tts.stop(); tts.shutdown(); } } catch (Exception ignored) { }

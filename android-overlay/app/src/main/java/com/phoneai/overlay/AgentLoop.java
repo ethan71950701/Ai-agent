@@ -76,6 +76,7 @@ final class AgentLoop {
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
+                OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
                 String img = screenshot();
                 if (img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
@@ -296,24 +297,40 @@ final class AgentLoop {
         return out;
     }
 
+    /** 點擊或滑動後畫漣漪（無障礙服務開著時才有；在主執行緒畫）。起點等於終點就是點擊。 */
+    private static void ripple(int x1, int y1, int x2, int y2) {
+        MAIN.post(() -> {
+            RippleView v = RippleAccessibilityService.view();
+            if (v == null) return;
+            if (x1 == x2 && y1 == y2) v.ripple(x1, y1);
+            else v.swipe(x1, y1, x2, y2);
+        });
+    }
+
     /** 執行一個動作，回傳給下一步看的結果文字。 */
     static String execute(JSONObject a, int[] wh, Context c, State st) {
         int w = wh[0], h = wh[1];
         String name = a.optString("action");
         try {
             switch (name) {
-                case "tap":
-                    sh("input tap " + px(a.optDouble("x"), w) + " " + px(a.optDouble("y"), h));
+                case "tap": {
+                    int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
+                    sh("input tap " + x + " " + y);
+                    ripple(x, y, x, y);
                     return "已點擊";
+                }
                 case "longpress": {
                     int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
                     sh("input swipe " + x + " " + y + " " + x + " " + y + " " + clamp(a.optInt("ms", 800), 300, 5000));
+                    ripple(x, y, x, y);
                     return "已長按";
                 }
-                case "swipe":
-                    sh("input swipe " + px(a.optDouble("x1"), w) + " " + px(a.optDouble("y1"), h) + " "
-                            + px(a.optDouble("x2"), w) + " " + px(a.optDouble("y2"), h) + " " + clamp(a.optInt("ms", 300), 50, 5000));
+                case "swipe": {
+                    int x1 = px(a.optDouble("x1"), w), y1 = px(a.optDouble("y1"), h), x2 = px(a.optDouble("x2"), w), y2 = px(a.optDouble("y2"), h);
+                    sh("input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " " + clamp(a.optInt("ms", 300), 50, 5000));
+                    ripple(x1, y1, x2, y2);
                     return "已滑動";
+                }
                 case "drag": {
                     int x1 = px(a.optDouble("x1"), w), y1 = px(a.optDouble("y1"), h), x2 = px(a.optDouble("x2"), w), y2 = px(a.optDouble("y2"), h);
                     int ms = clamp(a.optInt("ms", 500), 50, 5000), hold = clamp(a.optInt("hold_ms", 600), 200, 5000);
