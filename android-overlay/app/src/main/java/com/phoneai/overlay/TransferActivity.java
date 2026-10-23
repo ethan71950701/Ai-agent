@@ -99,12 +99,12 @@ public class TransferActivity extends Activity {
         LinearLayout me = Ui.card(this, box);
         me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("收到的檔案會放在：下載/PhoneAI")));
         me.addView(Ui.body(this, (TransferService.running ? L.t("狀態：運作中") : L.t("狀態：沒有在運作") + (TransferService.lastError.isEmpty() ? "" : "\n" + L.t("原因：") + TransferService.lastError)) + "\n" + L.t("本機位址：") + localIps()));
-        me.addView(Ui.tonal(this, L.t("改名稱"), v -> rename()));
+        me.addView(Ui.button(this, L.t("改名稱"), v -> rename()));
 
         Ui.section(this, box, L.t("配對"));
         LinearLayout pair = Ui.card(this, box);
         pair.addView(Ui.body(this, L.t("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。")));
-        pair.addView(Ui.pill(this, L.t("配對另一台"), false, v -> scanAndPair()));
+        pair.addView(Ui.pill(this, L.t("配對另一台"), true, v -> scanAndPair()));
 
         Ui.section(this, box, L.t("已配對的裝置"));
         List<TransferStore.Peer> peers = TransferStore.peers(this);
@@ -112,10 +112,10 @@ public class TransferActivity extends Activity {
         if (peers.isEmpty()) list.addView(Ui.body(this, L.t("還沒有。")));
         for (TransferStore.Peer p : peers) {
             list.addView(Ui.body(this, p.name));
-            list.addView(Ui.tonal(this, L.t("移除 ") + p.name, v -> new AlertDialog.Builder(this)
+            list.addView(Ui.button(this, L.t("移除 ") + p.name, v -> tint(new AlertDialog.Builder(this)
                     .setMessage(L.t("移除後這台裝置就不能再取檔案；要再用得重新配對。"))
                     .setPositiveButton(L.t("移除"), (d, w) -> { TransferStore.removePeer(this, p.id); render(); })
-                    .setNegativeButton(L.t("取消"), null).show()));
+                    .setNegativeButton(L.t("取消"), null)).show()));
         }
 
         Ui.section(this, box, L.t("最近的記錄"));
@@ -127,20 +127,31 @@ public class TransferActivity extends Activity {
     private void rename() {
         final EditText e = new EditText(this);
         e.setText(TransferStore.myName(this));
-        new AlertDialog.Builder(this).setTitle(L.t("這台裝置的名稱")).setView(e)
+        tint(new AlertDialog.Builder(this).setTitle(L.t("這台裝置的名稱")).setView(e)
                 .setPositiveButton(L.t("儲存"), (d, w) -> { TransferStore.setMyName(this, e.getText().toString()); render(); })
-                .setNegativeButton(L.t("取消"), null).show();
+                .setNegativeButton(L.t("取消"), null)).show();
+    }
+
+    /** 對話框的按鈕用主題色（預設是系統的紫色）。 */
+    private AlertDialog tint(AlertDialog.Builder b) {
+        AlertDialog d = b.create();
+        d.setOnShowListener(x -> {
+            int col = Ui.attr(this, com.google.android.material.R.attr.colorPrimary);
+            d.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(col);
+            d.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(col);
+        });
+        return d;
     }
 
     // ---------- 我是被配對的一方：核對確認碼 ----------
 
     private void askMatch(TransferService.Pending p) {
-        new AlertDialog.Builder(this).setCancelable(false)
+        tint(new AlertDialog.Builder(this).setCancelable(false)
                 .setTitle(L.t("確認碼：") + p.sas)
                 .setMessage(L.t("「") + p.name + L.t("」想配對。對方的畫面上是同一組數字嗎？"))
                 .setPositiveButton(L.t("相符"), (d, w) -> { TransferService.acceptPending(this); shownPending = ""; render(); })
                 .setNegativeButton(L.t("不相符"), (d, w) -> { TransferService.rejectPending(); shownPending = ""; render(); })
-                .show();
+                ).show();
     }
 
     // ---------- 我是發起配對的一方 ----------
@@ -161,31 +172,31 @@ public class TransferActivity extends Activity {
         final String[] items = new String[l.size() + 1];
         for (int i = 0; i < l.size(); i++) items[i] = l.get(i).name + "（" + l.get(i).ip + "）";
         items[l.size()] = L.t("找不到？手動輸入 IP");
-        new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
+        tint(new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
                 .setItems(items, (d, i) -> {
                     if (i < l.size()) startPair(l.get(i).ip, l.get(i).port);
                     else askIp();
-                }).setNegativeButton(L.t("取消"), null).show();
+                }).setNegativeButton(L.t("取消"), null)).show();
     }
 
     private void askIp() {
         final EditText e = new EditText(this);
         e.setInputType(InputType.TYPE_CLASS_PHONE);
         e.setHint("192.168.1.23");
-        new AlertDialog.Builder(this).setTitle(L.t("對方的 IP")).setView(e)
+        tint(new AlertDialog.Builder(this).setTitle(L.t("對方的 IP")).setView(e)
                 .setPositiveButton(L.t("配對"), (d, w) -> startPair(e.getText().toString().trim(), TransferServer.PORT))
-                .setNegativeButton(L.t("取消"), null).show();
+                .setNegativeButton(L.t("取消"), null)).show();
     }
 
     private void startPair(final String ip, final int port) {
         new Thread(() -> {
             try {
                 final TransferClient.Offer o = TransferClient.pairStart(ip, port, TransferStore.myId(this), TransferStore.myName(this));
-                ui.post(() -> new AlertDialog.Builder(this).setCancelable(false)
+                ui.post(() -> tint(new AlertDialog.Builder(this).setCancelable(false)
                         .setTitle(L.t("確認碼：") + o.sas)
                         .setMessage(L.t("對方（") + o.peerName + L.t("）的畫面上是同一組數字嗎？相符再按「相符」，然後請對方也按「相符」。"))
                         .setPositiveButton(L.t("相符"), (d, w) -> waitAccepted(ip, port, o))
-                        .setNegativeButton(L.t("不相符"), null).show());
+                        .setNegativeButton(L.t("不相符"), null)).show());
             } catch (Exception e) {
                 ui.post(() -> Toast.makeText(this, L.t("配對失敗：") + e.getMessage(), Toast.LENGTH_LONG).show());
             }

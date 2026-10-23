@@ -48,6 +48,7 @@ final class IconView extends View {
         d("circle", "M12,3 A9,9 0 1 1 11.99,3 Z");
         d("check_circle", "M12,3 A9,9 0 1 1 11.99,3 Z", "M8,12.5 L11,15.5 L16,9");
         d("download", "M12,4 V15", "M7,11 L12,16 L17,11", "M5,20 H19");
+        d("transfer", "M4,9 H19", "M15,5 L19,9 L15,13", "M20,15 H5", "M9,11 L5,15 L9,19");
         d("chevron", "M9,6 L15,12 L9,18");
         d("chevron_down", "M6,9 L12,15 L18,9");
     }

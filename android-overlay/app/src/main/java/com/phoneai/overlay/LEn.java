@@ -572,7 +572,7 @@ final class LEn {
         m.put("每日上限（千 token）", "Daily limit (thousand tokens)");
         m.put("每月上限（千 token）", "Monthly limit (thousand tokens)");
         m.put("用量與上限", "Usage and limits");
-        m.put("Claude 用了多少 token，可設每日／每月上限", "How many Claude tokens you have used; you can set daily and monthly limits");
+        m.put("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限", "Limit how many Claude tokens can be used: see usage, set daily and monthly caps");
         m.put("搜尋待辦、筆記", "Search to-dos and notes");
         m.put("匯出", "Export");
         m.put("匯入", "Import");
