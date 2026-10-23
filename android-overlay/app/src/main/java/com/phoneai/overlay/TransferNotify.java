@@ -20,7 +20,7 @@ final class TransferNotify {
     static final String ACTION_STOP = "com.phoneai.overlay.TRANSFER_STOP";
     private static long lastAt;
     private static int doneCount;
-    private static volatile boolean stopRequested;
+    private static volatile boolean stopRequested, active;
 
     /** 使用者按了進度通知的「停止」：進行中的傳輸在下一次更新時中斷，未完成的檔案會被刪掉。 */
     static final class Stopped extends RuntimeException {
@@ -31,9 +31,13 @@ final class TransferNotify {
 
     static boolean stopRequested() { return stopRequested; }
 
+    /** 現在有沒有傳輸進行中（互傳檔案頁用來顯示停止按鈕，不必靠通知）。 */
+    static boolean active() { return active; }
+
     /** 進度更新：最多每 0.4 秒換一次，免得通知列一直閃。 */
     static synchronized void progress(Context c, String title, String where, String name, long done, long total) {
         if (stopRequested) throw new Stopped();
+        active = true;
         long now = System.currentTimeMillis();
         if (done < total && now - lastAt < 400) return;
         lastAt = now;
@@ -56,6 +60,7 @@ final class TransferNotify {
     static synchronized void cancel(Context c) {
         lastAt = 0;
         stopRequested = false;
+        active = false;
         ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(PROGRESS_ID);
     }
 

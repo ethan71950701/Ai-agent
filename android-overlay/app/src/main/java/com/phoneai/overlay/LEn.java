@@ -692,5 +692,7 @@ final class LEn {
         m.put("已停止，未完成的檔案已刪除", "Stopped; the unfinished file was deleted");
         m.put("已停止傳給 ", "Stopped sending to ");
         m.put("已停止，檔案沒有傳出", "Stopped; the file was not sent");
+        m.put("正在傳輸中，可以在這裡停止（未完成的檔案會被刪掉）。", "A transfer is running; you can stop it here (the unfinished file will be deleted).");
+        m.put("停止傳輸", "Stop transfer");
     }
 }

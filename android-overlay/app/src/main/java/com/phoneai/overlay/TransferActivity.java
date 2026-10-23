@@ -27,14 +27,18 @@ public class TransferActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private LinearLayout box;
     private String shownPending = "";
-    private boolean visible, lastRunning;
+    private boolean visible, lastRunning, lastActive;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
             if (!visible) return;
             if (TransferStore.enabled(TransferActivity.this) && TransferService.running) TransferService.keepPairing();
-            if (TransferService.running != lastRunning) { lastRunning = TransferService.running; render(); }
+            if (TransferService.running != lastRunning || TransferNotify.active() != lastActive) {
+                lastRunning = TransferService.running;
+                lastActive = TransferNotify.active();
+                render();
+            }
             TransferService.Pending p = TransferService.pending;
             String key = p == null ? "" : p.peerId + p.state;
             if (!key.equals(shownPending)) {
@@ -91,6 +95,12 @@ public class TransferActivity extends Activity {
             }));
         }
         if (!TransferStore.enabled(this)) return;
+
+        if (TransferNotify.active()) {
+            LinearLayout now = Ui.card(this, box);
+            now.addView(Ui.body(this, L.t("正在傳輸中，可以在這裡停止（未完成的檔案會被刪掉）。")));
+            now.addView(Ui.button(this, L.t("停止傳輸"), v -> TransferNotify.requestStop()));
+        }
 
         LinearLayout me = Ui.card(this, box);
         String state = TransferService.running ? L.t("運作中") : L.t("沒有在運作");
