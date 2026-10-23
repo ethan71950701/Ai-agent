@@ -128,6 +128,11 @@ public class TransferActivity extends Activity {
             }
         }
 
+        Ui.section(this, box, L.t("找檔案"));
+        LinearLayout find = Ui.card(this, box);
+        find.addView(Ui.body(this, L.t("輸入檔名，手動搜手機或已配對的電腦（不用 AI）。")));
+        find.addView(Ui.button(this, L.t("找檔案"), v -> startActivity(new Intent(this, FileSearchActivity.class))));
+
         List<String> recent = TransferStore.recentLog(this, 5);
         if (!recent.isEmpty()) {
             Ui.section(this, box, L.t("最近"));

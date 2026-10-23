@@ -710,5 +710,24 @@ final class LEn {
         m.put("傳檔案過去", "Send file");
         m.put("選擇要傳過去的檔案", "Choose a file to send");
         m.put("開始傳檔案…可以在通知列看進度", "Sending… you can follow progress in the notifications");
+        m.put(" 筆（點一下操作）", " results (tap one to act)");
+        m.put("傳給哪一台", "Send to which device");
+        m.put("先輸入檔名關鍵字", "Enter a file name keyword first");
+        m.put("取回", "Fetch");
+        m.put("取回到這支手機的「下載/PhoneAI」？\n", "Fetch it to this phone's Download/PhoneAI?\n");
+        m.put("取回失敗：", "Fetch failed: ");
+        m.put("已取回：", "Fetched: ");
+        m.put("找到 ", "Found ");
+        m.put("找檔案", "Find files");
+        m.put("搜尋 ", " Searching ");
+        m.put("搜尋失敗：", "Search failed: ");
+        m.put("搜尋手機中…", "Searching phone…");
+        m.put("搜手機", "Search phone");
+        m.put("搜某台裝置", "Search a device");
+        m.put("檔名關鍵字", "File name keyword");
+        m.put("沒有找到", "Nothing found");
+        m.put("要搜哪一台", "Search which device");
+        m.put("還沒有配對過的裝置", "No paired devices yet");
+        m.put("輸入檔名，手動搜手機或已配對的電腦（不用 AI）。", "Type a file name to search the phone or a paired computer manually (no AI).");
     }
 }

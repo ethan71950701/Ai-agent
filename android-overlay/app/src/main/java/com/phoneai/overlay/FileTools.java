@@ -183,6 +183,59 @@ final class FileTools {
         }
     }
 
+    /** 手動搜尋（不用 AI）的結果：每行 類型\t大小\t時間\t路徑，這裡換成 {類型, 大小, 路徑}。 */
+    static List<String[]> rows(String raw) {
+        List<String[]> out = new ArrayList<>();
+        for (String line : raw.split("\n")) {
+            String[] f = line.split("\t", 4);
+            if (f.length == 4) out.add(new String[]{f[0], f[1], f[3]});
+        }
+        return out;
+    }
+
+    /** 手動搜本機（整支手機的儲存空間）。 */
+    static List<String[]> searchLocal(String q) throws Exception {
+        return rows(TransferServer.findIn(TransferStore.root(), q));
+    }
+
+    /** 手動搜某一台已配對的裝置。 */
+    static List<String[]> searchPeer(Context c, TransferStore.Peer p, String q) throws Exception {
+        return rows(clientFor(c, p).find(q));
+    }
+
+    /** 手動取回：從已配對的裝置取一個檔案到 下載/PhoneAI。 */
+    static String fetch(Context c, TransferStore.Peer p, String remotePath) throws Exception {
+        String name = new File(remotePath.replace('\\', '/')).getName();
+        File dest = unique(TransferStore.inbox(), name);
+        dest.getParentFile().mkdirs();
+        TransferNotify.begin();
+        try {
+            long n = clientFor(c, p).download(remotePath, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + p.name + L.t(" 取回"),
+                    L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
+            TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
+            TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）");
+            return dest.getName();
+        } catch (TransferNotify.Stopped s) {
+            TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
+            return null;
+        }
+    }
+
+    /** 手動傳：把手機上的一個檔案送到已配對的裝置。 */
+    static String sendLocal(Context c, TransferStore.Peer p, File f) throws Exception {
+        TransferNotify.begin();
+        try {
+            String saved = clientFor(c, p).put(f, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
+                    L.t("傳到：") + p.name + L.t(" 的收件匣"), f.getName(), d, t));
+            TransferStore.log(c, L.t("傳出 ") + f.getName() + " → " + p.name);
+            TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved);
+            return saved;
+        } catch (TransferNotify.Stopped s) {
+            TransferNotify.finish(c, L.t("已停止傳給 ") + p.name);
+            return null;
+        }
+    }
+
     /** 找到這台已配對裝置現在的位址，回傳可用的客戶端。 */
     static TransferClient clientFor(Context c, TransferStore.Peer p) throws Exception {
         List<TransferStore.Peer> one = new ArrayList<>();

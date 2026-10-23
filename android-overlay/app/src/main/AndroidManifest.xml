@@ -118,6 +118,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".FileSearchActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TaskDetailActivity"
             android:exported="false" />
 
