@@ -27,6 +27,9 @@ final class TransferNotify {
         Stopped() { super("stopped"); }
     }
 
+    /** 傳輸剛開始時要做的事（助理面板用：自動收起來，進度只看通知）；用完要設回 null。 */
+    static volatile Runnable onStart;
+
     static void requestStop() { stopRequested = true; }
 
     static boolean stopRequested() { return stopRequested; }
@@ -37,7 +40,11 @@ final class TransferNotify {
     /** 進度更新：最多每 0.4 秒換一次，免得通知列一直閃。 */
     static synchronized void progress(Context c, String title, String where, String name, long done, long total) {
         if (stopRequested) throw new Stopped();
-        active = true;
+        if (!active) {
+            active = true;
+            Runnable r = onStart;
+            if (r != null) r.run();
+        }
         long now = System.currentTimeMillis();
         if (done < total && now - lastAt < 400) return;
         lastAt = now;

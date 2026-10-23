@@ -710,12 +710,18 @@ public class AssistantSheet {
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
-            String reply = Brain.answer(act, t, new AgentLoop.Ui() {
+            TransferNotify.onStart = () -> act.runOnUiThread(AssistantSheet.this::dismiss);   // 傳檔案開始：面板收起來，進度看通知
+            String reply;
+            try {
+                reply = Brain.answer(act, t, new AgentLoop.Ui() {
                 @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
                 @Override public void status(String s) { }   // 進度由 Now Bar 顯示（OverlayService.showStep）；不要再發同編號的一般通知把它蓋掉
                 @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
                 @Override public String ask(String q) { return askUser(act.getApplicationContext(), q); }
             });
+            } finally {
+                TransferNotify.onStart = null;
+            }
             if (reply == null) return;   // 沒有回覆（不該發生）
             final String fr = reply;
             Notify.say(act, fr);
