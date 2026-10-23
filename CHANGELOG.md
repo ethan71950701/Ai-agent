@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1245
+
 - 瀏覽電腦資料夾變快：電腦版不再為每次瀏覽寫記錄、重畫視窗，列資料夾只讀一次目錄；手機讀取中不接受重複點擊｜Faster computer folder browsing: the Windows app no longer logs or redraws for each browse and reads each folder once; the phone ignores repeated taps while loading
 
 ## 1.0.1244
