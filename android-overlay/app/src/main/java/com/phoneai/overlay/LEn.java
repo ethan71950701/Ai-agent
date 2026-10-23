@@ -612,7 +612,6 @@ final class LEn {
         m.put("在自己的裝置之間傳檔案", "Send files between your own devices");
         m.put("」想配對。對方的畫面上是同一組數字嗎？", "\" wants to pair. Does the other screen show the same number?");
         m.put("不相符", "Doesn't match");
-        m.put("兩台裝置都開啟傳檔案後：一台按「讓別台配對我」，另一台按「配對另一台」。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。", "With File transfer on both devices: press \"Let another device pair with me\" on one and \"Pair another device\" on the other. Both show the same 6-digit code; press \"Matches\" only if they are identical.");
         m.put("前往授權", "Grant access");
         m.put("名稱：", "Name: ");
         m.put("在自己的裝置之間傳檔案：配對一次之後，對助理說「把 X 傳到我的手機」或「從〇〇手機拿 X」就會自動傳。只在同一個 Wi-Fi 內運作，內容加密。", "Send files between your own devices: after pairing once, tell the assistant \"send X to my phone\" or \"get X from <device>\" and it transfers automatically. Works only on the same Wi-Fi; content is encrypted.");
@@ -626,7 +625,6 @@ final class LEn {
         m.put("收到的檔案會放在：下載/PhoneAI", "Received files go to: Download/PhoneAI");
         m.put("改名稱", "Rename");
         m.put("最近的記錄", "Recent activity");
-        m.put("沒有找到裝置（對方要先按「讓別台配對我」）", "No devices found (the other one must first press \"Let another device pair with me\")");
         m.put("相符", "Matches");
         m.put("確認碼：", "Code: ");
         m.put("移除", "Remove");
@@ -634,7 +632,6 @@ final class LEn {
         m.put("移除後這台裝置就不能再取檔案；要再用得重新配對。", "After removal this device can no longer fetch files; you must pair again to use it.");
         m.put("等對方按「相符」…", "Waiting for the other device to press \"Matches\"…");
         m.put("等待另一台來配對…", "Waiting for another device to pair…");
-        m.put("讓別台配對我（2 分鐘）", "Let another device pair with me (2 min)");
         m.put("這台裝置", "This device");
         m.put("這台裝置的名稱", "This device's name");
         m.put("選擇要配對的裝置", "Choose a device to pair");
@@ -655,5 +652,7 @@ final class LEn {
         m.put("傳檔案已開啟", "File transfer is on");
         m.put("已配對", "Paired");
         m.put("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 傳檔案」可以關閉", "Paired devices on the same Wi-Fi can fetch files; turn off in Settings → File transfer");
+        m.put("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。", "Turn on File transfer on both devices and stay on this page; on either one press \"Pair another device\" and pick the other. Both show the same 6-digit code; press \"Matches\" only if they are identical.");
+        m.put("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）", "No devices found (the other one must also have File transfer on and be on this page)");
     }
 }

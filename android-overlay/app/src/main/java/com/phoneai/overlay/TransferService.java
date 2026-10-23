@@ -52,6 +52,11 @@ public class TransferService extends Service {
         pairUntil = System.currentTimeMillis() + seconds * 1000L;
     }
 
+    /** 配對頁開著時持續保持配對視窗（不清掉等待核對的請求）。 */
+    static void keepPairing() {
+        pairUntil = System.currentTimeMillis() + 15000;
+    }
+
     static void closePairing() {
         pairUntil = 0;
     }

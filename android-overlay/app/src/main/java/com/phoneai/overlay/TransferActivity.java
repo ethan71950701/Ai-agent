@@ -32,6 +32,7 @@ public class TransferActivity extends Activity {
         @Override
         public void run() {
             if (!visible) return;
+            if (TransferStore.enabled(TransferActivity.this) && TransferService.running) TransferService.keepPairing();
             TransferService.Pending p = TransferService.pending;
             String key = p == null ? "" : p.peerId + p.state;
             if (!key.equals(shownPending)) {
@@ -63,6 +64,7 @@ public class TransferActivity extends Activity {
     @Override
     protected void onPause() {
         visible = false;
+        TransferService.closePairing();
         ui.removeCallbacks(tick);
         super.onPause();
     }
@@ -98,12 +100,7 @@ public class TransferActivity extends Activity {
 
         Ui.section(this, box, L.t("配對"));
         LinearLayout pair = Ui.card(this, box);
-        pair.addView(Ui.body(this, L.t("兩台裝置都開啟傳檔案後：一台按「讓別台配對我」，另一台按「配對另一台」。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。")));
-        pair.addView(Ui.pill(this, L.t("讓別台配對我（2 分鐘）"), true, v -> {
-            TransferService.openPairing(120);
-            shownPending = "";
-            Toast.makeText(this, L.t("等待另一台來配對…"), Toast.LENGTH_SHORT).show();
-        }));
+        pair.addView(Ui.body(this, L.t("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。")));
         pair.addView(Ui.pill(this, L.t("配對另一台"), false, v -> scanAndPair()));
 
         Ui.section(this, box, L.t("已配對的裝置"));
@@ -159,7 +156,7 @@ public class TransferActivity extends Activity {
         final String[] items = new String[l.size() + 1];
         for (int i = 0; i < l.size(); i++) items[i] = l.get(i).name + "（" + l.get(i).ip + "）";
         items[l.size()] = L.t("找不到？手動輸入 IP");
-        new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方要先按「讓別台配對我」）") : L.t("選擇要配對的裝置"))
+        new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
                 .setItems(items, (d, i) -> {
                     if (i < l.size()) startPair(l.get(i).ip, l.get(i).port);
                     else askIp();
