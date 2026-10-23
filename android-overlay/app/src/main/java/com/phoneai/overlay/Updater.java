@@ -186,7 +186,8 @@ final class Updater {
         }
         String t = sb.toString().trim();
         if (t.isEmpty()) return L.t("（這次沒有更新說明）");
-        return t.length() > 600 ? t.substring(0, 600) + "…" : t;
+        // 對話框的說明區本身可以捲動，所以只防止極端長的內容；一般的更新說明完整顯示
+        return t.length() > 4000 ? t.substring(0, 4000) + "…" : t;
     }
 
     /** 從標籤 build-<序號>-<sha7> 取出序號；讀不到回傳 0。 */
