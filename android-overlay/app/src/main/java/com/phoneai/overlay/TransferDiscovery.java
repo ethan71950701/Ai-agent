@@ -120,6 +120,55 @@ final class TransferDiscovery {
         return out;
     }
 
+    /** 廣播收不到時的備案：逐一試同網段（/24）每個位址的傳檔案埠，對上的回「hello」。配對視窗開著的裝置才會回應。 */
+    static Map<String, Found> sweep(int tcpPort) {
+        final Map<String, Found> out = new java.util.concurrent.ConcurrentHashMap<>();
+        final List<String> targets = new java.util.ArrayList<>();
+        try {
+            Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
+            while (nis != null && nis.hasMoreElements()) {
+                NetworkInterface ni = nis.nextElement();
+                if (!ni.isUp() || ni.isLoopback()) continue;
+                for (InterfaceAddress ia : ni.getInterfaceAddresses()) {
+                    byte[] a = ia.getAddress().getAddress();
+                    if (a.length != 4) continue;
+                    String pre = (a[0] & 255) + "." + (a[1] & 255) + "." + (a[2] & 255) + ".";
+                    for (int i = 1; i < 255; i++) if (i != (a[3] & 255)) targets.add(pre + i);
+                }
+            }
+        } catch (Exception ignored) { }
+        java.util.concurrent.ExecutorService ex = java.util.concurrent.Executors.newFixedThreadPool(48);
+        for (final String ip : targets) {
+            ex.execute(() -> {
+                try (java.net.Socket s = new java.net.Socket()) {
+                    s.connect(new InetSocketAddress(ip, tcpPort), 400);
+                    s.setSoTimeout(1500);
+                    s.getOutputStream().write("GET /v1/pair/hello HTTP/1.1\r\nHost: phoneai\r\nConnection: close\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
+                    s.getOutputStream().flush();
+                    java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                    byte[] buf = new byte[512];
+                    int n;
+                    while ((n = s.getInputStream().read(buf)) > 0 && bo.size() < 4096) bo.write(buf, 0, n);
+                    String resp = new String(bo.toByteArray(), StandardCharsets.UTF_8);
+                    int k = resp.indexOf("PHONEAI\t");
+                    if (k < 0) return;
+                    String[] f = resp.substring(k).trim().split("\t");
+                    if (f.length < 4) return;
+                    Found fd = new Found();
+                    fd.id = f[1];
+                    fd.name = f[2];
+                    fd.port = Integer.parseInt(f[3].trim());
+                    fd.ip = ip;
+                    out.put(fd.id, fd);
+                } catch (Exception ignored) { }
+            });
+        }
+        ex.shutdown();
+        try { ex.awaitTermination(15, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        ex.shutdownNow();
+        return out;
+    }
+
     private static void send(DatagramSocket s, byte[] data, String host, int port) {
         try {
             s.send(new DatagramPacket(data, data.length, InetAddress.getByName(host), port));

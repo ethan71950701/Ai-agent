@@ -33,6 +33,7 @@ public class TransferService extends Service {
     static volatile Pending pending;
     static volatile boolean running;
 
+    private android.net.wifi.WifiManager.MulticastLock mlock;
     private TransferServer server;
     private TransferDiscovery.Responder responder;
 
@@ -151,6 +152,12 @@ public class TransferService extends Service {
                 @Override public int tcpPort() { return TransferServer.PORT; }
             });
             responder.start(TransferDiscovery.PORT);
+            try {   // 沒有這個鎖，很多手機會把收到的廣播封包丟掉
+                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) c.getSystemService(Context.WIFI_SERVICE);
+                mlock = wm.createMulticastLock("phoneai-transfer");
+                mlock.setReferenceCounted(false);
+                mlock.acquire();
+            } catch (Exception ignored) { }
             running = true;
         } catch (Exception e) {
             TransferStore.log(c, L.t("傳檔案伺服器啟動失敗：") + e.getMessage());
@@ -170,6 +177,8 @@ public class TransferService extends Service {
         closePairing();
         if (server != null) server.stop();
         if (responder != null) responder.stop();
+        try { if (mlock != null && mlock.isHeld()) mlock.release(); } catch (Exception ignored) { }
+        mlock = null;
         server = null;
         responder = null;
         super.onDestroy();

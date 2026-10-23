@@ -654,5 +654,8 @@ final class LEn {
         m.put("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 傳檔案」可以關閉", "Paired devices on the same Wi-Fi can fetch files; turn off in Settings → File transfer");
         m.put("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。", "Turn on File transfer on both devices and stay on this page; on either one press \"Pair another device\" and pick the other. Both show the same 6-digit code; press \"Matches\" only if they are identical.");
         m.put("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）", "No devices found (the other one must also have File transfer on and be on this page)");
+        m.put("狀態：運作中", "Status: running");
+        m.put("狀態：沒有在運作（關掉再開一次試試）", "Status: not running (try turning it off and on)");
+        m.put("本機位址：", "This device's address: ");
     }
 }

@@ -96,6 +96,7 @@ public class TransferActivity extends Activity {
         Ui.section(this, box, L.t("這台裝置"));
         LinearLayout me = Ui.card(this, box);
         me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("收到的檔案會放在：下載/PhoneAI")));
+        me.addView(Ui.body(this, (TransferService.running ? L.t("狀態：運作中") : L.t("狀態：沒有在運作（關掉再開一次試試）")) + "\n" + L.t("本機位址：") + localIps()));
         me.addView(Ui.tonal(this, L.t("改名稱"), v -> rename()));
 
         Ui.section(this, box, L.t("配對"));
@@ -146,6 +147,8 @@ public class TransferActivity extends Activity {
         Toast.makeText(this, L.t("搜尋裝置中…"), Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             Map<String, TransferDiscovery.Found> found = TransferDiscovery.scan("*", 2500, TransferDiscovery.PORT, null);
+            found.remove(TransferStore.myId(this));
+            if (found.isEmpty()) found.putAll(TransferDiscovery.sweep(TransferServer.PORT));   // 廣播被路由器或系統擋掉時，改逐一試同網段位址
             found.remove(TransferStore.myId(this));
             List<TransferDiscovery.Found> l = new ArrayList<>(found.values());
             ui.post(() -> chooseDevice(l));
@@ -216,5 +219,17 @@ public class TransferActivity extends Activity {
                 render();
             });
         }).start();
+    }
+
+    private static String localIps() {
+        StringBuilder sb = new StringBuilder();
+        try {
+            for (java.net.NetworkInterface ni : java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())) {
+                if (!ni.isUp() || ni.isLoopback()) continue;
+                for (java.net.InetAddress a : java.util.Collections.list(ni.getInetAddresses()))
+                    if (a instanceof java.net.Inet4Address) sb.append(sb.length() > 0 ? ", " : "").append(a.getHostAddress());
+            }
+        } catch (Exception ignored) { }
+        return sb.length() == 0 ? "?" : sb.toString();
     }
 }

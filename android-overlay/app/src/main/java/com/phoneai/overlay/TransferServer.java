@@ -344,6 +344,10 @@ final class TransferServer {
 
     private void pair(String path, Map<String, String> params, Map<String, String> h, InputStream in, OutputStream out) throws Exception {
         if (!host.pairingOpen()) { reply(out, 403, "pairing closed"); return; }
+        if ("/v1/pair/hello".equals(path)) {
+            reply(out, 200, "PHONEAI\t" + host.myId() + "\t" + host.myName().replace('\t', ' ').replace('\n', ' ') + "\t" + port());
+            return;
+        }
         if ("/v1/pair/status".equals(path)) {
             reply(out, 200, host.pairState(params.get("id") == null ? "" : params.get("id")));
             return;
