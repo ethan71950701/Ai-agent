@@ -138,6 +138,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".BrowseActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".FileSearchActivity"
             android:exported="false" />
 

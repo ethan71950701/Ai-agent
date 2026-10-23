@@ -9,6 +9,89 @@ from . import net, updater, version
 from .service import Service, Stopped, _size
 
 
+class RemoteBrowser:
+    """直接瀏覽已配對裝置的資料夾：雙擊資料夾進去，雙擊檔案就接收到電腦的「下載\\PhoneAI」。"""
+
+    def __init__(self, app, peer):
+        self.app = app
+        self.peer = peer
+        self.client = None
+        self.path = ""
+        self.rows = []
+        self.win = tk.Toplevel(app.root)
+        self.win.title(f"瀏覽「{peer['name']}」")
+        self.win.geometry("600x460")
+        top = ttk.Frame(self.win)
+        top.pack(fill="x", padx=12, pady=8)
+        ttk.Button(top, text="上一層", command=lambda: self.load(parent_of(self.path))).pack(side="left")
+        self.where = ttk.Label(top, text="")
+        self.where.pack(side="left", padx=8)
+        self.lb = tk.Listbox(self.win)
+        self.lb.pack(fill="both", expand=True, padx=12)
+        self.lb.bind("<Double-Button-1>", lambda e: self._open())
+        self.status = ttk.Label(self.win, text="連線中…")
+        self.status.pack(anchor="w", padx=12, pady=6)
+        threading.Thread(target=self._connect, daemon=True).start()
+
+    def _connect(self):
+        try:
+            self.client = self.app.svc.client_for(self.peer["id"])
+        except Exception as e:
+            self.app.root.after(0, lambda: self.status.config(text=f"連不上：{e}"))
+            return
+        self.load("")
+
+    def load(self, target):
+        if self.client is None:
+            return
+        self.status.config(text="讀取中…")
+
+        def work():
+            try:
+                rows = net.parse_listing(self.client.list(target))
+            except Exception as e:
+                self.app.root.after(0, lambda: self.status.config(text=f"讀取失敗：{e}"))
+                return
+            self.app.root.after(0, lambda: self._show(target, rows))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _show(self, target, rows):
+        self.path = target
+        self.rows = rows
+        self.where.config(text="位置：" + (target or "（磁碟）"))
+        self.lb.delete(0, "end")
+        for t, size, p in rows:
+            name = p.rstrip("/").rsplit("/", 1)[-1] or p
+            self.lb.insert("end", ("📁 " + name) if t == "D" else f"📄 {name}   {_size(size)}")
+        self.status.config(text="" if rows else "這個資料夾是空的")
+
+    def _open(self):
+        sel = self.lb.curselection()
+        if not sel or sel[0] >= len(self.rows):
+            return
+        t, size, p = self.rows[sel[0]]
+        if t == "D":
+            self.load(p)
+        elif messagebox.askyesno("接收", f"接收「{p.rsplit('/', 1)[-1]}」到電腦的下載\\PhoneAI？", parent=self.win):
+            self.win.destroy()
+            self.app._run(lambda: self.app.svc.fetch_file(self.peer["id"], p, self.app.svc.store.inbox()))
+
+
+def parent_of(p):
+    """上一層：「C:/Users」→「C:/」→「」（磁碟列表）；手機的「Download/PhoneAI」→「Download」→「」。"""
+    if not p:
+        return ""
+    s = p.rstrip("/")
+    if "/" not in s:
+        return ""
+    par = s.rsplit("/", 1)[0]
+    if par == "":
+        return "/"
+    if len(par) == 2 and par[1] == ":":
+        return par + "/"
+    return par
+
+
 class App:
     def __init__(self):
         updater.cleanup_old()
@@ -307,40 +390,7 @@ class App:
         p = self._selected()
         if not p:
             return
-        keyword = simpledialog.askstring("取檔案", f"要從「{p['name']}」找的檔名關鍵字：", parent=self.root)
-        if not keyword:
-            return
-
-        def find_then_pick():
-            try:
-                c = self.svc.client_for(p["id"])
-                rows = [l.split("\t", 3) for l in c.find(keyword).splitlines() if l.count("\t") >= 3]
-            except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror("找不到", str(e), parent=self.root))
-                return
-            self.root.after(0, lambda: self._pick_remote(p, rows))
-        threading.Thread(target=find_then_pick, daemon=True).start()
-
-    def _pick_remote(self, p, rows):
-        if not rows:
-            messagebox.showinfo("取檔案", "沒有找到。", parent=self.root)
-            return
-        win = tk.Toplevel(self.root)
-        win.title("選擇要取回的檔案")
-        win.geometry("560x320")
-        lb = tk.Listbox(win)
-        lb.pack(fill="both", expand=True, padx=12, pady=12)
-        for r in rows:
-            lb.insert("end", ("[資料夾] " if r[0] == "D" else "") + r[3] + f"  {_size(int(r[1]))}")
-
-        def choose():
-            sel = lb.curselection()
-            if sel and rows[sel[0]][0] == "F":
-                path = rows[sel[0]][3]
-                win.destroy()
-                self._run(lambda: self.svc.fetch_file(p["id"], path, self.svc.store.inbox()))
-
-        ttk.Button(win, text="取回", command=choose).pack(pady=8)
+        RemoteBrowser(self, p)
 
     def _run(self, job):
         self.stop_btn.config(state="normal")

@@ -737,5 +737,20 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("開始傳送…可以在通知列看進度", "Sending… see progress in the notifications");
         m.put("傳送失敗：", "Send failed: ");
+        m.put("瀏覽", "Browse");
+        m.put("上一層", "Up");
+        m.put("搜尋這台", "Search this device");
+        m.put("位置：", "Location: ");
+        m.put("（最上層）", "(top level)");
+        m.put("讀取中…", "Loading…");
+        m.put("讀取失敗：", "Load failed: ");
+        m.put("這個資料夾是空的", "This folder is empty");
+        m.put("📁 ", "📁 ");
+        m.put("📄 ", "📄 ");
+        m.put("接收「", "Receive \"");
+        m.put("」到這支手機的「下載/PhoneAI」？", "\" to this phone's Download/PhoneAI?");
+        m.put("接收", "Receive");
+        m.put("已接收：", "Received: ");
+        m.put("接收失敗：", "Receive failed: ");
     }
 }

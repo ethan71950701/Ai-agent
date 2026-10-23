@@ -128,11 +128,10 @@ public class TransferActivity extends Activity {
                 name.setOnClickListener(v -> removeDialog(p));
                 card.addView(name);
                 com.google.android.material.button.MaterialButton send = Ui.button(this, L.t("傳檔案過去"), v -> pickFileFor(p));
-                com.google.android.material.button.MaterialButton find = Ui.tonal(this, L.t("找檔案"), v -> {
-                    Intent it = new Intent(this, FileSearchActivity.class).putExtra("peer_id", p.id);
-                    startActivity(it);
+                com.google.android.material.button.MaterialButton browse = Ui.tonal(this, L.t("瀏覽"), v -> {
+                    startActivity(new Intent(this, BrowseActivity.class).putExtra("peer_id", p.id));
                 });
-                Ui.buttons(this, card, send, find);
+                Ui.buttons(this, card, send, browse);
             }
             box.addView(Ui.body(this, L.t("點裝置名字可以移除")));
         }
