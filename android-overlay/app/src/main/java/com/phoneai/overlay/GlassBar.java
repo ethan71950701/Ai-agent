@@ -43,6 +43,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
+            + "uniform float bodyLift;\n"       // 透鏡靜止時整塊微微提亮（磨砂感），按住後消失
             + "uniform float edgeLine;\n"       // 透鏡邊緣彩虹環的強度（0 = 不畫）
             + "uniform float edgeWidth;\n"      // 邊緣彩虹環的寬度（像素）
             + "float sd(float2 p, float r) {\n"
@@ -101,6 +102,7 @@ final class GlassBar extends FrameLayout {
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
             + "    color *= 1.0 - 0.12 * indicator * edge * edge;\n"   // 透鏡邊緣稍微變暗（玻璃的厚度感），背景平的時候也看得出邊界；不加亮線
+            + "    color = mix(color, half3(1.0), bodyLift);\n"
             + "    float ring = edgeLine * (1.0 - smoothstep(0.0, edgeWidth, depth));\n"   // 邊緣彩虹環：貼著邊界一圈，不依賴背景（仿酷安的多色邊緣），黑底上也看得見
             + "    float hue = atan(n.y, n.x) / 6.2831853 + 0.5;\n"
             + "    float3 spectrum = clamp(abs(fract(hue + float3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);\n"
@@ -117,6 +119,8 @@ final class GlassBar extends FrameLayout {
     static final float REST = 0.4f;
     /** 透鏡邊緣彩虹環的強度（0 = 不畫）；顏色依邊界方向變化（紅到紫）。想要更明顯就調大，想淡一點就調小。 */
     private static final float EDGE_LINE = 0.55f;
+    /** 透鏡靜止時整塊提亮多少（0..1，白色混合比例）；只是磨砂的微亮，不是邊緣線。按住時會慢慢消失。 */
+    private static final float BODY_LIFT = 0.08f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
@@ -324,6 +328,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
+        sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
         sh.setFloatUniform("edgeWidth", 1.5f * dp);
         sh.setFloatUniform("skew", skewValue);
     }
@@ -489,6 +494,7 @@ final class GlassBar extends FrameLayout {
         iconNode.endRecording();
         configure(iconShader, skewNow);
         iconShader.setFloatUniform("dispersion", 0f);   // 圖示不要彩虹色散，才看得清楚（透鏡邊緣的色散只給透鏡本身）
+        iconShader.setFloatUniform("bodyLift", 0f);     // 圖示不跟著透鏡整塊提亮，顏色才準
         iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
         canvas.save();
         canvas.clipPath(clip);
