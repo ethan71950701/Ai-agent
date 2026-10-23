@@ -514,18 +514,28 @@ def drives():
     return ["/"]
 
 
+def _entry_of(e):
+    """用 scandir 拿到的 DirEntry 組一行；Windows 上 DirEntry.stat() 不用再開檔案，所以很快。"""
+    try:
+        st = e.stat(follow_symlinks=False)
+    except OSError:
+        return None
+    is_dir = e.is_dir(follow_symlinks=False)
+    size = 0 if is_dir else st.st_size
+    return f"{'D' if is_dir else 'F'}\t{size}\t{int(st.st_mtime * 1000)}\t{e.path.replace(os.sep, '/')}\n"
+
+
 def _listing(path):
-    """列出一個資料夾：資料夾在前，再依名稱排序，最多 500 筆。
-    只讀一次目錄（scandir 的類型資訊是快取的），只對要送出的那 500 筆做 stat，所以大資料夾也不慢。"""
+    """列出一個資料夾（只看第一層，不往下讀）：資料夾在前，再依名稱排序，最多 500 筆。"""
     if path == "":
         return "".join(e for e in (_entry(d) for d in drives()) if e)
     try:
         with os.scandir(path) as it:
-            items = [(not e.is_dir(follow_symlinks=False), e.name.lower(), e.path) for e in it]
+            entries = list(it)
     except OSError:
         return ""
-    items.sort()
-    return "".join(e for e in (_entry(p) for _, _, p in items[:500]) if e)
+    entries.sort(key=lambda e: (not e.is_dir(follow_symlinks=False), e.name.lower()))
+    return "".join(e for e in (_entry_of(x) for x in entries[:500]) if e)
 
 
 SKIP_DIRS = {"windows", "$recycle.bin", "system volume information", "programdata", "program files",

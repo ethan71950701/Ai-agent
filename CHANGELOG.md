@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 電腦版列資料夾更快：直接使用目錄列舉附帶的大小與時間，不再為每個檔案重新開啟｜Windows app folder listing is faster: uses the size and time from the directory listing instead of reopening every file
+
 - 電腦版可以把檔案直接拖進視窗，再選要傳給哪一台裝置｜Windows app: drag files into the window, then choose which device to send them to
 
 ## 1.0.1245
