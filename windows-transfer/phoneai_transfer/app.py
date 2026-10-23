@@ -5,12 +5,13 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
 
-from . import net
+from . import net, updater, version
 from .service import Service, Stopped, _size
 
 
 class App:
     def __init__(self):
+        updater.cleanup_old()
         self.svc = Service()
         self.root = tk.Tk()
         self.root.title("PhoneAI 互傳檔案")
@@ -38,6 +39,7 @@ class App:
         self.me_label = ttk.Label(me, text="", justify="left")
         self.me_label.pack(side="left", padx=8, pady=6)
         ttk.Button(me, text="改名稱", command=self._rename).pack(side="right", padx=8)
+        ttk.Button(me, text="檢查更新", command=self._check_update).pack(side="right", padx=4)
 
         pair = ttk.LabelFrame(self.root, text="配對")
         pair.pack(fill="x", **pad)
@@ -168,6 +170,49 @@ class App:
         if name:
             self.svc.store.set_name(name)
             self.refresh()
+
+    # ---- 一鍵更新 ----
+    def _check_update(self):
+        self._status("檢查更新中…")
+
+        def work():
+            try:
+                build, url = updater.fetch_latest()
+            except Exception as e:
+                self.root.after(0, lambda: (self._status(""), messagebox.showerror("檢查更新", f"連不上 GitHub：{e}", parent=self.root)))
+                return
+            self.root.after(0, lambda: self._offer_update(build, url))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _offer_update(self, build, url):
+        self._status("")
+        if not updater.is_newer(build):
+            messagebox.showinfo("檢查更新", f"已經是最新版（{version.BUILD}）。", parent=self.root)
+            return
+        if not getattr(sys, "frozen", False):
+            messagebox.showinfo("檢查更新", f"有新版（{build}），但目前是開發模式，請自己下載。", parent=self.root)
+            return
+        if not messagebox.askyesno("檢查更新", f"有新版（{build}），要現在更新嗎？\n更新後會自動重新開啟。", parent=self.root):
+            return
+        self._status("下載更新中…")
+
+        def work():
+            try:
+                new_exe = sys.executable + ".new"
+                updater.download(url, new_exe)
+                self.root.after(0, lambda: self._apply_update(new_exe))
+            except Exception as e:
+                self.root.after(0, lambda: (self._status(""), messagebox.showerror("更新失敗", str(e), parent=self.root)))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _apply_update(self, new_exe):
+        try:
+            self.svc.stop()
+            updater.apply_and_restart(new_exe)
+        except Exception as e:
+            messagebox.showerror("更新失敗", str(e), parent=self.root)
+            return
+        self.root.destroy()
 
     def _selected(self):
         sel = self.dev_list.curselection()
