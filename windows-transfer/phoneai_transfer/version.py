@@ -2,4 +2,4 @@
 BUILD = 0                                   # 0 = 開發中（不會自動更新）
 REPO = "ethan71950701/ai-agent"
 RELEASE_TAG = "windows-latest"
-ASSET_NAME = "PhoneAI互傳.exe"
+ASSET_NAME = "PhoneAI.exe"          # GitHub 會把檔名裡的中文去掉，所以用英文名稱上傳
