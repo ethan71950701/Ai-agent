@@ -62,7 +62,7 @@ final class Ui {
         t.setText(text);
         t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium);
         t.setTextColor(attr(c, com.google.android.material.R.attr.colorOnSurfaceVariant));
-        t.setTextIsSelectable(true);
+        t.setTextIsSelectable(false);   // 不可選取：選取會把點擊吃掉，按列表時會按不到
         return t;
     }
 

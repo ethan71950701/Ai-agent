@@ -123,12 +123,23 @@ public class FileSearchActivity extends Activity {
         }).start();
     }
 
+    private android.graphics.drawable.Drawable rippleBackground() {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+        return getResources().getDrawable(tv.resourceId, getTheme());
+    }
+
     private void show(List<String[]> rows, TransferStore.Peer peer) {
         searching = false;
         status.setText(rows.isEmpty() ? L.t("沒有找到") : L.t("找到 ") + rows.size() + L.t(" 筆（點一下操作）"));
         for (String[] r : rows) {
             final boolean isFile = "F".equals(r[0]);
             LinearLayout card = Ui.card(this, results);
+            card.setMinimumHeight(Ui.dp(this, 64));
+            if (isFile) {
+                card.setClickable(true);
+                card.setBackground(rippleBackground());
+            }
             TextView t = Ui.body(this, r[2]);
             t.setTextSize(15);
             card.addView(t);
