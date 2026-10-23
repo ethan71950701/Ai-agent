@@ -304,7 +304,7 @@ class Server:
         elif path == "/v1/find":
             q = params.get("name", "")
             self.host.event(peer_id, "find", q, 0)
-            self._send_text(conn, key, nonce, _find(q, os.path.expanduser("~")))
+            self._send_text(conn, key, nonce, _find_everywhere(q))
         elif path == "/v1/file":
             p = _resolve(params.get("path", ""))
             if not os.path.isfile(p):
@@ -512,11 +512,28 @@ def _listing(path):
     return "".join(e for e in (_entry(k) for k in kids[:500]) if e)
 
 
-def _find(query, start, limit_s=4.0, max_visit=40000, max_depth=8):
-    """依檔名關鍵字找（不分大小寫），最多找 4 秒、4 萬個項目，回傳最新的 30 個。"""
+def _find_everywhere(query, limit_s=10.0):
+    """先找使用者資料夾，再找其他磁碟；整體最多 10 秒，回傳最新的 30 個。"""
+    home = os.path.expanduser("~")
+    starts = [home] + [d for d in drives() if os.path.normcase(d[:2]) != os.path.normcase(home[:2])]
+    deadline = time.time() + limit_s
+    hits = []
+    for st in starts:
+        left = deadline - time.time()
+        if left <= 0:
+            break
+        hits += _find_paths(query, st, left)
+        if len(hits) >= 200:
+            break
+    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
+    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
+
+
+def _find_paths(query, start, limit_s, max_visit=200000, max_depth=12):
+    """在一個資料夾底下依檔名找（不分大小寫）；回傳符合的完整路徑清單。"""
     q = query.lower().strip()
     if not q:
-        return ""
+        return []
     deadline = time.time() + limit_s
     visited = 0
     hits = []
@@ -536,8 +553,7 @@ def _find(query, start, limit_s=4.0, max_visit=40000, max_depth=8):
                 hits.append(p)
             if depth < max_depth and os.path.isdir(p) and not os.path.islink(p):
                 todo.append((p, depth + 1))
-    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
-    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
+    return hits
 
 
 # ---------- 區網探索 ----------
