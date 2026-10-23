@@ -31,8 +31,8 @@ final class AgentLoop {
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 8;
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
-    private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單",
-            "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout"};   // 中文與英文的敏感詞
+    private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單", "安裝", "訂閱",
+            "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout", "install", "subscribe"};   // 中文與英文的敏感詞
     private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
     private static final String[] PIPE_OK = {"grep", "head", "tail", "sort", "cut", "wc", "uniq", "tr"};
     private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "multitouch", "scroll", "wait", "back", "home", "enter", "type"};
@@ -447,6 +447,12 @@ final class AgentLoop {
                     return "已等待";
                 case "type":
                     return type(a.optString("text"), a.optBoolean("clear", true), a.optBoolean("enter", false), c);
+                case "open_url": {
+                    String url = a.optString("url", "").trim();
+                    if (!url.matches("(?i)^(https?|market)://[^\\s'\"`;|&<>]+$")) return "網址格式不對或不允許：" + url;
+                    sh("am start -a android.intent.action.VIEW -d '" + url.replace("'", "") + "'");
+                    return "已開啟網址 " + (url.length() > 60 ? url.substring(0, 60) + "…" : url);
+                }
                 case "open": {
                     String pkg = a.optString("pkg", "");
                     if (pkg.isEmpty()) return "沒有套件名稱，無法開啟「" + a.optString("name") + "」";
@@ -583,7 +589,7 @@ final class AgentLoop {
         if (text.matches("[A-Za-z0-9 ]*")) {
             if (!text.isEmpty()) sh("input text " + text.replace(" ", "%s"));
         } else if (!text.isEmpty()) {
-            paste(c, text);
+            if (!paste(c, text)) return "沒辦法輸入「" + text + "」：剪貼簿寫不進去（Android 的限制），不要再試貼上，改用 open_url 開網址";
             sh("input keyevent 279");   // KEYCODE_PASTE
         }
         if (enter) sh("input keyevent 66");
@@ -591,12 +597,24 @@ final class AgentLoop {
     }
 
     /** 把文字放進剪貼簿（Android 10 以後背景 App 可能寫不進去；實測時若失敗，之後改用 root 寫剪貼簿）。 */
-    private static void paste(Context c, String text) {
+    private static boolean paste(Context c, String text) {
+        final boolean[] ok = {false};
+        java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
         MAIN.post(() -> {
-            ClipboardManager cm = (ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);
-            if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("ai", text));
+            try {
+                ClipboardManager cm = (ClipboardManager) c.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(ClipData.newPlainText("ai", text));
+                    // 寫不進去時系統會靜默失敗，剪貼簿還是舊的；讀回來比對，對不上就不能貼
+                    ClipData cd = cm.getPrimaryClip();
+                    ok[0] = cd != null && cd.getItemCount() > 0 && text.contentEquals(String.valueOf(cd.getItemAt(0).coerceToText(c)));
+                }
+            } catch (Exception ignored) { }
+            done.countDown();
         });
-        sleep(400);
+        try { done.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        sleep(300);
+        return ok[0];
     }
 
     /** 唯讀 shell：白名單程式，後面只能接過濾程式，不能寫入、跳脫或子命令。 */

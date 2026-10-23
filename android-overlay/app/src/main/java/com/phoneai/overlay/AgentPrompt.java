@@ -23,6 +23,7 @@ final class AgentPrompt {
             "{\"action\":\"enter\"}，按下Enter送出輸入框內容\n" +
             "{\"action\":\"open\",\"name\":\"App顯示名稱\",\"pkg\":\"套件名稱\"}，用指令直接開啟已安裝的App，比在桌面找圖示快；一定要寫name（例如Chrome、設定、LINE），pkg只在你很確定時才寫，程式會用name自己查套件\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down\"}，直接開關Wi-Fi、藍牙或調音量，不用點畫面\n" +
+            "{\"action\":\"open_url\",\"url\":\"網址\"}，用網址開網頁或App頁面。在Google Play搜尋App用 market://search?q=關鍵字（關鍵字要做URL編碼，空白寫成%20）。搜尋中文或特殊字時一律用這個，不要靠輸入框貼上。\n" +
             "能用open或cmd做的事優先用它們，其餘才用畫面操作。\n" +
             "{\"action\":\"search\",\"q\":\"搜尋關鍵字\"}，到網路查資料。只有需要畫面上看不到的最新資訊（新聞、價格、不認得的名詞）才用；每個任務最多2次，要花錢，能靠畫面操作做完就不要搜尋；q不要放個人資料\n" +
             "{\"action\":\"shell\",\"cmd\":\"唯讀指令\",\"why\":\"為什麼要查\"}，只讀不寫：查系統資訊（dumpsys battery、getprop、date、cat /proc/…、pm list packages、cmd wifi status…），結果寫在下一步的歷史裡，不用開畫面，查到就可以直接done回答。不能寫入、刪除、改設定；有管線只能接grep、head、tail、sort、cut、wc等過濾。查得到就不要去點畫面。查手機的規格或版本（Android 版本、型號、容量）一律用 getprop 或 dumpsys，不要打開設定頁一頁一頁找\n" +
@@ -53,6 +54,7 @@ final class AgentPrompt {
             "{\"action\":\"enter\"}  {\"action\":\"back\"}  {\"action\":\"home\"}  {\"action\":\"wait\",\"wait\":seconds}  (0.5 to 6)\n" +
             "{\"action\":\"open\",\"name\":\"App name\",\"pkg\":\"package name\"}  (open an installed app directly; always give name)\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down\"}\n" +
+            "{\"action\":\"open_url\",\"url\":\"URL\"}  (open a web page or app page by URL; to search Google Play use market://search?q=KEYWORD with %20 for spaces; prefer this over typing non-ASCII text)\n" +
             "Prefer open and cmd over screen actions when they can do the job.\n" +
             "{\"action\":\"search\",\"q\":\"keywords\"}  (web search; only for information not on screen; at most 2 per task; it costs money)\n" +
             "{\"action\":\"ask\",\"why\":\"reason\",\"manual\":false}  (for payment, transfer, deleting, installing, sending, login or other sensitive actions; manual true when the user must type a password, code or fingerprint)\n" +
