@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
     private float dragX, dragV, lastVel, accExt, stretchD, stretchV, pressP;
     private long lastTick;
     private boolean stretching;
+    private float lensCurX, lensTargetX;   // 透鏡目前位置與手指目標位置（見 startStretch）
     /** 形變的門檻：加速度低於 ACC_DEAD（dp/ms²）、速度低於 VEL_DEAD（dp/ms）的抖動不形變，免得輕微碰一下畫面就抖。數字可依實測調整。 */
     private static final float ACC_DEAD = 0.004f, VEL_DEAD = 0.02f;
 
@@ -49,6 +50,8 @@ public class MainActivity extends Activity {
         stretchD = 0;
         stretchV = 0;
         pressP = 0;
+        lensCurX = indicator.getTranslationX();   // 從目前位置開始，之後每一幀平滑追向手指
+        lensTargetX = lensCurX;
         lastTick = android.os.SystemClock.uptimeMillis();
         indicator.postOnAnimation(new Runnable() {
             @Override
@@ -60,6 +63,8 @@ public class MainActivity extends Activity {
                 long now = android.os.SystemClock.uptimeMillis();
                 float dt = Math.min(0.033f, Math.max(0.001f, (now - lastTick) / 1000f));
                 lastTick = now;
+                lensCurX += (lensTargetX - lensCurX) * Math.min(1f, dt * 25f);   // 每一幀平滑靠近手指（觸控事件不同步，直接設定會一跳一跳）
+                indicator.setTranslationX(lensCurX);
                 pressP += (1f - pressP) * Math.min(1f, dt * 14f);
                 float force = 9000f * accExt;                                  // 加速度越大，推動形變的力越大
                 accExt *= (float) Math.pow(0.8, dt * 60);                       // 沒有新的移動事件，加速度很快歸零
@@ -299,7 +304,7 @@ public class MainActivity extends Activity {
                     dragX = ex;
                     dragT = nowMs;
                     Anim.cancel(indicator, androidx.dynamicanimation.animation.DynamicAnimation.TRANSLATION_X);   // 只停位移，放大的彈簧不能被取消
-                    indicator.setTranslationX(Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f)));
+                    lensTargetX = Math.max(min, Math.min(max, ex - (barItemW - Ui.dp(this, 24)) / 2f));   // 目標位置；實際位置由每一幀的 startStretch 平滑追過去
                     return true;
                 }
                 case android.view.MotionEvent.ACTION_UP:
