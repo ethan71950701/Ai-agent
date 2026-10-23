@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <!-- 只連 127.0.0.1（本機的操作指令），不連外網 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 助理面板的語音辨識（App 內即時辨識，才能畫音量動畫）。 -->
@@ -54,6 +56,16 @@
         </activity>
 
         <!-- 由 root 的 am start-foreground-service 或本 App 自己啟動；不開放給其他 App -->
+        <!-- 裝置之間傳檔案的伺服器（使用者在「設定 → 傳檔案」開啟才會啟動）。 -->
+        <service
+            android:name=".TransferService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Serves files to the user's own paired devices on the local network at the user's request." />
+        </service>
+
         <service
             android:name=".OverlayService"
             android:exported="false"
@@ -106,6 +118,10 @@
 
         <activity
             android:name=".LogActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".TransferActivity"
             android:exported="false" />
 
         <activity

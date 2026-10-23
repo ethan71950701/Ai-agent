@@ -33,7 +33,8 @@ final class ChatEngine {
             + "臨時的事（明天要考試）是 todo 或不用記，不要存成 note。\n"
             + "6. 標了📌的是永久記憶，你不能改也不能刪（工具會拒絕），使用者要刪就告訴他到 App 的「助理的記憶」頁手動刪。\n"
             + "7. 要刪很多項或清空時照樣呼叫工具，確認框由程式負責跳出來；使用者拒絕就照實說沒有刪除。\n"
-            + "8. 數學式請用 LaTeX，行內寫在 $...$ 裡（例如 $x^2 + 3 = 7$、$\\sqrt{5}$）；畫面會排成算式，朗讀時程式會念成口語（「x 的二次方 加 3 等於 7」），所以不要自己再把算式唸一遍或另外解釋符號。";
+            + "8. 數學式請用 LaTeX，行內寫在 $...$ 裡（例如 $x^2 + 3 = 7$、$\\sqrt{5}$）；畫面會排成算式，朗讀時程式會念成口語（「x 的二次方 加 3 等於 7」），所以不要自己再把算式唸一遍或另外解釋符號。\n"
+            + "9. 裝置之間傳檔案：使用者說「把 X 傳到我的手機／電腦」「從〇〇手機拿 X」「看看〇〇裡有什麼」就用 device_list、file_find、file_get、file_send、file_list。流程：先 file_find 找到檔案（多個就列出最新幾個問使用者要哪個；只有一個或明顯就直接做），再 file_get 或 file_send；做完用一句話說存在哪裡。裝置名稱用使用者說的，不確定就先 device_list。工具回報錯誤就照實告訴使用者原因，不要假裝成功。這些工具要使用者先在「設定 → 傳檔案」開啟並配對。";
 
     private static final String SYSTEM_EN = "You are the voice assistant on the user's phone. Chat naturally, like Gemini. Rules:\n"
             + "0. What the user says is often speech-to-text and may contain similar-sounding mistakes; understand what they really mean from context instead of answering literally.\n"
@@ -44,9 +45,20 @@ final class ChatEngine {
             + "5. When the user tells you something about themselves worth keeping long term (name, family, likes, habits, allergies), save it as a note with memory_add and say you have remembered it. Temporary things (an exam tomorrow) are to-dos or not saved at all.\n"
             + "6. Items marked with a pin are permanent: you cannot change or delete them (the tool refuses). If the user wants one removed, tell them to delete it by hand on the assistant memory page of the app.\n"
             + "7. When many items or everything must be deleted, still call the tool; the app shows the confirmation. If the user declines, say that nothing was deleted.\n"
-            + "8. Write math in LaTeX, inline inside $...$ (for example $x^2 + 3 = 7$, $\\sqrt{5}$); the screen typesets it and speech reads it aloud naturally, so do not spell the formula out again or explain the symbols.";
+            + "8. Write math in LaTeX, inline inside $...$ (for example $x^2 + 3 = 7$, $\\sqrt{5}$); the screen typesets it and speech reads it aloud naturally, so do not spell the formula out again or explain the symbols.\n"
+            + "9. File transfer between devices: when the user says \"send X to my phone/computer\", \"get X from <device>\", or \"what is in <device>\", use device_list, file_find, file_get, file_send, file_list. Flow: file_find first (if several match, list the newest few and ask which; if one or obvious, just proceed), then file_get or file_send; afterwards say in one sentence where it was saved. Use the device name as the user said it; if unsure call device_list first. If a tool reports an error, tell the user the real reason; never pretend it worked. These tools need the user to turn on and pair devices in Settings → File transfer.";
 
     private static final String TOOLS = "["
+            + "{\"name\":\"device_list\",\"description\":\"列出已配對、可以傳檔案的其他裝置（手機、電腦），並看哪些現在在線。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{}}},"
+            + "{\"name\":\"file_find\",\"description\":\"依檔名關鍵字找檔案。device 留空是找這支手機，填裝置名稱就是找那台裝置。回傳路徑、大小、日期（最新的在前）。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\",\"description\":\"檔名裡的關鍵字\"}},\"required\":[\"name\"]}},"
+            + "{\"name\":\"file_list\",\"description\":\"列出某個資料夾裡的內容。path 是相對於儲存空間根目錄，留空是根目錄。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"}}}},"
+            + "{\"name\":\"file_get\",\"description\":\"把另一台裝置上的檔案取到這支手機（存在 下載/PhoneAI）。要先用 file_find 找到路徑。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"}},\"required\":[\"device\",\"path\"]}},"
+            + "{\"name\":\"file_send\",\"description\":\"把這支手機上的檔案傳到另一台裝置（存在對方的收件匣）。要先用 file_find 找到路徑。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"device\":{\"type\":\"string\"},\"path\":{\"type\":\"string\"}},\"required\":[\"device\",\"path\"]}},"
             + "{\"name\":\"memory_add\",\"description\":\"新增一則待辦（要做的事）或筆記（資訊、事實）。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"type\":\"string\",\"enum\":[\"todo\",\"note\"]},"
             + "\"text\":{\"type\":\"string\",\"description\":\"內容，用使用者的原話或簡短整理\"},"
@@ -190,7 +202,9 @@ final class ChatEngine {
                 JSONArray results = new JSONArray();
                 for (int i = 0; i < uses.length(); i++) {
                     JSONObject u = uses.getJSONObject(i);
-                    String out = Memory.runTool(c, u.optString("name"), u.optJSONObject("input"), confirm);
+                    String tn = u.optString("name");
+                    JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
+                    String out = FileTools.handles(tn) ? FileTools.run(c, tn, ti) : Memory.runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
                 msgs.put(new JSONObject().put("role", "user").put("content", results));

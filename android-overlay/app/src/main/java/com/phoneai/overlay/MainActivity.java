@@ -612,7 +612,8 @@ public class MainActivity extends Activity {
         Ui.section(this, box, L.t("資料"));
         Ui.tileGrid(this, box,
                 new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),
-                new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))));
+                new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))),
+                new Ui.Tile("download", L.t("傳檔案"), L.t("在自己的裝置之間傳檔案"), false, v -> startActivity(new Intent(this, TransferActivity.class))));
         Ui.section(this, box, L.t("維護"));
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", "Claude API Key", L.t("只存在這支手機的 App 私有資料夾"), true, v -> askKey()),
