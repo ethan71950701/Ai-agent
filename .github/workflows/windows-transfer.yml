@@ -1,0 +1,31 @@
+name: Windows transfer
+
+on:
+  push:
+    branches: [main]
+    paths: ["windows-transfer/**"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows-transfer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-build.txt
+      - name: Test (Python side)
+        run: python -m unittest tests.test_service -v
+      - name: Build exe
+        run: pyinstaller --noconfirm --onefile --windowed --name PhoneAI互傳 run_app.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PhoneAI互傳-windows
+          path: windows-transfer/dist/PhoneAI互傳.exe
