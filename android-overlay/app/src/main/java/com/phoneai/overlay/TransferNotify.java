@@ -45,15 +45,19 @@ final class TransferNotify {
         String text = name + "　" + pct + "%　" + TransferStore.size(done) + " / " + TransferStore.size(total);
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
-        Notification n = new Notification.Builder(c, CHANNEL).setSmallIcon(android.R.drawable.stat_sys_upload)
-                .setContentTitle(title).setContentText(text)
-                .setStyle(new Notification.BigTextStyle().bigText(text + "\n" + where))
+        Notification.Builder nb = new Notification.Builder(c, CHANNEL).setSmallIcon(R.drawable.ic_stat)
+                .setContentTitle(title).setContentText(text + "\n" + where)
+                .setCategory(Notification.CATEGORY_PROGRESS).setShowWhen(false)
                 .setProgress(100, Math.min(100, pct), false)
                 .addAction(new Notification.Action.Builder(Icon.createWithResource(c, android.R.drawable.ic_menu_close_clear_cancel),
                         L.t("停止"), PendingIntent.getService(c, 0, new Intent(c, TransferService.class).setAction(ACTION_STOP),
                         PendingIntent.FLAG_IMMUTABLE)).build())
-                .setOngoing(true).setOnlyAlertOnce(true).build();
-        nm.notify(PROGRESS_ID, n);
+                .setOngoing(true).setOnlyAlertOnce(true);
+        android.os.Bundle ex = new android.os.Bundle();
+        ex.putBoolean("android.requestPromotedOngoing", true);   // 同 Updater：要求超級島／Now Bar／Live Update
+        nb.addExtras(ex);
+        if (android.os.Build.VERSION.SDK_INT >= 36) nb.setShortCriticalText(pct + "%");
+        nm.notify(PROGRESS_ID, nb.build());
     }
 
     /** 傳輸結束（成功或失敗）：收起進度通知。 */
