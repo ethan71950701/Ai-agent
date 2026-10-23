@@ -63,13 +63,18 @@ public class MainActivity extends Activity {
                 pressP += (1f - pressP) * Math.min(1f, dt * 14f);
                 float force = 9000f * accExt;                                  // 加速度越大，推動形變的力越大
                 accExt *= (float) Math.pow(0.8, dt * 60);                       // 沒有新的移動事件，加速度很快歸零
-                float k = 170f, c = 10f;                                        // 彈簧與阻尼：會回彈（果凍感）
+                float k = 170f, c = 26f;                                        // 臨界阻尼（c ≈ 2√k）：不來回彈，不會一抽一抽
                 stretchV += (force - k * stretchD - c * stretchV) * dt;
                 stretchD += stretchV * dt;
                 float d = Math.max(-0.5f, Math.min(1.4f, stretchD));
-                indicator.setScaleX(1f + (GlassPrefs.pressX - 1f) * pressP + d);
-                indicator.setScaleY(Math.max(1f, 1f + (GlassPrefs.pressY - 1f) * pressP - 0.7f * d));
-                bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP + 0.08f * d);
+                // 按住放大照舊；形變不再縮放整個 View（那樣中間的圖示也會跟著變形），改由著色器只在透鏡邊緣形變
+                indicator.setScaleX(1f + (GlassPrefs.pressX - 1f) * pressP);
+                indicator.setScaleY(1f + (GlassPrefs.pressY - 1f) * pressP);
+                if (indicator instanceof GlassBar) {
+                    ((GlassBar) indicator).setStretch(0.25f * d, -0.2f * d);
+                    ((GlassBar) indicator).kick(200);
+                }
+                bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP);
                 bar.setScaleY(1f + (GlassPrefs.barPress - 1f) * pressP);
                 indicator.postOnAnimation(this);
             }

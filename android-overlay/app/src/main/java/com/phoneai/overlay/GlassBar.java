@@ -44,6 +44,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
             + "uniform float bodyLift;\n"       // 透鏡靜止時整塊微微提亮（磨砂感），按住後消失
+            + "uniform float2 stretch;\n"       // 拖動的形變量（x、y）：只在透鏡邊緣的折射帶生效，中間的內容不動
             + "uniform float edgeLine;\n"       // 透鏡邊緣彩虹環的強度（0 = 不畫）
             + "uniform float edgeWidth;\n"      // 邊緣彩虹環的寬度（像素）
             + "float sd(float2 p, float r) {\n"
@@ -70,6 +71,7 @@ final class GlassBar extends FrameLayout {
             + "    }\n"
             + "    float2 offset = -normal * circleMap * amount;\n"
             + "    float2 refracted = xy + offset + float2(skew * p.y, 0.0);\n"
+            + "    refracted -= float2(stretch.x * p.x, stretch.y * p.y) * edge * edge;\n"   // 形變只在邊緣：離邊界越近越強，中心不動
             + "    half4 base = backdrop.eval(refracted);\n"
             + "    float factor = dispersion * (p.x * p.y) / max(halfSize.x * halfSize.y, 1.0);\n"
             + "    if (dispersion > 0.0 && edge > 0.0) {\n"
@@ -146,6 +148,7 @@ final class GlassBar extends FrameLayout {
     private final Path clip = new Path();
     private final RectF rect = new RectF();
     private boolean capturing, failed, plain;
+    private float stretchX, stretchY;   // 拖動形變量，見 setStretch
     private long until;
     private final int bgColor, tintColor;
     private final float radius;
@@ -255,6 +258,12 @@ final class GlassBar extends FrameLayout {
         if (on) invalidate();
     }
 
+    /** 拖動時的形變量（只畫在透鏡邊緣，中間的內容不動）。要配合 kick() 讓畫面更新。 */
+    void setStretch(float sx, float sy) {
+        stretchX = sx;
+        stretchY = sy;
+    }
+
     void kick(long ms) {
         until = Math.max(until, SystemClock.uptimeMillis() + ms);
         invalidate();
@@ -329,6 +338,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
+        sh.setFloatUniform("stretch", lens ? stretchX : 0f, lens ? stretchY : 0f);
         sh.setFloatUniform("edgeWidth", 1.0f * dp);   // 彩虹環細一點（1dp），跟酷安一樣是細線
         sh.setFloatUniform("skew", skewValue);
     }
