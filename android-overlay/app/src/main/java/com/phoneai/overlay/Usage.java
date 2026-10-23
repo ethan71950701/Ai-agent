@@ -45,13 +45,15 @@ final class Usage {
     }
 
     /** 記一次呼叫的用量（在背景執行緒呼叫）。 */
-    static synchronized void add(Context c, long in, long out) {
+    /** in＝輸入 token（含快取的寫入與讀取），out＝輸出，cw＝快取寫入，cr＝快取讀取（cw、cr 是 in 裡的明細）。 */
+    static synchronized void add(Context c, long in, long out, long cw, long cr) {
         try {
             JSONObject d = load(c);
             String k = today();
             JSONObject e = d.optJSONObject(k);
             long i = (e == null ? 0 : e.optLong("in")) + in, o = (e == null ? 0 : e.optLong("out")) + out;
-            d.put(k, new JSONObject().put("in", i).put("out", o));
+            long w = (e == null ? 0 : e.optLong("cw")) + cw, r = (e == null ? 0 : e.optLong("cr")) + cr;
+            d.put(k, new JSONObject().put("in", i).put("out", o).put("cw", w).put("cr", r));
             String cutoff = day(System.currentTimeMillis() - KEEP_DAYS * 86400000L);
             List<String> old = new ArrayList<>();
             java.util.Iterator<String> keys = d.keys();
@@ -68,9 +70,9 @@ final class Usage {
         }
     }
 
-    /** 日期前綴的合計（"2026-10-22" 是某一天，"2026-10" 是某個月）：[輸入, 輸出]。 */
+    /** 日期前綴的合計（"2026-10-22" 是某一天，"2026-10" 是某個月）：[輸入, 輸出, 快取寫入, 快取讀取]。 */
     static synchronized long[] sum(Context c, String prefix) {
-        long[] s = new long[2];
+        long[] s = new long[4];
         JSONObject d = load(c);
         java.util.Iterator<String> keys = d.keys();
         while (keys.hasNext()) {
@@ -80,6 +82,8 @@ final class Usage {
             if (e == null) continue;
             s[0] += e.optLong("in");
             s[1] += e.optLong("out");
+            s[2] += e.optLong("cw");
+            s[3] += e.optLong("cr");
         }
         return s;
     }
@@ -122,8 +126,8 @@ final class Usage {
         float d = a.getResources().getDisplayMetrics().density;
         long[] td = sum(a, today()), tm = sum(a, today().substring(0, 7));
         TextView info = new TextView(a);
-        info.setText(String.format(L.t("今天：%,d token（輸入 %,d、輸出 %,d）\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。"),
-                td[0] + td[1], td[0], td[1], tm[0] + tm[1], tm[0], tm[1]));
+        info.setText(String.format(L.t("今天：%,d token（輸入 %,d、輸出 %,d）\n　快取寫入 %,d、快取讀取 %,d\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。"),
+                td[0] + td[1], td[0], td[1], td[2], td[3], tm[0] + tm[1], tm[0], tm[1]));
         info.setTextSize(14);
         LinearLayout form = new LinearLayout(a);
         form.setOrientation(LinearLayout.VERTICAL);

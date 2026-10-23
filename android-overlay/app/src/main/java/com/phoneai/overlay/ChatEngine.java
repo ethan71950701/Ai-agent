@@ -133,8 +133,8 @@ final class ChatEngine {
         JSONObject r = new JSONObject(text);
         JSONObject u = r.optJSONObject("usage");
         if (app != null && u != null) {
-            Usage.add(app, u.optLong("input_tokens") + u.optLong("cache_creation_input_tokens") + u.optLong("cache_read_input_tokens"),
-                    u.optLong("output_tokens"));
+            long cw = u.optLong("cache_creation_input_tokens"), cr = u.optLong("cache_read_input_tokens");
+            Usage.add(app, u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
         }
         return r;
     }

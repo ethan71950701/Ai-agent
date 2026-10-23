@@ -568,7 +568,7 @@ final class LEn {
         m.put("｜", " | ");
         m.put("今天的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "Today's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
         m.put("這個月的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "This month's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
-        m.put("今天：%,d token（輸入 %,d、輸出 %,d）\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。", "Today: %,d tokens (input %,d, output %,d)\nThis month: %,d tokens (input %,d, output %,d)\n\nThese are token counts, not money; check amounts on the Usage page of the Anthropic Console. Limits are in thousands of tokens; 0 or empty = no limit.");
+                m.put("今天：%,d token（輸入 %,d、輸出 %,d）\n　快取寫入 %,d、快取讀取 %,d\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。", "Today: %,d tokens (input %,d, output %,d)\n　cache writes %,d, cache reads %,d\nThis month: %,d tokens (input %,d, output %,d)\n\nThese are token counts, not money; check amounts on the Usage page of the Anthropic Console. Limits are in thousands of tokens; 0 or empty = no limit.");
         m.put("每日上限（千 token）", "Daily limit (thousand tokens)");
         m.put("每月上限（千 token）", "Monthly limit (thousand tokens)");
         m.put("用量與上限", "Usage and limits");
