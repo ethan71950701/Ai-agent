@@ -47,9 +47,9 @@ final class FileTools {
                         File[] kids = dir.listFiles();
                         StringBuilder sb = new StringBuilder();
                         if (kids != null) for (int i = 0; i < kids.length && i < 100; i++) sb.append(TransferServer.lineOf(TransferStore.root(), kids[i]));
-                        return pretty(sb.toString(), "空的或不存在");
+                        return pretty(sb.toString(), "這個資料夾沒有內容，或不存在。電腦的路徑要用完整寫法，例如 C:/Users/使用者名稱（Windows 的使用者資料夾叫 Users，不是 user）");
                     }
-                    return pretty(client(c, dev).list(p), "空的或不存在");
+                    return pretty(client(c, dev).list(p), "這個資料夾沒有內容，或不存在。電腦的路徑要用完整寫法，例如 C:/Users/使用者名稱（Windows 的使用者資料夾叫 Users，不是 user）");
                 }
                 case "file_get": {
                     if (local) return "錯誤：file_get 是從另一台裝置取檔案，請指定 device";
