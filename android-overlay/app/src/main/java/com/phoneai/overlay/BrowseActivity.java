@@ -81,7 +81,8 @@ public class BrowseActivity extends Activity {
         list.removeAllViews();
         for (String[] r : rows) {
             final boolean folder = "D".equals(r[0]);
-            String name = r[2].contains("/") ? r[2].substring(r[2].lastIndexOf('/') + 1) : r[2];
+            String trimmed = r[2].endsWith("/") ? r[2].substring(0, r[2].length() - 1) : r[2];   // 磁碟根目錄「C:/」要去掉最後的 /
+            String name = trimmed.contains("/") ? trimmed.substring(trimmed.lastIndexOf('/') + 1) : trimmed;
             LinearLayout card = Ui.card(this, list);
             TextView t = Ui.body(this, (folder ? L.t("📁 ") : L.t("📄 ")) + name);
             t.setTextSize(16);
