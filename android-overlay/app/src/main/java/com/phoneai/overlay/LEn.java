@@ -678,5 +678,15 @@ final class LEn {
         m.put("運作中", "Running");
         m.put("需要「所有檔案存取」權限，才能找到並讀寫檔案。", "\"All files access\" permission is needed to find and read/write files.");
         m.put("點名稱可以移除", "Tap a name to remove it");
+        m.put(" 取回", " fetched");
+        m.put(" 的收件匣", "'s inbox");
+        m.put("傳到：", "Sent to: ");
+        m.put("存到：下載/PhoneAI", "Saved to: Download/PhoneAI");
+        m.put("已傳到 ", "Sent to ");
+        m.put("已存到 下載/PhoneAI/", "Saved to Download/PhoneAI/");
+        m.put("正在傳給 ", "Sending to ");
+        m.put("正在從 ", "Fetching from ");
+        m.put(" 傳來的檔案", " sent a file");
+        m.put("正在收 ", "Receiving from ");
     }
 }

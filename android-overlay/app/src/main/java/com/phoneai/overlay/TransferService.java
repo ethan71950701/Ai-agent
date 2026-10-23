@@ -18,7 +18,6 @@ import java.io.File;
 public class TransferService extends Service {
     private static final String CHANNEL = "transfer";
     private static final int NOTIF_ID = 7301;
-    private static int eventId;
 
     /** 配對視窗到什麼時候（毫秒時間戳）；沒開就是 0。 */
     static volatile long pairUntil;
@@ -140,6 +139,18 @@ public class TransferService extends Service {
             }
 
             @Override
+            public void progress(String peerId, boolean toPeer, String name, long done, long total) {
+                String who = TransferStore.nameOf(c, peerId);
+                if (toPeer) TransferNotify.progress(c, L.t("正在傳給 ") + who, L.t("傳到：") + who, name, done, total);
+                else TransferNotify.progress(c, L.t("正在收 ") + who + L.t(" 傳來的檔案"), L.t("存到：下載/PhoneAI"), name, done, total);
+            }
+
+            @Override
+            public void transferEnded() {
+                TransferNotify.cancel(c);
+            }
+
+            @Override
             public void peerName(String peerId, String name) {
                 TransferStore.updateName(c, peerId, name);
             }
@@ -189,7 +200,7 @@ public class TransferService extends Service {
     /** 記錄並發通知：每次有檔案被取走或收到，使用者都看得到。 */
     private static void note(Context c, String text) {
         TransferStore.log(c, text);
-        Notify.notifyText(c, L.t("互傳檔案"), text, 7302 + (eventId++ % 20));
+        TransferNotify.finish(c, text);
     }
 
     @Override

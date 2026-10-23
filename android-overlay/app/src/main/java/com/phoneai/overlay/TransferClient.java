@@ -146,7 +146,7 @@ final class TransferClient {
 
     /** 把本機的檔案送到對方的收件匣。回傳對方存成的檔名。 */
     String put(File src, Progress cb) throws IOException {
-        String target = "/v1/put?name=" + enc(src.getName());
+        String target = "/v1/put?name=" + enc(src.getName()) + "&size=" + src.length();
         try (Socket s = open()) {
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
             String nonce = writeHead(out, "PUT", target);

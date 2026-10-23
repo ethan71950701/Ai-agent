@@ -50,6 +50,10 @@ final class TransferServer {
         void event(String peerId, String kind, String what, long size);
         /** 已驗證的對方每次連上都會帶它現在的名稱；存下來，改名後不用重新配對。 */
         void peerName(String peerId, String name);
+        /** 傳輸進度：toPeer = 我們送給對方（對方取檔），否則是對方送來給我們。 */
+        void progress(String peerId, boolean toPeer, String name, long done, long total);
+        /** 一次傳輸結束（成功或失敗），用來收起進度通知。 */
+        void transferEnded();
     }
 
     private final Host host;
@@ -153,11 +157,11 @@ final class TransferServer {
                 case "/v1/file": {
                     File f = resolve(params.get("path"));
                     if (!f.isFile()) { reply(out, 404, "not a file"); return; }
-                    sendFile(out, au, f);
+                    try { sendFile(out, au, f); } finally { host.transferEnded(); }
                     break;
                 }
                 case "/v1/put":
-                    receive(in, out, au, params.get("name"));
+                    try { receive(in, out, au, params.get("name"), params.get("size")); } finally { host.transferEnded(); }
                     break;
                 default:
                     reply(out, 404, "unknown");
@@ -233,13 +237,19 @@ final class TransferServer {
              TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(au.key, au.nonce))) {
             byte[] buf = new byte[32 * 1024];
             int n;
-            while ((n = fin.read(buf)) > 0) { so.write(buf, 0, n); total += n; }
+            while ((n = fin.read(buf)) > 0) {
+                so.write(buf, 0, n);
+                total += n;
+                host.progress(au.peer, true, f.getName(), total, f.length());
+            }
         }
         out.flush();
         host.event(au.peer, "get", rel(f), total);
     }
 
-    private void receive(InputStream in, OutputStream out, Auth au, String name) throws IOException {
+    private void receive(InputStream in, OutputStream out, Auth au, String name, String size) throws IOException {
+        long expect = 0;
+        try { expect = Long.parseLong(size); } catch (Exception ignored) { }
         String base = name == null ? "" : new File(name.replace('\\', '/')).getName();
         if (base.isEmpty() || base.equals("..") || base.equals(".")) { reply(out, 400, "bad name"); return; }
         File inbox = host.inbox();
@@ -251,7 +261,11 @@ final class TransferServer {
              FileOutputStream fo = new FileOutputStream(tmp)) {
             byte[] buf = new byte[32 * 1024];
             int n;
-            while ((n = body.read(buf)) > 0) { fo.write(buf, 0, n); total += n; }
+            while ((n = body.read(buf)) > 0) {
+                fo.write(buf, 0, n);
+                total += n;
+                host.progress(au.peer, false, base, total, expect);
+            }
         } catch (IOException e) {
             tmp.delete();
             throw e;

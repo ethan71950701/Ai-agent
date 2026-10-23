@@ -58,8 +58,10 @@ final class FileTools {
                     TransferClient cl = client(c, dev);
                     File dest = unique(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
                     dest.getParentFile().mkdirs();
-                    long n = cl.download(p, dest, null);
+                    long n = cl.download(p, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + dev + L.t(" 取回"),
+                            L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
+                    TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）");
                     return "已存到 下載/PhoneAI/" + dest.getName() + "（" + TransferStore.size(n) + "）";
                 }
                 case "file_send": {
@@ -68,14 +70,17 @@ final class FileTools {
                     File src = new File(TransferStore.root(), p.startsWith("/sdcard/") ? p.substring(8) : p);
                     if (!src.isFile() || !src.getCanonicalPath().startsWith(TransferStore.root().getCanonicalPath() + File.separator))
                         return "錯誤：找不到這個檔案：" + p;
-                    String saved = client(c, dev).put(src, null);
+                    String saved = client(c, dev).put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
+                            L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
                     TransferStore.log(c, L.t("傳出 ") + src.getName() + " → " + dev);
+                    TransferNotify.finish(c, L.t("已傳到 ") + dev + "：" + src.getName());
                     return "已傳到對方的收件匣，檔名：" + saved + "（" + TransferStore.size(src.length()) + "）";
                 }
                 default:
                     return "錯誤：未知工具 " + name;
             }
         } catch (Exception e) {
+            TransferNotify.cancel(c);
             return "錯誤：" + e.getMessage();
         }
     }
