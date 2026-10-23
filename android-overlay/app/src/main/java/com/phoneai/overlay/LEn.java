@@ -732,5 +732,10 @@ final class LEn {
         m.put("點裝置名字可以移除", "Tap a device name to remove it");
         m.put("在 ", "Search in ");
         m.put(" 裡找", "");
+        m.put("請先到「功能 → 互傳檔案」打開開關", "Please turn on File transfer under Features first");
+        m.put("傳給哪一台（", "Send to which device (");
+        m.put(" 個檔案）", " files)");
+        m.put("開始傳送…可以在通知列看進度", "Sending… see progress in the notifications");
+        m.put("傳送失敗：", "Send failed: ");
     }
 }

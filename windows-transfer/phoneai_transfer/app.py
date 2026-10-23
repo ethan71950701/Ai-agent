@@ -52,9 +52,10 @@ class App:
         self.dev_list.pack(fill="x", padx=8, pady=6)
         row = ttk.Frame(devs)
         row.pack(fill="x", padx=8, pady=(0, 8))
-        ttk.Button(row, text="傳檔案過去", command=self._send).pack(side="left", expand=True, fill="x")
-        ttk.Button(row, text="從它取檔案", command=self._fetch).pack(side="left", expand=True, fill="x", padx=4)
-        ttk.Button(row, text="移除", command=self._remove).pack(side="left", expand=True, fill="x")
+        ttk.Button(row, text="傳送過去", command=self._send).pack(side="left", expand=True, fill="x")
+        ttk.Button(row, text="接收", command=self._fetch).pack(side="left", expand=True, fill="x", padx=4)
+        ttk.Label(devs, text="雙擊裝置名字可以移除").pack(anchor="w", padx=8, pady=(0, 6))
+        self.dev_list.bind("<Double-Button-1>", lambda e: self._remove())
 
         prog = ttk.LabelFrame(self.root, text="傳輸")
         prog.pack(fill="x", **pad)
