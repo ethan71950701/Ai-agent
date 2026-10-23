@@ -50,6 +50,28 @@ final class Assist {
 
     static Route fixed(int i) { return new Route(FIXED, COMMANDS[i].cmd, L.t(COMMANDS[i].reply), COMMANDS[i].confirm); }
     static int commandCount() { return COMMANDS.length; }
+
+    private static final java.util.regex.Pattern ACTION_VERB = java.util.regex.Pattern.compile(
+            "打開|打开|開啟|开启|進入|进入|前往|切換|切换|點擊|点击|點開|点开|滑動|滑动|回到|返回|去|"
+                    + "\\b(open|go to|goto|tap|click|turn on|turn off|switch to|launch|enter)\\b");
+    private static final java.util.regex.Pattern ACTION_OBJECT = java.util.regex.Pattern.compile(
+            "頁面|页面|界面|畫面|画面|選單|菜單|菜单|設定|设定|設置|设置|螢幕|屏幕|按鈕|按钮|桌面|首頁|首页|通知列|"
+                    + "wi-?fi|藍牙|蓝牙|\\b(settings?|screen|page|menu|home|bluetooth|app)\\b");
+
+    /** 這句話明顯是要操作手機（有「打開、進入…」這類動作詞，又提到設定、頁面、Wi-Fi 這類畫面或項目）。路由說是聊天時用它補救。 */
+    static boolean looksLikeAction(String t) {
+        if (t == null) return false;
+        String s = t.toLowerCase(java.util.Locale.ROOT);
+        return ACTION_VERB.matcher(s).find() && ACTION_OBJECT.matcher(s).find();
+    }
+
+    /** 聊天助理的回答是在說「我不能操作手機」：使用者其實是要操作手機。 */
+    static boolean refusesToOperate(String reply) {
+        if (reply == null) return false;
+        String s = reply.toLowerCase(java.util.Locale.ROOT);
+        return s.contains("不能操作手機") || s.contains("不能操作手机") || s.contains("無法操作手機") || s.contains("无法操作手机")
+                || s.contains("cannot operate") || s.contains("can't operate") || s.contains("unable to operate");
+    }
     private static final String[] EN_LABELS = {"turn Wi-Fi on", "turn Wi-Fi off", "turn Bluetooth on", "turn Bluetooth off", "go to the home screen",
             "go back", "volume up", "volume down", "Do Not Disturb on", "Do Not Disturb off", "auto-rotate on", "auto-rotate off",
             "dark mode on", "dark mode off", "battery saver on", "battery saver off", "airplane mode on", "airplane mode off"};

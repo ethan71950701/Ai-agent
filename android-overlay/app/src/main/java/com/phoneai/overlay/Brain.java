@@ -40,6 +40,8 @@ final class Brain {
         if (over != null) return over;
         Router.Decision d = Router.decide(act, t);
         String kind = d == null ? Router.CHAT : d.kind;
+        // Haiku 偶爾把「打開設定的 Wi-Fi 頁面」當成聊天（或路由失敗）：話裡有明顯的操作詞就改走自動操作
+        if (Router.CHAT.equals(kind) && Assist.looksLikeAction(t)) kind = Router.AGENT;
         switch (kind) {
             case Router.CMD:
                 return runFixed(act, Assist.fixed(d.cmdIndex));
@@ -51,6 +53,8 @@ final class Brain {
             default: {
                 String reply = localAnswer(act, t);
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
+                // 聊天助理回答「我不能操作手機」，但使用者明明是要操作：補救，改走自動操作
+                if (Assist.refusesToOperate(reply) && Assist.looksLikeAction(t)) return AgentLoop.run(act, t, ui);
                 return reply != null ? reply : L.t("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。");
             }
         }
