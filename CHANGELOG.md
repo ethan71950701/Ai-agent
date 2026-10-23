@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 瀏覽與搜尋結果的列恢復原本的細高度（保留按下去的水波紋）｜Browse and search result rows are back to their original thin height (press ripple kept)
 
+## 1.0.1249
+
 - 文字不再可以選取（選取會吃掉點擊）；搜尋結果列加大、按下去有水波紋｜Text is no longer selectable (selection was swallowing taps); search result rows are taller with a press ripple
 
 ## 1.0.1248
