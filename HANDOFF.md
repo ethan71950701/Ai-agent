@@ -405,6 +405,13 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 
 ## 11b. 開發環境備註（Claude Code 雲端）
 
+**合併到 `main` 的流程（避免 CHANGELOG 衝突）：** CI 每次發版都會往 `main` 推一個「Archive changelog … [skip ci]」提交，所以 `main` 常常比工作分支超前。順序要固定：
+1. 先把 `main` 合併進工作分支（`git checkout claude/… && git merge main`），把歸檔提交拿進來。
+2. 在工作分支上改程式、CHANGELOG、HANDOFF，提交並推送。
+3. 切到 `main`，用 `git merge --ff-only claude/…` 快進（不要用一般合併，免得又衝突），再推送 `main`。
+4. 如果第 3 步快進失敗，表示 `main` 在這期間又被推進了：回到第 1 步重來。
+不要在 `main` 上直接改 CHANGELOG；Unreleased 的內容只在工作分支上加。
+
 - **APK 簽名金鑰固定**（2026-10-17）：`android-overlay/debug.keystore`（密碼 android，別名 androiddebugkey），`app/build.gradle` 的 `signingConfigs.debug` 使用。
   原本 GitHub Actions 每次都產生新金鑰，簽名不同，只能先解除安裝才能裝（root 授權、無障礙設定都會掉）。雲端兩次獨立編譯的簽名指紋相同（SHA-256 `1a2c4298…cf49`）。
   **這個 repo 是私人的**才這樣放；若改成公開，這把金鑰就公開了，要先換掉並重裝一次。從舊版升級到固定金鑰那一次仍須先解除安裝，之後就能直接覆蓋安裝。
