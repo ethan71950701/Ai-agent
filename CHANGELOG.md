@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1250
+
 - 瀏覽與搜尋結果的列恢復原本的細高度（保留按下去的水波紋）｜Browse and search result rows are back to their original thin height (press ripple kept)
 
 ## 1.0.1249
