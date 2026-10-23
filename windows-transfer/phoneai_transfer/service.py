@@ -148,6 +148,14 @@ class Service:
         found.pop(self.my_id(), None)
         return found
 
+    def search_local(self, query):
+        """手動搜尋：本機（整台電腦），不用 AI。回傳 (類型, 大小, 路徑) 列表。"""
+        return net.parse_listing(net._find_everywhere(query))
+
+    def search_peer(self, peer_id, query):
+        """手動搜尋：已配對的裝置（手機）。"""
+        return net.parse_listing(self.client_for(peer_id).find(query))
+
     def client_for(self, peer_id):
         p = self.store.peer(peer_id)
         if not p:

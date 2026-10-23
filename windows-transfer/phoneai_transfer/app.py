@@ -65,6 +65,22 @@ class App:
         self.stop_btn = ttk.Button(prog, text="停止", command=self._stop, state="disabled")
         self.stop_btn.pack(anchor="e", padx=8, pady=(0, 8))
 
+        search = ttk.LabelFrame(self.root, text="找檔案（手動搜尋，不用 AI）")
+        search.pack(fill="x", **pad)
+        srow = ttk.Frame(search)
+        srow.pack(fill="x", padx=8, pady=6)
+        self.query = ttk.Entry(srow)
+        self.query.pack(side="left", fill="x", expand=True)
+        self.query.bind("<Return>", lambda e: self._search_local())
+        ttk.Button(srow, text="搜本機", command=self._search_local).pack(side="left", padx=4)
+        ttk.Button(srow, text="搜選的裝置", command=self._search_device).pack(side="left")
+        self.results = tk.Listbox(search, height=6)
+        self.results.pack(fill="x", padx=8)
+        self.results.bind("<Double-Button-1>", lambda e: self._do_result())
+        ttk.Button(search, text="傳給選的裝置／取回", command=self._do_result).pack(fill="x", padx=8, pady=6)
+        self.result_rows = []
+        self.result_source = None   # None = 本機（傳給已配對裝置）；裝置 dict = 從那台取回
+
         logf = ttk.LabelFrame(self.root, text="最近記錄")
         logf.pack(fill="both", expand=True, **pad)
         self.log = tk.Text(logf, height=8, wrap="word", state="disabled")
@@ -84,6 +100,59 @@ class App:
         self.log.delete("1.0", "end")
         self.log.insert("end", "\n".join(self.svc.store.recent(15)))
         self.log.config(state="disabled")
+
+    # ---- 手動搜尋 ----
+    def _search_local(self):
+        self._search(None)
+
+    def _search_device(self):
+        p = self._selected()
+        if p:
+            self._search(p)
+
+    def _search(self, peer):
+        q = self.query.get().strip()
+        if not q:
+            return
+        self._status(f"搜尋中：{q}")
+
+        def work():
+            try:
+                rows = self.svc.search_local(q) if peer is None else self.svc.search_peer(peer["id"], q)
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("搜尋失敗", str(e), parent=self.root))
+                return
+            self.root.after(0, lambda: self._show_results(rows, peer))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _show_results(self, rows, peer):
+        self._status("")
+        self.result_rows = rows
+        self.result_source = peer
+        self.results.delete(0, "end")
+        for t, size, path in rows:
+            if t == "F":
+                self.results.insert("end", f"{path}   {_size(size)}")
+            else:
+                self.results.insert("end", f"[資料夾] {path}")
+        if not rows:
+            self.results.insert("end", "沒有找到")
+
+    def _do_result(self):
+        sel = self.results.curselection()
+        if not sel or sel[0] >= len(self.result_rows):
+            return
+        t, size, path = self.result_rows[sel[0]]
+        if t != "F":
+            return
+        if self.result_source is None:
+            peer = self._selected()
+            if not peer:
+                return
+            self._run(lambda: self.svc.send_file(peer["id"], path))
+        else:
+            peer = self.result_source
+            self._run(lambda: self.svc.fetch_file(peer["id"], path, self.svc.store.inbox()))
 
     def _set_enabled(self, on):
         self.svc.store.set_enabled(on)

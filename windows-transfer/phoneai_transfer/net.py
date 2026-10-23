@@ -176,6 +176,19 @@ class Client:
             s.close()
 
 
+def parse_listing(text):
+    """伺服器回的清單（每行 類型\t大小\t時間\t路徑）換成 (類型, 大小, 路徑) 的列表。"""
+    out = []
+    for line in text.splitlines():
+        parts = line.split("\t", 3)
+        if len(parts) == 4:
+            try:
+                out.append((parts[0], int(parts[1]), parts[3]))
+            except ValueError:
+                pass
+    return out
+
+
 def _plain(ip, port, method, target, body=None):
     s = socket.create_connection((ip, port), timeout=4)
     try:
