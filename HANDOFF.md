@@ -406,7 +406,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 ## 11b. 開發環境備註（Claude Code 雲端）
 
 **合併到 `main` 的流程（避免 CHANGELOG 衝突）：** CI 每次發版都會往 `main` 推一個「Archive changelog … [skip ci]」提交，所以 `main` 常常比工作分支超前。順序要固定：
-1. 先把 `main` 合併進工作分支（`git checkout claude/… && git merge main`），把歸檔提交拿進來。
+1. 先從遠端抓最新的 `main`（`git fetch origin main`），再把 `FETCH_HEAD` 合併進工作分支（`git merge FETCH_HEAD`）。這個倉庫沒有 `origin/main` 追蹤分支，所以不能直接用 `origin/main`；也不能用本地舊的 `main`，否則會漏掉 CI 的歸檔提交。
 2. 在工作分支上改程式、CHANGELOG、HANDOFF，提交並推送。
 3. 切到 `main`，用 `git merge --ff-only claude/…` 快進（不要用一般合併，免得又衝突），再推送 `main`。
 4. 如果第 3 步快進失敗，表示 `main` 在這期間又被推進了：回到第 1 步重來。
