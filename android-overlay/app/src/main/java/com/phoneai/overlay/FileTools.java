@@ -25,12 +25,12 @@ final class FileTools {
                 || name.equals("file_get") || name.equals("file_send") || name.equals("file_delete");
     }
 
-    static String run(Context c, String name, JSONObject a) {
+    static String run(Context c, String name, JSONObject a, Memory.Confirm confirm) {
         try {
             if (!TransferStore.enabled(c)) return "錯誤：傳檔案功能還沒開。請使用者到「設定 → 傳檔案」打開，並和另一台裝置配對。";
             if (!TransferStore.hasAllFiles()) return "錯誤：還沒有「所有檔案存取」權限。請使用者到「設定 → 傳檔案」授權。";
             if (name.equals("device_list")) return deviceList(c);
-            if (name.equals("file_delete")) return delete(c, a.optString("path"));
+            if (name.equals("file_delete")) return delete(c, a.optString("path"), confirm);
             String dev = a.optString("device").trim();
             boolean local = dev.isEmpty() || dev.equals("this") || dev.equals("本機") || dev.equals("這支手機");
             switch (name) {
@@ -80,20 +80,23 @@ final class FileTools {
         }
     }
 
-    /** 只能刪「下載/PhoneAI」（收件匣）裡的檔案，不管路徑怎麼寫都不能跳出這個資料夾；使用者已同意助理不必再確認。 */
-    private static String delete(Context c, String path) throws Exception {
+    /** 刪除手機儲存空間裡的檔案或資料夾（不含 Android/）；每一次都先跳確認框，使用者按否就不刪。 */
+    private static String delete(Context c, String path, Memory.Confirm confirm) throws Exception {
         String p = path == null ? "" : path.trim().replace('\\', '/');
-        for (String pre : new String[]{"/sdcard/", "Download/PhoneAI/", "PhoneAI/"}) if (p.startsWith(pre)) p = p.substring(pre.length());
+        if (p.startsWith("/sdcard/")) p = p.substring(8);
         while (p.startsWith("/")) p = p.substring(1);
-        if (p.isEmpty()) return "錯誤：要給檔名";
-        File inbox = TransferStore.inbox().getCanonicalFile();
-        File f = new File(inbox, p).getCanonicalFile();
-        if (!f.getPath().startsWith(inbox.getPath() + File.separator)) return "錯誤：只能刪除 下載/PhoneAI 裡的檔案";
+        if (p.isEmpty()) return "錯誤：要給檔案路徑";
+        File root = TransferStore.root().getCanonicalFile();
+        File f = new File(root, p).getCanonicalFile();
+        if (f.equals(root) || !f.getPath().startsWith(root.getPath() + File.separator)) return "錯誤：路徑不在手機儲存空間裡";
+        if (f.getPath().startsWith(new File(root, "Android").getPath())) return "錯誤：不能刪除 Android/ 裡的東西（其他 App 的資料）";
         if (!f.exists()) return "錯誤：找不到 " + p;
-        long n = f.isFile() ? f.length() : 0;
-        if (!deleteTree(f)) return "錯誤：刪除失敗 " + p;
-        TransferStore.log(c, L.t("刪除 ") + p);
-        return "已刪除 下載/PhoneAI/" + p + (n > 0 ? "（" + TransferStore.size(n) + "）" : "");
+        String shown = TransferServer.relTo(root, f);
+        String what = f.isDirectory() ? L.t("資料夾（連裡面的東西一起）") : L.t("檔案") + "（" + TransferStore.size(f.length()) + "）";
+        if (confirm == null || !confirm.ask(L.t("要刪除") + what + "：\n" + shown + "\n" + L.t("刪除後無法復原。"))) return "使用者沒有同意，沒有刪除";
+        if (!deleteTree(f)) return "錯誤：刪除失敗 " + shown;
+        TransferStore.log(c, L.t("刪除 ") + shown);
+        return "已刪除 " + shown;
     }
 
     private static boolean deleteTree(File f) {

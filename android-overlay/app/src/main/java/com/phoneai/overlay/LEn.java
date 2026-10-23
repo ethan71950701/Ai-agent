@@ -659,5 +659,15 @@ final class LEn {
         m.put("原因：", "Reason: ");
         m.put("本機位址：", "This device's address: ");
         m.put("刪除 ", "Deleted ");
+        m.put("資料夾（連裡面的東西一起）", "folder (including everything inside)");
+        m.put("檔案", "file");
+        m.put("要刪除", "Delete ");
+        m.put("刪除後無法復原。", "This cannot be undone.");
+        m.put("使用者沒有同意，沒有刪除", "The user declined; nothing was deleted");
+        m.put("錯誤：路徑不在手機儲存空間裡", "Error: path is outside phone storage");
+        m.put("錯誤：不能刪除 Android/ 裡的東西（其他 App 的資料）", "Error: cannot delete anything in Android/ (other apps' data)");
+        m.put("錯誤：要給檔案路徑", "Error: a file path is required");
+        m.put("錯誤：刪除失敗 ", "Error: delete failed ");
+        m.put("已刪除 ", "Deleted ");
     }
 }
