@@ -523,8 +523,20 @@ def _find_everywhere(query, limit_s=12.0, max_visit=400000):
     if not q:
         return ""
     home = os.path.expanduser("~")
-    queue = [(d, 0) for d in [home] + [d for d in drives() if os.path.normcase(d[:2]) != os.path.normcase(home[:2])]]
     deadline = time.time() + limit_s
+    downloads = os.path.join(home, "Downloads")
+    # 第一步：先找「下載」（大部分檔案都在這裡）；找到就直接回傳
+    hits = _search([(downloads, 0)], q, deadline, max_visit)
+    if not hits:
+        # 第二步：其他地方，所有磁碟輪流找
+        others = [home] + [d for d in drives() if os.path.normcase(d[:2]) != os.path.normcase(home[:2])]
+        hits = _search([(d, 0) for d in others], q, deadline, max_visit)
+    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
+    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
+
+
+def _search(queue, q, deadline, max_visit):
+    """廣度優先搜尋，回傳符合的完整路徑。"""
     visited = 0
     hits = []
     i = 0
@@ -546,8 +558,7 @@ def _find_everywhere(query, limit_s=12.0, max_visit=400000):
                 if depth == 0 and n.lower() in SKIP_DIRS:
                     continue
                 queue.append((p, depth + 1))
-    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
-    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
+    return hits
 
 
 # ---------- 區網探索 ----------
