@@ -19,6 +19,7 @@ public class BrowseActivity extends Activity {
     private TransferStore.Peer peer;
     private TransferClient client;
     private String path = "";
+    private long tapAt;        // 點下去的時間（量從點到畫面出現的總時間）
     private boolean loading;   // 讀取中不接受重複點擊，避免同時發好幾個請求而慢、亂序
     private TextView where, status;
     private LinearLayout list;
@@ -65,6 +66,7 @@ public class BrowseActivity extends Activity {
     private void load(String target) {
         if (loading) return;
         loading = true;
+        tapAt = System.currentTimeMillis();
         status.setText(L.t("讀取中…"));
         final long t0 = System.currentTimeMillis();
         new Thread(() -> {
@@ -74,7 +76,12 @@ public class BrowseActivity extends Activity {
                 List<String[]> rows = FileTools.rows(client.list(target));
                 long ms = System.currentTimeMillis() - t0;
                 String timing = L.t("（連線 ") + (t1 - t0) + L.t(" 毫秒，讀取 ") + (System.currentTimeMillis() - t1) + L.t(" 毫秒）");
-                ui.post(() -> { loading = false; show(target, rows); status.setText(status.getText() + " " + timing); });
+                ui.post(() -> {
+                    loading = false;
+                    show(target, rows);
+                    long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
+                    status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
+                });
             } catch (Exception e) {
                 ui.post(() -> { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); });
             }

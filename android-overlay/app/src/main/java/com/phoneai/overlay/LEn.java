@@ -755,5 +755,7 @@ final class LEn {
         m.put("（連線 ", "(connect ");
         m.put(" 毫秒，讀取 ", " ms, read ");
         m.put(" 毫秒）", " ms)");
+        m.put("，從點到出現共 ", ", from tap to shown: ");
+        m.put(" 毫秒", " ms");
     }
 }
