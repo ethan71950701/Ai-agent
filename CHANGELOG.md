@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1247
+
 - 瀏覽頁的毫秒數改成量從點下去到畫面出現的總時間，方便找出慢在哪一段｜The browse page timing now measures the total time from tap to the list appearing
 
 - 電腦版檢查更新：找不到更新檔時會明確提示，不再顯示「已經是最新版」｜Windows app update check: when the update file cannot be found it says so, instead of reporting the app is up to date
