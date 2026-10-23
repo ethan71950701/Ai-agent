@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 修正電腦版「檢查更新」找不到檔案：GitHub 會去掉檔名中的中文，改用英文檔名 PhoneAI.exe 上傳｜Fix: Windows app update check could not find the file (GitHub strips Chinese from file names), so the file is now uploaded as PhoneAI.exe
 
+## 1.0.1243
+
 - 接收改成直接瀏覽對方的資料夾：手機和電腦都可以點進資料夾、點檔案接收，不用再搜檔名｜Receive now browses the other device's folders directly (phone and computer): open folders and tap a file to receive it, no name search needed
 
 ## 1.0.1242
