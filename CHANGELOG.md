@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1246
+
 - 電腦版回應不等待合併（TCP_NODELAY）；手機瀏覽頁顯示連線與讀取花了多少毫秒，方便找出慢在哪裡｜Windows app responds without Nagle delay; the phone browse page shows connect and read times in milliseconds to find where the delay is
 
 - 電腦版列資料夾更快：直接使用目錄列舉附帶的大小與時間，不再為每個檔案重新開啟｜Windows app folder listing is faster: uses the size and time from the directory listing instead of reopening every file
