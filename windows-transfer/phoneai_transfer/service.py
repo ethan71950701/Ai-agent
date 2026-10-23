@@ -94,6 +94,8 @@ class Service:
             text = f"{who} 查看了資料夾：{what}"
         else:
             text = f"{who} 搜尋了檔案：{what}"
+        if kind == "list":
+            return   # 瀏覽資料夾很頻繁，不寫記錄、也不重畫視窗（否則每點一下都會變慢）
         self.store.log(text)
         self.events.put(("log", text))
 

@@ -515,14 +515,17 @@ def drives():
 
 
 def _listing(path):
+    """列出一個資料夾：資料夾在前，再依名稱排序，最多 500 筆。
+    只讀一次目錄（scandir 的類型資訊是快取的），只對要送出的那 500 筆做 stat，所以大資料夾也不慢。"""
     if path == "":
         return "".join(e for e in (_entry(d) for d in drives()) if e)
     try:
-        kids = [os.path.join(path, k) for k in os.listdir(path)]
+        with os.scandir(path) as it:
+            items = [(not e.is_dir(follow_symlinks=False), e.name.lower(), e.path) for e in it]
     except OSError:
         return ""
-    kids.sort(key=lambda p: (not os.path.isdir(p), os.path.basename(p).lower()))
-    return "".join(e for e in (_entry(k) for k in kids[:500]) if e)
+    items.sort()
+    return "".join(e for e in (_entry(p) for _, _, p in items[:500]) if e)
 
 
 SKIP_DIRS = {"windows", "$recycle.bin", "system volume information", "programdata", "program files",

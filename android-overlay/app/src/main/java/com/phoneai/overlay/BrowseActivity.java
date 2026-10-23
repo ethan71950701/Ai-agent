@@ -19,6 +19,7 @@ public class BrowseActivity extends Activity {
     private TransferStore.Peer peer;
     private TransferClient client;
     private String path = "";
+    private boolean loading;   // 讀取中不接受重複點擊，避免同時發好幾個請求而慢、亂序
     private TextView where, status;
     private LinearLayout list;
 
@@ -62,14 +63,16 @@ public class BrowseActivity extends Activity {
     }
 
     private void load(String target) {
+        if (loading) return;
+        loading = true;
         status.setText(L.t("讀取中…"));
         new Thread(() -> {
             try {
                 if (client == null) client = FileTools.clientFor(this, peer);
                 List<String[]> rows = FileTools.rows(client.list(target));
-                ui.post(() -> show(target, rows));
+                ui.post(() -> { loading = false; show(target, rows); });
             } catch (Exception e) {
-                ui.post(() -> status.setText(L.t("讀取失敗：") + e.getMessage()));
+                ui.post(() -> { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); });
             }
         }).start();
     }
