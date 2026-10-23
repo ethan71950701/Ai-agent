@@ -48,6 +48,8 @@ final class TransferServer {
         String pairState(String peerId);
         /** 記錄與通知：kind = get／put／list／find；what = 路徑或名稱；size = 位元組數（沒有就 0）。 */
         void event(String peerId, String kind, String what, long size);
+        /** 已驗證的對方每次連上都會帶它現在的名稱；存下來，改名後不用重新配對。 */
+        void peerName(String peerId, String name);
     }
 
     private final Host host;
@@ -125,6 +127,13 @@ final class TransferServer {
 
             Auth au = authenticate(method, target, h);
             if (au == null) { fail(ip); reply(out, 401, "unauthorized"); return; }
+            String nm = h.get("x-name");
+            if (nm != null) {
+                try {
+                    String name = java.net.URLDecoder.decode(nm, "UTF-8").trim();
+                    if (!name.isEmpty() && name.length() <= 40) host.peerName(au.peer, name);
+                } catch (Exception ignored) { }
+            }
             switch (path) {
                 case "/v1/ping":
                     sendText(out, au, "ok\t" + host.myName());

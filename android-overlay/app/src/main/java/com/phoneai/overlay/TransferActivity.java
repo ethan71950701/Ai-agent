@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 設定 → 傳檔案：總開關、這台裝置的名稱、配對（兩台裝置各顯示同一組確認碼，使用者核對相符才存）、
- * 已配對的裝置、最近的傳輸記錄。實際傳檔案是對助理說（見 FileTools）。設計見 docs/FILE_TRANSFER.md。
+ * 設定 → 互傳檔案：開關、這台的名稱與狀態、配對、已配對的裝置、最近幾筆記錄。
+ * 實際傳檔案是對助理說（見 FileTools）。設計見 docs/FILE_TRANSFER.md。
  */
 public class TransferActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -32,8 +32,8 @@ public class TransferActivity extends Activity {
         @Override
         public void run() {
             if (!visible) return;
-            if (TransferService.running != lastRunning) { lastRunning = TransferService.running; render(); }
             if (TransferStore.enabled(TransferActivity.this) && TransferService.running) TransferService.keepPairing();
+            if (TransferService.running != lastRunning) { lastRunning = TransferService.running; render(); }
             TransferService.Pending p = TransferService.pending;
             String key = p == null ? "" : p.peerId + p.state;
             if (!key.equals(shownPending)) {
@@ -49,7 +49,7 @@ public class TransferActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         LinearLayout[] c = new LinearLayout[1];
-        setContentView(Ui.screen(this, L.t("傳檔案"), true, c));
+        setContentView(Ui.screen(this, L.t("互傳檔案"), true, c));
         Ui.enterSpring(this);
         box = c[0];
     }
@@ -58,7 +58,7 @@ public class TransferActivity extends Activity {
     protected void onResume() {
         super.onResume();
         visible = true;
-        if (TransferStore.enabled(this) && !TransferService.running) TransferService.start(this);   // 開關是開的但服務沒在跑（例如 App 被系統結束過）
+        if (TransferStore.enabled(this) && !TransferService.running) TransferService.start(this);
         render();
         ui.postDelayed(tick, 1000);
     }
@@ -73,19 +73,15 @@ public class TransferActivity extends Activity {
 
     private void render() {
         box.removeAllViews();
-        TextView intro = Ui.infoCard(this, box, 14, false, false);
-        intro.setText(L.t("在自己的裝置之間傳檔案：配對一次之後，對助理說「把 X 傳到我的手機」或「從〇〇手機拿 X」就會自動傳。只在同一個 Wi-Fi 內運作，內容加密。"));
-
-        LinearLayout card = Ui.card(this, box);
-        card.addView(Ui.toggle(this, L.t("開啟傳檔案"), TransferStore.enabled(this), (v, on) -> {
+        LinearLayout sw = Ui.card(this, box);
+        sw.addView(Ui.toggle(this, L.t("開啟互傳檔案"), TransferStore.enabled(this), (v, on) -> {
             if (on == TransferStore.enabled(this)) return;
             TransferStore.setEnabled(this, on);
             render();
         }));
         if (TransferStore.enabled(this) && !TransferStore.hasAllFiles()) {
-            TextView t = Ui.body(this, L.t("需要「所有檔案存取」權限，才能找到並讀寫你的檔案。"));
-            card.addView(t);
-            card.addView(Ui.button(this, L.t("前往授權"), v -> {
+            sw.addView(Ui.body(this, L.t("需要「所有檔案存取」權限，才能找到並讀寫檔案。")));
+            sw.addView(Ui.button(this, L.t("前往授權"), v -> {
                 try {
                     startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName())));
                 } catch (Exception e) {
@@ -95,33 +91,38 @@ public class TransferActivity extends Activity {
         }
         if (!TransferStore.enabled(this)) return;
 
-        Ui.section(this, box, L.t("這台裝置"));
         LinearLayout me = Ui.card(this, box);
-        me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("收到的檔案會放在：下載/PhoneAI")));
-        me.addView(Ui.body(this, (TransferService.running ? L.t("狀態：運作中") : L.t("狀態：沒有在運作") + (TransferService.lastError.isEmpty() ? "" : "\n" + L.t("原因：") + TransferService.lastError)) + "\n" + L.t("本機位址：") + localIps()));
-        me.addView(Ui.button(this, L.t("改名稱"), v -> rename()));
+        String state = TransferService.running ? L.t("運作中") : L.t("沒有在運作");
+        me.addView(Ui.body(this, TransferStore.myName(this) + "　·　" + state));
+        me.addView(Ui.body(this, L.t("位址：") + localIps()
+                + (TransferService.lastError.isEmpty() ? "" : "\n" + L.t("原因：") + TransferService.lastError)));
+        me.addView(Ui.tonal(this, L.t("改名稱"), v -> rename()));
 
-        Ui.section(this, box, L.t("配對"));
         LinearLayout pair = Ui.card(this, box);
-        pair.addView(Ui.body(this, L.t("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。")));
-        pair.addView(Ui.pill(this, L.t("配對另一台"), true, v -> scanAndPair()));
+        pair.addView(Ui.body(this, L.t("兩台都打開這一頁，在任一台按下面的按鈕，選對方即可配對。")));
+        pair.addView(Ui.button(this, L.t("配對另一台"), v -> scanAndPair()));
 
-        Ui.section(this, box, L.t("已配對的裝置"));
         List<TransferStore.Peer> peers = TransferStore.peers(this);
-        LinearLayout list = Ui.card(this, box);
-        if (peers.isEmpty()) list.addView(Ui.body(this, L.t("還沒有。")));
-        for (TransferStore.Peer p : peers) {
-            list.addView(Ui.body(this, p.name));
-            list.addView(Ui.button(this, L.t("移除 ") + p.name, v -> tint(new AlertDialog.Builder(this)
-                    .setMessage(L.t("移除後這台裝置就不能再取檔案；要再用得重新配對。"))
-                    .setPositiveButton(L.t("移除"), (d, w) -> { TransferStore.removePeer(this, p.id); render(); })
-                    .setNegativeButton(L.t("取消"), null)).show()));
+        if (!peers.isEmpty()) {
+            Ui.section(this, box, L.t("已配對的裝置"));
+            LinearLayout list = Ui.card(this, box);
+            for (TransferStore.Peer p : peers) {
+                list.addView(Ui.tonal(this, p.name, v -> removeDialog(p)));
+            }
         }
 
-        Ui.section(this, box, L.t("最近的記錄"));
-        TextView log = Ui.infoCard(this, box, 12, true, true);
-        List<String> recent = TransferStore.recentLog(this, 15);
-        log.setText(recent.isEmpty() ? L.t("還沒有傳輸。") : String.join("\n", recent));
+        List<String> recent = TransferStore.recentLog(this, 5);
+        if (!recent.isEmpty()) {
+            Ui.section(this, box, L.t("最近"));
+            TextView log = Ui.infoCard(this, box, 12, false, false);
+            log.setText(String.join("\n", recent));
+        }
+    }
+
+    private void removeDialog(TransferStore.Peer p) {
+        tint(new AlertDialog.Builder(this).setMessage(L.t("移除「") + p.name + L.t("」？移除後不能再取檔案，要重新配對。"))
+                .setPositiveButton(L.t("移除"), (d, w) -> { TransferStore.removePeer(this, p.id); render(); })
+                .setNegativeButton(L.t("取消"), null)).show();
     }
 
     private void rename() {
@@ -151,7 +152,7 @@ public class TransferActivity extends Activity {
                 .setMessage(L.t("「") + p.name + L.t("」想配對。對方的畫面上是同一組數字嗎？"))
                 .setPositiveButton(L.t("相符"), (d, w) -> { TransferService.acceptPending(this); shownPending = ""; render(); })
                 .setNegativeButton(L.t("不相符"), (d, w) -> { TransferService.rejectPending(); shownPending = ""; render(); })
-                ).show();
+        ).show();
     }
 
     // ---------- 我是發起配對的一方 ----------
@@ -161,8 +162,7 @@ public class TransferActivity extends Activity {
         new Thread(() -> {
             Map<String, TransferDiscovery.Found> found = TransferDiscovery.scan("*", 2500, TransferDiscovery.PORT, null);
             found.remove(TransferStore.myId(this));
-            if (found.isEmpty()) found.putAll(TransferDiscovery.sweep(TransferServer.PORT));   // 廣播被路由器或系統擋掉時，改逐一試同網段位址
-            found.remove(TransferStore.myId(this));
+            if (found.isEmpty()) found.putAll(TransferDiscovery.sweep(TransferServer.PORT));   // 廣播被擋時，改逐一試同網段位址
             List<TransferDiscovery.Found> l = new ArrayList<>(found.values());
             ui.post(() -> chooseDevice(l));
         }).start();
@@ -172,7 +172,7 @@ public class TransferActivity extends Activity {
         final String[] items = new String[l.size() + 1];
         for (int i = 0; i < l.size(); i++) items[i] = l.get(i).name + "（" + l.get(i).ip + "）";
         items[l.size()] = L.t("找不到？手動輸入 IP");
-        tint(new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
+        tint(new AlertDialog.Builder(this).setTitle(l.isEmpty() ? L.t("沒有找到裝置（對方也要開啟互傳檔案並停在這一頁）") : L.t("選擇要配對的裝置"))
                 .setItems(items, (d, i) -> {
                     if (i < l.size()) startPair(l.get(i).ip, l.get(i).port);
                     else askIp();

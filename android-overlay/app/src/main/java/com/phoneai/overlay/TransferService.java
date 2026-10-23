@@ -12,7 +12,7 @@ import android.os.IBinder;
 import java.io.File;
 
 /**
- * 裝置之間傳檔案的前景服務：「設定 → 傳檔案」的總開關開著時，才在區網上提供伺服器與裝置探索，
+ * 裝置之間互傳檔案的前景服務：「設定 → 互傳檔案」的總開關開著時，才在區網上提供伺服器與裝置探索，
  * 並在通知列顯示。每次有檔案被取走或收到，記錄並發通知。設計見 docs/FILE_TRANSFER.md。
  */
 public class TransferService extends Service {
@@ -90,7 +90,7 @@ public class TransferService extends Service {
             return startUp();
         } catch (Throwable t) {
             lastError = t.toString();
-            TransferStore.log(this, L.t("傳檔案伺服器啟動失敗：") + t);
+            TransferStore.log(this, L.t("互傳檔案伺服器啟動失敗：") + t);
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -98,10 +98,10 @@ public class TransferService extends Service {
 
     private int startUp() {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("傳檔案"), NotificationManager.IMPORTANCE_LOW));
+        nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
         Notification n = new Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_sys_upload_done)
-                .setContentTitle(L.t("傳檔案已開啟"))
-                .setContentText(L.t("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 傳檔案」可以關閉"))
+                .setContentTitle(L.t("互傳檔案已開啟"))
+                .setContentText(L.t("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 互傳檔案」可以關閉"))
                 .setOngoing(true).build();
         startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         if (!TransferStore.enabled(this)) {
@@ -137,6 +137,11 @@ public class TransferService extends Service {
             public String pairState(String peerId) {
                 Pending p = pending;
                 return p != null && p.peerId.equals(peerId) ? p.state : "none";
+            }
+
+            @Override
+            public void peerName(String peerId, String name) {
+                TransferStore.updateName(c, peerId, name);
             }
 
             @Override
@@ -176,7 +181,7 @@ public class TransferService extends Service {
             lastError = "";
         } catch (Throwable e) {
             lastError = e.toString();
-            TransferStore.log(c, L.t("傳檔案伺服器啟動失敗：") + e);
+            TransferStore.log(c, L.t("互傳檔案伺服器啟動失敗：") + e);
             stopSelf();
         }
     }
@@ -184,7 +189,7 @@ public class TransferService extends Service {
     /** 記錄並發通知：每次有檔案被取走或收到，使用者都看得到。 */
     private static void note(Context c, String text) {
         TransferStore.log(c, text);
-        Notify.notifyText(c, L.t("傳檔案"), text, 7302 + (eventId++ % 20));
+        Notify.notifyText(c, L.t("互傳檔案"), text, 7302 + (eventId++ % 20));
     }
 
     @Override

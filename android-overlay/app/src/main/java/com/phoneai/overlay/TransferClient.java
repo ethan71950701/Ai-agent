@@ -28,11 +28,13 @@ final class TransferClient {
     private final int port;
     private final String myId;
     private final byte[] key;
+    private final String myName;
 
-    TransferClient(String ip, int port, String myId, byte[] key) {
+    TransferClient(String ip, int port, String myId, String myName, byte[] key) {
         this.ip = ip;
         this.port = port;
         this.myId = myId;
+        this.myName = myName;
         this.key = key;
     }
 
@@ -48,7 +50,7 @@ final class TransferClient {
         String ts = String.valueOf(System.currentTimeMillis() / 1000), nonce = TransferCrypto.hex(TransferCrypto.random(12));
         String sig = TransferCrypto.sign(key, method, target, ts, nonce);
         out.write((method + " " + target + " HTTP/1.1\r\nHost: phoneai\r\nX-Id: " + myId + "\r\nX-Ts: " + ts + "\r\nX-Nonce: " + nonce
-                + "\r\nX-Sig: " + sig + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
+                + "\r\nX-Name: " + enc(myName) + "\r\nX-Sig: " + sig + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
         return nonce;
     }
 

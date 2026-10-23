@@ -124,6 +124,13 @@ final class TransferStore {
         save(c, l);
     }
 
+    static synchronized void updateName(Context c, String id, String name) {
+        List<Peer> l = peers(c);
+        boolean changed = false;
+        for (Peer p : l) if (p.id.equals(id) && !p.name.equals(name)) { p.name = name; changed = true; }
+        if (changed) save(c, l);
+    }
+
     static byte[] keyOf(Context c, String id) {
         for (Peer p : peers(c)) if (p.id.equals(id)) return p.key;
         return null;

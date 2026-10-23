@@ -112,7 +112,10 @@ final class FileTools {
         StringBuilder sb = new StringBuilder();
         for (TransferStore.Peer p : peers) {
             TransferDiscovery.Found f = seen.get(p.id);
-            if (f != null) TransferStore.updateAddress(c, p.id, f.ip, f.port);
+            if (f != null) {
+                TransferStore.updateAddress(c, p.id, f.ip, f.port);
+                TransferStore.updateName(c, p.id, f.name);
+            }
             sb.append("- ").append(p.name).append(f != null ? "（在線）" : "（找不到，可能沒開機、沒開傳檔案、或不在同一個 Wi-Fi）").append("\n");
         }
         return sb.toString();
@@ -142,8 +145,11 @@ final class FileTools {
         String ip = f != null ? f.ip : p.ip;
         int port = f != null ? f.port : p.port;
         if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開傳檔案、或不在同一個 Wi-Fi");
-        if (f != null) TransferStore.updateAddress(c, p.id, ip, port);
-        return new TransferClient(ip, port, TransferStore.myId(c), p.key);
+        if (f != null) {
+            TransferStore.updateAddress(c, p.id, ip, port);
+            TransferStore.updateName(c, p.id, f.name);
+        }
+        return new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
     }
 
     private static File unique(File dir, String name) {

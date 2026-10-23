@@ -608,13 +608,13 @@ final class LEn {
         m.put("・", "- ");
         m.put("傳出 ", "Sent ");
         m.put("取回 ", "Fetched ");
-        m.put("傳檔案", "File transfer");
-        m.put("在自己的裝置之間傳檔案", "Send files between your own devices");
+        m.put("互傳檔案", "File transfer");
+        m.put("在自己的裝置之間互傳檔案", "Send files between your own devices");
         m.put("」想配對。對方的畫面上是同一組數字嗎？", "\" wants to pair. Does the other screen show the same number?");
         m.put("不相符", "Doesn't match");
         m.put("前往授權", "Grant access");
         m.put("名稱：", "Name: ");
-        m.put("在自己的裝置之間傳檔案：配對一次之後，對助理說「把 X 傳到我的手機」或「從〇〇手機拿 X」就會自動傳。只在同一個 Wi-Fi 內運作，內容加密。", "Send files between your own devices: after pairing once, tell the assistant \"send X to my phone\" or \"get X from <device>\" and it transfers automatically. Works only on the same Wi-Fi; content is encrypted.");
+        m.put("在自己的裝置之間互傳檔案：配對一次之後，對助理說「把 X 傳到我的手機」或「從〇〇手機拿 X」就會自動傳。只在同一個 Wi-Fi 內運作，內容加密。", "Send files between your own devices: after pairing once, tell the assistant \"send X to my phone\" or \"get X from <device>\" and it transfers automatically. Works only on the same Wi-Fi; content is encrypted.");
         m.put("對方沒有接受或逾時，沒有配對", "The other device did not accept or timed out; not paired");
         m.put("對方的 IP", "Other device's IP");
         m.put("對方（", "The other device (");
@@ -641,19 +641,19 @@ final class LEn {
         m.put("配對另一台", "Pair another device");
         m.put("配對失敗：", "Pairing failed: ");
         m.put("配對完成：", "Paired: ");
-        m.put("開啟傳檔案", "Turn on File transfer");
+        m.put("開啟互傳檔案", "Turn on File transfer");
         m.put("需要「所有檔案存取」權限，才能找到並讀寫你的檔案。", "\"All files access\" permission is needed to find, read and write your files.");
         m.put("）的畫面上是同一組數字嗎？相符再按「相符」，然後請對方也按「相符」。", ") show the same number? Press \"Matches\" if so, then ask the other device to press \"Matches\" too.");
         m.put(" 傳來了：", " sent you: ");
         m.put(" 取走了：", " took: ");
         m.put(" 搜尋了檔案：", " searched for files: ");
         m.put(" 查看了資料夾：", " viewed folder: ");
-        m.put("傳檔案伺服器啟動失敗：", "File transfer server failed to start: ");
-        m.put("傳檔案已開啟", "File transfer is on");
+        m.put("互傳檔案伺服器啟動失敗：", "File transfer server failed to start: ");
+        m.put("互傳檔案已開啟", "File transfer is on");
         m.put("已配對", "Paired");
-        m.put("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 傳檔案」可以關閉", "Paired devices on the same Wi-Fi can fetch files; turn off in Settings → File transfer");
-        m.put("兩台裝置都開啟傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。", "Turn on File transfer on both devices and stay on this page; on either one press \"Pair another device\" and pick the other. Both show the same 6-digit code; press \"Matches\" only if they are identical.");
-        m.put("沒有找到裝置（對方也要開啟傳檔案並停在這一頁）", "No devices found (the other one must also have File transfer on and be on this page)");
+        m.put("已配對的裝置可以在同一個 Wi-Fi 取檔案；到「設定 → 互傳檔案」可以關閉", "Paired devices on the same Wi-Fi can fetch files; turn off in Settings → File transfer");
+        m.put("兩台裝置都開啟互傳檔案並停在這一頁，任何一台按「配對另一台」選對方就好。兩邊會顯示同一組 6 位數確認碼，相符才按「相符」。", "Turn on File transfer on both devices and stay on this page; on either one press \"Pair another device\" and pick the other. Both show the same 6-digit code; press \"Matches\" only if they are identical.");
+        m.put("沒有找到裝置（對方也要開啟互傳檔案並停在這一頁）", "No devices found (the other one must also have File transfer on and be on this page)");
         m.put("狀態：運作中", "Status: running");
         m.put("狀態：沒有在運作", "Status: not running");
         m.put("原因：", "Reason: ");
@@ -669,5 +669,13 @@ final class LEn {
         m.put("錯誤：要給檔案路徑", "Error: a file path is required");
         m.put("錯誤：刪除失敗 ", "Error: delete failed ");
         m.put("已刪除 ", "Deleted ");
+        m.put("」？移除後不能再取檔案，要重新配對。", "\"? After removing it you cannot fetch files until you pair again.");
+        m.put("位址：", "Address: ");
+        m.put("兩台都打開這一頁，在任一台按下面的按鈕，選對方即可配對。", "Open this page on both devices, then press the button below on either one and choose the other.");
+        m.put("最近", "Recent");
+        m.put("沒有在運作", "Not running");
+        m.put("移除「", "Remove \"");
+        m.put("運作中", "Running");
+        m.put("需要「所有檔案存取」權限，才能找到並讀寫檔案。", "\"All files access\" permission is needed to find and read/write files.");
     }
 }
