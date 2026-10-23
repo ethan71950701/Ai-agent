@@ -321,9 +321,9 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
-        sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma : 0f);
+        sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
-        sh.setFloatUniform("edgeLine", lens ? EDGE_LINE : 0f);
+        sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("edgeWidth", 1.5f * dp);
         sh.setFloatUniform("skew", skewValue);
     }
