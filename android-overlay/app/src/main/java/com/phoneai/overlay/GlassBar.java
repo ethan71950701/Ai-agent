@@ -374,6 +374,8 @@ final class GlassBar extends FrameLayout {
 
     private float lastTx, skewNow;
     private long lastT;
+    /** 歪斜的速度門檻（dp/ms）：低於這個的移動不產生歪斜。 */
+    private static final float SKEW_DEAD = 0.03f;
 
     /** 玻璃按鈕的橫向速度 → 歪斜量（平滑過、停下來會回到 0）。 */
     private void updateSkew() {
@@ -381,8 +383,9 @@ final class GlassBar extends FrameLayout {
         float tx = getTranslationX();
         if (lastT != 0 && now > lastT) {
             float vDpMs = (tx - lastTx) / getResources().getDisplayMetrics().density / (now - lastT);   // dp/ms
+            if (Math.abs(vDpMs) < SKEW_DEAD) vDpMs = 0f;   // 手指微抖的速度不歪斜，免得圖示跟著抖
             float target = Math.max(-1.0f, Math.min(1.0f, -vDpMs * 1.0f)) * GlassPrefs.skew;
-            skewNow = skewNow * 0.6f + target * 0.4f;
+            skewNow = skewNow * 0.8f + target * 0.2f;
             if (!GlassPrefs.skewOn) skewNow = 0f;
         }
         lastTx = tx;
@@ -502,7 +505,7 @@ final class GlassBar extends FrameLayout {
         rc.scale(s, s, cx, cy);           // 以按鈕中心放大
         iconSource.draw(rc);
         iconNode.endRecording();
-        configure(iconShader, skewNow);
+        configure(iconShader, 0f);   // 圖示不歪斜：歪斜只給透鏡本身，圖示才不會跟著微小移動抖
         iconShader.setFloatUniform("dispersion", 0f);   // 圖示不要彩虹色散，才看得清楚（透鏡邊緣的色散只給透鏡本身）
         iconShader.setFloatUniform("bodyLift", 0f);     // 圖示不跟著透鏡整塊提亮，顏色才準
         iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
