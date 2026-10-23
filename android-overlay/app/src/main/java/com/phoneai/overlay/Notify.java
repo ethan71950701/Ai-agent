@@ -28,7 +28,7 @@ final class Notify {
         if (text == null || text.isEmpty()) return;
         String plain = Md.plain(text);   // 朗讀與通知不要出現「星號、井字」這類符號
         notifyText(c, L.t("AI 助手"), plain, ID);
-        if (c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tts_on", true)) speak(c, plain);
+        if (c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tts_on", true)) speak(c, Md.spoken(text));
     }
 
     static void notifyText(Context c, String title, String text, int id) {

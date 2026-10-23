@@ -499,7 +499,7 @@ public class MainActivity extends Activity {
             });
             final String fr = r == null ? "" : r;
             runOnUiThread(() -> {
-                if (answerView != null) answerView.setText(fr);
+                if (answerView != null) answerView.setText(Md.render(fr));
                 Notify.say(this, fr);
             });
         }, "home-ask").start();
