@@ -53,6 +53,12 @@ public class AskActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);  // singleTask：面板已經開著時又被叫出來，重新開始聽
         setIntent(intent);
+        boolean plain = intent.getStringExtra("question") == null && intent.getStringExtra("reply_text") == null
+                && intent.getStringExtra("fill") == null && intent.getStringExtra("text") == null;
+        if (plain) {   // 單純重新叫出面板：清掉上一輪的回答卡片與狀態，當成全新的一次（recreate 會重建面板並自動開始聽）
+            recreate();
+            return;
+        }
         String q = intent.getStringExtra("question");
         if (q != null) sheet.setQuestion(q);
         String rt = intent.getStringExtra("reply_text");

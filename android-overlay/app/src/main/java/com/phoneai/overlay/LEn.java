@@ -585,6 +585,9 @@ final class LEn {
         m.put(" 則", " items");
         m.put("已停止。", "Stopped.");
         m.put("準備中…", "Preparing…");
+        m.put("模型：聊天與路由 ", "Models: chat and routing ");
+        m.put("；自動操作 ", "; automatic actions ");
+        m.put("；搜尋 ", "; search ");
         m.put("・", "- ");
     }
 }

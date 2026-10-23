@@ -197,9 +197,19 @@ public class MemoryActivity extends Activity {
             final JSONObject it = hit.get(i);
             String created = it.optString("created", "");
             View pin = null;
-            if (it.optBoolean("pinned")) {
-                pin = new IconView(this, "pin", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-                pin.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(this, 20), Ui.dp(this, 20)));
+            if (!"lesson".equals(kind)) {   // 每一列右邊的星星：空心＝普通，黃色實心＝永久記憶（AI 不能改或刪）；點一下就切換，不用點開
+                final boolean on = it.optBoolean("pinned");
+                TextView star = new TextView(this);
+                star.setText(on ? "★" : "☆");
+                star.setTextSize(24);
+                star.setTextColor(on ? 0xFFFFC107 : Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
+                star.setPadding(Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+                star.setLayoutParams(new LinearLayout.LayoutParams(-2, -2));
+                star.setOnClickListener(v -> {
+                    try { it.put("pinned", !on); } catch (Exception ignored) { }
+                    saveThen(this::render);
+                });
+                pin = star;
             }
             Ui.row(this, list, i, hit.size(), icon, it.optString("text"), created.length() >= 10 ? created.substring(5, 10).replace('-', '/') : null, pin, v -> edit(it, kind));
         }
