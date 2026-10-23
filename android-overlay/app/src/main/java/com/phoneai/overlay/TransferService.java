@@ -85,6 +85,10 @@ public class TransferService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && TransferNotify.ACTION_STOP.equals(intent.getAction())) {
+            TransferNotify.requestStop();
+            return START_STICKY;
+        }
         try {
             return startUp();
         } catch (Throwable t) {

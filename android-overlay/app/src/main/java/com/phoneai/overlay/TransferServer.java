@@ -266,8 +266,8 @@ final class TransferServer {
                 total += n;
                 host.progress(au.peer, false, base, total, expect);
             }
-        } catch (IOException e) {
-            tmp.delete();
+        } catch (IOException | RuntimeException e) {
+            tmp.delete();   // 中斷或被停止：未完成的檔案刪掉
             throw e;
         }
         if (!tmp.renameTo(dest)) { tmp.delete(); reply(out, 500, "rename failed"); return; }

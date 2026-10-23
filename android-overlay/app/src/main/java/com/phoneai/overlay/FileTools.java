@@ -58,8 +58,14 @@ final class FileTools {
                     TransferClient cl = client(c, dev);
                     File dest = unique(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
                     dest.getParentFile().mkdirs();
-                    long n = cl.download(p, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + dev + L.t(" 取回"),
-                            L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
+                    long n;
+                    try {
+                        n = cl.download(p, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + dev + L.t(" 取回"),
+                                L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
+                    } catch (TransferNotify.Stopped s) {
+                        TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
+                        return "已停止，未完成的檔案已刪除";
+                    }
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
                     TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）");
                     return "已存到 下載/PhoneAI/" + dest.getName() + "（" + TransferStore.size(n) + "）";
@@ -70,8 +76,14 @@ final class FileTools {
                     File src = new File(TransferStore.root(), p.startsWith("/sdcard/") ? p.substring(8) : p);
                     if (!src.isFile() || !src.getCanonicalPath().startsWith(TransferStore.root().getCanonicalPath() + File.separator))
                         return "錯誤：找不到這個檔案：" + p;
-                    String saved = client(c, dev).put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
-                            L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
+                    String saved;
+                    try {
+                        saved = client(c, dev).put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
+                                L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
+                    } catch (TransferNotify.Stopped s) {
+                        TransferNotify.finish(c, L.t("已停止傳給 ") + dev);
+                        return "已停止，檔案沒有傳出";
+                    }
                     TransferStore.log(c, L.t("傳出 ") + src.getName() + " → " + dev);
                     TransferNotify.finish(c, L.t("已傳到 ") + dev + "：" + src.getName());
                     return "已傳到對方的收件匣，檔名：" + saved + "（" + TransferStore.size(src.length()) + "）";

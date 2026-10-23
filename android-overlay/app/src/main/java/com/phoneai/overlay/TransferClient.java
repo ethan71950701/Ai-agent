@@ -138,8 +138,8 @@ final class TransferClient {
             }
             if (!tmp.renameTo(dest)) throw new IOException("無法存成 " + dest.getName());
             return done;
-        } catch (IOException e) {
-            tmp.delete();
+        } catch (IOException | RuntimeException e) {
+            tmp.delete();   // 失敗或被停止：未完成的檔案刪掉
             throw e;
         }
     }

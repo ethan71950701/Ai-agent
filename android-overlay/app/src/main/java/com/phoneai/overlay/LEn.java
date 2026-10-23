@@ -688,5 +688,9 @@ final class LEn {
         m.put("正在從 ", "Fetching from ");
         m.put(" 傳來的檔案", " sent a file");
         m.put("正在收 ", "Receiving from ");
+        m.put("停止", "Stop");
+        m.put("已停止，未完成的檔案已刪除", "Stopped; the unfinished file was deleted");
+        m.put("已停止傳給 ", "Stopped sending to ");
+        m.put("已停止，檔案沒有傳出", "Stopped; the file was not sent");
     }
 }
