@@ -35,10 +35,10 @@ final class TaskLog {
     }
 
     /** 記下一筆任務（在背景執行緒呼叫）。 */
-    static synchronized void add(Context c, String text, String reply) { add(c, text, reply, null); }
+    static synchronized void add(Context c, String text, String reply) { add(c, text, reply, null, 0); }
 
-    /** steps = 自動操作每一步做了什麼（點開任務可以看）；沒有就傳 null。 */
-    static synchronized void add(Context c, String text, String reply, java.util.List<String> steps) {
+    /** details = 每一步的思考、動作、結果、token（沒有自動操作就是 null）；tokens = 整個任務用了多少 token。 */
+    static synchronized void add(Context c, String text, String reply, JSONArray details, long tokens) {
         if (text == null || text.trim().isEmpty()) return;
         try {
             JSONArray a = load(c);
@@ -47,11 +47,8 @@ final class TaskLog {
             o.put("text", text.trim());
             o.put("reply", reply == null ? "" : reply);
             o.put("star", false);
-            if (steps != null && !steps.isEmpty()) {
-                JSONArray sa = new JSONArray();
-                for (String s : steps) sa.put(s);
-                o.put("steps", sa);
-            }
+            o.put("tokens", tokens);
+            if (details != null && details.length() > 0) o.put("detail", details);
             a.put(o);
             save(c, trim(a));
         } catch (Exception ignored) {
@@ -89,6 +86,16 @@ final class TaskLog {
         } catch (Exception e) {
             return new JSONArray();
         }
+    }
+
+    /** 取一筆任務（id 就是記錄時的時間戳）；找不到回 null。 */
+    static synchronized JSONObject get(Context c, long id) {
+        JSONArray a = load(c);
+        for (int k = 0; k < a.length(); k++) {
+            JSONObject o = a.optJSONObject(k);
+            if (o != null && o.optLong("id") == id) return o;
+        }
+        return null;
     }
 
     /** 加星或取消星星（id 就是記錄時的時間戳）。 */

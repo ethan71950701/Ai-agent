@@ -51,6 +51,26 @@ final class AgentLoop {
     static volatile boolean showCard;
 
     private static volatile List<String> lastSteps;
+    private static volatile List<JSONObject> lastDetails;
+
+    /** 這一輪每一步的細節（思考、動作、結果、用了多少 token）；沒跑過自動操作回 null。取一次就清掉。 */
+    static JSONArray takeDetails() {
+        List<JSONObject> d = lastDetails;
+        lastDetails = null;
+        if (d == null || d.isEmpty()) return null;
+        JSONArray out = new JSONArray();
+        for (JSONObject o : d) out.put(o);
+        return out;
+    }
+
+    private static JSONObject detail(int step, JSONObject action, long tokens) {
+        JSONObject o = new JSONObject();
+        try {
+            o.put("step", step).put("think", action.optString("think")).put("action", action.optString("action"))
+                    .put("result", "").put("tokens", tokens);
+        } catch (Exception ignored) { }
+        return o;
+    }
 
     /** 這一輪自動操作每一步做了什麼（給任務歷史用）；沒跑過自動操作回 null。取一次就清掉。 */
     static List<String> takeSteps() {
@@ -120,6 +140,8 @@ final class AgentLoop {
         boolean[] panelHidden = {false};   // 面板只在真的要操作手機時才收起（只收一次）；思考、提問、確認時光球留著
         List<String> history = new ArrayList<>();
         lastSteps = history;
+        List<JSONObject> details = new ArrayList<>();
+        lastDetails = details;
         String finalSay = null;
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
@@ -130,6 +152,7 @@ final class AgentLoop {
                 if (img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
                 JSONObject action;
+                long tokBefore = Usage.tallyNow();
                 try {
                     action = askModel(key, task, history, img, lessons);
                 } catch (Exception e) {
@@ -138,6 +161,9 @@ final class AgentLoop {
                 }
                 if (action == null) return L.t("AI 的回答看不懂，已停止。");
                 if (cancelled) return L.t("已停止。");
+                JSONObject det = detail(step, action, Usage.tallyNow() - tokBefore);
+                details.add(det);
+                int historyBefore = history.size();
                 double wait = action.optDouble("wait", 1.2);
                 String name = action.optString("action");
                 if (st.dragDown && !name.startsWith("drag_") && !name.equals("wait")) {
@@ -203,6 +229,10 @@ final class AgentLoop {
                         break;
                     }
                 }
+                try {
+                    det.put("tokens", Usage.tallyNow() - tokBefore);   // 含搜尋等這一步之後才花的 token
+                    det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
+                } catch (Exception ignored) { }
                 if (finalSay == null) sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));
             }
         } finally {

@@ -1,6 +1,7 @@
 package com.phoneai.overlay;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.graphics.Typeface;
 import android.view.Gravity;
@@ -69,6 +70,12 @@ public class LogActivity extends Activity {
         }).start();
     }
 
+    private android.graphics.drawable.Drawable obtainRipple() {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+        return getResources().getDrawable(tv.resourceId, getTheme());
+    }
+
     private void showTasks(JSONArray list) {
         taskBox.removeAllViews();
         if (list.length() == 0) {
@@ -100,25 +107,19 @@ public class LogActivity extends Activity {
                 col.addView(time);
                 col.addView(text);
                 if (!reply.isEmpty()) col.addView(Ui.body(this, reply));
-                JSONArray steps = o.optJSONArray("steps");   // 自動操作每一步做了什麼（含 AI 的想法）：點一下展開
-                if (steps != null && steps.length() > 0) {
-                    StringBuilder sb = new StringBuilder();
-                    for (int s = 0; s < steps.length(); s++) sb.append(steps.optString(s)).append("\n\n");
-                    final TextView stepsTv = Ui.body(this, sb.toString().trim());
-                    stepsTv.setTypeface(Typeface.MONOSPACE);
-                    stepsTv.setTextSize(12);
-                    stepsTv.setVisibility(View.GONE);
-                    final TextView hint = Ui.body(this, L.t("▸ 點一下看 AI 每一步做了什麼"));
-                    hint.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
-                    hint.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-                    hint.setOnClickListener(v -> {
-                        boolean show = stepsTv.getVisibility() != View.VISIBLE;
-                        stepsTv.setVisibility(show ? View.VISIBLE : View.GONE);
-                        hint.setText(show ? L.t("▾ 收起") : L.t("▸ 點一下看 AI 每一步做了什麼"));
-                    });
-                    col.addView(hint);
-                    col.addView(stepsTv);
-                }
+                long tokens = o.optLong("tokens", 0);
+                int steps = o.optJSONArray("detail") == null ? 0 : o.optJSONArray("detail").length();
+                String sum = (steps > 0 ? L.t("共 ") + steps + L.t(" 步 · ") : "") + L.t("用了 ") + String.format(Locale.US, "%,d", tokens) + " token";
+                TextView info = Ui.body(this, sum + "　›");
+                info.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+                info.setPadding(0, Ui.dp(this, 6), 0, 0);
+                col.addView(info);
+                card.setOnClickListener(v -> {   // 點整張卡片進入任務詳細頁（每一步的思考與 token）
+                    Intent it = new Intent(this, TaskDetailActivity.class).putExtra("id", id);
+                    startActivity(it);
+                });
+                card.setClickable(true);
+                card.setForeground(obtainRipple());
                 row.addView(col, new LinearLayout.LayoutParams(0, -2, 1f));
 
                 final StarView star = new StarView(this, Ui.attr(this, com.google.android.material.R.attr.colorPrimary),
@@ -134,6 +135,8 @@ public class LogActivity extends Activity {
                 row.addView(star);
 
                 card.addView(row);
+                final View bounce = card;
+                bounce.postDelayed(() -> Ui.bounceIn(bounce), 40L * k);   // 一張一張彈出來
             } catch (Exception ignored) {
                 // 壞掉的一筆跳過，其他照常顯示
             }

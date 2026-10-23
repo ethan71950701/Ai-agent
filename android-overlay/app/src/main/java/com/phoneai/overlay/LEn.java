@@ -694,5 +694,17 @@ final class LEn {
         m.put("已停止，檔案沒有傳出", "Stopped; the file was not sent");
         m.put("正在傳輸中，可以在這裡停止（未完成的檔案會被刪掉）。", "A transfer is running; you can stop it here (the unfinished file will be deleted).");
         m.put("停止傳輸", "Stop transfer");
+        m.put(" 步 · ", " steps · ");
+        m.put("共 ", "Total ");
+        m.put("用了 ", "Used ");
+        m.put(" 步）", " steps)");
+        m.put("共用了 ", "Used a total of ");
+        m.put("思考：", "Thinking: ");
+        m.put("找不到這筆任務。", "This task was not found.");
+        m.put("結果：", "Result: ");
+        m.put("這一步用了 ", "This step used ");
+        m.put("這次沒有自動操作，只是一次對話。", "No automation this time; it was just one chat.");
+        m.put("（沒有寫）", "(none written)");
+        m.put("（", "(");
     }
 }

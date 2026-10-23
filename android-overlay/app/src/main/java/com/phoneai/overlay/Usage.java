@@ -148,4 +148,28 @@ final class Usage {
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> setLimits(a, parseK(dayEt) * 1000, parseK(monEt) * 1000))
                 .setNegativeButton(L.t("取消"), null).show();
     }
+
+    // ---------- 任務用量：同一個執行緒裡的 Claude 呼叫，累加到目前這個任務（給任務過程用） ----------
+
+    private static final ThreadLocal<long[]> TALLY = new ThreadLocal<>();
+
+    static void beginTally() { TALLY.set(new long[1]); }
+
+    /** 結束這個任務的計算，回傳用了多少 token。 */
+    static long endTally() {
+        long[] t = TALLY.get();
+        TALLY.remove();
+        return t == null ? 0 : t[0];
+    }
+
+    /** 目前為止這個任務用了多少 token（沒在計算就回 0）。 */
+    static long tallyNow() {
+        long[] t = TALLY.get();
+        return t == null ? 0 : t[0];
+    }
+
+    static void tallyAdd(long tokens) {
+        long[] t = TALLY.get();
+        if (t != null) t[0] += tokens;
+    }
 }
