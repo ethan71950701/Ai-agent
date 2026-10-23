@@ -115,7 +115,7 @@ final class LEn {
         m.put("PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。", "PhoneAI needs root to read system information and perform phone actions (tapping, opening apps, toggling Wi-Fi and so on). Without root most features do not work.");
         m.put("讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。", "Lets the assistant panel, the glow and the floating button appear on top of other apps.");
         m.put("任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。", "While a task runs, a progress capsule appears in the status bar so you know what the AI is doing.");
-        m.put("讓 App 能幫你點擊、滑動、拖曳，並畫出點擊的漣漪。畫面只用截圖，不讀取無障礙的畫面內容。", "Lets the app tap, swipe and drag for you, and draws the tap ripples. The screen is read only from screenshots, not through accessibility.");
+        m.put("讓 App 能幫你點擊、滑動、拖曳、輸入文字，並畫出點擊的漣漪。只讀取正在輸入的文字欄位，其他畫面只用截圖。", "Lets the app tap, swipe, drag and type for you, and draws the tap ripples. It only reads the text field you type into; other screen content is read only from screenshots.");
         m.put("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。", "Talk to the assistant by voice. Speech recognition runs offline on the phone and your voice is not uploaded.");
         m.put("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。", "The AI needs an Anthropic API key to think. The key is stored only in this app's folder on the phone and is not uploaded anywhere else.");
         m.put("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。", "The speech model (SenseVoice) is downloaded to the phone and then works offline; your voice is not uploaded. About 228 MB, Wi-Fi recommended. Without it you cannot use offline speech recognition; you can come back and download it any time.");

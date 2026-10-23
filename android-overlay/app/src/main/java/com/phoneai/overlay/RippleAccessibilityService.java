@@ -16,7 +16,7 @@ import android.view.accessibility.AccessibilityEvent;
 /**
  * 持有 TYPE_ACCESSIBILITY_OVERLAY 懸浮層。一般 TYPE_APPLICATION_OVERLAY 會在「設定」等 App 前景時被系統強制隱藏
  * （dumpsys: mIsForceHiddenNonSystemOverlayWindow=true）；無障礙懸浮層是否不受影響要實機測。
- * 不讀取任何畫面內容，onAccessibilityEvent 什麼都不做。
+ * 不讀取畫面內容（onAccessibilityEvent 什麼都不做）；只在 setFocusedText 時讀取目前焦點的輸入框。
  */
 public class RippleAccessibilityService extends AccessibilityService {
     static volatile RippleAccessibilityService instance;
@@ -254,6 +254,24 @@ public class RippleAccessibilityService extends AccessibilityService {
     }
 
     /** 目前可用的漣漪畫布（沒開無障礙服務就是 null） */
+    /**
+     * 把文字填進目前焦點的輸入框（ACTION_SET_TEXT）。只碰焦點欄位，不讀其他元件；append = true 時接在原本的文字後面。
+     * 成功回 true；沒有焦點輸入框、服務沒開、或系統不接受時回 false（呼叫端改用其他方法）。
+     */
+    static boolean setFocusedText(String text, boolean append) {
+        RippleAccessibilityService s = instance;
+        if (s == null || text == null) return false;
+        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        if (root == null) return false;
+        android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
+        if (node == null || !node.isEditable()) return false;
+        String value = text;
+        if (append && !node.isShowingHintText() && node.getText() != null) value = node.getText().toString() + text;
+        android.os.Bundle args = new android.os.Bundle();
+        args.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
+        return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, args);
+    }
+
     static RippleView view() {
         RippleAccessibilityService s = instance;
         return s == null ? null : s.view;

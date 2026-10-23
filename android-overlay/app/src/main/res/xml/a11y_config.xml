@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 取得「無障礙懸浮層」視窗；canRetrieveWindowContent 關閉：不讀取畫面元件（畫面只用截圖）。
+<!-- 取得「無障礙懸浮層」視窗；canRetrieveWindowContent 開啟：只用來把文字填進目前焦點的輸入框（ACTION_SET_TEXT），程式不讀取其他畫面元件（畫面仍只用截圖）。
      canPerformGestures：讓 App 能做多指、長按、拖曳等手勢。 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:canRetrieveWindowContent="false"
+    android:canRetrieveWindowContent="true"
     android:canPerformGestures="true"
     android:description="@string/a11y_desc" />

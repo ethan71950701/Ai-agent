@@ -1,5 +1,5 @@
 <resources>
-    <string name="a11y_desc">用來在螢幕上畫出點擊的漣漪，並幫 App 點擊與滑動。不讀取畫面內容（畫面只用截圖）。</string>
+    <string name="a11y_desc">用來在螢幕上畫出點擊的漣漪，並幫 App 點擊、滑動與輸入文字。只讀取正在輸入的文字欄位，其他畫面內容只用截圖。</string>
     <string name="tile_label">AI 助手</string>
     <string name="a11y_label">PhoneAI 漣漪</string>
     <string name="share_label">問 PhoneAI</string>

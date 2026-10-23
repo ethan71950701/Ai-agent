@@ -584,8 +584,13 @@ final class AgentLoop {
 
     /** 文字輸入：ASCII 直接 input text；中文等用剪貼簿貼上。clear = 先全選再刪。 */
     private static String type(String text, boolean clear, boolean enter, Context c) {
-        if (clear) { sh("input keycombination 113 29"); sh("input keyevent 67"); }
         if (text == null) text = "";
+        if (!text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
+            // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
+            if (enter) sh("input keyevent 66");
+            return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+        }
+        if (clear) { sh("input keycombination 113 29"); sh("input keyevent 67"); }
         if (text.matches("[A-Za-z0-9 ]*")) {
             if (!text.isEmpty()) {
                 // 中文鍵盤打英文會變成注音或拼音候選字：先切到英文鍵盤，輸完再切回原本的
