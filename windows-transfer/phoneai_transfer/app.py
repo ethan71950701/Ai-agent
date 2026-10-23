@@ -309,6 +309,9 @@ class App:
 
     def _offer_update(self, build, url):
         self._status("")
+        if build is None:
+            messagebox.showwarning("檢查更新", "更新來源找不到電腦版的檔案（檔名對不上）。\n請到 GitHub 的 windows-latest 頁面，手動下載 PhoneAI.exe 換一次，之後就能一鍵更新。", parent=self.root)
+            return
         if not updater.is_newer(build):
             messagebox.showinfo("檢查更新", f"已經是最新版（{version.BUILD}）。", parent=self.root)
             return
