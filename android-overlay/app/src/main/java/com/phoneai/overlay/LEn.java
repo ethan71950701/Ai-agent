@@ -752,5 +752,8 @@ final class LEn {
         m.put("接收", "Receive");
         m.put("已接收：", "Received: ");
         m.put("接收失敗：", "Receive failed: ");
+        m.put("（連線 ", "(connect ");
+        m.put(" 毫秒，讀取 ", " ms, read ");
+        m.put(" 毫秒）", " ms)");
     }
 }

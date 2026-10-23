@@ -274,6 +274,7 @@ class Server:
             with conn:
                 if not _allowed(ip):
                     return
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)   # 回應不要等合併，減少每次點擊的延遲
                 conn.settimeout(20)
                 f = conn.makefile("rb")
                 if self._blocked(ip):

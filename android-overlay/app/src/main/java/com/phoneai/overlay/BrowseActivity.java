@@ -66,11 +66,15 @@ public class BrowseActivity extends Activity {
         if (loading) return;
         loading = true;
         status.setText(L.t("讀取中…"));
+        final long t0 = System.currentTimeMillis();
         new Thread(() -> {
             try {
                 if (client == null) client = FileTools.clientFor(this, peer);
+                long t1 = System.currentTimeMillis();
                 List<String[]> rows = FileTools.rows(client.list(target));
-                ui.post(() -> { loading = false; show(target, rows); });
+                long ms = System.currentTimeMillis() - t0;
+                String timing = L.t("（連線 ") + (t1 - t0) + L.t(" 毫秒，讀取 ") + (System.currentTimeMillis() - t1) + L.t(" 毫秒）");
+                ui.post(() -> { loading = false; show(target, rows); status.setText(status.getText() + " " + timing); });
             } catch (Exception e) {
                 ui.post(() -> { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); });
             }
