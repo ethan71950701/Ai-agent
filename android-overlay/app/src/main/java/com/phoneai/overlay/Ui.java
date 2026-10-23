@@ -99,8 +99,8 @@ final class Ui {
     /** 次要按鈕（淡色底）。 */
     static MaterialButton tonal(Context c, String text, View.OnClickListener l) {
         MaterialButton b = button(c, text, l);
-        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(attr(c, com.google.android.material.R.attr.colorSecondaryContainer)));
-        b.setTextColor(attr(c, com.google.android.material.R.attr.colorOnSecondaryContainer));
+        b.setBackgroundTintList(android.content.res.ColorStateList.valueOf(attr(c, com.google.android.material.R.attr.colorPrimaryContainer)));
+        b.setTextColor(attr(c, com.google.android.material.R.attr.colorOnPrimaryContainer));
         return b;
     }
 

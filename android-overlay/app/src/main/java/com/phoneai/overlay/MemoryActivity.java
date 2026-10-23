@@ -332,15 +332,11 @@ public class MemoryActivity extends Activity {
         et.setSelection(et.getText().length());
         et.setMinLines(2);
         til.addView(et);
-        final com.google.android.material.materialswitch.MaterialSwitch pin = new com.google.android.material.materialswitch.MaterialSwitch(this);
-        pin.setText(L.t("永久記住（沒有期限，AI 不能改或刪，只能在這裡手動刪）"));
-        pin.setChecked(it != null && it.optBoolean("pinned"));
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = (int) (20 * d);
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(til);
-        if (!"lesson".equals(kind)) form.addView(pin);
         com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(it == null ? L.t("新增") : L.t("編輯")).setView(form)
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> {
                     String t = et.getText().toString().trim();
@@ -351,10 +347,9 @@ public class MemoryActivity extends Activity {
                             data.put("next_id", id + 1);
                             data.getJSONArray("items").put(new JSONObject().put("id", id).put("kind", kind).put("text", t)
                                     .put("created", new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US).format(new java.util.Date()))
-                                    .put("done", false).put("done_at", JSONObject.NULL).put("deleted", false).put("pinned", pin.isChecked()));
+                                    .put("done", false).put("done_at", JSONObject.NULL).put("deleted", false).put("pinned", false));
                         } else {
                             it.put("text", t);
-                            it.put("pinned", pin.isChecked());
                         }
                     } catch (Exception ignored) { }
                     saveThen(this::render);
