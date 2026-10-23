@@ -98,6 +98,10 @@ public class BrowseActivity extends Activity {
             String trimmed = r[2].endsWith("/") ? r[2].substring(0, r[2].length() - 1) : r[2];   // 磁碟根目錄「C:/」要去掉最後的 /
             String name = trimmed.contains("/") ? trimmed.substring(trimmed.lastIndexOf('/') + 1) : trimmed;
             LinearLayout card = Ui.card(this, list);
+            card.setMinimumHeight(Ui.dp(this, 64));          // 列要夠高，好按
+            card.setClickable(true);
+            card.setBackground(rippleBackground());          // 按下去會有水波紋，知道有按到
+
             TextView t = Ui.body(this, (folder ? L.t("📁 ") : L.t("📄 ")) + name);
             t.setTextSize(16);
             t.setPadding(0, 0, 0, 0);
@@ -112,6 +116,12 @@ public class BrowseActivity extends Activity {
                 else confirmReceive(r[2], name);
             });
         }
+    }
+
+    private android.graphics.drawable.Drawable rippleBackground() {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+        return getResources().getDrawable(tv.resourceId, getTheme());
     }
 
     private void confirmReceive(String remote, String name) {
