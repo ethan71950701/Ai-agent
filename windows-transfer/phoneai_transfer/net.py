@@ -512,34 +512,25 @@ def _listing(path):
     return "".join(e for e in (_entry(k) for k in kids[:500]) if e)
 
 
-def _find_everywhere(query, limit_s=10.0):
-    """先找使用者資料夾，再找其他磁碟；整體最多 10 秒，回傳最新的 30 個。"""
-    home = os.path.expanduser("~")
-    starts = [home] + [d for d in drives() if os.path.normcase(d[:2]) != os.path.normcase(home[:2])]
-    deadline = time.time() + limit_s
-    hits = []
-    for st in starts:
-        left = deadline - time.time()
-        if left <= 0:
-            break
-        hits += _find_paths(query, st, left)
-        if len(hits) >= 200:
-            break
-    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
-    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
+SKIP_DIRS = {"windows", "$recycle.bin", "system volume information", "programdata", "program files",
+             "program files (x86)", "recovery", "perflogs"}
 
 
-def _find_paths(query, start, limit_s, max_visit=200000, max_depth=12):
-    """在一個資料夾底下依檔名找（不分大小寫）；回傳符合的完整路徑清單。"""
+def _find_everywhere(query, limit_s=12.0, max_visit=400000):
+    """找整台電腦的檔案：所有磁碟一層一層（廣度優先）輪流找，這樣每個磁碟都有機會被找到。
+    跳過 Windows 系統資料夾；整體最多 12 秒（手機那邊最多等 20 秒），回傳最新的 30 個。"""
     q = query.lower().strip()
     if not q:
-        return []
+        return ""
+    home = os.path.expanduser("~")
+    queue = [(d, 0) for d in [home] + [d for d in drives() if os.path.normcase(d[:2]) != os.path.normcase(home[:2])]]
     deadline = time.time() + limit_s
     visited = 0
     hits = []
-    todo = [(start, 0)]
-    while todo and visited < max_visit and time.time() < deadline and len(hits) < 200:
-        d, depth = todo.pop(0)
+    i = 0
+    while i < len(queue) and visited < max_visit and time.time() < deadline and len(hits) < 200:
+        d, depth = queue[i]
+        i += 1
         try:
             names = os.listdir(d)
         except OSError:
@@ -551,9 +542,12 @@ def _find_paths(query, start, limit_s, max_visit=200000, max_depth=12):
             p = os.path.join(d, n)
             if q in n.lower():
                 hits.append(p)
-            if depth < max_depth and os.path.isdir(p) and not os.path.islink(p):
-                todo.append((p, depth + 1))
-    return hits
+            if depth < 12 and os.path.isdir(p) and not os.path.islink(p):
+                if depth == 0 and n.lower() in SKIP_DIRS:
+                    continue
+                queue.append((p, depth + 1))
+    hits.sort(key=lambda p: os.path.getmtime(p) if os.path.exists(p) else 0, reverse=True)
+    return "".join(e for e in (_entry(p) for p in hits[:30]) if e)
 
 
 # ---------- 區網探索 ----------
