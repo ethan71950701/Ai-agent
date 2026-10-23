@@ -65,6 +65,22 @@ final class AgentLoop {
         ChatEngine.abortInflight();
     }
 
+    /** 這個動作會不會實際操作手機（點、滑、輸入、開 App…）。思考、提問、搜尋、記憶、確認、等待不算。 */
+    private static boolean operatesPhone(String name) {
+        switch (name) {
+            case "done": case "fail": case "ask_user": case "ask": case "search": case "remember": case "wait": case "": return false;
+            default: return true;
+        }
+    }
+
+    /** 第一次要真的操作手機時才收起面板（之後不再收）；在這之前光球一直留著。 */
+    private static void hideBeforeOperate(Ui ui, boolean[] hidden, String name) {
+        if (hidden[0] || !operatesPhone(name)) return;
+        hidden[0] = true;
+        ui.hide();
+        sleep(600);
+    }
+
     /** 這一次任務的狀態：開過哪些 App、量測次數、記了幾則經驗、搜尋次數、拖曳手指是否還按著。 */
     private static final class State {
         final List<String> opened = new ArrayList<>();
@@ -101,8 +117,7 @@ final class AgentLoop {
         if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
         int[] wh = screenSize();
         State st = new State();
-        ui.hide();
-        sleep(600);
+        boolean[] panelHidden = {false};   // 面板只在真的要操作手機時才收起（只收一次）；思考、提問、確認時光球留著
         List<String> history = new ArrayList<>();
         lastSteps = history;
         String finalSay = null;
@@ -171,6 +186,7 @@ final class AgentLoop {
                         List<JSONObject> subs = filterBatch(action.optJSONArray("actions"));
                         if (subs.isEmpty()) { history.add(step + ". batch 裡沒有可執行的動作，請直接給單一動作"); break; }
                         StringBuilder log = new StringBuilder(step + ". 連續執行" + subs.size() + "個動作（中間不看畫面）：");
+                        hideBeforeOperate(ui, panelHidden, "batch");
                         for (JSONObject sub : subs) {
                             String r = execute(sub, wh, c, st);
                             log.append(" [").append(sub.optString("action")).append(" → ").append(r).append("]");
@@ -180,6 +196,7 @@ final class AgentLoop {
                         break;
                     }
                     default: {
+                        hideBeforeOperate(ui, panelHidden, name);
                         String result = execute(action, wh, c, st);
                         String think = action.optString("think");
                         history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
