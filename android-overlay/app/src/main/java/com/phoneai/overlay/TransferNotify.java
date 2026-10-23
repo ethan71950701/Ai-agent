@@ -68,6 +68,11 @@ final class TransferNotify {
     }
 
     /** 傳輸結束（成功或失敗）：收起進度通知。 */
+    /** 新的傳輸開始：清掉上一次留下的「停止」。 */
+    static synchronized void begin() {
+        stopRequested = false;
+    }
+
     static synchronized void cancel(Context c) {
         lastAt = 0;
         stopRequested = false;

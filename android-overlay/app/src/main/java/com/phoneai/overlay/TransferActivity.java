@@ -116,13 +116,15 @@ public class TransferActivity extends Activity {
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {
             Ui.section(this, box, L.t("已配對的裝置"));
-            LinearLayout list = Ui.card(this, box);
-            list.addView(Ui.body(this, L.t("點名稱可以移除")));
             for (TransferStore.Peer p : peers) {
-                android.widget.TextView row = Ui.body(this, p.name);
-                row.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-                row.setOnClickListener(v -> removeDialog(p));
-                list.addView(row);
+                LinearLayout card = Ui.card(this, box);
+                android.widget.TextView name = Ui.body(this, p.name);
+                name.setTextSize(17);
+                name.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                card.addView(name);
+                com.google.android.material.button.MaterialButton send = Ui.button(this, L.t("傳檔案過去"), v -> pickFileFor(p));
+                com.google.android.material.button.MaterialButton remove = Ui.tonal(this, L.t("移除"), v -> removeDialog(p));
+                Ui.buttons(this, card, send, remove);
             }
         }
 
@@ -135,6 +137,37 @@ public class TransferActivity extends Activity {
     }
 
     /** 移除用跟 App 其他確認一樣的對話框（ConfirmActivity），會等使用者按，所以放在背景執行緒。 */
+    // ---------- 從手機傳檔案到已配對的裝置 ----------
+
+    private static final int REQ_PICK = 4101;
+    private TransferStore.Peer pickFor;
+
+    private void pickFileFor(TransferStore.Peer p) {
+        pickFor = p;
+        Intent it = new Intent(Intent.ACTION_GET_CONTENT);
+        it.setType("*/*");
+        it.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(it, L.t("選擇要傳過去的檔案")), REQ_PICK);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQ_PICK || resultCode != RESULT_OK || data == null || data.getData() == null || pickFor == null) return;
+        final TransferStore.Peer p = pickFor;
+        final android.net.Uri uri = data.getData();
+        pickFor = null;
+        Toast.makeText(this, L.t("開始傳檔案…可以在通知列看進度"), Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                FileTools.sendUri(this, p, uri);
+                ui.post(this::render);
+            } catch (Exception e) {
+                ui.post(() -> Toast.makeText(this, L.t("傳檔案失敗：") + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
     private void removeDialog(TransferStore.Peer p) {
         new Thread(() -> {
             boolean yes = ConfirmActivity.ask(this, L.t("移除「") + p.name + L.t("」？移除後不能再取檔案，要重新配對。"));

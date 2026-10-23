@@ -706,5 +706,9 @@ final class LEn {
         m.put("這次沒有自動操作，只是一次對話。", "No automation this time; it was just one chat.");
         m.put("（沒有寫）", "(none written)");
         m.put("（", "(");
+        m.put("傳檔案失敗：", "File transfer failed: ");
+        m.put("傳檔案過去", "Send file");
+        m.put("選擇要傳過去的檔案", "Choose a file to send");
+        m.put("開始傳檔案…可以在通知列看進度", "Sending… you can follow progress in the notifications");
     }
 }

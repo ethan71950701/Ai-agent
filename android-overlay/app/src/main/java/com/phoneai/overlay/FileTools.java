@@ -148,6 +148,56 @@ final class FileTools {
     }
 
     /** 用名稱（包含比對）找已配對的裝置，探索它現在的位址，回傳可用的客戶端。 */
+    /** 手機上選到的檔案（content://）直接串流送給已配對的裝置，不用先複製到別處。 */
+    static void sendUri(Context c, TransferStore.Peer p, android.net.Uri uri) throws Exception {
+        android.database.Cursor cur = c.getContentResolver().query(uri, null, null, null, null);
+        String name = "file";
+        long size = -1;
+        try {
+            if (cur != null && cur.moveToFirst()) {
+                int ni = cur.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                int si = cur.getColumnIndex(android.provider.OpenableColumns.SIZE);
+                if (ni >= 0 && !cur.isNull(ni)) name = cur.getString(ni);
+                if (si >= 0 && !cur.isNull(si)) size = cur.getLong(si);
+            }
+        } finally {
+            if (cur != null) cur.close();
+        }
+        if (size < 0) size = 0;
+        final long total = size;
+        final String shown = name;
+        TransferNotify.begin();
+        try {
+            TransferClient cl = clientFor(c, p);
+            java.io.InputStream in = c.getContentResolver().openInputStream(uri);
+            if (in == null) throw new Exception("打不開這個檔案");
+            String saved = cl.put(in, total, name, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
+                    L.t("傳到：") + p.name + L.t(" 的收件匣"), shown, d, t));
+            TransferStore.log(c, L.t("傳出 ") + name + " → " + p.name);
+            TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved);
+        } catch (TransferNotify.Stopped s) {
+            TransferNotify.finish(c, L.t("已停止傳給 ") + p.name);
+        } catch (Exception e) {
+            TransferNotify.cancel(c);
+            throw e;
+        }
+    }
+
+    /** 找到這台已配對裝置現在的位址，回傳可用的客戶端。 */
+    static TransferClient clientFor(Context c, TransferStore.Peer p) throws Exception {
+        List<TransferStore.Peer> one = new ArrayList<>();
+        one.add(p);
+        TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 2500, TransferDiscovery.PORT, extra(one)).get(p.id);
+        String ip = f != null ? f.ip : p.ip;
+        int port = f != null ? f.port : p.port;
+        if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開互傳，或不在同一個 Wi-Fi");
+        if (f != null) {
+            TransferStore.updateAddress(c, p.id, ip, port);
+            TransferStore.updateName(c, p.id, f.name);
+        }
+        return new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+    }
+
     private static TransferClient client(Context c, String dev) throws Exception {
         List<TransferStore.Peer> peers = TransferStore.peers(c), hit = new ArrayList<>();
         String q = dev.toLowerCase(Locale.ROOT);
@@ -155,18 +205,7 @@ final class FileTools {
         if (hit.isEmpty() && peers.size() == 1) hit.add(peers.get(0));
         if (hit.isEmpty()) throw new Exception("沒有叫「" + dev + "」的已配對裝置；用 device_list 看有哪些");
         if (hit.size() > 1) throw new Exception("有多台符合「" + dev + "」，請說清楚是哪一台");
-        TransferStore.Peer p = hit.get(0);
-        List<TransferStore.Peer> one = new ArrayList<>();
-        one.add(p);
-        TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 2500, TransferDiscovery.PORT, extra(one)).get(p.id);
-        String ip = f != null ? f.ip : p.ip;
-        int port = f != null ? f.port : p.port;
-        if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開傳檔案、或不在同一個 Wi-Fi");
-        if (f != null) {
-            TransferStore.updateAddress(c, p.id, ip, port);
-            TransferStore.updateName(c, p.id, f.name);
-        }
-        return new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+        return clientFor(c, hit.get(0));
     }
 
     private static File unique(File dir, String name) {

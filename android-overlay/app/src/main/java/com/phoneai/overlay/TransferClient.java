@@ -146,16 +146,21 @@ final class TransferClient {
 
     /** 把本機的檔案送到對方的收件匣。回傳對方存成的檔名。 */
     String put(File src, Progress cb) throws IOException {
-        String target = "/v1/put?name=" + enc(src.getName()) + "&size=" + src.length();
+        return put(new FileInputStream(src), src.length(), src.getName(), cb);
+    }
+
+    /** 從任何輸入串流送出（例如手機選到的 content:// 檔案）；size 是總位元組數，name 是檔名。會關閉 fin。 */
+    String put(InputStream fin, long size, String name, Progress cb) throws IOException {
+        String target = "/v1/put?name=" + enc(name) + "&size=" + size;
         try (Socket s = open()) {
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
             String nonce = writeHead(out, "PUT", target);
-            long total = src.length(), done = 0;
+            long total = size, done = 0;
             try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(key, nonce));
-                 InputStream fin = new FileInputStream(src)) {
+                 InputStream src = fin) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
-                while ((n = fin.read(buf)) > 0) {
+                while ((n = src.read(buf)) > 0) {
                     so.write(buf, 0, n);
                     done += n;
                     if (cb != null) cb.onBytes(done, total);
@@ -166,7 +171,7 @@ final class TransferClient {
             readStatus(in);
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
                 String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
-                return p.length > 1 ? p[1] : src.getName();
+                return p.length > 1 ? p[1] : name;
             }
         }
     }
