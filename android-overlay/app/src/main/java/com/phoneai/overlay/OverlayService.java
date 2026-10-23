@@ -358,8 +358,8 @@ public class OverlayService extends Service {
     private void stopAgent() {
         AgentLoop.cancel();        // App 內的自動操作迴圈在下一個檢查點結束
         Notify.stopSpeaking();
-        postStatus(title, L.t("正在停止…"), 0, 0);
-        main.postDelayed(this::finish, 800);
+        postStatus(title, L.t("已停止。"), 0, 0);
+        main.postDelayed(this::finish, 1200);
     }
 
     /** App 裡的「測試」按鈕：示範通知更新、漣漪與滑動。 */

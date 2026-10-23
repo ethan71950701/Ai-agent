@@ -5,6 +5,13 @@
     <!-- 固定深色背景：不跟系統的深色／淺色模式走；強調色由 accents.xml 的 Accent0～14 決定 -->
     <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar" />
 
+    <!-- 確認框：透明視窗，只留一個 Material 對話框 -->
+    <style name="ConfirmTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
     <style name="AssistTheme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

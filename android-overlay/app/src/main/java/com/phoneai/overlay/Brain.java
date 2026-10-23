@@ -20,7 +20,7 @@ final class Brain {
 
     static String answer(Activity act, String t, AgentLoop.Ui ui) {
         String reply = run(act, t, ui);
-        TaskLog.add(act, t, reply);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
+        TaskLog.add(act, t, reply, AgentLoop.takeSteps());   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         return reply;
     }
 

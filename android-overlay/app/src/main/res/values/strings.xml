@@ -5,5 +5,5 @@
     <string name="share_label">Ask PhoneAI</string>
     <string name="widget_label">PhoneAI Voice</string>
     <string name="widget_desc">Tap to speak to the assistant</string>
-    <string name="widget_button">🎙 Speak</string>
+    <string name="widget_button">Speak</string>
 </resources>

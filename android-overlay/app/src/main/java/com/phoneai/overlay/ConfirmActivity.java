@@ -44,7 +44,7 @@ public class ConfirmActivity extends Activity {
         super.onCreate(b);
         setShowWhenLocked(true);
         String msg = getIntent().getStringExtra("msg");
-        new AlertDialog.Builder(this)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(L.t("需要你確認"))
                 .setMessage(msg)
                 .setCancelable(false)

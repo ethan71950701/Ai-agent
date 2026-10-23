@@ -44,7 +44,7 @@ public class MemoryActivity extends Activity {
     private float d;
     private String diag = "";
     private String query = "";   // 搜尋框的文字（小寫）；空字串 = 全部顯示
-    private static final String BACKUP = "/sdcard/Download/phoneai_memory_backup.json";
+    private static final String BACKUP_DIR = "/sdcard/Download/", BACKUP_PREFIX = "phoneai_memory_backup";
 
     @Override
     protected void onCreate(Bundle b) {
@@ -197,17 +197,17 @@ public class MemoryActivity extends Activity {
             final JSONObject it = hit.get(i);
             String created = it.optString("created", "");
             View pin = null;
-            if (!"lesson".equals(kind)) {   // 每一列右邊的星星：空心＝普通，黃色實心＝永久記憶（AI 不能改或刪）；點一下就切換，不用點開
+            if (!"lesson".equals(kind)) {   // 每一列右邊的星星：空心＝普通，實心（主題色）＝永久記憶（AI 不能改或刪）；點一下就切換，不用點開
                 final boolean on = it.optBoolean("pinned");
-                TextView star = new TextView(this);
-                star.setText(on ? "★" : "☆");
-                star.setTextSize(24);
-                star.setTextColor(on ? 0xFFFFC107 : Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
-                star.setPadding(Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
-                star.setLayoutParams(new LinearLayout.LayoutParams(-2, -2));
+                final StarView star = new StarView(this, Ui.attr(this, com.google.android.material.R.attr.colorPrimary),
+                        Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
+                star.setOn(on, false);
                 star.setOnClickListener(v -> {
-                    try { it.put("pinned", !on); } catch (Exception ignored) { }
-                    saveThen(this::render);
+                    star.setOn(!on, true);   // 先彈一下，再存檔重畫
+                    star.postDelayed(() -> {
+                        try { it.put("pinned", !on); } catch (Exception ignored) { }
+                        saveThen(this::render);
+                    }, 320);
                 });
                 pin = star;
             }
@@ -218,7 +218,7 @@ public class MemoryActivity extends Activity {
 
     // ---------- 匯出／匯入（下載資料夾的 phoneai_memory_backup.json，格式就是 items 陣列） ----------
 
-    /** 匯出：待辦、筆記、經驗（不含已刪除的）寫到下載資料夾。用 root 寫，跟 Uninstaller 清的是同一個檔。 */
+    /** 匯出：待辦、筆記、經驗（不含已刪除的）寫到下載資料夾，檔名帶時間，多次匯出不會互相覆蓋。用 root 寫。 */
     private void exportMemory() {
         if (data == null) return;
         JSONObject out = new JSONObject();
@@ -231,21 +231,46 @@ public class MemoryActivity extends Activity {
         try {
             out.put("items", keep);
         } catch (Exception ignored) { }
-        String json = out.toString();
+        final String json = out.toString();
+        final String name = BACKUP_PREFIX + "_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(new java.util.Date()) + ".json";
+        final String path = BACKUP_DIR + name;
         new Thread(() -> {
-            String res = Maintenance.suRun("cat > " + BACKUP + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\n[ -s " + BACKUP + " ] && echo PHONEAI_OK");
+            String res = Maintenance.suRun("cat > " + path + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\n[ -s " + path + " ] && echo PHONEAI_OK");
             final boolean ok = res.contains("PHONEAI_OK");
-            runOnUiThread(() -> status.setText(ok ? L.t("已匯出到下載資料夾的 phoneai_memory_backup.json") : L.t("匯出失敗：") + res.trim()));
+            runOnUiThread(() -> status.setText(ok ? L.t("已匯出到下載資料夾：") + name : L.t("匯出失敗：") + res.trim()));
         }).start();
     }
 
-    /** 匯入：讀下載資料夾的備份，確認後只加入還沒有的項目（同類別、同文字就跳過），不刪除、不覆蓋。 */
+    /** 匯入：列出下載資料夾裡的備份（新的在前）讓使用者選一個，再確認；只加入還沒有的項目。 */
     private void importMemory() {
         new Thread(() -> {
-            JSONArray in = parseItems(Maintenance.suRun("cat " + BACKUP + " 2>/dev/null"));
+            String out = Maintenance.suRun("ls -1t " + BACKUP_DIR + BACKUP_PREFIX + "*.json 2>/dev/null");
+            final java.util.List<String> names = new java.util.ArrayList<>();
+            for (String line : out.split("\n")) {
+                String l = line.trim();
+                if (!l.startsWith(BACKUP_DIR)) continue;
+                String n = l.substring(BACKUP_DIR.length());
+                if (n.matches(BACKUP_PREFIX + "[A-Za-z0-9_\\-]*\\.json")) names.add(n);
+            }
+            runOnUiThread(() -> {
+                if (names.isEmpty()) {
+                    status.setText(L.t("找不到可以匯入的備份：先按「匯出」，會存到下載資料夾"));
+                    return;
+                }
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle(L.t("選擇要匯入的備份"))
+                        .setItems(names.toArray(new String[0]), (dlg, which) -> confirmImport(names.get(which)))
+                        .setNegativeButton(L.t("取消"), null).show();
+            });
+        }).start();
+    }
+
+    private void confirmImport(String name) {
+        new Thread(() -> {
+            JSONArray in = parseItems(Maintenance.suRun("cat " + BACKUP_DIR + name + " 2>/dev/null"));
             runOnUiThread(() -> {
                 if (in == null) {
-                    status.setText(L.t("找不到可以匯入的備份：先按「匯出」，會存到下載資料夾"));
+                    status.setText(L.t("這個備份讀不了"));
                     return;
                 }
                 new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)

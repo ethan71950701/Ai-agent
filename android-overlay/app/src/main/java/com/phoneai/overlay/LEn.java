@@ -590,6 +590,21 @@ final class LEn {
         m.put("；搜尋 ", "; search ");
         m.put("開面板時自動聽", "Listen when the panel opens");
         m.put("叫出助理面板就開始聽；關掉就要自己點光球", "Start listening as soon as the assistant panel opens; turn off to tap the orb yourself");
+        m.put("選擇要匯入的備份", "Choose a backup to import");
+        m.put("已匯出到下載資料夾：", "Exported to the Downloads folder: ");
+        m.put("這個備份讀不了", "This backup cannot be read");
+        m.put("▸ 點一下看 AI 每一步做了什麼", "▸ Tap to see what the AI did at each step");
+        m.put("▾ 收起", "▾ Collapse");
+        m.put("等你回答問題", "Waiting for your answer");
+        m.put("等你確認", "Waiting for your confirmation");
+        m.put("朗讀引擎啟動失敗（代碼 ", "Speech engine failed to start (code ");
+        m.put("朗讀失敗：", "Speech failed: ");
+        m.put("沒有可朗讀的文字", "Nothing to read aloud");
+        m.put("最近朗讀 ", "Last spoken: ");
+        m.put(" 字", " characters");
+        m.put("朗讀失敗（代碼 ", "Speech failed (code ");
+        m.put("朗讀：", "Speech: ");
+        m.put("（還沒朗讀過）", "(nothing spoken yet)");
         m.put("・", "- ");
     }
 }

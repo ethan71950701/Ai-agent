@@ -113,6 +113,17 @@ final class ChatEngine {
     }
 
     /** 送出一則 Messages API 的請求（聊天與自動操作共用）。 */
+    private static volatile HttpURLConnection inflight;
+
+    /** 立刻中斷正在等的請求（使用者按了停止）。要在別的執行緒做，主執行緒不能碰網路。 */
+    static void abortInflight() {
+        final HttpURLConnection con = inflight;
+        if (con == null) return;
+        new Thread(() -> {
+            try { con.disconnect(); } catch (Exception ignored) { }
+        }, "abort-request").start();
+    }
+
     static JSONObject post(JSONObject body, String key) throws Exception {
         Context app = App.ctx;
         if (app != null) {
@@ -120,6 +131,7 @@ final class ChatEngine {
             if (over != null) throw new Exception(over);
         }
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
+        inflight = con;
         con.setRequestMethod("POST");
         con.setConnectTimeout(20000);
         con.setReadTimeout(40000);
@@ -131,6 +143,7 @@ final class ChatEngine {
         int code = con.getResponseCode();
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
+        inflight = null;
         if (code >= 400) throw new Exception("HTTP " + code + " " + text);
         JSONObject r = new JSONObject(text);
         JSONObject u = r.optJSONObject("usage");

@@ -345,6 +345,7 @@ public class AssistantSheet {
     }
 
     public void destroy() {
+        Notify.stopSpeaking();   // 退出面板就停止朗讀
         cancelQuestion();
         if (current == this) current = null;
         root.removeCallbacks(waitTimeout);

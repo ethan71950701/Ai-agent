@@ -86,6 +86,7 @@ public class DiagActivity extends Activity {
                 .append(cfgp.getString("a11y_last", null) != null ? L.t("（最近 ") + cfgp.getString("a11y_last", "") + L.t("）") : "").append('\n');
         sb.append(L.t("系統長按電源鍵動作：")).append(powerLongPressText()).append('\n');
         sb.append(L.t("底欄玻璃效果：")).append(GlassBar.status).append('\n');
+        sb.append(L.t("朗讀：")).append(Notify.ttsInfo.isEmpty() ? L.t("（還沒朗讀過）") : Notify.ttsInfo).append('\n');
         sb.append(L.t("模型：聊天與路由 ")).append(ChatEngine.MODEL).append(L.t("；自動操作 ")).append(AgentLoop.MODEL)
                 .append(L.t("；搜尋 ")).append(AgentLoop.SEARCH_MODEL).append('\n');
         // 小米的小愛同學長按電源鍵可能綁在別的設定上：用 root 列出所有跟電源／長按／助理有關的設定名稱（只讀，不改）

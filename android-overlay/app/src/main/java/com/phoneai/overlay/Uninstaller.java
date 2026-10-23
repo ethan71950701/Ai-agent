@@ -35,7 +35,7 @@ final class Uninstaller {
                         : "settings put global power_button_long_press " + orig);
             }
             // 2. 刪除記憶備份檔
-            Maintenance.suRun("rm -f /sdcard/Download/phoneai_memory_backup.json");
+            Maintenance.suRun("rm -f /sdcard/Download/phoneai_memory_backup*.json");
             // 3. 最後才解除安裝本 App：用系統的解除安裝畫面，由你按確定
             a.runOnUiThread(() -> a.startActivity(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.getPackageName()))));
         }, "uninstall").start();

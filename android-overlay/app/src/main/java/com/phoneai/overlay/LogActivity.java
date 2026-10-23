@@ -2,7 +2,9 @@ package com.phoneai.overlay;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.graphics.Typeface;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -98,18 +100,37 @@ public class LogActivity extends Activity {
                 col.addView(time);
                 col.addView(text);
                 if (!reply.isEmpty()) col.addView(Ui.body(this, reply));
+                JSONArray steps = o.optJSONArray("steps");   // 自動操作每一步做了什麼（含 AI 的想法）：點一下展開
+                if (steps != null && steps.length() > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int s = 0; s < steps.length(); s++) sb.append(steps.optString(s)).append("\n\n");
+                    final TextView stepsTv = Ui.body(this, sb.toString().trim());
+                    stepsTv.setTypeface(Typeface.MONOSPACE);
+                    stepsTv.setTextSize(12);
+                    stepsTv.setVisibility(View.GONE);
+                    final TextView hint = Ui.body(this, L.t("▸ 點一下看 AI 每一步做了什麼"));
+                    hint.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+                    hint.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
+                    hint.setOnClickListener(v -> {
+                        boolean show = stepsTv.getVisibility() != View.VISIBLE;
+                        stepsTv.setVisibility(show ? View.VISIBLE : View.GONE);
+                        hint.setText(show ? L.t("▾ 收起") : L.t("▸ 點一下看 AI 每一步做了什麼"));
+                    });
+                    col.addView(hint);
+                    col.addView(stepsTv);
+                }
                 row.addView(col, new LinearLayout.LayoutParams(0, -2, 1f));
 
-                TextView star = new TextView(this);
-                star.setText(starred ? "★" : "☆");
-                star.setTextSize(26);
-                star.setTextColor(Ui.attr(this, starred ? com.google.android.material.R.attr.colorPrimary
-                        : com.google.android.material.R.attr.colorOnSurfaceVariant));
-                star.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
-                star.setOnClickListener(v -> new Thread(() -> {
-                    TaskLog.setStar(this, id, !starred);
-                    runOnUiThread(this::reloadTasks);
-                }).start());
+                final StarView star = new StarView(this, Ui.attr(this, com.google.android.material.R.attr.colorPrimary),
+                        Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
+                star.setOn(starred, false);
+                star.setOnClickListener(v -> {
+                    star.setOn(!starred, true);   // 先彈一下，再存檔重排
+                    star.postDelayed(() -> new Thread(() -> {
+                        TaskLog.setStar(this, id, !starred);
+                        runOnUiThread(this::reloadTasks);
+                    }).start(), 320);
+                });
                 row.addView(star);
 
                 card.addView(row);

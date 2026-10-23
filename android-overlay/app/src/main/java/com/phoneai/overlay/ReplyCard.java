@@ -3,6 +3,7 @@ package com.phoneai.overlay;
 import android.app.Activity;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -36,6 +37,9 @@ final class ReplyCard {
         AuroraView aurora = new AuroraView(act);
         aurora.setEnergy(0.7f);
         glowBox.addView(aurora, new FrameLayout.LayoutParams(-1, -1));
+        View glowFade = new View(act);   // 光區上緣慢慢淡進卡片底色，不要有一條硬邊
+        glowFade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8191927, 0x00191927}));
+        glowBox.addView(glowFade, new FrameLayout.LayoutParams(-1, (int) (90 * d), Gravity.TOP));
         card.addView(glowBox, new FrameLayout.LayoutParams(-1, glowH, Gravity.BOTTOM));
         card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> aurora.setGlowY(glowH - 16 * d));
 
@@ -47,6 +51,9 @@ final class ReplyCard {
             }
         };
         sv.setVerticalScrollBarEnabled(false);
+        sv.setVerticalFadingEdgeEnabled(true);        // 文字太長時，上下緣慢慢變淡，表示還可以捲
+        sv.setFadingEdgeLength((int) (40 * d));
+        sv.setOnTouchListener((v, e) -> { v.getParent().requestDisallowInterceptTouchEvent(true); return false; });   // 在卡片上上下滑是捲動，不是關面板
         sv.setPadding((int) (26 * d), (int) (22 * d), (int) (24 * d), (int) (22 * d));
         TextView body = new TextView(act);
         body.setText(Md.render(text));

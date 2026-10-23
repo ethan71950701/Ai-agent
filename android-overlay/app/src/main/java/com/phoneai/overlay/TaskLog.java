@@ -35,7 +35,10 @@ final class TaskLog {
     }
 
     /** 記下一筆任務（在背景執行緒呼叫）。 */
-    static synchronized void add(Context c, String text, String reply) {
+    static synchronized void add(Context c, String text, String reply) { add(c, text, reply, null); }
+
+    /** steps = 自動操作每一步做了什麼（點開任務可以看）；沒有就傳 null。 */
+    static synchronized void add(Context c, String text, String reply, java.util.List<String> steps) {
         if (text == null || text.trim().isEmpty()) return;
         try {
             JSONArray a = load(c);
@@ -44,6 +47,11 @@ final class TaskLog {
             o.put("text", text.trim());
             o.put("reply", reply == null ? "" : reply);
             o.put("star", false);
+            if (steps != null && !steps.isEmpty()) {
+                JSONArray sa = new JSONArray();
+                for (String s : steps) sa.put(s);
+                o.put("steps", sa);
+            }
             a.put(o);
             save(c, trim(a));
         } catch (Exception ignored) {

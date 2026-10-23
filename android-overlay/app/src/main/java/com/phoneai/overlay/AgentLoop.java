@@ -50,8 +50,20 @@ final class AgentLoop {
     /** 這一輪自動操作的結果是不是要用回答卡片顯示（搜尋結果或較長的回答）；「完成了」這類短的只通知。 */
     static volatile boolean showCard;
 
-    /** 使用者按了通知上的「停止」：下一個檢查點就結束這一輪。 */
-    static void cancel() { cancelled = true; }
+    private static volatile List<String> lastSteps;
+
+    /** 這一輪自動操作每一步做了什麼（給任務歷史用）；沒跑過自動操作回 null。取一次就清掉。 */
+    static List<String> takeSteps() {
+        List<String> s = lastSteps;
+        lastSteps = null;
+        return s == null || s.isEmpty() ? null : new ArrayList<>(s);
+    }
+
+    /** 使用者按了通知上的「停止」：立刻中斷正在等的網路請求，下一個檢查點就結束這一輪。 */
+    static void cancel() {
+        cancelled = true;
+        ChatEngine.abortInflight();
+    }
 
     /** 這一次任務的狀態：開過哪些 App、量測次數、記了幾則經驗、搜尋次數、拖曳手指是否還按著。 */
     private static final class State {
@@ -74,6 +86,7 @@ final class AgentLoop {
     static String run(Context c, String task, Ui ui) {
         cancelled = false;
         showCard = false;
+        lastSteps = null;
         try {
             return runInner(c, task, ui);
         } finally {
@@ -91,6 +104,7 @@ final class AgentLoop {
         ui.hide();
         sleep(600);
         List<String> history = new ArrayList<>();
+        lastSteps = history;
         String finalSay = null;
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
@@ -104,6 +118,7 @@ final class AgentLoop {
                 try {
                     action = askModel(key, task, history, img, lessons);
                 } catch (Exception e) {
+                    if (cancelled) return L.t("已停止。");
                     return L.t("連不上 AI：") + e.getMessage();
                 }
                 if (action == null) return L.t("AI 的回答看不懂，已停止。");
@@ -124,6 +139,7 @@ final class AgentLoop {
                         break;
                     case "ask_user": {
                         String q = action.optString("question", L.t("請告訴我你要怎麼做。"));
+                        OverlayService.showStep(c, L.t("等你回答問題"), step, MAX_STEPS);
                         String ans = ui.ask(q);
                         if (ans == null) { finalSay = q; break; }   // 這個介面沒辦法問：把問題當成回答
                         if (ans.trim().isEmpty()) return L.t("已取消。");
@@ -133,6 +149,7 @@ final class AgentLoop {
                     case "ask": {
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
+                        OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
                         if (!ui.confirm(manual ? why + L.t("\n請自己動手，完成後按確定。") : why + L.t("\n要繼續嗎？"))) return L.t("已取消。");
                         history.add(step + ". ask 使用者同意（" + why + "）");
                         break;

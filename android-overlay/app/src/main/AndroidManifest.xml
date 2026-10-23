@@ -136,7 +136,7 @@
             android:taskAffinity=""
             android:noHistory="true"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.Material3.DayNight.Dialog" />
+            android:theme="@style/ConfirmTheme" />
 
         <!-- 【實驗】直接顯示背景螢幕（不經影片壓縮）；用 su -c "am start -n com.phoneai.overlay/.DirectTestActivity" 開 -->
         <activity
