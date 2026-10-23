@@ -302,7 +302,7 @@ class App:
             try:
                 build, url = updater.fetch_latest()
             except Exception as e:
-                self.root.after(0, lambda: (self._status(""), messagebox.showerror("檢查更新", f"連不上 GitHub：{e}", parent=self.root)))
+                self.root.after(0, lambda: (self._status(f"檢查更新失敗：{e}"), messagebox.showerror("檢查更新", f"連不上 GitHub：{e}", parent=self.root)))
                 return
             self.root.after(0, lambda: self._offer_update(build, url))
         threading.Thread(target=work, daemon=True).start()

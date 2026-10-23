@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 電腦版檢查更新修正：打包後改用內建憑證連線，失敗的原因會顯示在視窗上｜Windows app update check fixed: uses bundled certificates when packaged; failure reasons show in the window
+
 - 外網連線（Tailscale）：伺服器接受 100.64.0.0/10 位址；記住對方的位址，區網搜不到時直接用它連線｜Remote connection via Tailscale: servers accept 100.64.0.0/10 addresses; each device remembers the peer address and uses it when LAN discovery finds nothing
 
 ## 1.0.1250
