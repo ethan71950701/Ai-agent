@@ -206,7 +206,10 @@ final class AgentLoop {
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
         JSONArray messages = new JSONArray().put(new JSONObject().put("role", "user").put("content", content));
         JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 800)
-                .put("system", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM).put("messages", messages);
+                .put("system", new JSONArray().put(new JSONObject().put("type", "text")
+                        .put("text", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM)
+                        .put("cache_control", new JSONObject().put("type", "ephemeral"))))   // 系統提示詞快取：每一步重複送，命中時輸入費用約降到 1/20
+                .put("messages", messages);
         JSONObject r = ChatEngine.post(body, key);
         JSONArray out = r.optJSONArray("content");
         if (out == null) return null;
