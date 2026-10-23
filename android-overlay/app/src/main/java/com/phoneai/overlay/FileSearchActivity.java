@@ -26,6 +26,7 @@ public class FileSearchActivity extends Activity {
     private LinearLayout results;
     private TextView status;
     private boolean searching;
+    private TransferStore.Peer preset;   // 從某台裝置的「找檔案」進來：預設就搜那台
 
     @Override
     protected void onCreate(Bundle b) {
@@ -44,8 +45,17 @@ public class FileSearchActivity extends Activity {
         query.setOnEditorActionListener((v, id, e) -> { searchLocal(); return true; });
         til.addView(query);
         card.addView(til);
-        Ui.buttons(this, card, Ui.button(this, L.t("搜手機"), v -> searchLocal()),
-                Ui.tonal(this, L.t("搜某台裝置"), v -> pickDeviceToSearch()));
+        String pid = getIntent().getStringExtra("peer_id");
+        if (pid != null) {
+            for (TransferStore.Peer p : TransferStore.peers(this)) if (p.id.equals(pid)) preset = p;
+        }
+        if (preset != null) {
+            Ui.buttons(this, card, Ui.button(this, L.t("在 ") + preset.name + L.t(" 裡找"), v -> searchPreset()),
+                    Ui.tonal(this, L.t("搜手機"), v -> searchLocal()));
+        } else {
+            Ui.buttons(this, card, Ui.button(this, L.t("搜手機"), v -> searchLocal()),
+                    Ui.tonal(this, L.t("搜某台裝置"), v -> pickDeviceToSearch()));
+        }
 
         status = Ui.body(this, "");
         box.addView(status);
@@ -56,6 +66,16 @@ public class FileSearchActivity extends Activity {
 
     private String q() {
         return query.getText() == null ? "" : query.getText().toString().trim();
+    }
+
+    private void searchPreset() {
+        final String q = q();
+        if (q.isEmpty()) {
+            Toast.makeText(this, L.t("先輸入檔名關鍵字"), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final TransferStore.Peer p = preset;
+        run(L.t("搜尋 ") + p.name + L.t(" 中…"), () -> FileTools.searchPeer(this, p, q), p);
     }
 
     private void searchLocal() {

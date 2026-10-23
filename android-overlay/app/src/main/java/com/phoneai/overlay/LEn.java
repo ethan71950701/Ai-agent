@@ -729,5 +729,8 @@ final class LEn {
         m.put("要搜哪一台", "Search which device");
         m.put("還沒有配對過的裝置", "No paired devices yet");
         m.put("輸入檔名，手動搜手機或已配對的電腦（不用 AI）。", "Type a file name to search the phone or a paired computer manually (no AI).");
+        m.put("點裝置名字可以移除", "Tap a device name to remove it");
+        m.put("在 ", "Search in ");
+        m.put(" 裡找", "");
     }
 }

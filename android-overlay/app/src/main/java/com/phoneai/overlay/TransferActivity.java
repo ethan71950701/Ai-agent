@@ -118,20 +118,24 @@ public class TransferActivity extends Activity {
             Ui.section(this, box, L.t("已配對的裝置"));
             for (TransferStore.Peer p : peers) {
                 LinearLayout card = Ui.card(this, box);
+                // 點名字就跳出移除確認（名字那一列很大，好點）
                 android.widget.TextView name = Ui.body(this, p.name);
                 name.setTextSize(17);
                 name.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                name.setPadding(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12));
+                name.setBackground(rippleBackground());
+                name.setClickable(true);
+                name.setOnClickListener(v -> removeDialog(p));
                 card.addView(name);
                 com.google.android.material.button.MaterialButton send = Ui.button(this, L.t("傳檔案過去"), v -> pickFileFor(p));
-                com.google.android.material.button.MaterialButton remove = Ui.tonal(this, L.t("移除"), v -> removeDialog(p));
-                Ui.buttons(this, card, send, remove);
+                com.google.android.material.button.MaterialButton find = Ui.tonal(this, L.t("找檔案"), v -> {
+                    Intent it = new Intent(this, FileSearchActivity.class).putExtra("peer_id", p.id);
+                    startActivity(it);
+                });
+                Ui.buttons(this, card, send, find);
             }
+            box.addView(Ui.body(this, L.t("點裝置名字可以移除")));
         }
-
-        Ui.section(this, box, L.t("找檔案"));
-        LinearLayout find = Ui.card(this, box);
-        find.addView(Ui.body(this, L.t("輸入檔名，手動搜手機或已配對的電腦（不用 AI）。")));
-        find.addView(Ui.button(this, L.t("找檔案"), v -> startActivity(new Intent(this, FileSearchActivity.class))));
 
         List<String> recent = TransferStore.recentLog(this, 5);
         if (!recent.isEmpty()) {
@@ -171,6 +175,12 @@ public class TransferActivity extends Activity {
                 ui.post(() -> Toast.makeText(this, L.t("傳檔案失敗：") + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private android.graphics.drawable.Drawable rippleBackground() {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        getTheme().resolveAttribute(android.R.attr.selectableItemBackground, tv, true);
+        return getResources().getDrawable(tv.resourceId, getTheme());
     }
 
     private void removeDialog(TransferStore.Peer p) {
