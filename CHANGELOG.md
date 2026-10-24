@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 設鬧鐘改用 root 打開時鐘，修正三星時鐘擋住「設定鬧鐘」請求的問題｜Alarms now open the clock through root, fixing Samsung clock blocking the "set alarm" request
+
 - 「連不上 AI」現在會顯示真正的原因（例如每日用量上限、網路錯誤、還沒設 API Key），方便找出問題｜"Cannot reach the AI" now shows the actual reason (for example the daily usage limit, a network error, or no API key set yet), so the cause is easier to find
 
 ## 1.0.1273

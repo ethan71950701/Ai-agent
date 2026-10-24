@@ -21,6 +21,15 @@ final class AlarmTool {
             minute = at.get(java.util.Calendar.MINUTE);
         }
         if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return "錯誤：要給 minutes_from_now，或 hour（0-23）與 minute（0-59）";
+        String shown = String.format(java.util.Locale.US, L.t("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定"), hour, minute);
+        // 三星時鐘會擋住一般 App 的 SET_ALARM（需要系統權限）；root 的 shell 可以直接啟動，先用它。
+        String msg = (label == null ? "" : label).replace("'", "'\\''");
+        String out = Maintenance.suRun("am start -a android.intent.action.SET_ALARM"
+                + " --ei android.intent.extra.alarm.HOUR " + hour
+                + " --ei android.intent.extra.alarm.MINUTES " + minute
+                + " --es android.intent.extra.alarm.MESSAGE '" + msg + "'"
+                + " --ez android.intent.extra.alarm.SKIP_UI false");
+        if (!out.startsWith("ERR:") && !out.contains("Error")) return shown;
         Intent it = new Intent(AlarmClock.ACTION_SET_ALARM)
                 .putExtra(AlarmClock.EXTRA_HOUR, hour)
                 .putExtra(AlarmClock.EXTRA_MINUTES, minute)
@@ -29,7 +38,7 @@ final class AlarmTool {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             c.startActivity(it);
-            return String.format(java.util.Locale.US, "已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", hour, minute);
+            return shown;
         } catch (ActivityNotFoundException e) {
             return "錯誤：找不到可以設鬧鐘的時鐘 App";
         }
