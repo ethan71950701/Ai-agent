@@ -12,8 +12,15 @@ import android.provider.AlarmClock;
 final class AlarmTool {
     private AlarmTool() { }
 
-    static String set(Context c, int hour, int minute, String label) {
-        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return "錯誤：時間不對（hour 0-23、minute 0-59）";
+    /** minutesFromNow >= 0 時，依目前時間算出響的時刻（一小時後＝60）；否則用指定的 hour、minute。 */
+    static String set(Context c, int hour, int minute, int minutesFromNow, String label) {
+        if (minutesFromNow >= 0) {
+            java.util.Calendar at = java.util.Calendar.getInstance();
+            at.add(java.util.Calendar.MINUTE, minutesFromNow);
+            hour = at.get(java.util.Calendar.HOUR_OF_DAY);
+            minute = at.get(java.util.Calendar.MINUTE);
+        }
+        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return "錯誤：要給 minutes_from_now，或 hour（0-23）與 minute（0-59）";
         Intent it = new Intent(AlarmClock.ACTION_SET_ALARM)
                 .putExtra(AlarmClock.EXTRA_HOUR, hour)
                 .putExtra(AlarmClock.EXTRA_MINUTES, minute)
