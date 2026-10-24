@@ -772,5 +772,12 @@ final class LEn {
         m.put("請點一下 Tailscale 的連線按鈕（只記錄這一次）", "Tap Tailscale's connect button once (only this one is recorded)");
         m.put("已記下位置", "Position saved");
         m.put("無法顯示提示：", "Cannot show the hint: ");
+        m.put("這支手機的 Tailscale 開關：在外面要連回家裡時要開著。需要 root。", "This phone's Tailscale switch: keep it on when you need to reach home. Requires root.");
+        m.put("Tailscale 目前：開", "Tailscale: on");
+        m.put("Tailscale 目前：關", "Tailscale: off");
+        m.put("Tailscale 目前：還不知道（請按「檢查狀態」）", "Tailscale: unknown (tap Check status)");
+        m.put("檢查狀態", "Check status");
+        m.put("切換 開／關", "Toggle on/off");
+        m.put("切換中…", "Switching…");
     }
 }

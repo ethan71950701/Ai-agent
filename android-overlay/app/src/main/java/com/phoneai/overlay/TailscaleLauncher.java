@@ -62,6 +62,67 @@ final class TailscaleLauncher {
         }).start();
     }
 
+    /** 讀取目前畫面上記下的位置附近的顏色：有顏色（綠色等）＝開，灰色＝關；讀不到回 null。需要在背景執行。 */
+    static Boolean readOn(Context c) {
+        try {
+            Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
+            p.getOutputStream().close();
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = p.getInputStream().read(buf)) > 0) bo.write(buf, 0, n);
+            p.waitFor();
+            android.graphics.Bitmap bmp = android.graphics.BitmapFactory.decodeByteArray(bo.toByteArray(), 0, bo.size());
+            if (bmp == null) return null;
+            int cx = tapX(c), cy = tapY(c);
+            int colored = 0;
+            // 開關的軌道是彩色的、拇指是白色的，所以在記下的位置附近找「有顏色」的像素
+            for (int dy = -30; dy <= 30; dy += 3) {
+                for (int dx = -40; dx <= 40; dx += 3) {
+                    int x = cx + dx, y = cy + dy;
+                    if (x < 0 || y < 0 || x >= bmp.getWidth() || y >= bmp.getHeight()) continue;
+                    int argb = bmp.getPixel(x, y);
+                    int r = (argb >> 16) & 255, g = (argb >> 8) & 255, b = argb & 255;
+                    if (Math.max(r, Math.max(g, b)) - Math.min(r, Math.min(g, b)) > 60) colored++;
+                }
+            }
+            return colored >= 8;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 檢查目前狀態：打開 Tailscale、讀顏色、回到 PhoneAI。結果記在 cfg（ts_on：1 開、0 關、-1 不知道）。 */
+    static void checkState(Context c, java.util.function.Consumer<Boolean> done) {
+        final Context app = c.getApplicationContext();
+        new Thread(() -> {
+            Maintenance.suRun("monkey -p " + PKG + " -c android.intent.category.LAUNCHER 1");
+            sleep(2000);
+            Boolean on = readOn(app);
+            Maintenance.suRun("monkey -p " + app.getPackageName() + " -c android.intent.category.LAUNCHER 1");
+            cfg(app).edit().putInt("ts_on", on == null ? -1 : (on ? 1 : 0)).apply();
+            if (done != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> done.accept(on));
+        }).start();
+    }
+
+    /** 切換：先讀目前狀態，然後點一下連線按鈕（開的會關，關的會開），再讀一次狀態回報。 */
+    static void toggle(Context c, java.util.function.Consumer<Boolean> done) {
+        final Context app = c.getApplicationContext();
+        checkState(app, now -> {
+            if (now == null) {
+                if (done != null) done.accept(null);
+                return;
+            }
+            new Thread(() -> {
+                Maintenance.suRun("monkey -p " + PKG + " -c android.intent.category.LAUNCHER 1");
+                sleep(2000);
+                Maintenance.suRun("input tap " + tapX(app) + " " + tapY(app));
+                sleep(3000);
+                checkState(app, done);
+            }).start();
+        });
+    }
+
     /**
      * 設定點擊位置（不用輸入數字）：打開 Tailscale，在畫面上蓋一層透明的提示，
      * 使用者直接點一下連線按鈕，就記下那個位置，然後把提示拿掉。需要「顯示在其他 App 上層」的權限。

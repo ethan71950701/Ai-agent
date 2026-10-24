@@ -115,9 +115,19 @@ public class TransferActivity extends Activity {
 
         Ui.section(this, box, L.t("外網（Tailscale）"));
         LinearLayout remote = Ui.card(this, box);
-        remote.addView(Ui.body(this, L.t("在外面要連回家裡的裝置時，按這裡一下，會自動打開 Tailscale 並按連線，再回到這個 App。需要 root。")));
-        remote.addView(Ui.button(this, L.t("打開 Tailscale 並連線"), v -> TailscaleLauncher.connect(this, () ->
-                ui.post(() -> Toast.makeText(this, L.t("找不到 Tailscale，請先安裝"), Toast.LENGTH_LONG).show()))));
+        remote.addView(Ui.body(this, L.t("這支手機的 Tailscale 開關：在外面要連回家裡時要開著。需要 root。")));
+        tsStatus = Ui.body(this, tsStateText());
+        tsStatus.setTextSize(16);
+        remote.addView(tsStatus);
+        Ui.buttons(this, remote,
+                Ui.tonal(this, L.t("檢查狀態"), v -> {
+                    tsStatus.setText(L.t("讀取中…"));
+                    TailscaleLauncher.checkState(this, on -> render());
+                }),
+                Ui.button(this, L.t("切換 開／關"), v -> {
+                    tsStatus.setText(L.t("切換中…"));
+                    TailscaleLauncher.toggle(this, on -> render());
+                }));
         remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.captureTap(this)));
 
         List<TransferStore.Peer> peers = TransferStore.peers(this);
@@ -181,6 +191,15 @@ public class TransferActivity extends Activity {
                 ui.post(() -> Toast.makeText(this, L.t("傳檔案失敗：") + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private TextView tsStatus;
+
+    private String tsStateText() {
+        int v = getSharedPreferences("cfg", MODE_PRIVATE).getInt("ts_on", -1);
+        if (v == 1) return L.t("Tailscale 目前：開");
+        if (v == 0) return L.t("Tailscale 目前：關");
+        return L.t("Tailscale 目前：還不知道（請按「檢查狀態」）");
     }
 
     private android.graphics.drawable.Drawable rippleBackground() {
