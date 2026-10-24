@@ -425,6 +425,7 @@ final class LEn {
         m.put(" 步", "");
         m.put("截圖失敗：請確認 root 已允許 PhoneAI。", "Screenshot failed: make sure root is allowed for PhoneAI.");
         m.put("連不上 AI：", "Cannot reach the AI: ");
+        m.put("已設定 %02d:%02d 的鬧鐘", "Alarm set for %02d:%02d.");
         m.put("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", "Opened the clock. Tap Save in the clock to set the %02d:%02d alarm.");
         m.put("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Features → Maintenance\".)");
         m.put("還沒有 Claude API Key（功能 → 維護 → Claude API Key）", "No Claude API key yet (Features → Maintenance → Claude API key)");

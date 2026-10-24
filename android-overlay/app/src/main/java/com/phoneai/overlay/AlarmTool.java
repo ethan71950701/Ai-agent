@@ -24,12 +24,15 @@ final class AlarmTool {
         String shown = String.format(java.util.Locale.US, L.t("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定"), hour, minute);
         // 三星時鐘會擋住一般 App 的 SET_ALARM（需要系統權限）；root 的 shell 可以直接啟動，先用它。
         String msg = (label == null ? "" : label).replace("'", "'\\''");
+        // SKIP_UI true：不打開時鐘畫面，直接設定好。
         String out = Maintenance.suRun("am start -a android.intent.action.SET_ALARM"
                 + " --ei android.intent.extra.alarm.HOUR " + hour
                 + " --ei android.intent.extra.alarm.MINUTES " + minute
                 + " --es android.intent.extra.alarm.MESSAGE '" + msg + "'"
-                + " --ez android.intent.extra.alarm.SKIP_UI false");
-        if (!out.startsWith("ERR:") && !out.contains("Error")) return shown;
+                + " --ez android.intent.extra.alarm.SKIP_UI true");
+        if (!out.startsWith("ERR:") && !out.contains("Error")) {
+            return String.format(java.util.Locale.US, L.t("已設定 %02d:%02d 的鬧鐘"), hour, minute);
+        }
         Intent it = new Intent(AlarmClock.ACTION_SET_ALARM)
                 .putExtra(AlarmClock.EXTRA_HOUR, hour)
                 .putExtra(AlarmClock.EXTRA_MINUTES, minute)
