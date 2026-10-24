@@ -194,7 +194,17 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 把暗色層畫進背景圖（底欄座標 → 背景圖座標）。 */
+    /** 底欄的暗色層：每次畫之前都用目前的「底欄暗度」重設，滑桿拖動才會立即生效。 */
+    private void refreshTint() {
+        if (lens) return;   // 透鏡不畫底色
+        int a = Math.round(GlassPrefs.barDark * 255);
+        int h = Math.max(1, getHeight());
+        tint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(tintColor & 0xFFFFFF) | (a << 24), (tintColor & 0xFFFFFF) | (a << 24)},
+                null, Shader.TileMode.CLAMP));
+    }
+
     private void paintTintInto(Canvas bc, int sw, int sh) {
+        refreshTint();
         bc.save();
         bc.scale(sw / (float) getWidth(), sh / (float) getHeight());
         bc.drawRect(0, 0, getWidth(), getHeight(), tint);
@@ -396,6 +406,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawFlat(Canvas canvas) {
+        refreshTint();
         if (!lens) {
             Paint solid = new Paint(Paint.ANTI_ALIAS_FLAG);
             solid.setColor((bgColor & 0xFFFFFF) | (Math.round(GlassPrefs.barDark * 255) << 24));   // 底欄暗度
@@ -427,6 +438,7 @@ final class GlassBar extends FrameLayout {
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
+        refreshTint();
         if (lens && parentBar != null) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             drawUnderLens(canvas);
