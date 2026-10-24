@@ -49,6 +49,8 @@ final class ChatEngine {
             + "9. File transfer between devices: when the user says \"send X to my phone/computer\", \"get X from <device>\", or \"what is in <device>\", use device_list, file_find, file_get, file_send, file_list. Flow: file_find first (if several match, list the newest few and ask which; if one or obvious, just proceed), then file_get or file_send; afterwards say in one sentence where it was saved. Use the device name as the user said it; if unsure call device_list first. If a tool reports an error, tell the user the real reason; never pretend it worked. These tools need the user to turn on and pair devices in Settings → File transfer. For files on a computer: use file_find first (it searches the whole computer); if nothing is found, use file_list step by step (empty path lists the drives; use full paths like C:/Users/...). To delete files, first confirm the path with file_list or file_find, then use file_delete; every delete shows a confirmation dialog, so you do not ask separately, but report the result honestly (if the user declines, say nothing was deleted).\n"
             + "10. To set an alarm (wake me at a time): use set_alarm with hour in 24-hour format (3 pm is 15). The tool opens the clock; tell the user the clock is open and they must press save in the clock to set it.";
     private static final String TOOLS = "["
+            + "{\"name\":\"get_time\",\"description\":\"查手機現在的日期與時間。問幾點、今天幾號、星期幾、或算「幾小時後」之前，先用這個。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{}}},"
             + "{\"name\":\"set_alarm\",\"description\":\"設鬧鐘（打開手機的時鐘，使用者要在時鐘裡按儲存才會設定）。hour 是 0-23 的小時，minute 是分鐘。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"minutes_from_now\":{\"type\":\"integer\",\"description\":\"幾分鐘後響（例如一小時後是 60）；說「幾分鐘後／幾小時後」就用這個，不要自己算時間\"},\"hour\":{\"type\":\"integer\",\"description\":\"指定時刻的小時 0-23\"},\"minute\":{\"type\":\"integer\"},\"label\":{\"type\":\"string\",\"description\":\"鬧鐘的名稱，例如 起床\"}}}},"
             + "{\"name\":\"device_list\",\"description\":\"列出已配對、可以傳檔案的其他裝置（手機、電腦），並看哪些現在在線。\","
@@ -211,7 +213,8 @@ final class ChatEngine {
                     JSONObject u = uses.getJSONObject(i);
                     String tn = u.optString("name");
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
-                    String out = tn.equals("set_alarm") ? AlarmTool.set(c, ti.optInt("hour", -1), ti.optInt("minute", -1), ti.optInt("minutes_from_now", -1), ti.optString("label"))
+                    String out = tn.equals("get_time") ? new java.text.SimpleDateFormat("yyyy-MM-dd (EEEE) HH:mm:ss", java.util.Locale.TAIWAN).format(new java.util.Date())
+                            : tn.equals("set_alarm") ? AlarmTool.set(c, ti.optInt("hour", -1), ti.optInt("minute", -1), ti.optInt("minutes_from_now", -1), ti.optString("label"))
                             : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
