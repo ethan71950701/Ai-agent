@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 底部玻璃欄調亮一點、不要那麼黑｜The bottom glass bar is a bit lighter and less dark
+
 - 電腦版：修正「檢查更新」和各種錯誤對話框不出現的問題；關閉視窗會縮到右下角繼續運作；可以勾選「開機自動啟動」｜Windows app: fixed the update check and error dialogs that never appeared; closing the window minimizes to the tray and keeps running; new Start with Windows option
 
 ## 1.0.1262

@@ -90,7 +90,7 @@ final class GlassBar extends FrameLayout {
             + "        base = half4(half3(acc / max(wsum, float3(0.001))), half(alphaSum / 7.0));\n"
             + "    }\n"
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
-            + "    if (indicator < 0.5) color = mix(color, half3(surface), 0.06);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
+            + "    if (indicator < 0.5) color = mix(color, half3(0.35), 0.18);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
             + "    float2 n = normalize(gradient(p, radius) / viewScale);\n"   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
             + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
@@ -396,7 +396,7 @@ final class GlassBar extends FrameLayout {
     private void drawFlat(Canvas canvas) {
         if (!lens) {
             Paint solid = new Paint(Paint.ANTI_ALIAS_FLAG);
-            solid.setColor((bgColor & 0xFFFFFF) | 0xE6000000);
+            solid.setColor((bgColor & 0xFFFFFF) | 0xA8000000);
             canvas.drawPath(clip, solid);
         }
         canvas.drawPath(clip, tint);

@@ -217,7 +217,7 @@ public class MainActivity extends Activity {
     private View floatingBar() {
         final int onS = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
         // 玻璃：半透明深色底（只透出一點點底下的文字）+ 淡淡的光面 + 細亮邊；折射與形變照舊
-        final GlassBar card = new GlassBar(this, 0xFF0E1012,   // 底欄是透明玻璃（像酷安），只有很淡的暗色
+        final GlassBar card = new GlassBar(this, 0xFF23262A,   // 底欄是透明玻璃（像酷安），底色比之前亮一點
                 0x00000000,
                 0x44FFFFFF, Ui.dp(this, 29), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
