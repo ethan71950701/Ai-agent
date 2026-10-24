@@ -5,9 +5,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1262
+
 - 遠端指令（Telegram 機器人）：在群組用「@機器人 <裝置名稱> 開／關／狀態」控制這台手機的 Tailscale，只回應自己的名字；機器人 token 只存在這台手機｜Remote commands (Telegram bot): in a group, send "@bot <device name> on/off/status" to switch this phone Tailscale; each device answers only to its own name; the bot token stays on this phone
 
 - 遠端指令（Telegram 機器人）：在群組用「@機器人 <裝置名稱> 開／關／狀態」控制這台手機的 Tailscale，只回應自己的名字；機器人 token 只存在這台手機｜Remote commands (Telegram bot): in a group, send "@bot <device name> on/off/status" to switch this phone Tailscale; each device answers only to its own name; the bot token stays on this phone
+
 ## 1.0.1261
 
 ## 1.0.1260
