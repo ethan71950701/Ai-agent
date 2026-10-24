@@ -796,5 +796,15 @@ final class LEn {
         m.put("開啟遠端指令", "Turn on remote commands");
         m.put("關閉遠端指令", "Turn off remote commands");
         m.put("（群組裡先傳一則訊息，這裡會列出最近的 ID，方便複製）", "(Send a message in the group first; recent IDs will be listed here for copying)");
+        m.put("遠端指令（Telegram）：在群組傳「", "Remote commands (Telegram): send \"");
+        m.put(" 關」，這支手機就會替你切換 Tailscale。需要在系統設定允許「通知存取」。", " off\"; this phone switches Tailscale for you. Requires Notification access.");
+        m.put("允許通知存取", "Allow notification access");
+        m.put("群組名稱（要跟 Telegram 裡的一樣）", "Group name (exactly as in Telegram)");
+        m.put("我在 Telegram 的名字（發訊息的人）", "My name in Telegram (the sender)");
+        m.put("這台的名字（給指令用，例如 家裡手機）", "This device's name for commands (e.g. Home phone)");
+        m.put("機器人和群組只要一個，每台手機用不同的名字區分。機器人的 token 不需要填在這裡。", "One bot and one group are enough; each phone uses a different name. The bot token is not needed here.");
+        m.put("PhoneAI 遠端指令", "PhoneAI remote commands");
+        m.put("切換失敗，請看看手機", "Switch failed, please check the phone");
+        m.put("讀不到狀態（請先設定點擊位置）", "Cannot read state (set the tap position first)");
     }
 }
