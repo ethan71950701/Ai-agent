@@ -101,6 +101,7 @@ public class MainActivity extends Activity {
         sl.addOnChangeListener((s, v, fromUser) -> {
             GlassPrefs.putFloat(this, key, v);
             t.setText(title + "　" + String.format(java.util.Locale.US, "%.2f", v));
+            if (glass != null) glass.kick(600);   // 拖動時底欄要即時重畫（其他頁平常是省電、不會自己重畫）
         });
         inner.addView(sl, new LinearLayout.LayoutParams(-1, -2));
     }
