@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 外網區塊顯示 Tailscale 開／關（看記下的位置附近是不是有顏色），可以檢查狀態或切換｜The remote section shows whether Tailscale is on or off (by checking color at the saved spot), with check and toggle buttons
 
+## 1.0.1258
+
 - 設定 Tailscale 點擊位置改成直接在畫面上點一下記錄，不用輸入座標｜Setting the Tailscale tap position is now done by tapping it on screen, no coordinates to type
 
 ## 1.0.1257
