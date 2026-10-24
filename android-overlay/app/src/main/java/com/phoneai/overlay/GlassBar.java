@@ -39,6 +39,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float lightAngle;\n"
             + "uniform float indicator;\n"
             + "uniform float dark;\n"
+            + "uniform float shade;\n"          // 底欄的暗度（只影響底欄，不影響透鏡）
             + "uniform float dispersion;\n"
             + "uniform float surface;\n"
             + "uniform float skew;\n"
@@ -90,7 +91,7 @@ final class GlassBar extends FrameLayout {
             + "        base = half4(half3(acc / max(wsum, float3(0.001))), half(alphaSum / 7.0));\n"
             + "    }\n"
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
-            + "    if (indicator < 0.5) color = mix(color, half3(0.35), 0.18);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
+            + "    if (indicator < 0.5) color = mix(color, half3(0.35), shade);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
             + "    float2 n = normalize(gradient(p, radius) / viewScale);\n"   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
             + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
@@ -334,6 +335,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
+        sh.setFloatUniform("shade", GlassPrefs.barDark * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
@@ -396,7 +398,7 @@ final class GlassBar extends FrameLayout {
     private void drawFlat(Canvas canvas) {
         if (!lens) {
             Paint solid = new Paint(Paint.ANTI_ALIAS_FLAG);
-            solid.setColor((bgColor & 0xFFFFFF) | 0xA8000000);
+            solid.setColor((bgColor & 0xFFFFFF) | (Math.round(GlassPrefs.barDark * 255) << 24));   // 底欄暗度
             canvas.drawPath(clip, solid);
         }
         canvas.drawPath(clip, tint);

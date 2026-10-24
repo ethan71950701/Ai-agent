@@ -796,5 +796,7 @@ final class LEn {
         m.put("開啟遠端指令", "Turn on remote commands");
         m.put("關閉遠端指令", "Turn off remote commands");
         m.put("（群組裡先傳一則訊息，這裡會列出最近的 ID，方便複製）", "(Send a message in the group first; recent IDs will be listed here for copying)");
+        m.put("底欄暗度", "Bottom bar darkness");
+        m.put("0 = 幾乎透明，1 = 很暗", "0 = almost transparent, 1 = very dark");
     }
 }
