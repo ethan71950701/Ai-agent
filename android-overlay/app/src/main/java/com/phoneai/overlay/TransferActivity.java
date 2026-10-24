@@ -72,6 +72,7 @@ public class TransferActivity extends Activity {
     protected void onPause() {
         visible = false;
         TransferService.closePairing();
+        if (!TransferNotify.active()) TransferService.stop(this);   // 離開互傳頁、沒有傳輸：服務就停止，不一直佔背景
         ui.removeCallbacks(tick);
         super.onPause();
     }
@@ -130,16 +131,6 @@ public class TransferActivity extends Activity {
                 }));
         remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.captureTap(this)));
 
-        // 遠端指令（Telegram 群組）：別的地方可以用群組指令開關這支手機的 Tailscale
-        remote.addView(Ui.body(this, L.t("遠端指令（Telegram）：在外面可以在群組裡傳「") + TelegramRemote.label(this)
-                + L.t(" 開」或「") + TelegramRemote.label(this) + L.t(" 關」，這支手機就會替你切換 Tailscale。")));
-        remote.addView(Ui.button(this, TelegramRemote.enabled(this) ? L.t("關閉遠端指令") : L.t("開啟遠端指令"), v -> {
-            boolean on = !TelegramRemote.enabled(this);
-            TelegramRemote.setEnabled(this, on);
-            if (on) RemoteService.start(this); else RemoteService.stop(this);
-            render();
-        }));
-        remote.addView(Ui.tonal(this, L.t("設定遠端指令"), v -> remoteSettings()));
 
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {
@@ -205,50 +196,6 @@ public class TransferActivity extends Activity {
     }
 
     private TextView tsStatus;
-
-    private void remoteSettings() {
-        LinearLayout form = new LinearLayout(this);
-        form.setOrientation(LinearLayout.VERTICAL);
-        int pad = Ui.dp(this, 16);
-        form.setPadding(pad, pad / 2, pad, 0);
-        final EditText tokenEt = new EditText(this);
-        tokenEt.setHint(L.t("機器人 token（只存這支手機）"));
-        tokenEt.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        final EditText userEt = new EditText(this);
-        userEt.setHint(L.t("我的 Telegram 使用者 ID"));
-        userEt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-        userEt.setText(TelegramRemote.allowedUser(this) == 0 ? "" : String.valueOf(TelegramRemote.allowedUser(this)));
-        final EditText chatEt = new EditText(this);
-        chatEt.setHint(L.t("群組的聊天 ID（負數）"));
-        chatEt.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-        chatEt.setText(TelegramRemote.group(this) == 0 ? "" : String.valueOf(TelegramRemote.group(this)));
-        final EditText labelEt = new EditText(this);
-        labelEt.setHint(L.t("裝置名稱（給指令用）"));
-        labelEt.setText(TelegramRemote.label(this));
-        TextView seen = Ui.body(this, TelegramRemote.lastSeen(this).isEmpty()
-                ? L.t("（群組裡先傳一則訊息，這裡會列出最近的 ID，方便複製）") : L.t("最近收到的 ID：\n") + TelegramRemote.lastSeen(this));
-        form.addView(tokenEt);
-        form.addView(userEt);
-        form.addView(chatEt);
-        form.addView(labelEt);
-        form.addView(seen);
-        new AlertDialog.Builder(this)
-                .setTitle(L.t("遠端指令設定"))
-                .setView(form)
-                .setPositiveButton(L.t("儲存"), (d, w) -> {
-                    try {
-                        if (!tokenEt.getText().toString().trim().isEmpty()) TelegramRemote.saveToken(this, tokenEt.getText().toString());
-                        TelegramRemote.saveSettings(this, Long.parseLong(userEt.getText().toString().trim()),
-                                Long.parseLong(chatEt.getText().toString().trim()), labelEt.getText().toString().trim());
-                        Toast.makeText(this, L.t("已儲存"), Toast.LENGTH_SHORT).show();
-                    } catch (Exception e) {
-                        Toast.makeText(this, L.t("請確認 ID 都是數字"), Toast.LENGTH_LONG).show();
-                    }
-                    render();
-                })
-                .setNegativeButton(L.t("取消"), null)
-                .show();
-    }
 
     private String tsStateText() {
         int v = getSharedPreferences("cfg", MODE_PRIVATE).getInt("ts_on", -1);

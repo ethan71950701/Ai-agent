@@ -57,16 +57,6 @@
         </activity>
 
         <!-- 由 root 的 am start-foreground-service 或本 App 自己啟動；不開放給其他 App -->
-        <!-- 遠端指令（Telegram 群組）：使用者開啟才會啟動。 -->
-        <service
-            android:name=".RemoteService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Listens for the user's own remote commands from a private chat group to switch Tailscale on or off." />
-        </service>
-
         <!-- 裝置之間傳檔案的伺服器（使用者在「設定 → 傳檔案」開啟才會啟動）。 -->
         <service
             android:name=".TransferService"

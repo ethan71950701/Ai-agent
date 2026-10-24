@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 互傳檔案的服務只在互傳頁打開、或正在傳輸時運行，離開頁面就停止，不再一直在背景；移除沒有在用的遠端指令（Telegram）｜The file transfer service now runs only while the transfer page is open or a transfer is running, and stops when you leave; removed the unused Telegram remote commands
+
 - 拖動玻璃滑桿時，底欄會即時更新（不再有時候不刷新）｜Dragging a glass slider now updates the bottom bar live (no more occasional stale frames)
 ## 1.0.1266
 
