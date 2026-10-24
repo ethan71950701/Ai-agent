@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 對方連上來時，會自動記下它的位址（區網或 Tailscale），不用兩邊都手動輸入 IP｜When a paired device connects, its address (LAN or Tailscale) is remembered automatically, so IPs need not be typed on both sides
 
+## 1.0.1254
+
 - 手動輸入 IP 可以連續輸入多個「.」（之前第二個點就按不下去）｜Manual IP entry now allows several dots, so a full address like 100.x.x.x can be typed
 
 ## 1.0.1253
