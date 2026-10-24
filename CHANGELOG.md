@@ -5,9 +5,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1264
+
 - 手機更新說明不再列出電腦版的改動（電腦版條目標記為「【電腦版】」）｜The phone update notes no longer list computer-app changes (those entries are marked 【電腦版】)
 
 - 【電腦版】外觀重做：Windows 11 風格深色主題、分頁（裝置／找檔案／記錄）、標題與狀態一直顯示、傳輸進度固定在下方｜Windows app redesigned: Windows 11-style dark theme, tabs (Devices / Find files / Log), title and status always visible, transfer progress pinned at the bottom
+
 ## 1.0.1263
 
 - 【電腦版】外觀重做：Windows 11 風格深色主題、分頁（裝置／找檔案／記錄）、標題與狀態一直顯示、傳輸進度固定在下方｜Windows app redesigned: Windows 11-style dark theme, tabs (Devices / Find files / Log), title and status always visible, transfer progress pinned at the bottom
