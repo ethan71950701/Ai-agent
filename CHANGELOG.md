@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1276
+
 - 設鬧鐘改成直接設定好，不再打開時鐘畫面｜Alarms are now set directly without opening the clock screen
 
 ## 1.0.1275
