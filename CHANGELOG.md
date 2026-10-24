@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1261
+
 - 遠端指令改用通知監聽：讀 Telegram 群組的通知，不用一直在背景輪詢；同一個群組可以給多台裝置用，靠裝置名稱區分｜Remote commands now listen to Telegram notifications instead of polling in the background; one group serves several devices, told apart by device name
 
 ## 1.0.1260
