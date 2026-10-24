@@ -19,6 +19,21 @@ def _enc(s):
     return quote_plus(s, safe="")
 
 
+def local_tailnet_ip():
+    """本機在 Tailscale（100.64.0.0/10）裡的位址；沒有就回 None。Windows 用 ipconfig 找。"""
+    import re
+    import subprocess
+    try:
+        cmd = ["ipconfig"] if os.name == "nt" else ["ip", "-4", "addr"]
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    for ip in re.findall(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b", out):
+        if _is_tailnet_str(ip):
+            return ip
+    return None
+
+
 def _local_ips():
     ips = []
     try:
@@ -78,8 +93,10 @@ class Client:
         ts = str(int(time.time()))
         nonce = crypto.hexs(crypto.random_bytes(12))
         sig = crypto.sign(self.key, method, target, ts, nonce)
+        tailnet = local_tailnet_ip()   # 自己的 Tailscale 位址，對方記下來，換網路後也連得回來
+        extra = f"\r\nX-Tailnet: {tailnet}" if tailnet else ""
         return nonce, (f"{method} {target} HTTP/1.1\r\nHost: phoneai\r\nX-Id: {self.my_id}\r\nX-Ts: {ts}\r\nX-Nonce: {nonce}"
-                       f"\r\nX-Name: {_enc(self.my_name)}\r\nX-Sig: {sig}\r\nConnection: close\r\n\r\n").encode("latin-1")
+                       f"\r\nX-Name: {_enc(self.my_name)}\r\nX-Sig: {sig}{extra}\r\nConnection: close\r\n\r\n").encode("latin-1")
 
     @staticmethod
     def _status(f):
@@ -307,6 +324,9 @@ class Server:
                     if 0 < len(name) <= 40:
                         self.host.peer_name(peer[0], name)
                 self.host.peer_address(peer[0], ip)   # 已驗證：記下對方的來源位址，之後我們也能連回去
+                mine = h.get("x-tailnet", "")
+                if mine and _is_tailnet_str(mine):
+                    self.host.peer_address(peer[0], mine)   # 對方自己的 Tailscale 位址
                 self._route(conn, f, method, path, params, peer)
         except Exception:
             pass  # 單一連線出錯不影響伺服器
@@ -478,6 +498,13 @@ class Server:
                 self._fails[ip] = [1, now]
             else:
                 f[0] += 1
+
+
+def _is_tailnet_str(ip):
+    try:
+        return ipaddress.ip_address(ip) in TAILNET
+    except ValueError:
+        return False
 
 
 def _unique(folder, name):

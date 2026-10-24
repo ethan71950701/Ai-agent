@@ -102,6 +102,20 @@ final class TransferServer {
         }
     }
 
+    /** 是不是 Tailscale 的位址（100.64.0.0/10）。 */
+    static boolean isTailnetAddr(InetAddress a) {
+        byte[] b = a.getAddress();
+        return b.length == 4 && (b[0] & 255) == 100 && (b[1] & 0xC0) == 64;
+    }
+
+    static boolean isTailnetString(String ip) {
+        try {
+            return isTailnetAddr(InetAddress.getByName(ip)) && ip.indexOf(':') < 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** 區網、本機、link-local，以及 Tailscale 的位址範圍（100.64.0.0/10，Java 不把它算成區網）。 */
     static boolean allowed(InetAddress a) {
         if (a.isSiteLocalAddress() || a.isLoopbackAddress() || a.isLinkLocalAddress()) return true;
@@ -141,6 +155,8 @@ final class TransferServer {
             Auth au = authenticate(method, target, h);
             if (au == null) { fail(ip); reply(out, 401, "unauthorized"); return; }
             host.peerSeen(au.peer, ip);
+            String myTailnet = h.get("x-tailnet");   // 對方自己的 Tailscale 位址：已驗證，記下來
+            if (myTailnet != null && isTailnetString(myTailnet)) host.peerSeen(au.peer, myTailnet);
             String nm = h.get("x-name");
             if (nm != null) {
                 try {

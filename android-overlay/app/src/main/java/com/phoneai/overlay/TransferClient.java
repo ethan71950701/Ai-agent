@@ -45,12 +45,27 @@ final class TransferClient {
         return s;
     }
 
+    /** 本機在 Tailscale（100.64.0.0/10）裡的位址；沒有就回 null。 */
+    static String localTailnetIp() {
+        try {
+            for (java.net.NetworkInterface ni : java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())) {
+                if (!ni.isUp()) continue;
+                for (java.net.InetAddress a : java.util.Collections.list(ni.getInetAddresses())) {
+                    if (TransferServer.isTailnetAddr(a)) return a.getHostAddress();
+                }
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
     /** 寫出帶簽章的請求標頭；回傳這個請求的隨機數（內容加密金鑰由它衍生）。 */
     private String writeHead(OutputStream out, String method, String target) throws IOException {
         String ts = String.valueOf(System.currentTimeMillis() / 1000), nonce = TransferCrypto.hex(TransferCrypto.random(12));
         String sig = TransferCrypto.sign(key, method, target, ts, nonce);
+        String myTs = localTailnetIp();   // 自己的 Tailscale 位址（有開 Tailscale 才有）：對方記下來，換網路後也連得回來
         out.write((method + " " + target + " HTTP/1.1\r\nHost: phoneai\r\nX-Id: " + myId + "\r\nX-Ts: " + ts + "\r\nX-Nonce: " + nonce
-                + "\r\nX-Name: " + enc(myName) + "\r\nX-Sig: " + sig + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
+                + "\r\nX-Name: " + enc(myName) + "\r\nX-Sig: " + sig
+                + (myTs == null ? "" : "\r\nX-Tailnet: " + myTs) + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
         return nonce;
     }
 
