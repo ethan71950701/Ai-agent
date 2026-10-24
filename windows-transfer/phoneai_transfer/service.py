@@ -163,20 +163,22 @@ class Service:
         if not p:
             raise IOError("這台裝置還沒配對")
         key = crypto_key(p)
-        # 先試記住的位址（外網或固定 IP 時最快）；不通才用區網搜尋
-        if p.get("ip") and p.get("port"):
-            c = net.Client(p["ip"], p["port"], self.my_id(), self.my_name(), key)
+        # 順序：1) 區網搜尋（同一個 Wi‑Fi 最快） 2) Tailscale 位址（外網） 3) 上次記住的區網位址
+        f = net.scan(peer_id, timeout=1.2).get(peer_id)
+        if f:
+            self.store.update_peer_name(peer_id, f.name)
+            self.store.update_peer_address(peer_id, f.ip, f.port)
+            return net.Client(f.ip, f.port, self.my_id(), self.my_name(), key)
+        for ip, port in ((p.get("ts_ip"), p.get("ts_port")), (p.get("ip"), p.get("port"))):
+            if not (ip and port):
+                continue
+            c = net.Client(ip, port, self.my_id(), self.my_name(), key)
             try:
                 c.ping()
                 return c
             except OSError:
                 pass
-        f = net.scan(peer_id, timeout=2.5).get(peer_id)
-        if not f:
-            raise IOError(f"找不到「{p['name']}」：可能沒開機、沒開互傳，或不在同一個網路（外網請確認 Tailscale 都在線）")
-        self.store.update_peer_name(peer_id, f.name)
-        self.store.update_peer_address(peer_id, f.ip, f.port)
-        return net.Client(f.ip, f.port, self.my_id(), self.my_name(), key)
+        raise IOError(f"找不到「{p['name']}」：可能沒開機、沒開互傳，或不在同一個網路（外網請確認 Tailscale 都在線）")
 
     def send_file(self, peer_id, path):
         self._stop.clear()

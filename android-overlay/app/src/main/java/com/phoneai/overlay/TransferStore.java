@@ -25,9 +25,24 @@ final class TransferStore {
     private TransferStore() { }
 
     static final class Peer {
-        String id, name, ip;
+        String id, name, ip;      // 區網位址（最後一次在區網找到的）
         int port;
+        String tsIp;             // Tailscale 位址（100.x，外網用）
+        int tsPort;
         byte[] key;
+    }
+
+    /** Tailscale 的位址範圍 100.64.0.0/10。 */
+    static boolean isTailnet(String ip) {
+        if (ip == null || !ip.startsWith("100.")) return false;
+        String[] f = ip.split("\\.");
+        if (f.length != 4) return false;
+        try {
+            int second = Integer.parseInt(f[1]);
+            return second >= 64 && second <= 127;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private static SharedPreferences cfg(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE); }
@@ -81,6 +96,9 @@ final class TransferStore {
                 p.ip = o.optString("ip", "");
                 if (p.ip.isEmpty()) p.ip = null;
                 p.port = o.optInt("port", 0);
+                p.tsIp = o.optString("ts_ip", "");
+                if (p.tsIp.isEmpty()) p.tsIp = null;
+                p.tsPort = o.optInt("ts_port", 0);
                 p.key = TransferCrypto.unhex(o.getString("key"));
                 out.add(p);
             }
@@ -93,7 +111,8 @@ final class TransferStore {
             JSONArray a = new JSONArray();
             for (Peer p : list) {
                 a.put(new JSONObject().put("id", p.id).put("name", p.name).put("ip", p.ip == null ? "" : p.ip)
-                        .put("port", p.port).put("key", TransferCrypto.hex(p.key)));
+                        .put("port", p.port).put("ts_ip", p.tsIp == null ? "" : p.tsIp).put("ts_port", p.tsPort)
+                        .put("key", TransferCrypto.hex(p.key)));
             }
             File f = peersFile(c), tmp = new File(f.getPath() + ".tmp");
             Files.write(tmp.toPath(), a.toString().getBytes(StandardCharsets.UTF_8));
@@ -118,9 +137,14 @@ final class TransferStore {
         save(c, l);
     }
 
+    /** 記住位址：Tailscale 位址和區網位址分開存，兩種網路都能用。 */
     static synchronized void updateAddress(Context c, String id, String ip, int port) {
         List<Peer> l = peers(c);
-        for (Peer p : l) if (p.id.equals(id)) { p.ip = ip; p.port = port; }
+        for (Peer p : l) {
+            if (!p.id.equals(id)) continue;
+            if (isTailnet(ip)) { p.tsIp = ip; p.tsPort = port; }
+            else { p.ip = ip; p.port = port; }
+        }
         save(c, l);
     }
 

@@ -9,6 +9,15 @@ import uuid
 from . import crypto
 
 
+def is_tailnet(ip):
+    """Tailscale 的位址範圍 100.64.0.0/10。"""
+    import ipaddress
+    try:
+        return ipaddress.ip_address(ip) in ipaddress.ip_network("100.64.0.0/10")
+    except ValueError:
+        return False
+
+
 def data_dir():
     base = os.environ.get("APPDATA") or os.path.expanduser("~")
     d = os.path.join(base, "PhoneAI互傳")
@@ -73,7 +82,13 @@ class Store:
     def add_peer(self, peer_id, name, key, ip=None, port=None):
         with self._lock:
             peers = [p for p in self._cfg.get("peers", []) if p["id"] != peer_id]
-            peers.append({"id": peer_id, "name": name, "key": crypto.hexs(key), "ip": ip, "port": port})
+            entry = {"id": peer_id, "name": name, "key": crypto.hexs(key), "ip": None, "port": None, "ts_ip": None, "ts_port": None}
+            if ip:
+                if is_tailnet(ip):
+                    entry["ts_ip"], entry["ts_port"] = ip, port
+                else:
+                    entry["ip"], entry["port"] = ip, port
+            peers.append(entry)
             self._cfg["peers"] = peers
             self._save()
 
@@ -93,13 +108,19 @@ class Store:
         return crypto.unhex(p["key"]) if p else None
 
     def update_peer_address(self, peer_id, ip, port):
-        """記住對方最後一次的位址（區網或 Tailscale），下次區網搜不到時直接用它。"""
+        """記住位址：區網位址和 Tailscale 位址分開存，兩種網路都能用。"""
         with self._lock:
             for p in self._cfg.get("peers", []):
-                if p["id"] == peer_id and (p.get("ip"), p.get("port")) != (ip, port):
+                if p["id"] != peer_id:
+                    continue
+                if is_tailnet(ip):
+                    if (p.get("ts_ip"), p.get("ts_port")) != (ip, port):
+                        p["ts_ip"], p["ts_port"] = ip, port
+                        self._save()
+                elif (p.get("ip"), p.get("port")) != (ip, port):
                     p["ip"], p["port"] = ip, port
                     self._save()
-                    return
+                return
 
     def update_peer_name(self, peer_id, name):
         with self._lock:

@@ -238,27 +238,37 @@ final class FileTools {
 
     /** 找到這台已配對裝置現在的位址，回傳可用的客戶端。 */
     static TransferClient clientFor(Context c, TransferStore.Peer p) throws Exception {
-        // 先試記住的位址（外網 Tailscale 或固定 IP 時最快）；不通才用區網搜尋
-        if (p.ip != null && p.port > 0) {
-            TransferClient known = new TransferClient(p.ip, p.port, TransferStore.myId(c), TransferStore.myName(c), p.key);
-            try {
-                known.ping();
-                return known;
-            } catch (Exception ignored) {
-                // 記住的位址連不上：往下用區網搜尋
-            }
-        }
+        // 順序：1) 區網搜尋（在同一個 Wi‑Fi 最快）  2) Tailscale 位址（外網）  3) 上次記住的區網位址
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
-        TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 2500, TransferDiscovery.PORT, extra(one)).get(p.id);
-        String ip = f != null ? f.ip : p.ip;
-        int port = f != null ? f.port : p.port;
-        if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開互傳，或不在同一個 Wi-Fi");
+        TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
+        String ip;
+        int port;
+        if (f != null) {
+            ip = f.ip;
+            port = f.port;
+        } else if (p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort)) {
+            ip = p.tsIp;
+            port = p.tsPort;
+        } else {
+            ip = p.ip;
+            port = p.port;
+        }
+        if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開互傳，或不在同一個 Wi-Fi（外網請確認 Tailscale 都在線）");
         if (f != null) {
             TransferStore.updateAddress(c, p.id, ip, port);
             TransferStore.updateName(c, p.id, f.name);
         }
         return new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+    }
+
+    private static boolean canPing(Context c, TransferStore.Peer p, String ip, int port) {
+        try {
+            new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key).ping();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static TransferClient client(Context c, String dev) throws Exception {

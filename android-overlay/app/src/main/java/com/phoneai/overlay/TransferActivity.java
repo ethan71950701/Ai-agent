@@ -284,8 +284,13 @@ public class TransferActivity extends Activity {
                     TransferStore.Peer p = new TransferStore.Peer();
                     p.id = o.peerId;
                     p.name = o.peerName;
-                    p.ip = ip;
-                    p.port = port;
+                    if (TransferStore.isTailnet(ip)) {   // 手動輸入的 100.x 是 Tailscale 位址，分開存
+                        p.tsIp = ip;
+                        p.tsPort = port;
+                    } else {
+                        p.ip = ip;
+                        p.port = port;
+                    }
                     p.key = o.key;
                     TransferStore.addPeer(this, p);
                     TransferStore.log(this, L.t("已配對 ") + p.name);
