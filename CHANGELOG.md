@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 連線順序改成：先區網搜尋（在家裡最快），找不到才用 Tailscale 位址，最後才用上次的區網位址；區網與 Tailscale 位址分開記住｜Connection order is now: LAN discovery first (fastest at home), then the Tailscale address, then the last LAN address; LAN and Tailscale addresses are remembered separately
 
+## 1.0.1252
+
 - 手動輸入 IP 的鍵盤改成有「.」的數字鍵盤，才能輸入 Tailscale 位址（100.x.x.x）｜Manual IP entry now shows a decimal point key so Tailscale addresses (100.x.x.x) can be typed
 
 - 電腦版檢查更新修正：打包後改用內建憑證連線，失敗的原因會顯示在視窗上｜Windows app update check fixed: uses bundled certificates when packaged; failure reasons show in the window
