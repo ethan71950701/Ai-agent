@@ -146,6 +146,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".CommandsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TaskDetailActivity"
             android:exported="false" />
 

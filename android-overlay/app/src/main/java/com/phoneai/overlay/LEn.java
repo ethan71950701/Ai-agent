@@ -798,5 +798,38 @@ final class LEn {
         m.put("（群組裡先傳一則訊息，這裡會列出最近的 ID，方便複製）", "(Send a message in the group first; recent IDs will be listed here for copying)");
         m.put("底欄暗度", "Bottom bar darkness");
         m.put("0 = 幾乎透明，1 = 很暗", "0 = almost transparent, 1 = very dark");
+        m.put("查現在的日期與時間", "Current date and time");
+        m.put("記住、列出、修改、刪除待辦與筆記", "Remember, list, edit and delete to-dos and notes");
+        m.put("設鬧鐘（幾分鐘後，或指定幾點）", "Set an alarm (in N minutes, or at a set time)");
+        m.put("AI 和固定指令能做的事", "What the AI and fixed commands can do");
+        m.put("AI 助理的工具（需要 AI，聊天時會自己用）", "AI assistant tools (need AI; used automatically in chat)");
+        m.put("快速問題（手機直接回答，不用 AI）", "Quick questions (answered on the phone, no AI)");
+        m.put("互傳檔案頁 → 找檔案", "File transfer page → Find files");
+        m.put("輸入檔名搜尋手機或電腦", "Type a file name to search the phone or computer");
+        m.put("每天定時用通知回報（只支援快速問題，誤差約 15 分鐘）", "Reports by notification every day (quick questions only, about 15 minutes accuracy)");
+        m.put("互傳檔案頁 → 傳檔案過去", "File transfer page → Send file");
+        m.put("點進對方的資料夾，點檔案接收", "Open the other side's folders, tap a file to receive it");
+        m.put("固定指令（直接執行，不用 AI）", "Fixed commands (run directly, no AI)");
+        m.put("手動操作（不用 AI）", "Manual actions (no AI)");
+        m.put("互傳檔案頁 → 瀏覽", "File transfer page → Browse");
+        m.put("「亮度」「音量」「Wi‑Fi 狀態」", "\"brightness\" \"volume\" \"Wi-Fi status\"");
+        m.put("定時任務（每天重複）", "Scheduled tasks (repeat daily)");
+        m.put("「每天早上 8 點查電量」", "\"every day at 8 am check battery\"");
+        m.put("「現在幾點」「今天幾號」「今年幾年」", "\"what time is it\" \"what's today's date\" \"what year\"");
+        m.put("查目前的設定", "Current settings");
+        m.put("從裝置取檔、傳檔到裝置", "Fetch files from a device, send files to a device");
+        m.put("查機型與系統版本", "Model and system version");
+        m.put("列出已配對的裝置與是否在線", "List paired devices and whether they are online");
+        m.put("選檔案傳給已配對的裝置", "Pick a file and send it to a paired device");
+        m.put("「電量多少」", "\"battery level\"");
+        m.put("指令一覽", "Command list");
+        m.put("「儲存空間」「記憶體」", "\"storage\" \"memory\"");
+        m.put("要確認", "confirm first");
+        m.put("查容量與記憶體", "Storage and memory");
+        m.put("「什麼手機」「安卓版本」", "\"what phone\" \"Android version\"");
+        m.put("搜尋、瀏覽手機或電腦的檔案", "Search and browse files on the phone or computer");
+        m.put("查時間與日期", "Time and date");
+        m.put("查電池電量", "Battery level");
+        m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
     }
 }

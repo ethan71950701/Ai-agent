@@ -48,6 +48,13 @@ final class Assist {
         return (t == null ? "" : t).replaceAll("[\\s\\-_，。,.]", "").toLowerCase(java.util.Locale.ROOT);
     }
 
+    /** 指令一覽用：每個固定指令的第一個說法、回覆文字、是否要確認。 */
+    static java.util.List<String[]> describeFixed() {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        for (Cmd c : COMMANDS) out.add(new String[]{c.keys[0], L.t(c.reply), c.confirm ? L.t("要確認") : ""});
+        return out;
+    }
+
     static Route fixed(int i) { return new Route(FIXED, COMMANDS[i].cmd, L.t(COMMANDS[i].reply), COMMANDS[i].confirm); }
     static int commandCount() { return COMMANDS.length; }
 

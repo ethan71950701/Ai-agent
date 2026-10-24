@@ -625,6 +625,7 @@ public class MainActivity extends Activity {
         Ui.section(this, box, L.t("進階"));
         Ui.tileGrid(this, box,
                 new Ui.Tile("terminal", L.t("進階與診斷"), L.t("版本、狀態、測試"), false, v -> startActivity(new Intent(this, DiagActivity.class))),
+                new Ui.Tile("note", L.t("指令一覽"), L.t("AI 和固定指令能做的事"), false, v -> startActivity(new Intent(this, CommandsActivity.class))),
                 new Ui.Tile("sparkle", L.t("功能介紹"), L.t("再看一次介紹動畫"), false, v -> startActivity(new Intent(this, OnboardingActivity.class))));
     }
 
