@@ -4,7 +4,6 @@
     <string name="a11y_label">PhoneAI Ripple</string>
     <string name="share_label">Ask PhoneAI</string>
     <string name="share_file_label">PhoneAI 傳檔案</string>
-    <string name="notify_listener_label">PhoneAI 遠端指令</string>
     <string name="widget_label">PhoneAI Voice</string>
     <string name="widget_desc">Tap to speak to the assistant</string>
     <string name="widget_button">Speak</string>
