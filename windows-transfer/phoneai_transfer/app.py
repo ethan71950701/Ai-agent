@@ -19,6 +19,12 @@ try:   # 縮到右下角的系統匣圖示需要 pystray 和 Pillow；沒有的�
 except ImportError:
     HAS_TRAY = False
 
+try:   # Windows 11 風格的外觀主題；沒有的話用系統預設樣式
+    import sv_ttk
+    HAS_SVTTK = True
+except ImportError:
+    HAS_SVTTK = False
+
 from . import net, startup, updater, version
 from .service import Service, Stopped, _size
 
@@ -112,8 +118,8 @@ class App:
         self.svc = Service()
         self.root = TkinterDnD.Tk() if HAS_DND else tk.Tk()
         self.root.title("PhoneAI 互傳檔案")
-        self.root.geometry("460x720")
-        self.root.minsize(420, 600)
+        self.root.geometry("540x780")
+        self.root.minsize(500, 680)
         self.enabled = tk.BooleanVar(value=self.svc.store.enabled())
         self._build()
         if self.enabled.get():
@@ -128,76 +134,120 @@ class App:
             self.root.withdraw()
 
     # ---- 畫面 ----
+    def _style(self):
+        """Windows 11 風格的主題（sv_ttk）；沒有安裝時用系統預設樣式。"""
+        self.accent = "TButton"
+        self.switch = "TCheckbutton"
+        font = ("Microsoft JhengHei UI", 10)
+        if HAS_SVTTK:
+            sv_ttk.set_theme("dark")
+            self.accent = "Accent.TButton"
+            self.switch = "Switch.TCheckbutton"
+            # tk 原生的清單和文字框不會跟著主題變色，要自己設
+            self.root.option_add("*Listbox.background", "#2b2b2b")
+            self.root.option_add("*Listbox.foreground", "#f2f2f2")
+            self.root.option_add("*Listbox.selectBackground", "#0067c0")
+            self.root.option_add("*Listbox.relief", "flat")
+            self.root.option_add("*Listbox.highlightThickness", 0)
+            self.root.option_add("*Text.background", "#2b2b2b")
+            self.root.option_add("*Text.foreground", "#e6e6e6")
+            self.root.option_add("*Text.relief", "flat")
+        # 只改預設字型的字體（Windows 的微軟正黑體），不用 option_add("*Font")，那會蓋掉標題等元件自己的字型
+        import tkinter.font as tkfont
+        for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont", "TkCaptionFont"):
+            try:
+                tkfont.nametofont(name).configure(family=font[0])
+            except tk.TclError:
+                pass
+        st = ttk.Style()
+        st.configure("Title.TLabel", font=("Microsoft JhengHei UI", 18, "bold"))
+        st.configure("Hint.TLabel", foreground="#9a9a9a")
+        st.configure("Big.TButton", font=("Microsoft JhengHei UI", 11))
+
     def _build(self):
-        pad = {"padx": 12, "pady": 6}
-        top = ttk.Frame(self.root)
-        top.pack(fill="x", **pad)
+        self._style()
+        outer = ttk.Frame(self.root, padding=16)
+        outer.pack(fill="both", expand=True)
         if HAS_DND:
             self.root.drop_target_register(DND_FILES)
             self.root.dnd_bind("<<Drop>>", self._on_drop)
-            ttk.Label(self.root, text="可以把檔案直接拖進這個視窗，再選要傳給哪一台").pack(anchor="w", padx=12)
-        ttk.Checkbutton(top, text="開啟互傳檔案", variable=self.enabled, command=lambda: self._set_enabled(self.enabled.get())).pack(side="left")
-        self.state_label = ttk.Label(top, text="")
-        self.state_label.pack(side="right")
 
-        me = ttk.LabelFrame(self.root, text="這台電腦")
-        me.pack(fill="x", **pad)
-        self.me_label = ttk.Label(me, text="", justify="left")
-        self.me_label.pack(side="left", padx=8, pady=6)
-        ttk.Button(me, text="改名稱", command=self._rename).pack(side="right", padx=8)
+        # 上方：標題、開關、狀態（一直顯示）
+        head = ttk.Frame(outer)
+        head.pack(fill="x")
+        ttk.Label(head, text="PhoneAI 互傳檔案", style="Title.TLabel").pack(side="left")
+        self.state_label = ttk.Label(head, text="", style="Hint.TLabel")
+        self.state_label.pack(side="right")
+        row1 = ttk.Frame(outer)
+        row1.pack(fill="x", pady=(10, 0))
+        ttk.Checkbutton(row1, text="開啟互傳檔案", variable=self.enabled, style=self.switch,
+                        command=lambda: self._set_enabled(self.enabled.get())).pack(side="left")
+        ttk.Button(row1, text="檢查更新", command=self._check_update).pack(side="right")
+        ttk.Button(row1, text="改名稱", command=self._rename).pack(side="right", padx=6)
+        self.me_label = ttk.Label(outer, text="", style="Hint.TLabel", justify="left", wraplength=500)
+        self.me_label.pack(anchor="w", pady=(8, 0))
         if startup.supported():
             self.autostart = tk.BooleanVar(value=startup.is_enabled())
-            ttk.Checkbutton(me, text="開機自動啟動（縮在右下角）", variable=self.autostart,
-                            command=lambda: startup.set_enabled(self.autostart.get())).pack(side="bottom", padx=8)
-        ttk.Button(me, text="檢查更新", command=self._check_update).pack(side="right", padx=4)
+            ttk.Checkbutton(outer, text="開機自動啟動（縮在右下角）", variable=self.autostart,
+                            command=lambda: startup.set_enabled(self.autostart.get())).pack(anchor="w", pady=(6, 0))
 
-        pair = ttk.LabelFrame(self.root, text="配對")
-        pair.pack(fill="x", **pad)
-        ttk.Label(pair, text="兩台都打開互傳，在任一台按「配對另一台」，核對 6 位數確認碼即可。", wraplength=400).pack(anchor="w", padx=8, pady=4)
-        ttk.Button(pair, text="配對另一台", command=self._pair_out).pack(fill="x", padx=8, pady=6)
+        # 中間：分頁（裝置／找檔案／記錄），不再全部擠在一頁
+        tabs = ttk.Notebook(outer)
+        tabs.pack(fill="both", expand=True, pady=(14, 8))
 
-        devs = ttk.LabelFrame(self.root, text="已配對的裝置")
-        devs.pack(fill="x", **pad)
-        self.dev_list = tk.Listbox(devs, height=5)
-        self.dev_list.pack(fill="x", padx=8, pady=6)
-        row = ttk.Frame(devs)
-        row.pack(fill="x", padx=8, pady=(0, 8))
-        ttk.Button(row, text="傳送過去", command=self._send).pack(side="left", expand=True, fill="x")
-        ttk.Button(row, text="接收", command=self._fetch).pack(side="left", expand=True, fill="x", padx=4)
-        ttk.Label(devs, text="雙擊裝置名字可以移除").pack(anchor="w", padx=8, pady=(0, 6))
+        dev_tab = ttk.Frame(tabs, padding=14)
+        tabs.add(dev_tab, text="  裝置  ")
+        ttk.Button(dev_tab, text="配對另一台", style=self.accent, command=self._pair_out).pack(fill="x")
+        ttk.Label(dev_tab, text="兩台都打開互傳，在任一台按「配對另一台」，核對 6 位數確認碼即可。",
+                  style="Hint.TLabel", wraplength=480).pack(anchor="w", pady=(6, 12))
+        ttk.Label(dev_tab, text="已配對的裝置").pack(anchor="w")
+        self.dev_list = tk.Listbox(dev_tab, height=6, activestyle="none")
+        self.dev_list.pack(fill="both", expand=True, pady=(6, 8), ipady=4)
         self.dev_list.bind("<Double-Button-1>", lambda e: self._remove())
+        btns = ttk.Frame(dev_tab)
+        btns.pack(fill="x")
+        ttk.Button(btns, text="傳送過去", style=self.accent, command=self._send).pack(side="left", expand=True, fill="x")
+        ttk.Button(btns, text="接收", command=self._fetch).pack(side="left", expand=True, fill="x", padx=(8, 0))
+        hint = "雙擊裝置名字可以移除"
+        if HAS_DND:
+            hint += "；也可以把檔案直接拖進這個視窗，再選要傳給哪一台"
+        ttk.Label(dev_tab, text=hint, style="Hint.TLabel", wraplength=480).pack(anchor="w", pady=(8, 0))
 
-        prog = ttk.LabelFrame(self.root, text="傳輸")
-        prog.pack(fill="x", **pad)
-        self.prog_title = ttk.Label(prog, text="沒有進行中的傳輸", wraplength=400)
-        self.prog_title.pack(anchor="w", padx=8, pady=4)
-        self.bar = ttk.Progressbar(prog, maximum=100)
-        self.bar.pack(fill="x", padx=8)
-        self.prog_text = ttk.Label(prog, text="")
-        self.prog_text.pack(anchor="w", padx=8, pady=4)
-        self.stop_btn = ttk.Button(prog, text="停止", command=self._stop, state="disabled")
-        self.stop_btn.pack(anchor="e", padx=8, pady=(0, 8))
-
-        search = ttk.LabelFrame(self.root, text="找檔案（手動搜尋，不用 AI）")
-        search.pack(fill="x", **pad)
-        srow = ttk.Frame(search)
-        srow.pack(fill="x", padx=8, pady=6)
+        find_tab = ttk.Frame(tabs, padding=14)
+        tabs.add(find_tab, text="  找檔案  ")
+        ttk.Label(find_tab, text="手動搜尋檔名（不用 AI）", style="Hint.TLabel").pack(anchor="w")
+        srow = ttk.Frame(find_tab)
+        srow.pack(fill="x", pady=(6, 8))
         self.query = ttk.Entry(srow)
         self.query.pack(side="left", fill="x", expand=True)
         self.query.bind("<Return>", lambda e: self._search_local())
-        ttk.Button(srow, text="搜本機", command=self._search_local).pack(side="left", padx=4)
+        ttk.Button(srow, text="搜本機", style=self.accent, command=self._search_local).pack(side="left", padx=(8, 4))
         ttk.Button(srow, text="搜選的裝置", command=self._search_device).pack(side="left")
-        self.results = tk.Listbox(search, height=6)
-        self.results.pack(fill="x", padx=8)
+        self.results = tk.Listbox(find_tab, height=8, activestyle="none")
+        self.results.pack(fill="both", expand=True, ipady=4)
         self.results.bind("<Double-Button-1>", lambda e: self._do_result())
-        ttk.Button(search, text="傳給選的裝置／取回", command=self._do_result).pack(fill="x", padx=8, pady=6)
+        ttk.Button(find_tab, text="傳給選的裝置／取回", command=self._do_result).pack(fill="x", pady=(8, 0))
         self.result_rows = []
         self.result_source = None   # None = 本機（傳給已配對裝置）；裝置 dict = 從那台取回
 
-        logf = ttk.LabelFrame(self.root, text="最近記錄")
-        logf.pack(fill="both", expand=True, **pad)
-        self.log = tk.Text(logf, height=8, wrap="word", state="disabled")
-        self.log.pack(fill="both", expand=True, padx=8, pady=6)
+        log_tab = ttk.Frame(tabs, padding=14)
+        tabs.add(log_tab, text="  記錄  ")
+        self.log = tk.Text(log_tab, height=10, wrap="word", state="disabled")
+        self.log.pack(fill="both", expand=True)
+
+        # 下方：傳輸進度（一直顯示）
+        prog = ttk.Frame(outer)
+        prog.pack(fill="x")
+        self.prog_title = ttk.Label(prog, text="沒有進行中的傳輸", wraplength=500)
+        self.prog_title.pack(anchor="w")
+        self.bar = ttk.Progressbar(prog, maximum=100)
+        self.bar.pack(fill="x", pady=(6, 4))
+        bottom = ttk.Frame(prog)
+        bottom.pack(fill="x")
+        self.prog_text = ttk.Label(bottom, text="", style="Hint.TLabel")
+        self.prog_text.pack(side="left")
+        self.stop_btn = ttk.Button(bottom, text="停止", command=self._stop, state="disabled")
+        self.stop_btn.pack(side="right")
 
     def refresh(self):
         ip = ", ".join(net._local_ips()) or "?"
@@ -207,8 +257,12 @@ class App:
         else:
             self.state_label.config(text="沒有在運作" + (f"（{self.svc.last_error}）" if self.svc.last_error else ""))
         self.dev_list.delete(0, "end")
-        for p in self.svc.store.peers():
-            self.dev_list.insert("end", p["name"])
+        peers = self.svc.store.peers()
+        for p in peers:
+            self.dev_list.insert("end", "   " + p["name"])
+        if not peers:   # 還沒有配對：清單不要空白一大塊，給個說明
+            self.dev_list.insert("end", "   還沒有配對的裝置，按上面的「配對另一台」開始")
+            self.dev_list.itemconfig(0, foreground="#8a8a8a")
         self.log.config(state="normal")
         self.log.delete("1.0", "end")
         self.log.insert("end", "\n".join(self.svc.store.recent(15)))
