@@ -757,5 +757,16 @@ final class LEn {
         m.put(" 毫秒）", " ms)");
         m.put("，從點到出現共 ", ", from tap to shown: ");
         m.put(" 毫秒", " ms");
+        m.put("外網（Tailscale）", "Remote (Tailscale)");
+        m.put("在外面要連回家裡的裝置時，按這裡一下，會自動打開 Tailscale 並按連線，再回到這個 App。需要 root。", "When you are outside and need to reach home devices, tap here: it opens Tailscale, presses connect, and returns to this app. Requires root.");
+        m.put("打開 Tailscale 並連線", "Open Tailscale and connect");
+        m.put("找不到 Tailscale，請先安裝", "Tailscale not found, please install it first");
+        m.put("設定點擊位置", "Set tap position");
+        m.put("Tailscale 連線按鈕的位置", "Tailscale connect button position");
+        m.put("在 Tailscale 上連線按鈕的 X、Y（像素）。不確定就用「開發者選項 → 顯示觸碰位置」量。", "X and Y (pixels) of the connect button in Tailscale. Not sure? Measure with Developer options → Show taps.");
+        m.put("儲存", "Save");
+        m.put("測試", "Test");
+        m.put("已儲存", "Saved");
+        m.put("請輸入數字", "Please enter numbers");
     }
 }

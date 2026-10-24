@@ -113,6 +113,13 @@ public class TransferActivity extends Activity {
         pair.addView(Ui.body(this, L.t("兩台都打開這一頁，在任一台按下面的按鈕，選對方即可配對。")));
         pair.addView(Ui.button(this, L.t("配對另一台"), v -> scanAndPair()));
 
+        Ui.section(this, box, L.t("外網（Tailscale）"));
+        LinearLayout remote = Ui.card(this, box);
+        remote.addView(Ui.body(this, L.t("在外面要連回家裡的裝置時，按這裡一下，會自動打開 Tailscale 並按連線，再回到這個 App。需要 root。")));
+        remote.addView(Ui.button(this, L.t("打開 Tailscale 並連線"), v -> TailscaleLauncher.connect(this, () ->
+                ui.post(() -> Toast.makeText(this, L.t("找不到 Tailscale，請先安裝"), Toast.LENGTH_LONG).show()))));
+        remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.showSettings(this)));
+
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {
             Ui.section(this, box, L.t("已配對的裝置"));
