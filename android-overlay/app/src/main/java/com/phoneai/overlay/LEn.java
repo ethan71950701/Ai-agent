@@ -768,5 +768,9 @@ final class LEn {
         m.put("測試", "Test");
         m.put("已儲存", "Saved");
         m.put("請輸入數字", "Please enter numbers");
+        m.put("請先允許「顯示在其他 App 上層」，再試一次", "Please allow \"Display over other apps\", then try again");
+        m.put("請點一下 Tailscale 的連線按鈕（只記錄這一次）", "Tap Tailscale's connect button once (only this one is recorded)");
+        m.put("已記下位置", "Position saved");
+        m.put("無法顯示提示：", "Cannot show the hint: ");
     }
 }

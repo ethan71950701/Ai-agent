@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 設定 Tailscale 點擊位置改成直接在畫面上點一下記錄，不用輸入座標｜Setting the Tailscale tap position is now done by tapping it on screen, no coordinates to type
+
 - 互傳頁新增「打開 Tailscale 並連線」：用 root 打開 Tailscale、點一下設定的位置，再回到 PhoneAI；點擊位置可以在設定裡調整（需要 root）｜New "Open Tailscale and connect" button on the transfer page: with root, it opens Tailscale, taps the configured spot, and returns to PhoneAI; the tap position is adjustable (requires root)
 
 ## 1.0.1256

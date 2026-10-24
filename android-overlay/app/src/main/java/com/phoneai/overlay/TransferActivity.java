@@ -118,7 +118,7 @@ public class TransferActivity extends Activity {
         remote.addView(Ui.body(this, L.t("在外面要連回家裡的裝置時，按這裡一下，會自動打開 Tailscale 並按連線，再回到這個 App。需要 root。")));
         remote.addView(Ui.button(this, L.t("打開 Tailscale 並連線"), v -> TailscaleLauncher.connect(this, () ->
                 ui.post(() -> Toast.makeText(this, L.t("找不到 Tailscale，請先安裝"), Toast.LENGTH_LONG).show()))));
-        remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.showSettings(this)));
+        remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.captureTap(this)));
 
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {

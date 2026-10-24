@@ -62,44 +62,59 @@ final class TailscaleLauncher {
         }).start();
     }
 
-    /** 設定點擊的位置：填 X、Y（像素），可以先按「測試」看點不點得到。 */
-    static void showSettings(Context c) {
-        LinearLayout form = new LinearLayout(c);
-        form.setOrientation(LinearLayout.VERTICAL);
-        int pad = (int) (c.getResources().getDisplayMetrics().density * 16);
-        form.setPadding(pad, pad / 2, pad, 0);
-        EditText x = new EditText(c);
-        x.setHint("X");
-        x.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        x.setText(String.valueOf(tapX(c)));
-        EditText y = new EditText(c);
-        y.setHint("Y");
-        y.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        y.setText(String.valueOf(tapY(c)));
-        form.addView(x);
-        form.addView(y);
-        new AlertDialog.Builder(c)
-                .setTitle(L.t("Tailscale 連線按鈕的位置"))
-                .setMessage(L.t("在 Tailscale 上連線按鈕的 X、Y（像素）。不確定就用「開發者選項 → 顯示觸碰位置」量。"))
-                .setView(form)
-                .setPositiveButton(L.t("儲存"), (d, w) -> {
-                    try {
-                        setTap(c, Integer.parseInt(x.getText().toString().trim()), Integer.parseInt(y.getText().toString().trim()));
-                        Toast.makeText(c, L.t("已儲存"), Toast.LENGTH_SHORT).show();
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(c, L.t("請輸入數字"), Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNeutralButton(L.t("測試"), (d, w) -> {
-                    try {
-                        setTap(c, Integer.parseInt(x.getText().toString().trim()), Integer.parseInt(y.getText().toString().trim()));
-                        connect(c, null);
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(c, L.t("請輸入數字"), Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton(L.t("取消"), null)
-                .show();
+    /**
+     * 設定點擊位置（不用輸入數字）：打開 Tailscale，在畫面上蓋一層透明的提示，
+     * 使用者直接點一下連線按鈕，就記下那個位置，然後把提示拿掉。需要「顯示在其他 App 上層」的權限。
+     */
+    static void captureTap(Context c) {
+        if (!android.provider.Settings.canDrawOverlays(c)) {
+            android.widget.Toast.makeText(c, L.t("請先允許「顯示在其他 App 上層」，再試一次"), android.widget.Toast.LENGTH_LONG).show();
+            c.startActivity(new android.content.Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:" + c.getPackageName())).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            return;
+        }
+        final Context app = c.getApplicationContext();
+        new Thread(() -> {
+            Maintenance.suRun("monkey -p " + PKG + " -c android.intent.category.LAUNCHER 1");
+            sleep(2000);
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> showCaptureLayer(app));
+        }).start();
+    }
+
+    private static void showCaptureLayer(Context app) {
+        final android.view.WindowManager wm = (android.view.WindowManager) app.getSystemService(Context.WINDOW_SERVICE);
+        final android.widget.FrameLayout layer = new android.widget.FrameLayout(app);
+        layer.setBackgroundColor(0x33000000);   // 半透明，看得到底下的 Tailscale
+        android.widget.TextView hint = new android.widget.TextView(app);
+        hint.setText(L.t("請點一下 Tailscale 的連線按鈕（只記錄這一次）"));
+        hint.setTextColor(0xFFFFFFFF);
+        hint.setTextSize(18);
+        hint.setBackgroundColor(0xCC000000);
+        hint.setPadding(40, 40, 40, 40);
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = 120;
+        layer.addView(hint, lp);
+        layer.setOnTouchListener((v, ev) -> {
+            if (ev.getAction() == android.view.MotionEvent.ACTION_UP) {
+                setTap(app, (int) ev.getRawX(), (int) ev.getRawY());
+                try { wm.removeView(layer); } catch (Exception ignored) { }
+                android.widget.Toast.makeText(app, L.t("已記下位置"), android.widget.Toast.LENGTH_SHORT).show();
+            }
+            return true;
+        });
+        android.view.WindowManager.LayoutParams p = new android.view.WindowManager.LayoutParams(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT, android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                android.graphics.PixelFormat.TRANSLUCENT);
+        p.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
+        try {
+            wm.addView(layer, p);
+        } catch (Exception e) {
+            android.widget.Toast.makeText(app, L.t("無法顯示提示：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private static void sleep(long ms) {
