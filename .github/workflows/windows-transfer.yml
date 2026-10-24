@@ -30,7 +30,7 @@ jobs:
         run: |
           (Get-Content phoneai_transfer/version.py) -replace 'BUILD = 0', "BUILD = $env:GITHUB_RUN_NUMBER" | Set-Content phoneai_transfer/version.py
       - name: Build exe
-        run: pyinstaller --noconfirm --onefile --windowed --name PhoneAI互傳 --collect-all tkinterdnd2 run_app.py
+        run: pyinstaller --noconfirm --onefile --windowed --name PhoneAI互傳 --collect-all tkinterdnd2 --hidden-import pystray._win32 run_app.py
       - uses: actions/upload-artifact@v4
         with:
           name: PhoneAI互傳-windows

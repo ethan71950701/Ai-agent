@@ -1,6 +1,7 @@
 """電腦版視窗（tkinter）：開啟互傳開關、配對、已配對裝置、最近記錄、傳輸進度與停止。"""
 import os
 import socket
+import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog, ttk
@@ -11,7 +12,14 @@ try:   # 拖曳檔案進視窗需要 tkinterdnd2；沒有的話仍可以用按�
 except ImportError:
     HAS_DND = False
 
-from . import net, updater, version
+try:   # 縮到右下角的系統匣圖示需要 pystray 和 Pillow；沒有的話，關閉視窗就是結束
+    import pystray
+    from PIL import Image, ImageDraw
+    HAS_TRAY = True
+except ImportError:
+    HAS_TRAY = False
+
+from . import net, startup, updater, version
 from .service import Service, Stopped, _size
 
 
@@ -43,7 +51,7 @@ class RemoteBrowser:
         try:
             self.client = self.app.svc.client_for(self.peer["id"])
         except Exception as e:
-            self.app.root.after(0, lambda: self.status.config(text=f"連不上：{e}"))
+            self.app.root.after(0, lambda e=e: self.status.config(text=f"連不上：{e}"))
             return
         self.load("")
 
@@ -56,7 +64,7 @@ class RemoteBrowser:
             try:
                 rows = net.parse_listing(self.client.list(target))
             except Exception as e:
-                self.app.root.after(0, lambda: self.status.config(text=f"讀取失敗：{e}"))
+                self.app.root.after(0, lambda e=e: self.status.config(text=f"讀取失敗：{e}"))
                 return
             self.app.root.after(0, lambda: self._show(target, rows))
         threading.Thread(target=work, daemon=True).start()
@@ -113,6 +121,11 @@ class App:
         self.refresh()
         self.root.after(200, self._pump)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
+        self.tray = None
+        if HAS_TRAY and os.name == "nt":
+            self._setup_tray()
+        if "--tray" in sys.argv and self.tray:   # 開機自動啟動時：直接縮到右下角
+            self.root.withdraw()
 
     # ---- 畫面 ----
     def _build(self):
@@ -132,6 +145,10 @@ class App:
         self.me_label = ttk.Label(me, text="", justify="left")
         self.me_label.pack(side="left", padx=8, pady=6)
         ttk.Button(me, text="改名稱", command=self._rename).pack(side="right", padx=8)
+        if startup.supported():
+            self.autostart = tk.BooleanVar(value=startup.is_enabled())
+            ttk.Checkbutton(me, text="開機自動啟動（縮在右下角）", variable=self.autostart,
+                            command=lambda: startup.set_enabled(self.autostart.get())).pack(side="bottom", padx=8)
         ttk.Button(me, text="檢查更新", command=self._check_update).pack(side="right", padx=4)
 
         pair = ttk.LabelFrame(self.root, text="配對")
@@ -245,7 +262,7 @@ class App:
             try:
                 rows = self.svc.search_local(q) if peer is None else self.svc.search_peer(peer["id"], q)
             except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror("搜尋失敗", str(e), parent=self.root))
+                self.root.after(0, lambda e=e: messagebox.showerror("搜尋失敗", str(e), parent=self.root))
                 return
             self.root.after(0, lambda: self._show_results(rows, peer))
         threading.Thread(target=work, daemon=True).start()
@@ -302,7 +319,7 @@ class App:
             try:
                 build, url = updater.fetch_latest()
             except Exception as e:
-                self.root.after(0, lambda: (self._status(f"檢查更新失敗：{e}"), messagebox.showerror("檢查更新", f"連不上 GitHub：{e}", parent=self.root)))
+                self.root.after(0, lambda e=e: (self._status(f"檢查更新失敗：{e}"), messagebox.showerror("檢查更新", f"連不上 GitHub：{e}", parent=self.root)))
                 return
             self.root.after(0, lambda: self._offer_update(build, url))
         threading.Thread(target=work, daemon=True).start()
@@ -328,7 +345,7 @@ class App:
                 updater.download(url, new_exe)
                 self.root.after(0, lambda: self._apply_update(new_exe))
             except Exception as e:
-                self.root.after(0, lambda: (self._status(""), messagebox.showerror("更新失敗", str(e), parent=self.root)))
+                self.root.after(0, lambda e=e: (self._status(""), messagebox.showerror("更新失敗", str(e), parent=self.root)))
         threading.Thread(target=work, daemon=True).start()
 
     def _apply_update(self, new_exe):
@@ -338,6 +355,8 @@ class App:
         except Exception as e:
             messagebox.showerror("更新失敗", str(e), parent=self.root)
             return
+        if self.tray:
+            self.tray.stop()
         self.root.destroy()
 
     def _selected(self):
@@ -389,7 +408,7 @@ class App:
             try:
                 offer = self.svc.pair_outgoing(ip, port)
             except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror("配對失敗", str(e), parent=self.root))
+                self.root.after(0, lambda e=e: messagebox.showerror("配對失敗", str(e), parent=self.root))
                 return
             self.root.after(0, lambda: self._confirm_out(offer, ip, port))
         threading.Thread(target=work, daemon=True).start()
@@ -443,7 +462,7 @@ class App:
             except Stopped:
                 self.root.after(0, lambda: self._status("已停止，未完成的檔案已刪除"))
             except Exception as e:
-                self.root.after(0, lambda: messagebox.showerror("傳檔案失敗", str(e), parent=self.root))
+                self.root.after(0, lambda e=e: messagebox.showerror("傳檔案失敗", str(e), parent=self.root))
             finally:
                 self.root.after(0, self.refresh)
         threading.Thread(target=work, daemon=True).start()
@@ -491,9 +510,33 @@ class App:
         self.svc.finish_pair(ok)
         self.refresh()
 
-    def _close(self):
+    def _setup_tray(self):
+        """右下角的系統匣圖示：關閉視窗只是縮起來，服務繼續跑；要結束請用圖示選單的「結束」。"""
+        img = Image.new("RGB", (64, 64), (30, 120, 220))
+        d = ImageDraw.Draw(img)
+        d.ellipse((12, 12, 52, 52), fill=(255, 255, 255))
+        d.ellipse((24, 24, 40, 40), fill=(30, 120, 220))
+        menu = pystray.Menu(
+            pystray.MenuItem("開啟視窗", lambda: self.root.after(0, self._show), default=True),
+            pystray.MenuItem("結束", lambda: self.root.after(0, self._quit)))
+        self.tray = pystray.Icon("phoneai", img, "PhoneAI 互傳檔案", menu)
+        self.tray.run_detached()
+
+    def _show(self):
+        self.root.deiconify()
+        self.root.lift()
+
+    def _quit(self):
         self.svc.stop()
+        if self.tray:
+            self.tray.stop()
         self.root.destroy()
+
+    def _close(self):
+        if self.tray:
+            self.root.withdraw()   # 縮到系統匣，服務繼續運作
+        else:
+            self._quit()
 
     def run(self):
         self.root.mainloop()
