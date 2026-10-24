@@ -245,7 +245,7 @@ public class TransferActivity extends Activity {
 
     private void askIp() {
         final EditText e = new EditText(this);
-        e.setInputType(InputType.TYPE_CLASS_PHONE);
+        e.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);   // 要有「.」才能輸入 IP（100.x.x.x）
         e.setHint("192.168.1.23");
         tint(new MaterialAlertDialogBuilder(this).setTitle(L.t("對方的 IP")).setView(e)
                 .setPositiveButton(L.t("配對"), (d, w) -> startPair(e.getText().toString().trim(), TransferServer.PORT))

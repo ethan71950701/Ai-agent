@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 手動輸入 IP 的鍵盤改成有「.」的數字鍵盤，才能輸入 Tailscale 位址（100.x.x.x）｜Manual IP entry now shows a decimal point key so Tailscale addresses (100.x.x.x) can be typed
+
 - 電腦版檢查更新修正：打包後改用內建憑證連線，失敗的原因會顯示在視窗上｜Windows app update check fixed: uses bundled certificates when packaged; failure reasons show in the window
 
 ## 1.0.1251
