@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1271
+
 - 助理知道現在的時間，設鬧鐘支援「幾分鐘後／幾小時後」（例如一小時後）｜The assistant now knows the current time, and alarms support "N minutes from now" (e.g. in one hour)
+
 ## 1.0.1270
 
 - 助理可以設鬧鐘：說「幫我設 7 點的鬧鐘」，會打開手機的時鐘，在時鐘裡按儲存即可（用系統的標準做法，不用背景服務）｜The assistant can set an alarm: say "set an alarm for 7" and it opens the phone clock to save (uses the standard system method, no background service)
