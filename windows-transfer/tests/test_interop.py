@@ -71,6 +71,9 @@ class TestHost:
     def peer_name(self, peer_id, name):
         pass
 
+    def peer_address(self, peer_id, ip):
+        pass
+
     def progress(self, peer_id, to_peer, name, done, total):
         pass
 

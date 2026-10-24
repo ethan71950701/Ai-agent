@@ -150,6 +150,11 @@ public class TransferService extends Service {
             }
 
             @Override
+            public void peerSeen(String peerId, String ip) {
+                TransferStore.updateAddress(c, peerId, ip, TransferServer.PORT);
+            }
+
+            @Override
             public void transferEnded() {
                 TransferNotify.cancel(c);
             }

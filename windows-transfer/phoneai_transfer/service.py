@@ -80,6 +80,11 @@ class Service:
         p = self.pending
         return p["state"] if p and p["id"] == peer_id else "none"
 
+    def peer_address(self, peer_id, ip):
+        """對方（已驗證）連上來：記下它的來源位址。埠固定是 PORT。"""
+        if self.store.peer(peer_id):
+            self.store.update_peer_address(peer_id, ip, net.PORT)
+
     def peer_name(self, peer_id, name):
         self.store.update_peer_name(peer_id, name)
 

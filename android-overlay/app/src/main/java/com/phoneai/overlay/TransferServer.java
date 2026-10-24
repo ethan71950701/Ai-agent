@@ -54,6 +54,8 @@ final class TransferServer {
         void progress(String peerId, boolean toPeer, String name, long done, long total);
         /** 一次傳輸結束（成功或失敗），用來收起進度通知。 */
         void transferEnded();
+        /** 已驗證的對方連上來：記下它的來源位址（區網或 Tailscale），之後我們也能連回去。 */
+        void peerSeen(String peerId, String ip);
     }
 
     private final Host host;
@@ -138,6 +140,7 @@ final class TransferServer {
 
             Auth au = authenticate(method, target, h);
             if (au == null) { fail(ip); reply(out, 401, "unauthorized"); return; }
+            host.peerSeen(au.peer, ip);
             String nm = h.get("x-name");
             if (nm != null) {
                 try {

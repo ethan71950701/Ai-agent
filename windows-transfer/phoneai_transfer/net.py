@@ -306,6 +306,7 @@ class Server:
                     name = unquote_plus(name).strip()
                     if 0 < len(name) <= 40:
                         self.host.peer_name(peer[0], name)
+                self.host.peer_address(peer[0], ip)   # 已驗證：記下對方的來源位址，之後我們也能連回去
                 self._route(conn, f, method, path, params, peer)
         except Exception:
             pass  # 單一連線出錯不影響伺服器

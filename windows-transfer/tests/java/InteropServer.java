@@ -24,6 +24,7 @@ public class InteropServer {
                 System.out.flush();
             }
             public void peerName(String peerId, String name) { System.out.println("NAME " + name); System.out.flush(); }
+            public void peerSeen(String peerId, String ip) { }
             public void progress(String peerId, boolean toPeer, String name, long done, long total) { }
             public void transferEnded() { }
         });
