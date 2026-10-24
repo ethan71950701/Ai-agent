@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 遠端指令改用通知監聽：讀 Telegram 群組的通知，不用一直在背景輪詢；同一個群組可以給多台裝置用，靠裝置名稱區分｜Remote commands now listen to Telegram notifications instead of polling in the background; one group serves several devices, told apart by device name
 
+## 1.0.1260
+
 - 遠端指令（Telegram 群組）：在群組傳「@機器人 <裝置名稱> 開／關／狀態」，家裡那台手機就切換自己的 Tailscale 並回覆；只接受設定的帳號與群組｜Remote commands (Telegram group): send "@bot <device name> on/off/status" and the home phone switches its own Tailscale and replies; only the configured account and group are accepted
 
 ## 1.0.1259
