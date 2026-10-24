@@ -779,5 +779,22 @@ final class LEn {
         m.put("檢查狀態", "Check status");
         m.put("切換 開／關", "Toggle on/off");
         m.put("切換中…", "Switching…");
+        m.put("正在聽 Telegram 群組的指令；到「互傳檔案」頁可以關閉", "Listening for commands from the Telegram group; turn it off on the File transfer page");
+        m.put("遠端指令", "Remote commands");
+        m.put("遠端指令已開啟", "Remote commands on");
+        m.put(" 開」或「", " on\" or \"");
+        m.put(" 關」，這支手機就會替你切換 Tailscale。", " off\", and this phone will switch Tailscale for you.");
+        m.put("我的 Telegram 使用者 ID", "My Telegram user ID");
+        m.put("最近收到的 ID：\n", "Recent IDs:\n");
+        m.put("機器人 token（只存這支手機）", "Bot token (stored on this phone only)");
+        m.put("群組的聊天 ID（負數）", "Group chat ID (negative)");
+        m.put("裝置名稱（給指令用）", "Device name (for commands)");
+        m.put("設定遠端指令", "Remote command settings");
+        m.put("請確認 ID 都是數字", "Please check that the IDs are numbers");
+        m.put("遠端指令設定", "Remote command settings");
+        m.put("遠端指令（Telegram）：在外面可以在群組裡傳「", "Remote commands (Telegram): from outside, send \"");
+        m.put("開啟遠端指令", "Turn on remote commands");
+        m.put("關閉遠端指令", "Turn off remote commands");
+        m.put("（群組裡先傳一則訊息，這裡會列出最近的 ID，方便複製）", "(Send a message in the group first; recent IDs will be listed here for copying)");
     }
 }

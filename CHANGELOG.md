@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 遠端指令（Telegram 群組）：在群組傳「@機器人 <裝置名稱> 開／關／狀態」，家裡那台手機就切換自己的 Tailscale 並回覆；只接受設定的帳號與群組｜Remote commands (Telegram group): send "@bot <device name> on/off/status" and the home phone switches its own Tailscale and replies; only the configured account and group are accepted
+
 - 外網區塊顯示 Tailscale 開／關（看記下的位置附近是不是有顏色），可以檢查狀態或切換｜The remote section shows whether Tailscale is on or off (by checking color at the saved spot), with check and toggle buttons
 
 ## 1.0.1258
