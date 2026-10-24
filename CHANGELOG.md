@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 「連不上 AI」現在會顯示真正的原因（例如每日用量上限、網路錯誤、還沒設 API Key），方便找出問題｜"Cannot reach the AI" now shows the actual reason (for example the daily usage limit, a network error, or no API key set yet), so the cause is easier to find
+
 - 新增「指令一覽」頁（功能 → 進階）：列出固定指令、快速問題、AI 工具、定時任務與手動操作｜New "Command list" page (Features → Advanced): lists fixed commands, quick questions, AI tools, scheduled tasks and manual actions
 
 - 助理多了「查時間」工具，問幾點、星期幾或要算幾小時後時，會先查手機的時間｜The assistant has a get-time tool: it checks the phone clock when asked the time, weekday, or for an offset like "in one hour"

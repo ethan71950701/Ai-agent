@@ -425,6 +425,8 @@ final class LEn {
         m.put(" 步", "");
         m.put("截圖失敗：請確認 root 已允許 PhoneAI。", "Screenshot failed: make sure root is allowed for PhoneAI.");
         m.put("連不上 AI：", "Cannot reach the AI: ");
+        m.put("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Features → Maintenance\".)");
+        m.put("還沒有 Claude API Key（功能 → 維護 → Claude API Key）", "No Claude API key yet (Features → Maintenance → Claude API key)");
         m.put("AI 的回答看不懂，已停止。", "The AI's reply could not be understood; stopped.");
         m.put("完成了。", "Done.");
         m.put("做不到：", "Cannot do it: ");

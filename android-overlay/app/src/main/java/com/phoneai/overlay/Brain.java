@@ -52,7 +52,7 @@ final class Brain {
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
                 // 聊天助理回答「我不能操作手機」，但使用者明明是要操作：補救，改走自動操作
                 if (Assist.refusesToOperate(reply) && Assist.looksLikeAction(t)) return AgentLoop.run(act, t, ui);
-                return reply != null ? reply : L.t("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。");
+                return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
             }
         }
     }

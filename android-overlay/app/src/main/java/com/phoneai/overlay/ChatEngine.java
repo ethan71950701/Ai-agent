@@ -182,9 +182,13 @@ final class ChatEngine {
     }
 
     /** 回傳回答文字；連不上或沒有 Key 回 null。在背景執行緒呼叫。 */
+    /** 最近一次聊天失敗的原因（給畫面顯示，讓使用者知道是金鑰、用量還是網路）。 */
+    static volatile String lastError = "";
+
     static String ask(Context c, String text, Memory.Confirm confirm) {
+        lastError = "";
         String key = key(c);
-        if (key == null || key.isEmpty()) return null;
+        if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
         try {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
@@ -230,6 +234,7 @@ final class ChatEngine {
             return reply;
         } catch (Exception e) {
             android.util.Log.w("ChatEngine", L.t("聊天失敗: ") + e);
+            lastError = String.valueOf(e.getMessage() == null ? e : e.getMessage());
             return null;
         }
     }
