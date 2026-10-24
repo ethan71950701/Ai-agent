@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1256
+
 - 連線時會帶上自己的 Tailscale 位址，對方記下來；在區網配對過，換成行動網路也能連回去｜Requests now carry each device's own Tailscale address, which the other side remembers, so a pairing made on the LAN still works after switching networks
 
 ## 1.0.1255
