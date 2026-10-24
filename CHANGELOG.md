@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 拖動玻璃滑桿時，底欄會即時更新（不再有時候不刷新）｜Dragging a glass slider now updates the bottom bar live (no more occasional stale frames)
+## 1.0.1266
 
 - 底欄暗度滑桿修正為真的會改變暗度（之前的深色層是固定值）；底欄暗度加了滑桿（設定 → 底欄玻璃（進階）→ 底欄暗度），拖動即時生效｜Added a bottom bar darkness slider (Settings → Bottom bar glass (advanced) → Bottom bar darkness), live
+
 ## 1.0.1265
 
 - 底欄暗度加了滑桿（設定 → 底欄玻璃（進階）→ 底欄暗度），拖動即時生效｜Added a bottom bar darkness slider (Settings → Bottom bar glass (advanced) → Bottom bar darkness), live
