@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1277
+
 - 問「我的車在哪」這類自己的事，助理會先查記憶直接回答，不再打開地圖去找｜Questions about your own things (e.g. where your car is) now check memory first instead of opening maps
 
 ## 1.0.1276
