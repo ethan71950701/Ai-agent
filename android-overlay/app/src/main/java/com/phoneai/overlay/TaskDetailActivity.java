@@ -41,6 +41,8 @@ public class TaskDetailActivity extends Activity {
         LinearLayout total = Ui.card(this, box);
         total.addView(Ui.body(this, L.t("共用了 ") + String.format(Locale.US, "%,d", tokens) + " token"
                 + (steps > 0 ? L.t("（") + steps + L.t(" 步）") : "")));
+        double estCost = t.optDouble("cost", 0);
+        if (estCost > 0) total.addView(Ui.body(this, String.format(Locale.US, L.t("估價約 $%.4f（第三方價格，以 Console 為準）"), estCost)));
 
         if (steps == 0) {
             total.addView(Ui.body(this, L.t("這次沒有自動操作，只是一次對話。")));
@@ -59,6 +61,10 @@ public class TaskDetailActivity extends Activity {
             String result = d.optString("result");
             if (!result.isEmpty()) card.addView(Ui.body(this, L.t("結果：") + result));
             card.addView(Ui.body(this, L.t("這一步用了 ") + String.format(Locale.US, "%,d", d.optLong("tokens")) + " token"));
+            if (!d.optString("model").isEmpty()) {   // 這一步用的模型與估價（舊紀錄沒有這些欄位就不顯示）
+                card.addView(Ui.body(this, String.format(Locale.US, L.t("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f"),
+                        d.optString("model"), d.optLong("in"), d.optLong("out"), d.optDouble("cost"))));
+            }
             final View v = card;
             v.postDelayed(() -> Ui.bounceIn(v), 60L * i + 120);   // 一張一張彈出來
         }

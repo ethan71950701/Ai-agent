@@ -110,6 +110,8 @@ public class LogActivity extends Activity {
                 long tokens = o.optLong("tokens", 0);
                 int steps = o.optJSONArray("detail") == null ? 0 : o.optJSONArray("detail").length();
                 String sum = (steps > 0 ? L.t("共 ") + steps + L.t(" 步 · ") : "") + L.t("用了 ") + String.format(Locale.US, "%,d", tokens) + " token";
+                double estCost = o.optDouble("cost", 0);
+                if (estCost > 0) sum += String.format(Locale.US, L.t(" · 估價約 $%.4f"), estCost);
                 TextView info = Ui.body(this, sum + "　›");
                 info.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
                 info.setPadding(0, Ui.dp(this, 6), 0, 0);

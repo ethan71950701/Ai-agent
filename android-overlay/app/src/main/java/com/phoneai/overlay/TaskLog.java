@@ -35,10 +35,10 @@ final class TaskLog {
     }
 
     /** 記下一筆任務（在背景執行緒呼叫）。 */
-    static synchronized void add(Context c, String text, String reply) { add(c, text, reply, null, 0); }
+    static synchronized void add(Context c, String text, String reply) { add(c, text, reply, null, 0, 0); }
 
     /** details = 每一步的思考、動作、結果、token（沒有自動操作就是 null）；tokens = 整個任務用了多少 token。 */
-    static synchronized void add(Context c, String text, String reply, JSONArray details, long tokens) {
+    static synchronized void add(Context c, String text, String reply, JSONArray details, long tokens, double cost) {
         if (text == null || text.trim().isEmpty()) return;
         try {
             JSONArray a = load(c);
@@ -48,6 +48,7 @@ final class TaskLog {
             o.put("reply", reply == null ? "" : reply);
             o.put("star", false);
             o.put("tokens", tokens);
+            o.put("cost", cost);
             if (details != null && details.length() > 0) o.put("detail", details);
             a.put(o);
             save(c, trim(a));

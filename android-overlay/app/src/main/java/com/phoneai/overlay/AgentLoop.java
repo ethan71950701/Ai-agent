@@ -73,6 +73,16 @@ final class AgentLoop {
         return o;
     }
 
+    /** 這一步的模型、輸入／輸出 token 與估價，在這一步的 token 都算完之後呼叫。 */
+    private static void usage(JSONObject det, String model, long[] before, double costBefore) {
+        long[] now = Usage.tallyCounts();
+        try {
+            det.put("model", Usage.modelName(model)).put("tokens", now[0] - before[0])
+                    .put("in", now[1] - before[1]).put("out", now[2] - before[2])
+                    .put("cost", Usage.tallyCost() - costBefore);
+        } catch (Exception ignored) { }
+    }
+
     /** 這一輪自動操作每一步做了什麼（給任務歷史用）；沒跑過自動操作回 null。取一次就清掉。 */
     static List<String> takeSteps() {
         List<String> s = lastSteps;
@@ -160,6 +170,8 @@ final class AgentLoop {
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
                 JSONObject action;
                 long tokBefore = Usage.tallyNow();
+                long[] cntBefore = Usage.tallyCounts();
+                double costBefore = Usage.tallyCost();
                 try {
                     action = askModel(key, task, history, img, lessons, useTree ? TREE_MODEL : MODEL, useTree ? ElementList.describe(tree) : null);
                 } catch (Exception e) {
@@ -242,7 +254,7 @@ final class AgentLoop {
                     }
                 }
                 try {
-                    det.put("tokens", Usage.tallyNow() - tokBefore);   // 含搜尋等這一步之後才花的 token
+                    usage(det, useTree ? TREE_MODEL : MODEL, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
                 } catch (Exception ignored) { }
                 if (finalSay == null) sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));

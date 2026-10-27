@@ -24,8 +24,9 @@ final class Brain {
         try {
             reply = run(act, t, ui);
         } finally {
+            double cost = Usage.tallyCost();
             long tokens = Usage.endTally();
-            TaskLog.add(act, t, reply, AgentLoop.takeDetails(), tokens);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
+            TaskLog.add(act, t, reply, AgentLoop.takeDetails(), tokens, cost);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         }
         return reply;
     }

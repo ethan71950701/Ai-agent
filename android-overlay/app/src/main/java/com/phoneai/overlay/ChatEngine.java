@@ -168,7 +168,7 @@ final class ChatEngine {
         if (app != null && u != null) {
             long cw = u.optLong("cache_creation_input_tokens"), cr = u.optLong("cache_read_input_tokens");
             Usage.add(app, u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
-            Usage.tallyAdd(u.optLong("input_tokens") + cw + cr + u.optLong("output_tokens"));
+            Usage.tallyAdd(body.optString("model"), u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
         }
         return r;
     }

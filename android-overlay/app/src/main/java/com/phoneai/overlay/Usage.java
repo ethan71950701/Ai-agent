@@ -151,14 +151,34 @@ final class Usage {
 
     // ---------- 任務用量：同一個執行緒裡的 Claude 呼叫，累加到目前這個任務（給任務過程用） ----------
 
-    private static final ThreadLocal<long[]> TALLY = new ThreadLocal<>();
+    /** 每百萬 token 的美元價 [輸入, 輸出]（第三方整理，請以 Console 為準）；快取寫入約 1.25 倍輸入價，快取讀取 0.1 倍。 */
+    static double[] price(String model) {
+        if (model.contains("haiku")) return new double[]{0.10, 0.50};
+        if (model.contains("sonnet")) return new double[]{2.00, 10.00};
+        return new double[]{0, 0};
+    }
 
-    static void beginTally() { TALLY.set(new long[1]); }
+    /** 模型代號轉成給人看的名字，例如 claude-haiku-5-5 → Haiku 5.5。 */
+    static String modelName(String model) {
+        if (model == null || model.isEmpty()) return "";
+        String s = model.replace("claude-", "");
+        int dash = s.indexOf('-');
+        if (dash < 0) return s;
+        String name = s.substring(0, dash);
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1) + " " + s.substring(dash + 1).replace('-', '.');
+    }
+
+    /** 累計：[總 token, 輸入（含快取）, 輸出, 快取寫入, 快取讀取]。 */
+    private static final ThreadLocal<long[]> TALLY = new ThreadLocal<>();
+    private static final ThreadLocal<double[]> COST = new ThreadLocal<>();
+
+    static void beginTally() { TALLY.set(new long[5]); COST.set(new double[1]); }
 
     /** 結束這個任務的計算，回傳用了多少 token。 */
     static long endTally() {
         long[] t = TALLY.get();
         TALLY.remove();
+        COST.remove();
         return t == null ? 0 : t[0];
     }
 
@@ -168,8 +188,33 @@ final class Usage {
         return t == null ? 0 : t[0];
     }
 
-    static void tallyAdd(long tokens) {
+    /** 目前為止各項數字的複本，給每一步算差額用。 */
+    static long[] tallyCounts() {
         long[] t = TALLY.get();
-        if (t != null) t[0] += tokens;
+        return t == null ? new long[5] : t.clone();
+    }
+
+    /** 目前為止估算的花費（美元）。 */
+    static double tallyCost() {
+        double[] c = COST.get();
+        return c == null ? 0 : c[0];
+    }
+
+    /** 記一次 Claude 呼叫：in 含快取，cw、cr 是其中的快取寫入與讀取。 */
+    static void tallyAdd(String model, long in, long out, long cw, long cr) {
+        long[] t = TALLY.get();
+        if (t != null) {
+            t[0] += in + out;
+            t[1] += in;
+            t[2] += out;
+            t[3] += cw;
+            t[4] += cr;
+        }
+        double[] c = COST.get();
+        if (c != null) {
+            double[] p = price(model);
+            long base = in - cw - cr;
+            c[0] += (base * p[0] + cw * p[0] * 1.25 + cr * p[0] * 0.10 + out * p[1]) / 1000000.0;
+        }
     }
 }
