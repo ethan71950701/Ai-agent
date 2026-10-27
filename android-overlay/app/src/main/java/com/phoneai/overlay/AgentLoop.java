@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 final class AgentLoop {
     static final String MODEL = "claude-sonnet-5-5";
     static final String SEARCH_MODEL = "claude-sonnet-5-5";
+    static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 8;
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
@@ -143,24 +144,35 @@ final class AgentLoop {
         List<JSONObject> details = new ArrayList<>();
         lastDetails = details;
         String finalSay = null;
+        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", false);
+        boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 if (cancelled) return L.t("已停止。");
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
-                String img = screenshot();
-                if (img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
+                // 元件清單模式：不截圖，改給 Haiku 看元件編號清單；編號點不到時這一步改回截圖＋Sonnet。
+                List<JSONObject> tree = treeOn && !forceShot ? ElementList.collect(wh[0], wh[1]) : null;
+                forceShot = false;
+                boolean useTree = tree != null && !tree.isEmpty();
+                String img = useTree ? null : screenshot();
+                if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
                 JSONObject action;
                 long tokBefore = Usage.tallyNow();
                 try {
-                    action = askModel(key, task, history, img, lessons);
+                    action = askModel(key, task, history, img, lessons, useTree ? TREE_MODEL : MODEL, useTree ? ElementList.describe(tree) : null);
                 } catch (Exception e) {
                     if (cancelled) return L.t("已停止。");
                     return L.t("連不上 AI：") + e.getMessage();
                 }
                 if (action == null) return L.t("AI 的回答看不懂，已停止。");
                 if (cancelled) return L.t("已停止。");
+                if (useTree && action.has("pick") && !ElementList.pick(action, tree)) {
+                    history.add(step + ". 找不到編號 " + action.optInt("pick") + "，下一步改看截圖");
+                    forceShot = true;
+                    continue;
+                }
                 JSONObject det = detail(step, action, Usage.tallyNow() - tokBefore);
                 details.add(det);
                 int historyBefore = history.size();
@@ -281,10 +293,14 @@ final class AgentLoop {
 
     // ---------- 模型 ----------
 
-    private static JSONObject askModel(String key, String task, List<String> history, String img, List<String> lessons) throws Exception {
+    /** img 為 null 且 elements 有值時是元件清單模式：不送截圖，只送編號清單。 */
+    private static JSONObject askModel(String key, String task, List<String> history, String img, List<String> lessons,
+                                       String model, String elements) throws Exception {
         JSONArray content = new JSONArray();
-        content.put(new JSONObject().put("type", "image").put("source",
-                new JSONObject().put("type", "base64").put("media_type", "image/jpeg").put("data", img)));
+        if (img != null) {
+            content.put(new JSONObject().put("type", "image").put("source",
+                    new JSONObject().put("type", "base64").put("media_type", "image/jpeg").put("data", img)));
+        }
         StringBuilder text = new StringBuilder("任務：").append(task);
         if (!lessons.isEmpty()) {
             text.append("\n已學到的經驗（之前記下來的規律，照用）：\n");
@@ -294,10 +310,14 @@ final class AgentLoop {
             text.append("\n已執行的動作（最近的在後面）：\n");
             for (int i = Math.max(0, history.size() - 8); i < history.size(); i++) text.append(history.get(i)).append('\n');
         }
+        if (elements != null) {
+            text.append("\n畫面元件清單（編號. 文字）：\n").append(elements);
+            text.append("這一步沒有截圖。要點哪個元件就回 {\"action\":\"tap\",\"pick\":編號}，不要給 x、y；清單裡沒有你要的，就先 scroll 看看。\n");
+        }
         text.append("\n請決定下一步，只輸出一行 JSON。");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
         JSONArray messages = new JSONArray().put(new JSONObject().put("role", "user").put("content", content));
-        JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 800)
+        JSONObject body = new JSONObject().put("model", model).put("max_tokens", 800)
                 .put("system", new JSONArray().put(new JSONObject().put("type", "text")
                         .put("text", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM)
                         .put("cache_control", new JSONObject().put("type", "ephemeral"))))   // 系統提示詞快取：每一步重複送，命中時輸入費用約降到 1/20
