@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1279
+
 - 任務過程顯示每一步用的模型、輸入與輸出 token，以及估價（第三方價格，以 Console 為準）｜Task details now show each step's model, input and output tokens, and an estimated cost (third-party prices; check the Console)
 
 ## 1.0.1278
