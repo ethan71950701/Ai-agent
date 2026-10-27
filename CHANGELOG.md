@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1278
+
 - 省錢實驗「元件清單」：開關打開後不截圖，改給 Haiku 看畫面元件編號，點不到時自動改回截圖＋Sonnet（預設關閉）｜Cost experiment "element list": when on, the assistant reads numbered on-screen elements instead of screenshots and uses Haiku, falling back to screenshots and Sonnet when a number is not found (off by default)
 
 ## 1.0.1277
