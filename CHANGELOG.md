@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 嘗試修正回答卡片有時沒跳出：要跳卡片時，進度條多留 2.5 秒，避免被系統當成背景啟動而擋掉｜Attempted fix for the answer card sometimes not appearing: the progress bar stays 2.5 seconds longer when a card is about to show, so the system does not block it as a background launch
+
 - 查手機本身的資訊（Android 版本、電量、容量、時間）時，不再先打開設定等 App，直接用指令查｜When asking for the phone's own information (Android version, battery, storage, time), the assistant no longer opens Settings or another app first and queries it with a command directly
 
 ## 1.0.1297

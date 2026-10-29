@@ -151,7 +151,10 @@ final class AgentLoop {
         try {
             return runInner(c, task, ui, preOpen);
         } finally {
-            OverlayService.endSteps(c);
+            // 要跳回答卡片時，進度條多留一下：Android 只允許「有看得見的懸浮視窗」的 App 在背景啟動畫面，
+            // 太早收掉的話，面板接著要叫出的回答卡片可能被系統靜默擋掉
+            if (showCard) MAIN.postDelayed(() -> OverlayService.endSteps(c), 2500);
+            else OverlayService.endSteps(c);
         }
     }
 
