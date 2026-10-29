@@ -171,7 +171,7 @@ final class Updater {
                 Intent cb = new Intent(action).setPackage(a.getPackageName());
                 s.commit(android.app.PendingIntent.getBroadcast(a, id, cb, android.app.PendingIntent.FLAG_MUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender());
             }
-            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」")));
+            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」"))   /* 沒 root 的更新：系統安裝畫面要使用者按一下 */);
         } catch (Exception e) {
             apk.delete();
             done(a, L.t("安裝失敗：") + e.getMessage());
