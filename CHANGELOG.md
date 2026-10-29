@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1294
+
 - 新增直接切換深色模式、勿擾、自動旋轉、定位的指令；元件清單也能讀拉下來的通知欄、快速設定；助理面板蓋住畫面時先收起再讀；查詢指令的輸出縮短，省 token｜Direct commands for dark mode, Do Not Disturb, auto-rotate and location; the element list can read the pulled-down notification shade and quick settings; the assistant panel is hidden first when it covers the screen; query command output is shortened to save tokens
 
 ## 1.0.1293
