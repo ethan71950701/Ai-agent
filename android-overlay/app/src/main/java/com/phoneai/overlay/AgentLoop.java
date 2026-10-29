@@ -392,10 +392,36 @@ final class AgentLoop {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < out.length(); i++) if ("text".equals(out.getJSONObject(i).optString("type"))) sb.append(out.getJSONObject(i).optString("text"));
         lastRaw = sb.length() == 0 ? "（空）" + r.optString("stop_reason") : sb.substring(0, Math.min(sb.length(), 80));
+        if (sb.indexOf("<invoke") >= 0) {   // 模型有時回成工具呼叫的 XML 格式，不是 JSON
+            JSONObject inv = parseInvoke(sb.toString());
+            if (inv != null) return inv;
+        }
         return parseLast(sb.toString());
     }
 
     /** 取最後一個 JSON 物件（能處理巢狀，例如 batch 的 actions 陣列）。 */
+    /** <invoke name="動作"><parameter name="欄位">值</parameter>…</invoke> 轉成一般的動作 JSON；轉不出來回 null。 */
+    static JSONObject parseInvoke(String out) {
+        Matcher m = Pattern.compile("<invoke\\s+name=\"([^\"]+)\"\\s*>(.*?)(</invoke>|$)", Pattern.DOTALL).matcher(out);
+        if (!m.find()) return null;
+        try {
+            JSONObject o = new JSONObject().put("action", m.group(1));
+            Matcher p = Pattern.compile("<parameter\\s+name=\"([^\"]+)\"\\s*>(.*?)</parameter>", Pattern.DOTALL).matcher(m.group(2));
+            while (p.find()) {
+                String k = p.group(1), v = p.group(2).trim();
+                if (v.matches("-?\\d+")) o.put(k, Long.parseLong(v));
+                else if (v.matches("-?\\d*\\.\\d+")) o.put(k, Double.parseDouble(v));
+                else if (v.equals("true") || v.equals("false")) o.put(k, Boolean.parseBoolean(v));
+                else if (v.startsWith("[")) o.put(k, new JSONArray(v));
+                else if (v.startsWith("{")) o.put(k, new JSONObject(v));
+                else o.put(k, v);
+            }
+            return o;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     static JSONObject parseLast(String out) {
         JSONObject found = null;
         int i = 0;
@@ -722,8 +748,16 @@ final class AgentLoop {
             case "bluetooth_off": sh("svc bluetooth disable"); return "已關閉藍牙";
             case "volume_up": sh("input keyevent 24"); return "已調大音量";
             case "volume_down": sh("input keyevent 25"); return "已調小音量";
+            case "notifications_open": sh("cmd statusbar expand-notifications"); return "已打開通知欄";
+            case "quick_settings_open": sh("cmd statusbar expand-settings"); return "已打開快速設定";
+            case "panels_close": sh("cmd statusbar collapse"); return "已收起通知欄";
             default: return "不認識的命令：" + name;
         }
+    }
+
+    /** 送出輸入框：先用輸入法的動作鍵（搜尋／前往），沒用才送假的 Enter 鍵。 */
+    private static void pressEnter() {
+        if (!RippleAccessibilityService.imeEnter()) sh("input keyevent 66");
     }
 
     /** 文字輸入：ASCII 直接 input text；中文等用剪貼簿貼上。clear = 先全選再刪。 */
@@ -731,7 +765,7 @@ final class AgentLoop {
         if (text == null) text = "";
         if (!text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
             // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
-            if (enter) sh("input keyevent 66");
+            if (enter) { sleep(200); pressEnter(); }
             return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
         }
         if (clear) { sh("input keycombination 113 29"); sh("input keyevent 67"); }
@@ -751,7 +785,7 @@ final class AgentLoop {
             if (!paste(c, text)) return "沒辦法輸入「" + text + "」：剪貼簿寫不進去（Android 的限制），不要再試貼上，改用 open_url 開網址";
             sh("input keyevent 279");   // KEYCODE_PASTE
         }
-        if (enter) sh("input keyevent 66");
+        if (enter) pressEnter();
         return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
     }
 
