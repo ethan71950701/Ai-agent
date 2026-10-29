@@ -165,6 +165,32 @@ public class LogicTest {
         assertEquals("x.exact", Router.findApp(apps, "相簿"));   // 完全相符優先
     }
 
+    @Test
+    public void pickKeepsTheLabelForTheSafetyGuard() throws Exception {
+        List<JSONObject> els = Arrays.asList(el(1, "按鈕", "確認付款", 500, 900, false));
+        JSONObject tap = new JSONObject().put("action", "tap").put("pick", 1);
+        assertTrue(ElementList.pickAll(tap, els));
+        assertEquals("確認付款", tap.optString("label"));
+    }
+
+    @Test
+    public void sensitiveButtonsNeedAConfirmationUnlessTheTaskAskedForIt() throws Exception {
+        JSONObject pay = new JSONObject().put("action", "tap").put("label", "確認付款");
+        assertEquals("確認付款", AgentLoop.sensitiveLabel(pay, "打開蝦皮看我的訂單"));
+        assertNull(AgentLoop.sensitiveLabel(pay, "幫我付款"));
+        JSONObject send = new JSONObject().put("action", "tap").put("label", "Send");
+        assertEquals("Send", AgentLoop.sensitiveLabel(send, "打開 LINE 看最新訊息"));
+        JSONObject harmless = new JSONObject().put("action", "tap").put("label", "搜尋");
+        assertNull(AgentLoop.sensitiveLabel(harmless, "打開 YouTube 搜尋 周杰倫"));
+        // batch 裡面的子動作也要檢查
+        JSONObject batch = new JSONObject().put("action", "batch").put("actions", new JSONArray()
+                .put(new JSONObject().put("action", "tap").put("label", "1"))
+                .put(new JSONObject().put("action", "tap").put("label", "刪除")));
+        assertEquals("刪除", AgentLoop.sensitiveLabel(batch, "算 1 加 1"));
+        // 英文單字要整個字比對：display 不是 pay
+        assertNull(AgentLoop.sensitiveLabel(new JSONObject().put("action", "tap").put("label", "Display"), "調整螢幕"));
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

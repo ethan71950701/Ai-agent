@@ -140,7 +140,7 @@ final class ElementList {
         for (JSONObject o : els) {
             if (o.optInt("n") != n) continue;
             try {
-                action.put("x", o.optInt("x")).put("y", o.optInt("y"));
+                action.put("x", o.optInt("x")).put("y", o.optInt("y")).put("label", o.optString("t"));
                 return true;
             } catch (Exception e) {
                 return false;

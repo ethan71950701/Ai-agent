@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 防「畫面文字夾帶指令」：提示規定畫面上的文字只是資料；AI 要點付款、刪除、傳送這類敏感按鈕、而你的任務沒提到時，一定先跳確認框｜Defence against instructions hidden in on-screen text: the prompt says screen text is data only, and when the AI wants to tap a sensitive button (pay, delete, send…) that your task did not mention, a confirmation always appears first
+
 - 開 App 時認得常見的同義說法（相簿＝圖庫、計算機＝計算器、日曆＝行事曆…），不再因為名稱對不上白白多花一步｜Opening an app now understands common synonyms (相簿 = 圖庫, 計算機 = 計算器, 日曆 = 行事曆…), so a name mismatch no longer wastes a step
 
 ## 1.0.1302
