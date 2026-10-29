@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1327
+
 - 設定導覽第一頁變簡潔，新增「三種模式比較」可以點開看 root／Shizuku／普通 的差別｜The first setup page is simpler and has a "Compare the three modes" link that explains the difference between root, Shizuku and Normal
+
 ## 1.0.1326
 
 - 新增三種執行模式：root、Shizuku（不用 root，用 adb 等級權限）、普通（只用無障礙）。在設定導覽第一頁選，之後可到「設定 → 執行任務時 → 執行模式」改；Shizuku 模式下開關 Wi-Fi／藍牙、輸入、截圖等都走 Shizuku｜Three execution modes: root, Shizuku (no root, adb-level permission) and Normal (accessibility only). Pick one on the first page of the setup guide, change it later in Settings; in Shizuku mode Wi-Fi/Bluetooth toggles, input and screenshots all go through Shizuku
