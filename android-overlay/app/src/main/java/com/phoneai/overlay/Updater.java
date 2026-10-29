@@ -132,13 +132,13 @@ final class Updater {
         }
     }
 
-    /** 不用 root 安裝：PackageInstaller 一次寫入 APK，系統跳出安裝確認（需要允許「安裝未知應用程式」）。 */
     /** 安裝回呼（InstallResultReceiver）收到結果後：清掉下載好的 APK、解除忙碌。 */
     static void finishInstall(Context c) {
         new File(c.getCacheDir(), "update.apk").delete();
         busy = false;
     }
 
+    /** 不用 root 安裝：把 APK 交給系統安裝程式（跟瀏覽器下載的 APK 同一個畫面，有「安裝中／完成」），需要允許「安裝未知應用程式」。 */
     private static void installWithoutRoot(Activity a, File apk, String v) {
         try {
             if (!a.getPackageManager().canRequestPackageInstalls()) {
@@ -149,22 +149,12 @@ final class Updater {
                 busy = false;   // APK 留著：授權後再按更新，直接安裝不用重下載
                 return;
             }
-            android.content.pm.PackageInstaller pi = a.getPackageManager().getPackageInstaller();
-            android.content.pm.PackageInstaller.SessionParams sp = new android.content.pm.PackageInstaller.SessionParams(android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-            int id = pi.createSession(sp);
-            try (android.content.pm.PackageInstaller.Session s = pi.openSession(id)) {
-                try (InputStream in = new java.io.FileInputStream(apk); OutputStream o = s.openWrite("update.apk", 0, apk.length())) {
-                    byte[] buf = new byte[65536];
-                    int n;
-                    while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
-                    s.fsync(o);
-                }   // 先關掉檔案再 commit，不然會出現 Files still open
-                Intent cb = new Intent(a, InstallResultReceiver.class);   // 明確指定元件：Android 14 不允許可變的隱含 PendingIntent
-                s.commit(android.app.PendingIntent.getBroadcast(a, id, cb, android.app.PendingIntent.FLAG_MUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender());
-            }
-            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」"))   /* 沒 root 的更新：系統安裝畫面要使用者按一下（測試用的版本號推進 2） */);
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(a, a.getPackageName() + ".update", apk);
+            Intent it = new Intent(Intent.ACTION_INSTALL_PACKAGE).setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION).putExtra(Intent.EXTRA_RETURN_RESULT, false);
+            a.runOnUiThread(() -> a.startActivity(it));
+            busy = false;
         } catch (Exception e) {
-            apk.delete();
             done(a, L.t("安裝失敗：") + e.getMessage());
         }
     }
