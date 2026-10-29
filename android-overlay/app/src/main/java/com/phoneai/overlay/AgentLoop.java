@@ -166,15 +166,23 @@ final class AgentLoop {
         String finalSay = null;
         boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", false);
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
+        String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
+        int sameTree = 0;
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 if (cancelled) return L.t("已停止。");
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
                 // 元件清單模式：不截圖，改給 Haiku 看元件編號清單；編號點不到時這一步改回截圖＋Sonnet。
+                boolean wasForced = forceShot;
                 List<JSONObject> tree = treeOn && !forceShot ? ElementList.collect(wh[0], wh[1]) : null;
                 forceShot = false;
                 boolean useTree = tree != null && !tree.isEmpty();
+                int treeNote = !treeOn ? -1 : useTree ? tree.size() : wasForced ? -2 : 0;   // 診斷用，顯示在任務過程
+                String treeText = useTree ? ElementList.describe(tree) : null;
+                sameTree = treeText != null && treeText.equals(lastTreeText) ? sameTree + 1 : 0;
+                lastTreeText = treeText;
+                if (useTree && sameTree >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 清單連續三次沒變：這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot();
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessons = Memory.lessonsFor(c, st.opened);
@@ -197,8 +205,8 @@ final class AgentLoop {
                 }
                 if (action == null) return L.t("AI 的回答看不懂，已停止。");
                 if (cancelled) return L.t("已停止。");
-                if (useTree && action.has("pick") && !ElementList.pick(action, tree)) {
-                    history.add(step + ". 找不到編號 " + action.optInt("pick") + "，下一步改看截圖");
+                if (useTree && !ElementList.pickAll(action, tree)) {
+                    history.add(step + ". 有找不到的元件編號，下一步改看截圖");
                     forceShot = true;
                     continue;
                 }
@@ -271,7 +279,7 @@ final class AgentLoop {
                     }
                 }
                 try {
-                    if (treeOn) det.put("tree", useTree ? tree.size() : tree == null ? -2 : 0);   // 診斷：這一步有沒有用元件清單
+                    if (treeOn) det.put("tree", treeNote);   // 診斷：這一步有沒有用元件清單
                     usage(det, model, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
                 } catch (Exception ignored) { }
@@ -341,8 +349,10 @@ final class AgentLoop {
             for (int i = Math.max(0, history.size() - 5); i < history.size(); i++) text.append(history.get(i)).append('\n');
         }
         if (elements != null) {
-            text.append("\n畫面元件清單（編號. 文字）：\n").append(elements);
+            text.append("\n畫面元件清單（編號. 種類「文字」(大約位置x,y，0到1000)）：\n").append(elements);
             text.append("這一步沒有截圖。要點哪個元件就回 {\"action\":\"tap\",\"pick\":編號}，不要給 x、y；清單裡沒有你要的，就先 scroll 看看。\n");
+            text.append("連續點好幾個、而且點完畫面不會換頁的（例如計算機的數字鍵），用 {\"action\":\"batch\",\"actions\":[{\"action\":\"tap\",\"pick\":編號},...]}，一次做完。\n");
+            text.append("要確認輸入了什麼或結果是什麼，看種類是「輸入框」或位置在最上方的大顯示區；位置在按鍵上方的小膠囊（常是剪貼簿的建議數字或文字）不是已經輸入的內容，不要當成輸入完成。畫面連續幾步都沒變，就換個方法，不要一直 wait。\n");
         }
         text.append("\n請決定下一步，只輸出一行 JSON。");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));

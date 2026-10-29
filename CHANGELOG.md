@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 元件清單實驗：清單標出輸入框／按鈕／文字與位置，避免把計算機上方的建議膠囊當成已輸入；可用 batch 一次連點多個編號；畫面連續沒變時改用截圖＋Sonnet｜Element-list experiment: the list now marks input boxes, buttons and text with positions, so suggestion chips above a calculator are not mistaken for entered text; batch can tap several numbers at once; if the screen does not change for several steps it falls back to a screenshot with Sonnet
+
 ## 1.0.1284
 
 - 任務一開始要先開某個 App 時，由判斷路由的 Haiku 5.5 直接指定，程式先打開它，不用再花一步請模型決定，更快也更省｜When a task starts by opening an app, the routing step (Haiku 5.5) now names it and the app opens it first, saving a model step so tasks are faster and cheaper

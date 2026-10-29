@@ -55,7 +55,8 @@ final class ElementList {
             boolean actionable = n.isClickable() || n.isLongClickable() || n.isCheckable() || n.isEditable();
             boolean onScreen = r.width() > 0 && r.height() > 0 && r.bottom > 0 && r.top < h && r.right > 0 && r.left < w;
             if (onScreen && (actionable || !label.isEmpty())) {
-                JSONObject el = element(out.size() + 1, (r.centerX() * 1000) / w, (r.centerY() * 1000) / h, label);
+                String kind = n.isEditable() ? "輸入框" : actionable ? "按鈕" : "文字";
+                JSONObject el = element(out.size() + 1, (r.centerX() * 1000) / w, (r.centerY() * 1000) / h, label, kind);
                 if (el != null) out.add(el);
             }
         }
@@ -70,19 +71,34 @@ final class ElementList {
         return s.length() > LABEL_MAX ? s.substring(0, LABEL_MAX) : s;
     }
 
-    private static JSONObject element(int n, int x, int y, String t) {
+    private static JSONObject element(int n, int x, int y, String t, String k) {
         try {
-            return new JSONObject().put("n", n).put("x", x).put("y", y).put("t", t);
+            return new JSONObject().put("n", n).put("x", x).put("y", y).put("t", t).put("k", k);
         } catch (Exception e) {
             return null;
         }
     }
 
-    /** 給 AI 看的清單：只有編號與文字，不給座標（點擊時程式去查）。 */
+    /** 給 AI 看的清單：編號、種類（輸入框／按鈕／文字）、文字、大約位置（0～1000，只用來分辨上下左右；點擊仍用編號）。 */
     static String describe(List<JSONObject> els) {
         StringBuilder sb = new StringBuilder();
-        for (JSONObject o : els) sb.append(o.optInt("n")).append(". ").append(o.optString("t").isEmpty() ? "（無文字）" : o.optString("t")).append('\n');
+        for (JSONObject o : els) {
+            sb.append(o.optInt("n")).append(". ").append(o.optString("k")).append('「')
+                    .append(o.optString("t").isEmpty() ? "無文字" : o.optString("t")).append("」(")
+                    .append(o.optInt("x")).append(',').append(o.optInt("y")).append(")\n");
+        }
         return sb.toString();
+    }
+
+    /** 動作本身或 batch 裡每個子動作的 pick 都換成 x、y；有任何一個找不到編號就回 false。 */
+    static boolean pickAll(JSONObject action, List<JSONObject> els) {
+        if (action.has("pick") && !pick(action, els)) return false;
+        org.json.JSONArray subs = action.optJSONArray("actions");
+        for (int i = 0; subs != null && i < subs.length(); i++) {
+            JSONObject sub = subs.optJSONObject(i);
+            if (sub != null && sub.has("pick") && !pick(sub, els)) return false;
+        }
+        return true;
     }
 
     /** 把 action 裡的 pick（編號）換成 x、y；找不到編號回 false。 */

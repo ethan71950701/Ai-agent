@@ -69,6 +69,7 @@ public class TaskDetailActivity extends Activity {
                     int tn = d.optInt("tree");
                     card.addView(Ui.body(this, tn > 0 ? String.format(Locale.US, L.t("元件清單：%d 個元件"), tn)
                             : tn == 0 ? L.t("元件清單：沒有讀到元件，這一步改用截圖")
+                            : tn == -3 ? L.t("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet")
                             : L.t("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet")));
                 }
             }
