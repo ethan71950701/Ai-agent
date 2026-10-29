@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- Gemini 教學更正：Key 也可能以 AQ. 開頭｜Gemini guide corrected: keys may also start with AQ.
+
 - 修正「AI 服務」選單只顯示說明、選不了的問題；入口改到「功能 → 資料 → AI 服務與 API Key」（設定裡的那一列移除），設定導覽第 6 步也改成同一個流程｜Fixed the "AI service" dialog showing only text with nothing to pick; the entry moved to Functions → Data → "AI service and API key" (the Settings row is gone) and setup guide step 6 now uses the same flow
 ## 1.0.1330
 

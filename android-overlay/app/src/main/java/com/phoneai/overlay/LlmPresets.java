@@ -20,7 +20,7 @@ final class LlmPresets {
                     "https://aistudio.google.com/apikey",
                     "用 Google 帳號登入 Google AI Studio（按下面「開啟申請頁面」）。",
                     "按「Create API key」（建立 API 金鑰），選一個專案。",
-                    "複製產生的 Key（AIza 開頭），回到這裡按「下一步」，再貼上。",
+                    "複製產生的 Key（以 AIza 或 AQ. 開頭），回到這裡按「下一步」，再貼上。",
                     "免費方案有每分鐘與每天的次數上限，用完會顯示 429，等一下再試。"),
             new Preset("OpenAI", "https://api.openai.com/v1", "gpt-4o-mini", "gpt-4o",
                     "https://platform.openai.com/api-keys",

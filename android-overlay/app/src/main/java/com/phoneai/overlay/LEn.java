@@ -518,7 +518,7 @@ final class LEn {
         m.put("其他（自己填網址）", "Other (enter your own URL)");
         m.put("用 Google 帳號登入 Google AI Studio（按下面「開啟申請頁面」）。", "Sign in to Google AI Studio with a Google account (tap \"Open the sign-up page\" below).");
         m.put("按「Create API key」（建立 API 金鑰），選一個專案。", "Tap \"Create API key\" and pick a project.");
-        m.put("複製產生的 Key（AIza 開頭），回到這裡按「下一步」，再貼上。", "Copy the generated key (starts with AIza), come back, tap Next and paste it.");
+        m.put("複製產生的 Key（以 AIza 或 AQ. 開頭），回到這裡按「下一步」，再貼上。", "Copy the generated key (starts with AIza or AQ.), come back, tap Next and paste it.");
         m.put("免費方案有每分鐘與每天的次數上限，用完會顯示 429，等一下再試。", "The free tier has per-minute and per-day limits; when used up you see 429, wait and retry.");
         m.put("登入 OpenAI Platform（按下面「開啟申請頁面」），到 Billing 先儲值（預付制）。", "Sign in to the OpenAI Platform (tap \"Open the sign-up page\" below) and add credit under Billing (prepaid).");
         m.put("到 API keys 按「Create new secret key」。", "Go to API keys and tap \"Create new secret key\".");
