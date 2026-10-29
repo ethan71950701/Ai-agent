@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 背景模式分成兩層：設定裡的「背景模式按鈕」（有 root 預設開，決定面板上顯示不顯示按鈕），和面板上的按鈕本身（每次自己按，預設關，開著才在第二螢幕執行任務）｜Background mode now has two layers: the "Background mode button" in Settings (on by default with root, decides whether the panel shows the button) and the button itself in the panel (you press it each time, off by default, tasks run on the second screen only when it is on)
+## 1.0.1341
 
 - 背景模式搬進 App（有 root 才能用）：開啟後任務在隱形的第二螢幕執行，不動目前畫面；任務結束自動收掉。設定新增「測試背景螢幕」可先檢查手機支不支援。目前只用截圖模式，銀行、支付類 App 不會在背景操作；預設仍是關閉｜Background mode is back in the app (root only): when on, the task runs on an invisible second screen without touching your current screen and is removed afterwards. Settings has a new "Test background screen" check. Screenshot mode only for now, banking and payment apps are never operated in the background; still off by default
+
 ## 1.0.1340
 
 - 沒有 root 時，助理面板的背景模式按鈕和設定裡的「背景模式」「無障礙自動修復」不再顯示（這些都要 root）｜Without root the background-mode button in the assistant panel and the Background mode and Accessibility auto-repair rows in Settings are no longer shown (they need root)
