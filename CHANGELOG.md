@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1306
+
 - 新增「巨集」：任務成功做完後記住每一步（記的是元件名稱，不是座標），下次同樣的任務直接重播，AI 只確認結果；畫面對不上就交回 AI，連續失敗兩次就刪掉；可在設定 → 執行任務時關閉或清除｜New "macros": after a task succeeds, every step is remembered (by element name, not coordinates) and the same task is replayed directly next time with the AI only checking the result; if the screen does not match, the AI takes over, and a macro that fails twice in a row is deleted; it can be turned off or cleared under Settings → While running a task
 
 ## 1.0.1305
