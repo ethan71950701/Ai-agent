@@ -1097,8 +1097,8 @@ final class AgentLoop {
             case "wifi_off": sh("svc wifi disable"); return "已關閉 Wi-Fi";
             case "bluetooth_on": sh("svc bluetooth enable"); return "已開啟藍牙";
             case "bluetooth_off": sh("svc bluetooth disable"); return "已關閉藍牙";
-            case "volume_up": sh("input keyevent 24"); return "已調大音量";
-            case "volume_down": sh("input keyevent 25"); return "已調小音量";
+            case "volume_up": sh("input keyevent 24"); return "已調大音量" + Phone.volumeNow(App.ctx);
+            case "volume_down": sh("input keyevent 25"); return "已調小音量" + Phone.volumeNow(App.ctx);
             case "dark_mode_on": sh("cmd uimode night yes"); return "已開啟深色模式";
             case "dark_mode_off": sh("cmd uimode night no"); return "已關閉深色模式";
             case "dnd_on": sh("cmd notification set_dnd on"); return "已開啟勿擾模式";

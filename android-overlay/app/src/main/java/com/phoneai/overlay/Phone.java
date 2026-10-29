@@ -251,11 +251,22 @@ final class Phone {
         }
     }
 
+    /** 目前媒體音量（不用 root 也讀得到），接在音量指令的結果後面，AI 就知道要不要再按。 */
+    static String volumeNow(Context c) {
+        try {
+            AudioManager am = c.getSystemService(AudioManager.class);
+            int v = am.getStreamVolume(AudioManager.STREAM_MUSIC), max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            return "（現在媒體音量 " + v + "/" + max + (v == 0 ? "，已是最小" : v == max ? "，已是最大" : "") + "）";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     private static String volume(Context c, boolean up) {
         try {
             c.getSystemService(AudioManager.class).adjustStreamVolume(AudioManager.STREAM_MUSIC,
                     up ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
-            return up ? "已調大音量" : "已調小音量";
+            return (up ? "已調大音量" : "已調小音量") + volumeNow(c);
         } catch (Exception e) {
             return "調整音量失敗：" + e.getMessage();
         }

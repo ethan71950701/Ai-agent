@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 調音量後會回報目前音量（例如 3/15，0 就是最小），AI 不用再一格一格猜｜After changing the volume the result now reports the current level (e.g. 3/15; 0 = minimum), so the AI no longer has to guess step by step
+
 ## 1.0.1311
 
 - 在 root 管理器撤銷 PhoneAI 的 root 之後，下一個任務會自動改用無障礙模式，不用重開 App｜After root is revoked for PhoneAI in the root manager, the next task automatically switches to the accessibility mode without restarting the app
