@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1326
+
 - 新增三種執行模式：root、Shizuku（不用 root，用 adb 等級權限）、普通（只用無障礙）。在設定導覽第一頁選，之後可到「設定 → 執行任務時 → 執行模式」改；Shizuku 模式下開關 Wi-Fi／藍牙、輸入、截圖等都走 Shizuku｜Three execution modes: root, Shizuku (no root, adb-level permission) and Normal (accessibility only). Pick one on the first page of the setup guide, change it later in Settings; in Shizuku mode Wi-Fi/Bluetooth toggles, input and screenshots all go through Shizuku
+
 ## 1.0.1325
 
 - 固定指令：說「音量調到 30%」「聲音百分之八十」之類（0～100 的數字）會直接設定媒體音量，不經 AI、不花 token、不用 root｜Fixed command: saying "volume to 30%" (any number 0-100) sets the media volume directly, with no AI call, no tokens and no root
