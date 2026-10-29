@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1312
+
 - 調音量後會回報目前音量（例如 3/15，0 就是最小），AI 不用再一格一格猜｜After changing the volume the result now reports the current level (e.g. 3/15; 0 = minimum), so the AI no longer has to guess step by step
 
 ## 1.0.1311
