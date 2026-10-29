@@ -65,6 +65,9 @@ public class TaskDetailActivity extends Activity {
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f"),
                         d.optString("model"), d.optLong("in"), d.optLong("out"), d.optDouble("cost"))));
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("快取：寫入 %,d、讀取 %,d"), d.optLong("cw"), d.optLong("cr"))));
+                if (d.has("retry")) {   // Haiku 的回覆看不懂、這一步多花了一次 Sonnet
+                    card.addView(Ui.body(this, String.format(Locale.US, L.t("Haiku 的回覆看不懂，這一步改用 Sonnet 重問（回覆開頭：%s）"), d.optString("retry"))));
+                }
                 if (d.has("tree")) {   // 元件清單模式的診斷
                     int tn = d.optInt("tree");
                     card.addView(Ui.body(this, tn > 0 ? String.format(Locale.US, L.t("元件清單：%d 個元件"), tn)

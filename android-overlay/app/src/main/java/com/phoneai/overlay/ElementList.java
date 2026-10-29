@@ -64,7 +64,7 @@ final class ElementList {
             boolean onScreen = r.width() > 0 && r.height() > 0 && r.bottom > 0 && r.top < h && r.right > 0 && r.left < w;
             if (onScreen && (actionable || !label.isEmpty())) {
                 String kind = n.isEditable() ? "輸入框" : actionable ? "按鈕" : "文字";
-                JSONObject el = element(out.size() + 1, (r.centerX() * 1000) / w, (r.centerY() * 1000) / h, label, kind);
+                JSONObject el = element(out.size() + 1, (r.centerX() * 1000) / w, (r.centerY() * 1000) / h, label, kind, n.isFocused());
                 if (el != null) out.add(el);
             }
         }
@@ -79,9 +79,9 @@ final class ElementList {
         return s.length() > LABEL_MAX ? s.substring(0, LABEL_MAX) : s;
     }
 
-    private static JSONObject element(int n, int x, int y, String t, String k) {
+    private static JSONObject element(int n, int x, int y, String t, String k, boolean focused) {
         try {
-            return new JSONObject().put("n", n).put("x", x).put("y", y).put("t", t).put("k", k);
+            return new JSONObject().put("n", n).put("x", x).put("y", y).put("t", t).put("k", k).put("f", focused);
         } catch (Exception e) {
             return null;
         }
@@ -91,7 +91,7 @@ final class ElementList {
     static String describe(List<JSONObject> els) {
         StringBuilder sb = new StringBuilder();
         for (JSONObject o : els) {
-            sb.append(o.optInt("n")).append(". ").append(o.optString("k")).append('「')
+            sb.append(o.optInt("n")).append(". ").append(o.optString("k")).append(o.optBoolean("f") ? "（已聚焦）" : "").append('「')
                     .append(o.optString("t").isEmpty() ? "無文字" : o.optString("t")).append("」(")
                     .append(o.optInt("x")).append(',').append(o.optInt("y")).append(")\n");
         }

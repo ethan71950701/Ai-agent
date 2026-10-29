@@ -199,6 +199,7 @@ final class AgentLoop {
                 // 元件清單開著、但第一步讀不到元件（桌面）：第一步通常只是開 App，先用 Haiku＋截圖；它回了要座標的動作再升級 Sonnet。
                 boolean cheapFirst = treeOn && step == 1 && !useTree;
                 String model = useTree || cheapFirst ? TREE_MODEL : MODEL;
+                String retryRaw = null;   // Haiku 的回覆看不懂、改用 Sonnet 重問時，留下 Haiku 回覆的開頭給任務過程看
                 try {
                     action = askModel(key, task, history, img, lessons, model, useTree ? ElementList.describe(tree) : null);
                     if (cheapFirst && action != null && needsCoords(action.optString("action"))) {
@@ -206,6 +207,7 @@ final class AgentLoop {
                         action = askModel(key, task, history, img, lessons, model, null);
                     }
                     if (action == null && model.equals(TREE_MODEL)) {   // Haiku 的回覆解析不出動作：用 Sonnet＋截圖重問一次
+                        retryRaw = lastRaw;
                         String shot = img != null ? img : screenshot();
                         if (shot != null) {
                             model = MODEL;
@@ -299,6 +301,7 @@ final class AgentLoop {
                     }
                 }
                 try {
+                    if (retryRaw != null) det.put("retry", retryRaw);
                     if (treeOn) det.put("tree", treeNote);   // 診斷：這一步有沒有用元件清單
                     usage(det, model, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
@@ -374,6 +377,7 @@ final class AgentLoop {
         if (elements != null) {
             text.append("\n畫面元件清單（編號. 種類「文字」(大約位置x,y，0到1000)）：\n").append(elements);
             text.append("這一步沒有截圖。要點哪個元件就回 {\"action\":\"tap\",\"pick\":編號}，不要給 x、y；清單裡沒有你要的，就先 scroll 看看。\n");
+            text.append("標了「已聚焦」的輸入框已經可以直接輸入（用 type），不用再點它一次。\n");
             text.append("連續點好幾個、而且點完畫面不會換頁的（例如計算機的數字鍵），用 {\"action\":\"batch\",\"actions\":[{\"action\":\"tap\",\"pick\":編號},...]}，一次做完。\n");
             text.append("要確認輸入了什麼或結果是什麼，看種類是「輸入框」或位置在最上方的大顯示區。畫面連續幾步都沒變，就換個方法，不要一直 wait。\n");
         }
