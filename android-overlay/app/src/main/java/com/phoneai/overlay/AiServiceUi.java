@@ -31,11 +31,21 @@ final class AiServiceUi {
     static void open(Activity a, Runnable done) {
         String[] items = {L.t("兩個都用同一家（簡單）"), L.t("只設定便宜模型（判斷、讀元件清單）"), L.t("只設定看圖模型（截圖）")};
         String[] scopes = {ALL, LlmConfig.CHEAP, LlmConfig.VISION};
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 服務"))
-                .setMessage(L.t("目前：便宜模型 ") + LlmConfig.cheap(a).label() + L.t("｜看圖模型 ") + LlmConfig.vision(a).label()
-                        + L.t("\n\n兩個可以選不同的服務，例如便宜的用 DeepSeek、看圖的用 Gemini。"))
-                .setItems(items, (d, which) -> chooseService(a, scopes[which], done))
-                .setNegativeButton(L.t("取消"), null).show();
+        LinearLayout box = new LinearLayout(a);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int p = Ui.dp(a, 20);
+        box.setPadding(p, p / 2, p, 0);
+        box.addView(Ui.body(a, L.t("目前：便宜模型 ") + LlmConfig.cheap(a).label() + L.t("｜看圖模型 ") + LlmConfig.vision(a).label()
+                + L.t("\n\n兩個可以選不同的服務，例如便宜的用 DeepSeek、看圖的用 Gemini。")));
+        final androidx.appcompat.app.AlertDialog[] dlg = new androidx.appcompat.app.AlertDialog[1];
+        for (int i = 0; i < items.length; i++) {
+            final String scope = scopes[i];
+            com.google.android.material.button.MaterialButton b = Ui.pill(a, items[i], i == 0, v -> { dlg[0].dismiss(); chooseService(a, scope, done); });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, Ui.dp(a, 48));
+            lp.topMargin = Ui.dp(a, 10);
+            box.addView(b, lp);
+        }
+        dlg[0] = new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 服務與 API Key")).setView(box).setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void chooseService(Activity a, String scope, Runnable done) {

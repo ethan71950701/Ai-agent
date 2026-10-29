@@ -29,14 +29,14 @@ public class GuideActivity extends Activity {
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
             "1. 選擇執行模式", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
-            "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
+            "6. AI 服務與 API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
             "選一種執行模式，之後隨時可以在設定改。不確定就選「普通」，什麼都不用裝。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
             "讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。",
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
-            "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
+            "AI 需要一個服務才能思考：Claude（預設）、Google Gemini（有免費額度）、OpenAI 等都可以，便宜模型和看圖模型也能分開選。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
             "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
             "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
             "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
@@ -51,7 +51,9 @@ public class GuideActivity extends Activity {
                     "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
                     "有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。"},
             {"按「允許麥克風」，在系統視窗按「允許」。"},
-            {"用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
+            {"按下面的「選擇 AI 服務與 Key」，選一家服務；非 Claude 的服務會有申請 Key 的教學與預設模型。",
+                    "以下是用 Claude 時的步驟：",
+                    "用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
                     "到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。",
                     "到 Settings → API keys → Create key，名稱隨意（例如 phone-agent）。",
                     "重要：Linked account 選「未連結」，工作區選「預設工作區」。選「你的帳號」會拿到個人 Key（sk-ant-usr- 開頭），這個專案用它會 401。",
@@ -89,7 +91,7 @@ public class GuideActivity extends Activity {
     private static final String[] MODE_LABELS = {"root", "Shizuku", "普通"};
     private rikka.shizuku.Shizuku.OnRequestPermissionResultListener shizukuListener;
     private static final String[] BTN = {"檢查", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
-            "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
+            "選擇 AI 服務與 Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
     private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
@@ -198,7 +200,7 @@ public class GuideActivity extends Activity {
             case 2: requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF); break;
             case 3: startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); break;
             case 4: requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); break;
-            case 5: Maintenance.askKey(this, this::refresh); break;
+            case 5: AiServiceUi.open(this, this::refresh); break;
             case 6: downloadVoice(); break;
             case 7:
                 try {

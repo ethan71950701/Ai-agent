@@ -475,6 +475,13 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("AI 服務與 API Key", "AI service and API key");
+        m.put("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡", "Pick Claude, Gemini, OpenAI and more; the key stays on the phone");
+        m.put("6. AI 服務與 API Key", "6. AI service and API key");
+        m.put("選擇 AI 服務與 Key", "Choose AI service and key");
+        m.put("AI 需要一個服務才能思考：Claude（預設）、Google Gemini（有免費額度）、OpenAI 等都可以，便宜模型和看圖模型也能分開選。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。", "The AI needs a service to think: Claude (default), Google Gemini (free tier), OpenAI and others all work, and the cheap and vision models can be chosen separately. The key is stored only in this phone's app folder and is never uploaded elsewhere.");
+        m.put("按下面的「選擇 AI 服務與 Key」，選一家服務；非 Claude 的服務會有申請 Key 的教學與預設模型。", "Tap \"Choose AI service and key\" below and pick a service; services other than Claude come with a how-to for getting a key and default models.");
+        m.put("以下是用 Claude 時的步驟：", "The steps below are for Claude:");
         m.put("API Key：", "API key: ");
         m.put("\n\n兩個可以選不同的服務，例如便宜的用 DeepSeek、看圖的用 Gemini。", "\n\nYou can pick different services for the two, e.g. DeepSeek for the cheap model and Gemini for vision.");
         m.put("保留目前的", "Keep current");
