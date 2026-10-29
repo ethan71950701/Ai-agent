@@ -22,11 +22,26 @@ final class AbTestUi {
         }
         String last = AbTest.last(a);
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 比較測試"))
-                .setMessage(L.t("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。"))
-                .setPositiveButton(L.t("開始"), (d, w) -> pick(a))
+                .setMessage(L.t("同一批固定的任務（簡單題或困難題，下一步選），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。"))
+                .setPositiveButton(L.t("開始"), (d, w) -> chooseSet(a))
                 .setNegativeButton(L.t("取消"), null);
         if (last != null) b.setNeutralButton(L.t("上次結果"), (d, w) -> showResult(a, last));
         b.show();
+    }
+
+    /** 選題組：簡單題確認基本功能；困難題不保證每個模型都做得到，才分得出高下。 */
+    private static void chooseSet(Activity a) {
+        java.util.List<AbTest.Task> both = new ArrayList<>();
+        java.util.Collections.addAll(both, AbTest.EASY);
+        java.util.Collections.addAll(both, AbTest.HARD);
+        String[] items = {
+                String.format(L.t("簡單題（%d 個）：Wi-Fi 頁面、算 123＋45、時鐘碼錶、設定搜尋"), AbTest.EASY.length),
+                String.format(L.t("困難題（%d 個）：捲動找選項、連續算數、讀取資訊、搜尋後進入、跨 App；不一定做得到"), AbTest.HARD.length),
+                String.format(L.t("全部（%d 個）"), both.size())};
+        AbTest.Task[][] sets = {AbTest.EASY, AbTest.HARD, both.toArray(new AbTest.Task[0])};
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("選題組"))
+                .setItems(items, (d, which) -> { AbTest.tasks = sets[which]; pick(a); })
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void pick(Activity a) {
@@ -126,13 +141,13 @@ final class AbTestUi {
     }
 
     private static void confirmRun(Activity a, List<AbTest.Config> chosen) {
-        int tasks = AbTest.TASKS.length;
+        int tasks = AbTest.tasks.length;
         new MaterialAlertDialogBuilder(a).setTitle(L.t("開始比較？"))
                 .setMessage(String.format(L.t("會跑 %d 組 × %d 個任務，AI 操作你的手機約 %d 到 %d 分鐘，期間請不要碰螢幕。要停可以按 Now Bar 的「停止」。免費方案可能遇到次數上限，會算失敗。"), chosen.size(), tasks, chosen.size() * 2, chosen.size() * 4))
                 .setPositiveButton(L.t("開始"), (d, w) -> {
                     Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     new Thread(() -> {
-                        AbTest.run(a.getApplicationContext(), chosen);
+                        AbTest.run(a.getApplicationContext(), chosen, AbTest.tasks);
                         // 跑完把 App 帶回前景，顯示結果
                         a.getApplicationContext().startActivity(new Intent(a.getApplicationContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     }, "ab-test").start();

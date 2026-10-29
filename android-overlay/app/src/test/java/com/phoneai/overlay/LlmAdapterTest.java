@@ -155,6 +155,15 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void abTestSetsAreWellFormed() {
+        for (AbTest.Task[] set : new AbTest.Task[][]{AbTest.EASY, AbTest.HARD})
+            for (AbTest.Task k : set) {
+                assertTrue(k.task.length() > 5);
+                assertTrue("每題都要有判斷成功的依據：" + k.name, k.mustSee != null || k.mustPkg != null || k.mustReply != null);
+            }
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

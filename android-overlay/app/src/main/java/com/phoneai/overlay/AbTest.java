@@ -28,19 +28,35 @@ final class AbTest {
     /** 跑完還沒給使用者看的結果（MainActivity 回到前景時顯示）。 */
     static volatile String unseen;
 
+    /** mustSee＝最後畫面上要看得到其中一個文字；mustReply＝AI 的回答要含其中一個；mustPkg＝最後在前景的 App 套件要含這個字；extra＝測完還要一起強制關閉的 App。 */
     static final class Task {
-        final String name, task, app, mustSee, mustPkg, mustReply;
-        Task(String name, String task, String app, String mustSee, String mustPkg, String mustReply) {
-            this.name = name; this.task = task; this.app = app; this.mustSee = mustSee; this.mustPkg = mustPkg; this.mustReply = mustReply;
+        final String name, task, app, mustPkg;
+        final String[] mustSee, mustReply, extra;
+        Task(String name, String task, String app, String[] mustSee, String mustPkg, String[] mustReply, String... extra) {
+            this.name = name; this.task = task; this.app = app; this.mustSee = mustSee; this.mustPkg = mustPkg; this.mustReply = mustReply; this.extra = extra;
         }
     }
 
-    static final Task[] TASKS = {
-            new Task("Wi-Fi 頁面", "進入設定裡的 Wi-Fi 頁面", "設定", "Wi-Fi", "settings", null),
-            new Task("計算 123＋45", "打開計算機，計算 123 加 45，告訴我結果", "計算機", null, null, "168"),
+    private static String[] a(String... s) { return s; }
+
+    /** 簡單題：兩邊通常都做得到，用來確認基本功能。 */
+    static final Task[] EASY = {
+            new Task("Wi-Fi 頁面", "進入設定裡的 Wi-Fi 頁面", "設定", a("Wi-Fi"), "settings", null),
+            new Task("計算 123＋45", "打開計算機，計算 123 加 45，告訴我結果", "計算機", null, null, a("168")),
             new Task("時鐘碼錶", "打開時鐘，進入碼錶頁面", "時鐘", null, "clock", null),
-            new Task("設定搜尋藍牙", "打開設定，在搜尋欄輸入「藍牙」", "設定", "藍牙", "settings", null)
+            new Task("設定搜尋藍牙", "打開設定，在搜尋欄輸入「藍牙」", "設定", a("藍牙"), "settings", null)
     };
+
+    /** 困難題：要捲動找選項、連續算數、讀取資訊、跨 App；不保證每個模型都做得到，用來分出高下。 */
+    static final Task[] HARD = {
+            new Task("找軟體資訊", "打開設定，往下捲動找到「關於手機」，進入後再進入「軟體資訊」頁面", "設定", a("軟體資訊", "Software information", "One UI"), "settings", null),
+            new Task("連續算數", "打開計算機，計算 (123 + 45) × 6 − 78，告訴我結果", "計算機", null, null, a("930")),
+            new Task("讀取螢幕逾時", "打開設定，進入「顯示」，找到螢幕逾時（螢幕關閉時間）目前設定是多久，告訴我", "設定", null, null, a("秒", "分鐘", "分")),
+            new Task("搜尋後進入結果", "打開設定，搜尋「螢幕解析度」，點進第一個搜尋結果", "設定", a("解析度", "Screen resolution", "resolution"), "settings", null),
+            new Task("跨 App", "先打開計算機算 12 乘 12，記下結果，再打開時鐘進入碼錶頁面，最後告訴我算出的結果", "計算機", null, "clock", a("144"), "時鐘")
+    };
+
+    static Task[] tasks = EASY;
 
     static final class Config {
         final String name;
@@ -98,8 +114,9 @@ final class AbTest {
     }
 
     /** 在背景執行緒呼叫。跑完把結果文字存起來並放進 unseen。 */
-    static void run(Context c, List<Config> configs) {
+    static void run(Context c, List<Config> configs, Task[] taskSet) {
         if (running) return;
+        tasks = taskSet;
         running = true;
         stopRequested = false;
         List<Result> results = new ArrayList<>();
@@ -112,7 +129,7 @@ final class AbTest {
             Map<String, String> apps = Router.apps(c);
             for (Config cfg : configs) {
                 LlmConfig.override = new LlmConfig.Slot[]{cfg.cheap, cfg.vision};
-                for (Task t : TASKS) {
+                for (Task t : taskSet) {
                     if (stopRequested) break;
                     progress = cfg.name + "：" + t.name;
                     resetPhone(c, apps, t);
@@ -159,7 +176,7 @@ final class AbTest {
     private static String check(Context c, Task t, String reply) {
         if (reply == null) return L.t("沒有回覆");
         for (String bad : new String[]{"已到最大步數", "已停止", "截圖失敗", "出錯", "失敗", "HTTP "}) if (reply.contains(bad) && !reply.contains("已完成")) return reply.length() > 80 ? reply.substring(0, 80) + "…" : reply;
-        if (t.mustReply != null && !reply.contains(t.mustReply)) return L.t("回答裡沒有「") + t.mustReply + "」：" + (reply.length() > 60 ? reply.substring(0, 60) + "…" : reply);
+        if (t.mustReply != null && !containsAny(reply, t.mustReply)) return L.t("回答裡沒有「") + t.mustReply[0] + "」：" + (reply.length() > 60 ? reply.substring(0, 60) + "…" : reply);
         if (t.mustPkg != null) {
             String fg = ElementList.foregroundPackage();
             if (fg == null || !fg.toLowerCase(Locale.ROOT).contains(t.mustPkg)) return L.t("最後畫面不是預期的 App（") + fg + "）";
@@ -168,10 +185,15 @@ final class AbTest {
             int[] wh = AgentLoop.screenSize();
             List<JSONObject> els = ElementList.collect(wh[0], wh[1]);
             boolean seen = false;
-            for (JSONObject o : els == null ? new ArrayList<JSONObject>() : els) if (o.optString("t").contains(t.mustSee)) { seen = true; break; }
-            if (!seen) return L.t("最後畫面上看不到「") + t.mustSee + "」";
+            for (JSONObject o : els == null ? new ArrayList<JSONObject>() : els) if (containsAny(o.optString("t"), t.mustSee)) { seen = true; break; }
+            if (!seen) return L.t("最後畫面上看不到「") + t.mustSee[0] + "」";
         }
         return null;
+    }
+
+    private static boolean containsAny(String text, String[] needles) {
+        for (String n : needles) if (text.contains(n)) return true;
+        return false;
     }
 
     /** 回主畫面並強制關閉要測的 App，讓每一組都從一樣的起點開始。 */
@@ -182,6 +204,10 @@ final class AbTest {
                 if (t != null && apps != null) {
                     String pkg = Router.findApp(apps, t.app);
                     if (pkg != null && pkg.matches("[A-Za-z0-9._]+")) Maintenance.suRun("am force-stop " + pkg);
+                    for (String extra : t.extra) {
+                        String p2 = Router.findApp(apps, extra);
+                        if (p2 != null && p2.matches("[A-Za-z0-9._]+")) Maintenance.suRun("am force-stop " + p2);
+                    }
                 }
             } else {
                 Phone.key("home");

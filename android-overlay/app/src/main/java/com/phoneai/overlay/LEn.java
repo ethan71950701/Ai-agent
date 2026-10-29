@@ -475,6 +475,10 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("簡單題（%d 個）：Wi-Fi 頁面、算 123＋45、時鐘碼錶、設定搜尋", "Easy set (%d tasks): Wi-Fi page, calculate 123+45, clock stopwatch, search in Settings");
+        m.put("困難題（%d 個）：捲動找選項、連續算數、讀取資訊、搜尋後進入、跨 App；不一定做得到", "Hard set (%d tasks): scroll to find an option, chained arithmetic, reading information, search then open, across apps; may not succeed");
+        m.put("全部（%d 個）", "Everything (%d tasks)");
+        m.put("選題組", "Pick a task set");
         m.put("選要比較的 API", "Pick the APIs to compare");
         m.put("至少勾兩個才能比較", "Tick at least two to compare");
         m.put("已勾選 %d 個（至少要 2 個）", "%d selected (at least 2)");
@@ -497,7 +501,7 @@ final class LEn {
         m.put("\n\n成功判斷是粗略的（看最後畫面有沒有該有的文字），預估花費用我們內建的價格表，只是參考。", "\n\nSuccess is judged roughly (whether the final screen shows what it should) and the cost uses our built-in price table, so treat it as a guide only.");
         m.put("上次結果", "Last results");
         m.put("停止測試", "Stop the test");
-        m.put("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。", "The same small tasks (Wi-Fi page, calculate 123+45, clock stopwatch, search Bluetooth in Settings) are run once with each AI service to compare success, steps, time and estimated cost.\n\nDuring the test the AI operates your phone (Settings, Calculator, Clock), so do not touch the screen; after each task it returns home and force-stops that app. Needs root or Shizuku. It uses each service's quota or money.\n\nOn the next step the APIs you can use (with a saved key) are listed; tick two or more to compare. They use the models you have set now; tap Custom combination to change a model.");
+        m.put("同一批固定的任務（簡單題或困難題，下一步選），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。", "The same fixed tasks (an easy or a hard set, chosen next) are run once with each AI service to compare success, steps, time and estimated cost.\n\nDuring the test the AI operates your phone (Settings, Calculator, Clock), so do not touch the screen; after each task it returns home and force-stops that app. Needs root or Shizuku. It uses each service's quota or money.\n\nOn the next step the APIs you can use (with a saved key) are listed; tick two or more to compare. They use the models you have set now; tap Custom combination to change a model.");
         m.put("會跑 %d 組 × %d 個任務，AI 操作你的手機約 %d 到 %d 分鐘，期間請不要碰螢幕。要停可以按 Now Bar 的「停止」。免費方案可能遇到次數上限，會算失敗。", "Runs %d groups × %d tasks; the AI operates your phone for about %d to %d minutes, do not touch the screen. Tap Stop on the Now Bar to cancel. Free tiers may hit their limits, which counts as a failure.");
         m.put("正在跑：", "Running: ");
         m.put("至少要有兩種組合才能比較：到「功能 → AI 服務與 API Key」再設定一個服務（存好 Key）。", "At least two combinations are needed: set up another service (with its key) under Functions → AI service and API key.");
