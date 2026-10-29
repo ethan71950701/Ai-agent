@@ -65,6 +65,12 @@ public class TaskDetailActivity extends Activity {
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f"),
                         d.optString("model"), d.optLong("in"), d.optLong("out"), d.optDouble("cost"))));
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("快取：寫入 %,d、讀取 %,d"), d.optLong("cw"), d.optLong("cr"))));
+                if (d.has("tree")) {   // 元件清單模式的診斷
+                    int tn = d.optInt("tree");
+                    card.addView(Ui.body(this, tn > 0 ? String.format(Locale.US, L.t("元件清單：%d 個元件"), tn)
+                            : tn == 0 ? L.t("元件清單：沒有讀到元件，這一步改用截圖＋Sonnet")
+                            : L.t("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet")));
+                }
             }
             final View v = card;
             v.postDelayed(() -> Ui.bounceIn(v), 60L * i + 120);   // 一張一張彈出來

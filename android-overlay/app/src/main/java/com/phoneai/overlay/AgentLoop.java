@@ -255,6 +255,7 @@ final class AgentLoop {
                     }
                 }
                 try {
+                    if (treeOn) det.put("tree", useTree ? tree.size() : tree == null ? -2 : 0);   // 診斷：這一步有沒有用元件清單
                     usage(det, useTree ? TREE_MODEL : MODEL, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
                 } catch (Exception ignored) { }
@@ -518,7 +519,8 @@ final class AgentLoop {
                 }
                 case "open": {
                     String pkg = a.optString("pkg", "");
-                    if (pkg.isEmpty()) return "沒有套件名稱，無法開啟「" + a.optString("name") + "」";
+                    if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));   // 提示寫「程式會用 name 查套件」，這裡真的去查
+                    if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
@@ -631,6 +633,20 @@ final class AgentLoop {
     private static void releaseDrag(State st) {
         sh(dragScript("end", st.dx, st.dy, st.dx, st.dy));
         st.dragDown = false;
+    }
+
+    /** 依 App 顯示名稱找已安裝的套件名稱：先完全相符，再找名稱互相包含的；找不到回 null。 */
+    private static String findPackage(Context c, String name) {
+        String n = Router.norm(name);
+        if (n.isEmpty()) return null;
+        java.util.Map<String, String> apps = Router.apps(c);
+        String hit = apps.get(n);
+        if (hit != null) return hit;
+        for (java.util.Map.Entry<String, String> e : apps.entrySet()) {
+            String k = e.getKey();
+            if (k.length() >= 2 && (k.contains(n) || n.contains(k))) return e.getValue();
+        }
+        return null;
     }
 
     private static String cmd(String name) {

@@ -428,6 +428,9 @@ final class LEn {
         m.put("估價約 $%.4f（第三方價格，以 Console 為準）", "Est. $%.4f (third-party prices; check Console)");
         m.put("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f", "%s · input %,d, output %,d · est. $%.4f");
         m.put(" · 估價約 $%.4f", " · est. $%.4f");
+        m.put("元件清單：%d 個元件", "Element list: %d elements");
+        m.put("元件清單：沒有讀到元件，這一步改用截圖＋Sonnet", "Element list: no elements read, using screenshot + Sonnet for this step");
+        m.put("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet", "Element list: the last number was not found, using screenshot + Sonnet for this step");
         m.put("快取：寫入 %,d、讀取 %,d", "Cache: written %,d, read %,d");
         m.put("已設定 %02d:%02d 的鬧鐘", "Alarm set for %02d:%02d.");
         m.put("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", "Opened the clock. Tap Save in the clock to set the %02d:%02d alarm.");
