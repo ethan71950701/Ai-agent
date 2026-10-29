@@ -292,6 +292,9 @@ final class AgentLoop {
                         String result = execute(action, wh, c, st);
                         String think = action.optString("think");
                         history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
+                        // 指令類動作（亮度、Wi-Fi、藍牙、音量）：模型說「做完任務就完成」(finish) 而且指令成功，就直接結束，不再多問一次模型
+                        String fin = action.optString("finish", "").trim();
+                        if (!fin.isEmpty() && (name.equals("brightness") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
                         break;
                     }
                 }
