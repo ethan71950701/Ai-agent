@@ -22,13 +22,13 @@ final class AgentPrompt {
             "{\"action\":\"type\",\"text\":\"要輸入的文字\",\"clear\":true,\"enter\":false}，在已選取的輸入框輸入文字，輸入前要先點一下輸入框；點過輸入框之後你會再看到一次畫面，這時先判斷輸入框是不是空的（只有灰色提示字或只有游標都算空的）：不是空的（有舊字）就寫\"clear\":true，程式會先全選再按一次刪除鍵清空，才貼上新的字；是空的就寫\"clear\":false，程式不會刪除；沒寫clear時當作true（保險起見會清空）；要接在原本文字後面也寫\"clear\":false。輸入完要不要送出（搜尋、傳送…）也在這一步決定：要就寫\"enter\":true，程式貼完會自動按Enter，不必再另外用一次enter動作；密碼、驗證碼、卡號不要自己輸入，改用ask（manual設true）請使用者自己輸入；不要點系統跳出的「貼上」浮動按鈕或鍵盤上的剪貼簿建議，輸入文字只用type動作；輸入並按Enter送出後，頁面常要幾秒才載入完，畫面還沒變就用wait多等幾秒再看一次，不要重複輸入同樣的字、也不要重複點搜尋列\n" +
             "{\"action\":\"enter\"}，按下Enter送出輸入框內容\n" +
             "{\"action\":\"open\",\"name\":\"App顯示名稱\",\"pkg\":\"套件名稱\"}，用指令直接開啟已安裝的App，比在桌面找圖示快；一定要寫name（例如Chrome、設定、LINE），pkg只在你很確定時才寫，程式會用name自己查套件\n" +
-            "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|notifications_open|quick_settings_open|panels_close\"}，直接開關Wi-Fi、藍牙、調音量、打開或收起通知欄／快速設定，不用點畫面\n" +
+            "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}，直接開關Wi-Fi、藍牙、深色模式、勿擾、自動旋轉、定位、調音量、打開或收起通知欄／快速設定，不用點畫面；這些設定一律先用cmd\n" +
             "{\"action\":\"brightness\",\"level\":0到100}，直接設定螢幕亮度（0最暗、100最亮），不用拖滑桿。調亮度一律用這個，shell是唯讀的不能改設定\n" +
             "brightness和cmd可以多加\"finish\":\"要告訴使用者的話\"（寫在think前面）：只有做完這個動作任務就整個完成時才加，程式成功執行後會直接結束，不會再給你看畫面確認；後面還有別的事要做就不要加\n" +
             "{\"action\":\"open_url\",\"url\":\"網址\"}，用網址開網頁或App頁面。在Google Play搜尋App用 market://search?q=關鍵字（關鍵字要做URL編碼，空白寫成%20）。搜尋中文或特殊字時一律用這個，不要靠輸入框貼上。\n" +
             "能用open或cmd做的事優先用它們，其餘才用畫面操作。\n" +
             "{\"action\":\"search\",\"q\":\"搜尋關鍵字\"}，到網路查資料。只有需要畫面上看不到的最新資訊（新聞、價格、不認得的名詞）才用；每個任務最多2次，要花錢，能靠畫面操作做完就不要搜尋；q不要放個人資料\n" +
-            "{\"action\":\"shell\",\"cmd\":\"唯讀指令\",\"why\":\"為什麼要查\"}，只讀不寫：查系統資訊（dumpsys battery、getprop、date、cat /proc/…、pm list packages、cmd wifi status…），結果寫在下一步的歷史裡，不用開畫面，查到就可以直接done回答。不能寫入、刪除、改設定；有管線只能接grep、head、tail、sort、cut、wc等過濾。查得到就不要去點畫面。查手機的規格或版本（Android 版本、型號、容量）一律用 getprop 或 dumpsys，不要打開設定頁一頁一頁找\n" +
+            "{\"action\":\"shell\",\"cmd\":\"唯讀指令\",\"why\":\"為什麼要查\"}，只讀不寫：查系統資訊（dumpsys battery、getprop、date、cat /proc/…、pm list packages、cmd wifi status…），結果寫在下一步的歷史裡，不用開畫面，查到就可以直接done回答。不能寫入、刪除、改設定；有管線只能接grep、head、tail、sort、cut、wc等過濾；輸出超過600字會被截斷，用grep只取需要的行（例如 dumpsys battery | grep level）。查得到就不要去點畫面。查手機的規格或版本（Android 版本、型號、容量）一律用 getprop 或 dumpsys，不要打開設定頁一頁一頁找\n" +
             "{\"action\":\"wait\",\"wait\":秒數}，什麼都不做，只等待（App或遊戲載入中、廣告倒數時用，0.5到6秒）\n" +
             "{\"action\":\"back\"}、{\"action\":\"home\"}\n" +
             "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、驗證碼、指紋、授權）時manual設true，使用者做完會按是，之後你再看畫面繼續；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
@@ -55,7 +55,7 @@ final class AgentPrompt {
             "{\"action\":\"type\",\"text\":\"text\",\"clear\":true,\"enter\":false}  (tap the input box first)\n" +
             "{\"action\":\"enter\"}  {\"action\":\"back\"}  {\"action\":\"home\"}  {\"action\":\"wait\",\"wait\":seconds}  (0.5 to 6)\n" +
             "{\"action\":\"open\",\"name\":\"App name\",\"pkg\":\"package name\"}  (open an installed app directly; always give name)\n" +
-            "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|notifications_open|quick_settings_open|panels_close\"}\n" +
+            "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}  (use these first for these settings)\n" +
             "{\"action\":\"brightness\",\"level\":0 to 100}  (set the screen brightness directly, 0 is darkest; always use this for brightness, shell is read-only)\n" +
             "brightness and cmd may add \"finish\":\"what to tell the user\" (before think): only when the whole task is complete after this action; the program ends right after it succeeds without showing you the screen. Do not add it if more work remains.\n" +
             "{\"action\":\"open_url\",\"url\":\"URL\"}  (open a web page or app page by URL; to search Google Play use market://search?q=KEYWORD with %20 for spaces; prefer this over typing non-ASCII text)\n" +

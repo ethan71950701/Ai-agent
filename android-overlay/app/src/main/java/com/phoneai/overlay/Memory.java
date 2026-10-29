@@ -109,7 +109,7 @@ final class Memory {
     }
 
     /** 從 all（舊到新）挑 n 則：跟任務文字重疊的詞越多越優先，同分的新的優先；回傳順序是舊到新。 */
-    private static List<String> pickRelevant(List<String> all, String task, int n) {
+    static List<String> pickRelevant(List<String> all, String task, int n) {
         if (all.size() <= n) return new ArrayList<>(all);
         final java.util.Set<String> tb = bigrams(task);
         List<Integer> idx = new ArrayList<>();

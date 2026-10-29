@@ -45,6 +45,9 @@ android {
         ndk { abiFilters "arm64-v8a" }
     }
 
+    testOptions {
+        unitTests.returnDefaultValues = true   // 測試時 Android 的類別（Handler、Looper…）回預設值，不要丟例外
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -56,4 +59,7 @@ dependencies {
     implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.dynamicanimation:dynamicanimation:1.0.0"   // 彈簧動畫（底欄、展開、按壓回彈）
     // 離線語音辨識（SenseVoice，sherpa-onnx 的 Java 介面；原生函式庫由 GitHub 編譯時下載，見 SherpaEngine）
+    // 單元測試（不需要手機）：純邏輯的解析與挑選；Android 內建的 org.json 在電腦上是空殼，測試要用真的
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.json:json:20231013"
 }

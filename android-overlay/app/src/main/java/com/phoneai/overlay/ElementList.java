@@ -19,15 +19,40 @@ final class ElementList {
     private static final int MAX = 80;
     private static final int LABEL_MAX = 40;
 
-    /** 目前的目標 App 畫面上的元件；拿不到（無障礙沒開、沒有目標視窗）回空清單。 */
+    /** 畫面最上層、讀得到元件的視窗裡的元件；拿不到（無障礙沒開、沒有可讀的視窗）回空清單。 */
     static List<JSONObject> collect(int w, int h) {
         List<JSONObject> out = new ArrayList<>();
         RippleAccessibilityService svc = RippleAccessibilityService.instance;
         if (svc == null) return out;
-        AccessibilityNodeInfo root = targetRoot(svc);
-        if (root == null) return out;
-        walk(root, w, h, out);
+        for (AccessibilityNodeInfo root : candidateRoots(svc, h)) {
+            walk(root, w, h, out);
+            if (!out.isEmpty()) return out;   // 最上層的視窗讀不到東西（例如收起來的通知欄），就換下一層
+        }
         return out;
+    }
+
+    /**
+     * 由上往下（依圖層）的候選視窗：別的 App 的應用程式視窗，以及佔螢幕四成以上高度的系統視窗（拉下來的通知欄、快速設定）。
+     * 略過 PhoneAI 自己的視窗、鍵盤、無障礙懸浮層；狀態列、導覽列這種細長的系統視窗也略過。
+     */
+    private static List<AccessibilityNodeInfo> candidateRoots(RippleAccessibilityService svc, int h) {
+        List<AccessibilityNodeInfo> roots = new ArrayList<>();
+        List<AccessibilityWindowInfo> wins = svc.getWindows();
+        if (wins == null) return roots;
+        List<AccessibilityWindowInfo> sorted = new ArrayList<>(wins);
+        sorted.sort((a, b) -> b.getLayer() - a.getLayer());
+        Rect bounds = new Rect();
+        for (AccessibilityWindowInfo win : sorted) {
+            int type = win.getType();
+            if (type == AccessibilityWindowInfo.TYPE_SYSTEM) {
+                win.getBoundsInScreen(bounds);
+                if (bounds.height() < h * 0.4) continue;
+            } else if (type != AccessibilityWindowInfo.TYPE_APPLICATION) continue;
+            AccessibilityNodeInfo r = win.getRoot();
+            if (r == null || svc.getPackageName().equals(String.valueOf(r.getPackageName()))) continue;
+            roots.add(r);
+        }
+        return roots;
     }
 
     /** 目前前景（目標）App 的套件名稱；讀不到回 null。經驗要記在哪個 App、要帶哪個 App 的經驗，都用它。 */

@@ -14,6 +14,7 @@
 
 ## 怎麼建置
 - 雲端可用 Android SDK + Gradle 先編譯確認：`cd android-overlay && gradle assembleDebug`。
+- 單元測試（純邏輯，不需要手機）：`cd android-overlay && gradle testDebugUnitTest`，測試在 `app/src/test/`；CI 編譯前會先跑。
 - 正式 APK 由 GitHub Actions 產生（`.github/workflows/android.yml`），使用者從 Release 下載安裝。
 
 ## 規則

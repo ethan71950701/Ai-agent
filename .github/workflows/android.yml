@@ -72,6 +72,9 @@ jobs:
         run: |
           echo "::error::main 上需要簽名金鑰：請照 docs/PUBLISH_CHECKLIST.md「簽名金鑰」設定 4 個 Secrets 後重跑"
           exit 1
+      - name: Unit tests
+        working-directory: android-overlay
+        run: gradle --no-daemon testDebugUnitTest
       - name: Build debug APK
         working-directory: android-overlay
         run: gradle --no-daemon assembleDebug -PgitSha=${GITHUB_SHA::7}

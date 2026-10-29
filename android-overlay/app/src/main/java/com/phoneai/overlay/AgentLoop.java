@@ -180,6 +180,10 @@ final class AgentLoop {
                 boolean wasForced = forceShot;
                 List<JSONObject> tree = treeOn && !forceShot ? ElementList.collect(wh[0], wh[1]) : null;
                 forceShot = false;
+                if (treeOn && !wasForced && (tree == null || tree.isEmpty()) && !panelHidden[0]) {   // 助理面板蓋住下面的畫面時讀不到元件：先收起面板再讀
+                    hideBeforeOperate(ui, panelHidden, "tap");
+                    tree = ElementList.collect(wh[0], wh[1]);
+                }
                 // App 剛打開或剛換頁、還在載入時讀不到元件：等一下再讀，不要馬上改用 Sonnet＋截圖（桌面第一步沒有預先開 App，不等）
                 for (int tries = 0; treeOn && !wasForced && (step > 1 || preOpen != null) && (tree == null || tree.isEmpty()) && tries < 2; tries++) {
                     sleep(1200);
@@ -639,7 +643,7 @@ final class AgentLoop {
                     String cmd = a.optString("cmd");
                     if (!readOnly(cmd)) return "拒絕：這不是唯讀指令";
                     String out = sh(cmd);
-                    return out.length() > 1500 ? out.substring(0, 1500) + "…" : out;
+                    return out.length() > 600 ? out.substring(0, 600) + "…（太長已截斷，用 grep 只取需要的行）" : out;   // 整段會塞進之後每一步的歷史，太長很花 token
                 }
                 default:
                     return "「" + name + "」尚未支援（之後會搬進來）";
@@ -773,6 +777,14 @@ final class AgentLoop {
             case "bluetooth_off": sh("svc bluetooth disable"); return "已關閉藍牙";
             case "volume_up": sh("input keyevent 24"); return "已調大音量";
             case "volume_down": sh("input keyevent 25"); return "已調小音量";
+            case "dark_mode_on": sh("cmd uimode night yes"); return "已開啟深色模式";
+            case "dark_mode_off": sh("cmd uimode night no"); return "已關閉深色模式";
+            case "dnd_on": sh("cmd notification set_dnd on"); return "已開啟勿擾模式";
+            case "dnd_off": sh("cmd notification set_dnd off"); return "已關閉勿擾模式";
+            case "auto_rotate_on": sh("settings put system accelerometer_rotation 1"); return "已開啟自動旋轉";
+            case "auto_rotate_off": sh("settings put system accelerometer_rotation 0"); return "已關閉自動旋轉";
+            case "location_on": sh("cmd location set-location-enabled true"); return "已開啟定位";
+            case "location_off": sh("cmd location set-location-enabled false"); return "已關閉定位";
             case "notifications_open": sh("cmd statusbar expand-notifications"); return "已打開通知欄";
             case "quick_settings_open": sh("cmd statusbar expand-settings"); return "已打開快速設定";
             case "panels_close": sh("cmd statusbar collapse"); return "已收起通知欄";
