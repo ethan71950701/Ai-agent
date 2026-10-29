@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1307
+
 - 新增雙擊動作；助理新增三個工具：新增行事曆事件、在地圖上找地方、撥號（都只是打開對應的 App 並填好，要自己按儲存或撥出）｜Added a double-tap action; the assistant has three new tools: add a calendar event, show a place on the map, and dial a number (they only open the app prefilled; you press save or call yourself)
 
 ## 1.0.1306
