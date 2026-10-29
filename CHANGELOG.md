@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 新增 OpenAI 相容的 API 支援（OpenAI、DeepSeek、Groq、OpenRouter、Ollama 等）：到「設定 → 執行任務時 → AI 服務」填網址、便宜模型、看圖模型與 Key。操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋與費用統計仍只支援 Claude｜Added OpenAI-compatible API support (OpenAI, DeepSeek, Groq, OpenRouter, Ollama...): Settings → While running tasks → AI service, enter the URL, a cheap model, a vision model and the key. The phone-operating prompts are tuned for Claude so test other models yourself; web search and cost stats remain Claude-only
+## 1.0.1327
 
 - 設定導覽第一頁變簡潔，新增「三種模式比較」可以點開看 root／Shizuku／普通 的差別｜The first setup page is simpler and has a "Compare the three modes" link that explains the difference between root, Shizuku and Normal
+
 ## 1.0.1326
 
 - 新增三種執行模式：root、Shizuku（不用 root，用 adb 等級權限）、普通（只用無障礙）。在設定導覽第一頁選，之後可到「設定 → 執行任務時 → 執行模式」改；Shizuku 模式下開關 Wi-Fi／藍牙、輸入、截圖等都走 Shizuku｜Three execution modes: root, Shizuku (no root, adb-level permission) and Normal (accessibility only). Pick one on the first page of the setup guide, change it later in Settings; in Shizuku mode Wi-Fi/Bluetooth toggles, input and screenshots all go through Shizuku
