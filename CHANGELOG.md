@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1281
+
 - 任務過程每一步多顯示快取寫入與讀取的 token，可以看出快取有沒有命中｜Task details show cache-written and cache-read tokens for each step, so you can see whether the cache is hit
 
 ## 1.0.1279
