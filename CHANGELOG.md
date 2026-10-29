@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 加入 Gemini Flash／Flash-Lite 的官網價格（含快取讀取價；3.6／3.8 Flash 在 2027-01-01 起自動改用翻倍後的價格）｜Added the official Gemini Flash / Flash-Lite prices (including the cache read rate; the 3.6 / 3.8 Flash prices automatically double from 2027-01-01)
+## 1.0.1338
 
 - 加入 OpenAI GPT-6 系列的官網價格（Astra、Sol、Terra、Luna），OpenAI 預設改成便宜 Luna、看圖 Terra｜Added the official OpenAI GPT-6 prices (Astra, Sol, Terra, Luna); OpenAI now defaults to Luna for cheap and Terra for vision
+
 ## 1.0.1337
 
 - 價格改成官網的數字：Claude（Haiku／Sonnet／Opus 5.5 與快取讀寫的實際倍率，Sonnet 5.5 快取讀取是 $0.10）與 DeepSeek（deepseek-flash／v4-pro）；DeepSeek 預設改用 deepseek-flash（官網寫支援看圖）｜Prices now follow the official pages: Claude (Haiku/Sonnet/Opus 5.5 with the real cache write/read rates; Sonnet 5.5 cache read is $0.10) and DeepSeek (deepseek-flash / v4-pro); DeepSeek now defaults to deepseek-flash (the website says it supports vision)
