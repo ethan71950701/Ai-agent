@@ -183,7 +183,8 @@ final class ChatEngine {
         JSONObject u = r.optJSONObject("usage");
         if (app != null && u != null) {
             long cw = u.optLong("cache_creation_input_tokens"), cr = u.optLong("cache_read_input_tokens");
-            Usage.add(app, "Claude", u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
+            Usage.add(app, "Claude", u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr,
+                    Usage.costOf(body.optString("model"), u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr));
             Usage.tallyAdd(body.optString("model"), u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
         }
         return r;
@@ -211,7 +212,8 @@ final class ChatEngine {
         JSONObject u = r.optJSONObject("usage");
         if (u != null) {
             long cr = u.optLong("cache_read_input_tokens");
-            Usage.add(app, LlmConfig.host(slot.base), u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr);
+            Usage.add(app, LlmConfig.host(slot.base), u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr,
+                    Usage.costOf(req.optString("model"), u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr));
             Usage.tallyAdd(req.optString("model"), u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr);
         }
         return r;

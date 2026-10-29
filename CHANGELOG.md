@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 非 Claude 的模型也會估價（Gemini、GPT-4o、DeepSeek 內建粗估價），任務過程和「用量與上限」會顯示預估花費；在用量頁點「預估價格」可以改成官網的價格（免費方案實際不收費，這是「如果付費」的估算）｜Models other than Claude now get a cost estimate (rough built-in prices for Gemini, GPT-4o, DeepSeek), shown in the task log and in Usage and limits; tap "Estimated price" on the usage page to enter the website's price (free tiers aren't actually charged, this is the "if it were paid" estimate)
+
 - 「用量與上限」現在會分服務顯示今天與這個月的請求次數和 token（Claude、Gemini…）；OpenRouter、DeepSeek 可以直接在 App 查餘額，其他服務有按鈕開啟官網用量頁｜"Usage and limits" now shows requests and tokens per service for today and this month (Claude, Gemini...); OpenRouter and DeepSeek balances can be checked in the app, and other services get a button that opens their usage page
 ## 1.0.1334
 

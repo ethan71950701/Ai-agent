@@ -475,6 +475,12 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("價格未知", "price unknown");
+        m.put("每百萬 token 的美元價（看那家官網的 Pricing 頁）。留空＝用內建的粗估值。免費方案實際不收費，這裡是「如果付費大約多少」。", "US dollars per million tokens (see that service's Pricing page). Leave empty to use the built-in rough value. Free tiers are not actually charged; this is roughly what it would cost if paid.");
+        m.put("輸入價（$／百萬 token）", "Input price ($ per million tokens)");
+        m.put("輸出價（$／百萬 token）", "Output price ($ per million tokens)");
+        m.put("預估價格：", "Estimated price: ");
+        m.put("，預估 $%.4f", ", about $%.4f");
         m.put("沒有餘額資料", "No balance data");
         m.put("目前的服務沒有可查的餘額，請到官網用量頁看。", "The current services have no balance lookup, please check the usage page on their website.");
         m.put("餘額 ", "Balance ");

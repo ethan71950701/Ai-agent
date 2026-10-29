@@ -87,6 +87,17 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void estimatesCostsForKnownModels() {
+        assertEquals(0.30, Usage.guessPrice("gemini-flash-lite-latest")[0], 1e-9);
+        assertEquals(1.50, Usage.guessPrice("gemini-flash-latest")[0], 1e-9);
+        assertEquals(0.15, Usage.guessPrice("gpt-4o-mini")[0], 1e-9);
+        assertEquals(2.50, Usage.guessPrice("gpt-4o")[0], 1e-9);
+        assertEquals(0.0, Usage.guessPrice("some-unknown-model")[0], 1e-9);
+        // 1M 輸入 + 1M 輸出（沒有快取）
+        assertEquals(0.15 + 0.60, Usage.costOf("gpt-4o-mini", 1_000_000, 1_000_000, 0, 0), 1e-9);
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

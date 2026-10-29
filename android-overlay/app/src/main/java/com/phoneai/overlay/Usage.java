@@ -46,10 +46,10 @@ final class Usage {
 
     /** 記一次呼叫的用量（在背景執行緒呼叫）。 */
     /** in＝輸入 token（含快取的寫入與讀取），out＝輸出，cw＝快取寫入，cr＝快取讀取（cw、cr 是 in 裡的明細）。 */
-    static synchronized void add(Context c, long in, long out, long cw, long cr) { add(c, "Claude", in, out, cw, cr); }
+    static synchronized void add(Context c, long in, long out, long cw, long cr) { add(c, "Claude", in, out, cw, cr, 0); }
 
     /** service＝這次請求用的服務（Claude 或網址的主機名稱），另外記每個服務當天的請求次數與 token。 */
-    static synchronized void add(Context c, String service, long in, long out, long cw, long cr) {
+    static synchronized void add(Context c, String service, long in, long out, long cw, long cr, double cost) {
         try {
             JSONObject d = load(c);
             String k = today();
@@ -58,7 +58,8 @@ final class Usage {
             long w = (e == null ? 0 : e.optLong("cw")) + cw, r = (e == null ? 0 : e.optLong("cr")) + cr;
             JSONObject svc = e == null || e.optJSONObject("svc") == null ? new JSONObject() : e.getJSONObject("svc");
             JSONObject one = svc.optJSONObject(service) == null ? new JSONObject() : svc.getJSONObject(service);
-            svc.put(service, new JSONObject().put("req", one.optLong("req") + 1).put("in", one.optLong("in") + in).put("out", one.optLong("out") + out));
+            svc.put(service, new JSONObject().put("req", one.optLong("req") + 1).put("in", one.optLong("in") + in).put("out", one.optLong("out") + out)
+                    .put("cost", one.optDouble("cost", 0) + cost));
             d.put(k, new JSONObject().put("in", i).put("out", o).put("cw", w).put("cr", r).put("svc", svc));
             String cutoff = day(System.currentTimeMillis() - KEEP_DAYS * 86400000L);
             List<String> old = new ArrayList<>();
@@ -114,6 +115,26 @@ final class Usage {
                 a[0] += o.optLong("req");
                 a[1] += o.optLong("in");
                 a[2] += o.optLong("out");
+            }
+        }
+        return out;
+    }
+
+    /** 各服務在日期前綴範圍內的預估花費（美元）。 */
+    static synchronized java.util.Map<String, Double> costByService(Context c, String prefix) {
+        java.util.Map<String, Double> out = new java.util.TreeMap<>();
+        JSONObject d = load(c);
+        java.util.Iterator<String> keys = d.keys();
+        while (keys.hasNext()) {
+            String k = keys.next();
+            JSONObject e = k.startsWith(prefix) ? d.optJSONObject(k) : null;
+            JSONObject svc = e == null ? null : e.optJSONObject("svc");
+            if (svc == null) continue;
+            java.util.Iterator<String> names = svc.keys();
+            while (names.hasNext()) {
+                String n = names.next();
+                JSONObject o = svc.optJSONObject(n);
+                if (o != null) out.merge(n, o.optDouble("cost", 0), Double::sum);
             }
         }
         return out;
@@ -186,13 +207,43 @@ final class Usage {
     private static TextView breakdown(Activity a, String prefix, String title) {
         StringBuilder sb = new StringBuilder("\n").append(title).append("：");
         java.util.Map<String, long[]> m = byService(a, prefix);
+        java.util.Map<String, Double> costs = costByService(a, prefix);
         if (m.isEmpty()) sb.append(L.t("（還沒有紀錄）"));
-        for (java.util.Map.Entry<String, long[]> e : m.entrySet())
+        for (java.util.Map.Entry<String, long[]> e : m.entrySet()) {
             sb.append("\n　").append(e.getKey()).append("　").append(e.getValue()[0]).append(L.t(" 次、")).append(String.format(Locale.US, "%,d", e.getValue()[1] + e.getValue()[2])).append(" token");
+            Double cost = costs.get(e.getKey());
+            if (cost != null && cost > 0) sb.append(String.format(Locale.US, L.t("，預估 $%.4f"), cost));
+        }
         TextView t = new TextView(a);
         t.setText(sb.toString());
         t.setTextSize(14);
         return t;
+    }
+
+    /** 改這個模型的預估價格（美元／百萬 token）：內建值是粗估，換成官網的價格會比較準；留空就用內建值。 */
+    private static void priceDialog(Activity a, String model) {
+        LinearLayout form = new LinearLayout(a);
+        form.setOrientation(LinearLayout.VERTICAL);
+        int p = Ui.dp(a, 20);
+        form.setPadding(p, p / 2, p, 0);
+        form.addView(Ui.body(a, L.t("每百萬 token 的美元價（看那家官網的 Pricing 頁）。留空＝用內建的粗估值。免費方案實際不收費，這裡是「如果付費大約多少」。")));
+        double[] cur = price(model);
+        EditText in = new EditText(a), out = new EditText(a);
+        in.setHint(L.t("輸入價（$／百萬 token）"));
+        out.setHint(L.t("輸出價（$／百萬 token）"));
+        in.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        out.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        if (customPrice(model) != null) { in.setText(String.valueOf(cur[0])); out.setText(String.valueOf(cur[1])); }
+        form.addView(in);
+        form.addView(out);
+        new MaterialAlertDialogBuilder(a).setTitle(model).setView(form)
+                .setPositiveButton(L.t("儲存"), (d, w) -> {
+                    try {
+                        if (in.getText().toString().trim().isEmpty() || out.getText().toString().trim().isEmpty()) setCustomPrice(a, model, null, null);
+                        else setCustomPrice(a, model, Double.parseDouble(in.getText().toString().trim()), Double.parseDouble(out.getText().toString().trim()));
+                    } catch (NumberFormatException ignored) { }
+                })
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     /** 「查詢餘額」（OpenRouter、DeepSeek 有公開的餘額查詢）與各服務官網的用量頁連結。 */
@@ -205,6 +256,16 @@ final class Usage {
             if (s.openai() && (LlmConfig.host(s.base).contains("openrouter") || LlmConfig.host(s.base).contains("deepseek"))) balance = true;
         }
         if (!LlmConfig.cheap(a).openai() || !LlmConfig.vision(a).openai()) pages.put("Claude", "https://console.anthropic.com/settings/usage");
+        java.util.Set<String> priced = new java.util.LinkedHashSet<>();
+        for (LlmConfig.Slot s : new LlmConfig.Slot[]{LlmConfig.cheap(a), LlmConfig.vision(a)}) if (s.openai()) priced.add(s.model);
+        for (String model : priced) {
+            double[] p = price(model);
+            String label = priceKnown(a, model) ? String.format(Locale.US, "$%.2f / $%.2f", p[0], p[1]) : L.t("價格未知");
+            com.google.android.material.button.MaterialButton b = Ui.pill(a, L.t("預估價格：") + model + "（" + label + "）", false, v -> priceDialog(a, model));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, Ui.dp(a, 44));
+            lp.bottomMargin = Ui.dp(a, 6);
+            form.addView(b, lp);
+        }
         if (balance) {
             com.google.android.material.button.MaterialButton b = Ui.pill(a, L.t("查詢餘額（OpenRouter／DeepSeek）"), false, v -> {
                 info.setText(L.t("查詢中…"));
@@ -229,9 +290,51 @@ final class Usage {
 
     /** 每百萬 token 的美元價 [輸入, 輸出]（第三方整理，請以 Console 為準）；快取寫入約 1.25 倍輸入價，快取讀取 0.1 倍。 */
     static double[] price(String model) {
-        if (model.contains("haiku")) return new double[]{0.10, 0.50};
-        if (model.contains("sonnet")) return new double[]{2.00, 10.00};
+        double[] custom = customPrice(model);
+        if (custom != null) return custom;
+        return guessPrice(model);
+    }
+
+    /** 內建的粗估價（美元／百萬 token）：第三方整理、各來源不一致，只是預估，請以官網為準；可在用量頁改成自己的價格。 */
+    static double[] guessPrice(String model) {
+        String m = model == null ? "" : model.toLowerCase(Locale.ROOT);
+        if (m.contains("haiku")) return new double[]{0.10, 0.50};
+        if (m.contains("sonnet")) return new double[]{2.00, 10.00};
+        if (m.contains("gemini") && m.contains("flash-lite")) return new double[]{0.30, 2.50};
+        if (m.contains("gemini") && m.contains("flash")) return new double[]{1.50, 7.50};
+        if (m.contains("gpt-4o-mini")) return new double[]{0.15, 0.60};
+        if (m.contains("gpt-4o")) return new double[]{2.50, 10.00};
+        if (m.contains("deepseek")) return new double[]{0.28, 0.42};
         return new double[]{0, 0};
+    }
+
+    static boolean priceKnown(Context c, String model) {
+        return customPrice(model) != null || guessPrice(model)[0] > 0;
+    }
+
+    private static double[] customPrice(String model) {
+        Context c = App.ctx;
+        if (c == null || model == null) return null;
+        String v = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("price_" + model, null);
+        if (v == null) return null;
+        try {
+            String[] p = v.split(",");
+            return new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1])};
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static void setCustomPrice(Context c, String model, Double in, Double out) {
+        android.content.SharedPreferences.Editor ed = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit();
+        if (in == null || out == null) ed.remove("price_" + model); else ed.putString("price_" + model, in + "," + out);
+        ed.apply();
+    }
+
+    static double costOf(String model, long in, long out, long cw, long cr) {
+        double[] p = price(model);
+        long base = in - cw - cr;
+        return (base * p[0] + cw * p[0] * 1.25 + cr * p[0] * 0.10 + out * p[1]) / 1000000.0;
     }
 
     /** 模型代號轉成給人看的名字，例如 claude-haiku-5-5 → Haiku 5.5。 */
@@ -289,9 +392,7 @@ final class Usage {
         }
         double[] c = COST.get();
         if (c != null) {
-            double[] p = price(model);
-            long base = in - cw - cr;
-            c[0] += (base * p[0] + cw * p[0] * 1.25 + cr * p[0] * 0.10 + out * p[1]) / 1000000.0;
+            c[0] += costOf(model, in, out, cw, cr);
         }
     }
 }
