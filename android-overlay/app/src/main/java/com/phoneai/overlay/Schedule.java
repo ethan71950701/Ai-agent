@@ -291,6 +291,10 @@ final class Schedule {
             }
         }
         if (WIFI_RE.matcher(t).find()) {
+            if (!Root.available()) {
+                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) c.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                return wm != null && wm.isWifiEnabled() ? L.t("Wi-Fi 已開啟（讀不到目前連的網路名稱）。") : L.t("Wi-Fi 目前是關閉的。");
+            }
             String out = Maintenance.suRun("cmd wifi status");
             if (out.matches("(?s).*wifi is disabled.*")) return L.t("Wi-Fi 目前是關閉的。");
             Matcher m = Pattern.compile("SSID:\\s*\"?([^\",\\n]+)\"?").matcher(out);
@@ -299,6 +303,11 @@ final class Schedule {
             if (out.matches("(?s).*wifi is enabled.*")) return L.t("Wi-Fi 已開啟（讀不到目前連的網路名稱）。");
         }
         if (VOL_RE.matcher(t).find()) {
+            if (!Root.available()) {
+                android.media.AudioManager am = (android.media.AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+                int cur = am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC), hi = am.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+                return L.t("目前媒體音量 ") + cur + L.t("／") + hi + L.t("（約 ") + Math.round(100f * cur / Math.max(1, hi)) + L.t("%）。");
+            }
             Matcher m = Pattern.compile("volume is (\\d+) in range \\[(\\d+)\\.\\.(\\d+)\\]").matcher(Maintenance.suRun("cmd media_session volume --get --stream 3"));
             if (m.find()) {
                 int cur = Integer.parseInt(m.group(1)), lo = Integer.parseInt(m.group(2)), hi = Integer.parseInt(m.group(3));

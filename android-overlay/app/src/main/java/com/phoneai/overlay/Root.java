@@ -12,6 +12,32 @@ final class Root {
     private Root() { }
 
     private static String found;
+    private static volatile Boolean rootOk;
+
+    /**
+     * 這支手機有沒有可用的 root：第一次會實際跑一次 su，結果記下來（不要在主執行緒呼叫）。
+     * 設定裡勾了「不使用 root」就一律回 false，用來測試沒有 root 的情況。
+     */
+    static boolean available() {
+        if (App.ctx != null && App.ctx.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("no_root", false)) return false;
+        Boolean r = rootOk;
+        if (r != null) return r;
+        synchronized (Root.class) {
+            if (rootOk == null) {
+                su();
+                rootOk = found != null;
+            }
+            return rootOk;
+        }
+    }
+
+    /** 使用者剛允許（或撤銷）root 之後，重新判斷。 */
+    static void recheck() {
+        synchronized (Root.class) {
+            found = null;
+            rootOk = null;
+        }
+    }
 
     /** 放在 App 資料夾裡的 su 包裝腳本。 */
     private static final String WRAPPER =

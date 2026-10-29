@@ -168,6 +168,8 @@ final class AgentLoop {
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
+        if (!Root.available() && RippleAccessibilityService.instance == null)
+            return L.t("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。");
         Memory.seedLessons(c);
         int[] wh = screenSize();
         State st = new State();
@@ -178,7 +180,7 @@ final class AgentLoop {
         lastDetails = details;
         if (preOpen != null && preOpen.matches("[A-Za-z0-9._]+")) {   // 路由已判斷第一步是開 App：不用再花一次模型呼叫
             hideBeforeOperate(ui, panelHidden, "open");   // 開 App 會把面板蓋住：先收起面板，不然任務結束時以為面板還開著、答案只顯示在被蓋住的面板裡
-            sh("monkey -p " + preOpen + " -c android.intent.category.LAUNCHER 1");
+            if (Root.available()) sh("monkey -p " + preOpen + " -c android.intent.category.LAUNCHER 1"); else Phone.launch(c, preOpen);
             st.opened.add(preOpen);
             history.add("0. 任務開始前，程式已先開啟 " + preOpen + "，不用再 open");
             sleep(2500);
@@ -409,6 +411,7 @@ final class AgentLoop {
     // ---------- 螢幕 ----------
 
     static int[] screenSize() {
+        if (!Root.available()) return Phone.screenSize(App.ctx);
         Matcher m = Pattern.compile("(\\d+)x(\\d+)").matcher(Maintenance.suRun("wm size"));
         int w = 1080, h = 2340;
         while (m.find()) { w = Integer.parseInt(m.group(1)); h = Integer.parseInt(m.group(2)); }
@@ -417,6 +420,10 @@ final class AgentLoop {
 
     /** root 截圖 → 縮成寬 WIDTH 的 JPEG → base64。失敗回 null。 */
     static String screenshot() {
+        if (!Root.available()) {   // 沒有 root：用無障礙截圖
+            Bitmap shot = Phone.screenshot();
+            return shot == null ? null : encodeJpeg(shot);
+        }
         try {
             Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
             p.getOutputStream().close();
@@ -433,6 +440,14 @@ final class AgentLoop {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static String encodeJpeg(Bitmap bmp) {
+        int h = Math.round(bmp.getHeight() * (WIDTH / (float) bmp.getWidth()));
+        Bitmap small = Bitmap.createScaledBitmap(bmp, WIDTH, h, true);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        small.compress(Bitmap.CompressFormat.JPEG, 80, out);
+        return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
     }
 
     private static byte[] readAll(InputStream in) throws Exception {
@@ -623,6 +638,10 @@ final class AgentLoop {
         int w = wh[0], h = wh[1];
         String name = a.optString("action");
         try {
+            if (!Root.available()) {   // 沒有 root：點擊、滑動、按鍵、開 App、查資訊改走無障礙與系統 API
+                String r = executeNoRoot(a, w, h, c, st);
+                if (r != null) return r;
+            }
             switch (name) {
                 case "tap": {
                     int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
@@ -833,6 +852,106 @@ final class AgentLoop {
         st.dragDown = false;
     }
 
+    private static final String NO_SERVICE = "做不到：請先到系統設定開啟 PhoneAI 的無障礙服務";
+
+    /** 沒有 root 時的動作；回 null 表示這個動作不用特別處理（交給原本的流程）。 */
+    private static String executeNoRoot(JSONObject a, int w, int h, Context c, State st) {
+        String name = a.optString("action");
+        switch (name) {
+            case "tap": {
+                int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
+                if (!Phone.tap(x, y)) return NO_SERVICE;
+                ripple(x, y, x, y);
+                return "已點擊";
+            }
+            case "longpress": {
+                int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
+                if (!Phone.longpress(x, y, clamp(a.optInt("ms", 800), 300, 5000))) return NO_SERVICE;
+                ripple(x, y, x, y);
+                return "已長按";
+            }
+            case "swipe": {
+                int x1 = px(a.optDouble("x1"), w), y1 = px(a.optDouble("y1"), h), x2 = px(a.optDouble("x2"), w), y2 = px(a.optDouble("y2"), h);
+                if (!Phone.swipe(x1, y1, x2, y2, clamp(a.optInt("ms", 300), 50, 5000))) return NO_SERVICE;
+                ripple(x1, y1, x2, y2);
+                return "已滑動";
+            }
+            case "drag": {
+                int x1 = px(a.optDouble("x1"), w), y1 = px(a.optDouble("y1"), h), x2 = px(a.optDouble("x2"), w), y2 = px(a.optDouble("y2"), h);
+                if (!Phone.drag(x1, y1, x2, y2, clamp(a.optInt("hold_ms", 600), 200, 5000), clamp(a.optInt("ms", 500), 50, 5000))) return NO_SERVICE;
+                return "已拖曳";
+            }
+            case "drag_start": case "drag_move": case "drag_end": case "drag_cancel":
+                return "不用 root 時不支援分段拖曳，請改用 drag 或 swipe";
+            case "multitouch":
+                return multitouchNoRoot(a, w, h);
+            case "scroll": {
+                boolean down = !"up".equals(a.optString("dir", "down"));
+                int x = w / 2, y1 = (int) (h * 0.7), y2 = (int) (h * 0.3);
+                if (!down) { int t = y1; y1 = y2; y2 = t; }
+                return Phone.swipe(x, y1, x, y2, 300) ? "已捲動" : NO_SERVICE;
+            }
+            case "back": return Phone.key("back") ? "已按返回" : NO_SERVICE;
+            case "home": return Phone.key("home") ? "已回桌面" : NO_SERVICE;
+            case "enter": return RippleAccessibilityService.imeEnter() ? "已按 Enter" : "沒有可以送出的輸入框（不用 root 時沒辦法送假的 Enter 鍵）";
+            case "open_url": {
+                String url = a.optString("url", "").trim();
+                if (!url.matches("(?i)^(https?|market)://[^\\s'\"`;|&<>]+$")) return "網址格式不對或不允許：" + url;
+                return Phone.openUrl(c, url) ? "已開啟網址 " + (url.length() > 60 ? url.substring(0, 60) + "…" : url) : "打不開這個網址";
+            }
+            case "open": {
+                String pkg = a.optString("pkg", "");
+                if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));
+                if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App";
+                if (!Phone.launch(c, pkg)) return "打不開 " + pkg;
+                st.opened.add(pkg);
+                return "已開啟 " + pkg;
+            }
+            case "brightness":
+                return Phone.setBrightness(c, clamp(a.optInt("level", 50), 0, 100));
+            case "shell": {
+                String cmd = a.optString("cmd");
+                if (!readOnly(cmd)) return "拒絕：這不是唯讀指令";
+                String out = Phone.shellRead(cmd);
+                return out.length() > 600 ? out.substring(0, 600) + "…（太長已截斷，用 grep 只取需要的行）" : out;
+            }
+            default:
+                return null;   // wait、type、cmd、double_tap 等照原本的流程（它們自己會判斷有沒有 root）
+        }
+    }
+
+    private static String multitouchNoRoot(JSONObject a, int w, int h) {
+        JSONArray arr = a.optJSONArray("fingers");
+        if (arr == null || arr.length() == 0) return "沒有手指的資料";
+        try {
+            JSONArray fs = new JSONArray();
+            for (int i = 0; i < Math.min(arr.length(), 4); i++) {
+                JSONObject f = arr.optJSONObject(i);
+                if (f == null) return "手指資料格式不對";
+                fs.put(new JSONObject().put("x1", px(f.optDouble("x1"), w)).put("y1", px(f.optDouble("y1"), h))
+                        .put("x2", px(f.optDouble("x2"), w)).put("y2", px(f.optDouble("y2"), h)).put("ms", clamp(f.optInt("ms", 400), 50, 5000)));
+            }
+            String r = RippleAccessibilityService.gesture(new JSONObject().put("hold", clamp(a.optInt("hold_ms", 0), 0, 5000)).put("fingers", fs));
+            return "ok".equals(r) ? "多指觸控完成（" + fs.length() + " 根手指）" : "多指觸控失敗（" + r + "）";
+        } catch (Exception e) {
+            return "多指觸控失敗：" + e.getMessage();
+        }
+    }
+
+    /** 沒有 root 的輸入：用無障礙直接填進焦點欄位，不行再用「貼上」；送出用輸入法的動作鍵。 */
+    private static String typeNoRoot(String text, boolean clear, boolean enter, Context c) {
+        boolean done = text.isEmpty();
+        if (!done) done = RippleAccessibilityService.setFocusedText(text, !clear);
+        if (!done && paste(c, text)) done = RippleAccessibilityService.pasteFocused();
+        if (!done) return "沒辦法輸入：沒有選取中的輸入框，請先點一下輸入框再輸入";
+        String shown = "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+        if (enter) {
+            sleep(200);
+            if (!RippleAccessibilityService.imeEnter()) return shown + "，但沒辦法按送出（不用 root 時沒辦法送假的 Enter 鍵），請自己按";
+        }
+        return shown;
+    }
+
     /** 這類動作要靠截圖算座標，Haiku 常點錯。 */
     private static boolean needsCoords(String name) {
         switch (name) {
@@ -969,6 +1088,10 @@ final class AgentLoop {
     }
 
     private static String cmd(String name) {
+        if (!Root.available()) {
+            String shell = Phone.shellForName(name);
+            return shell == null ? "不認識的命令：" + name : Phone.runFixedNoRoot(App.ctx, shell);
+        }
         switch (name) {
             case "wifi_on": sh("svc wifi enable"); return "已開啟 Wi-Fi";
             case "wifi_off": sh("svc wifi disable"); return "已關閉 Wi-Fi";
@@ -999,6 +1122,7 @@ final class AgentLoop {
     /** 文字輸入：ASCII 直接 input text；中文等用剪貼簿貼上。clear = 先全選再刪。 */
     private static String type(String text, boolean clear, boolean enter, Context c) {
         if (text == null) text = "";
+        if (!Root.available()) return typeNoRoot(text, clear, enter, c);
         if (!text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
             // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
             if (enter) { sleep(200); pressEnter(); }

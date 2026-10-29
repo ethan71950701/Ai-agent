@@ -310,6 +310,22 @@ public class RippleAccessibilityService extends AccessibilityService {
         }
     }
 
+    /** 無障礙的全域動作（返回、首頁、最近使用、通知欄、快速設定、鎖螢幕、截圖）；服務沒開回 false。 */
+    static boolean globalAction(int action) {
+        RippleAccessibilityService s = instance;
+        return s != null && s.performGlobalAction(action);
+    }
+
+    /** 對目前焦點的輸入框執行「貼上」（剪貼簿要先放好內容）；成功回 true。 */
+    static boolean pasteFocused() {
+        RippleAccessibilityService s = instance;
+        if (s == null) return false;
+        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        if (root == null) return false;
+        android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
+        return node != null && node.isEditable() && node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_PASTE);
+    }
+
     static RippleView view() {
         RippleAccessibilityService s = instance;
         return s == null ? null : s.view;

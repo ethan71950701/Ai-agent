@@ -37,6 +37,7 @@ final class A11yGuard {
         final Context app = c.getApplicationContext();
         final String cur = Settings.Secure.getString(app.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         new Thread(() -> {
+            if (!Root.available()) return;   // 沒有 root 補不回去，使用者要自己到系統設定重開
             String list = (cur == null || cur.isEmpty() || "null".equals(cur)) ? COMPONENT : cur + ":" + COMPONENT;   // 保留別的服務
             try {
                 Process p = new ProcessBuilder(Root.su(), "-c",

@@ -468,6 +468,9 @@ final class LEn {
         m.put("目前記住 %d 個任務", "%d tasks remembered");
         m.put("新增行事曆事件（直接建立，沒有權限才打開畫面）", "Add a calendar event (created directly; the screen only opens when permission is missing)");
         m.put("在地圖上找地方、撥號（只打開並填好，不會自動導航或撥出）", "Find a place on the map, dial a number (only opens and prefills; it does not navigate or call by itself)");
+        m.put("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。", "Without root, operating the phone relies on the accessibility service: please turn on PhoneAI's accessibility service in system settings first.");
+        m.put("不使用 root（測試用）", "Do not use root (for testing)");
+        m.put("不做任何 root 動作，改用無障礙與系統 API，用來測試沒有 root 的情況；有些功能（Wi-Fi、藍牙、深色模式…）只能打開設定頁", "No root actions at all; accessibility and system APIs are used instead, to test the no-root case. Some features (Wi-Fi, Bluetooth, dark mode…) can only open the settings page");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

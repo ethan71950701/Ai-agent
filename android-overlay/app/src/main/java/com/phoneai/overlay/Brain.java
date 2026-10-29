@@ -65,6 +65,7 @@ final class Brain {
 
     static String runFixed(Activity act, Assist.Route r) {
         if (r.confirm && !confirm(act, L.t("這個動作可能會斷網（連 AI 也會連不上），要繼續嗎？"))) return L.t("已取消");
+        if (!Root.available()) return Phone.runFixedNoRoot(act, r.cmd);   // 沒有 root：用無障礙與系統 API，做不到的打開設定頁
         Maintenance.suRun(r.cmd);
         return r.reply;
     }
