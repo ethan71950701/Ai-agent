@@ -79,6 +79,7 @@ final class AgentLoop {
         try {
             det.put("model", Usage.modelName(model)).put("tokens", now[0] - before[0])
                     .put("in", now[1] - before[1]).put("out", now[2] - before[2])
+                    .put("cw", now[3] - before[3]).put("cr", now[4] - before[4])
                     .put("cost", Usage.tallyCost() - costBefore);
         } catch (Exception ignored) { }
     }

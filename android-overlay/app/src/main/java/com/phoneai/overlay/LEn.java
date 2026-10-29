@@ -428,6 +428,7 @@ final class LEn {
         m.put("估價約 $%.4f（第三方價格，以 Console 為準）", "Est. $%.4f (third-party prices; check Console)");
         m.put("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f", "%s · input %,d, output %,d · est. $%.4f");
         m.put(" · 估價約 $%.4f", " · est. $%.4f");
+        m.put("快取：寫入 %,d、讀取 %,d", "Cache: written %,d, read %,d");
         m.put("已設定 %02d:%02d 的鬧鐘", "Alarm set for %02d:%02d.");
         m.put("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", "Opened the clock. Tap Save in the clock to set the %02d:%02d alarm.");
         m.put("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Features → Maintenance\".)");

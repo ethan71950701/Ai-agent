@@ -64,6 +64,7 @@ public class TaskDetailActivity extends Activity {
             if (!d.optString("model").isEmpty()) {   // 這一步用的模型與估價（舊紀錄沒有這些欄位就不顯示）
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f"),
                         d.optString("model"), d.optLong("in"), d.optLong("out"), d.optDouble("cost"))));
+                card.addView(Ui.body(this, String.format(Locale.US, L.t("快取：寫入 %,d、讀取 %,d"), d.optLong("cw"), d.optLong("cr"))));
             }
             final View v = card;
             v.postDelayed(() -> Ui.bounceIn(v), 60L * i + 120);   // 一張一張彈出來
