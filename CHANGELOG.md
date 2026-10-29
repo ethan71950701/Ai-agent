@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1316
+
 - 沒 root 更新：修正安裝時出現 Files still open；缺「安裝未知應用程式」權限時保留已下載的 APK，授權後不用重新下載｜Non-root update: fixed the "Files still open" install error; when the "install unknown apps" permission is missing the downloaded APK is kept so you don't download again after granting it
 
 ## 1.0.1314
