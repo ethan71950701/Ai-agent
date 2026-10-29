@@ -51,7 +51,7 @@ final class AbTest {
     /** 可以比較的組合：目前的設定、Claude，以及每個已經存了 Key 的服務（預設模型）。 */
     static List<Config> candidates(Context c) {
         List<Config> out = new ArrayList<>();
-        out.add(new Config(L.t("目前的設定"), LlmConfig.cheap(c), LlmConfig.vision(c)));
+        out.add(new Config(L.t("目前設定：") + LlmConfig.cheap(c).label() + (LlmConfig.cheap(c).label().equals(LlmConfig.vision(c).label()) ? "" : " / " + LlmConfig.vision(c).label()), LlmConfig.cheap(c), LlmConfig.vision(c)));
         if (new File(c.getFilesDir(), "claude_key").length() > 0)
             out.add(new Config("Claude（Haiku 5.5＋Sonnet 5.5）", new LlmConfig.Slot(LlmConfig.ANTHROPIC, "", ""), new LlmConfig.Slot(LlmConfig.ANTHROPIC, "", "")));
         for (LlmPresets.Preset ps : LlmPresets.ALL) {
@@ -59,8 +59,12 @@ final class AbTest {
             LlmConfig.Slot a = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.cheap), b = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.vision);
             if (LlmConfig.readKey(c, a) != null) out.add(new Config(L.t(ps.name) + "：" + ps.cheap + (ps.cheap.equals(ps.vision) ? "" : " / " + ps.vision), a, b));
         }
+        out.addAll(custom);
         return out;
     }
+
+    /** 使用者在比較測試裡臨時自訂的組合（只在這次 App 執行期間有效）。 */
+    static final List<Config> custom = new ArrayList<>();
 
     static final class Result {
         final String config, task;

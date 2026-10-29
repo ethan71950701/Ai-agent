@@ -22,7 +22,7 @@ final class AbTestUi {
         }
         String last = AbTest.last(a);
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 比較測試"))
-                .setMessage(L.t("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。"))
+                .setMessage(L.t("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步勾選要比的組合：「目前設定」就是你現在在「AI 服務與 API Key」設定的便宜／看圖模型；也可以按「自訂組合」自己挑服務和模型。"))
                 .setPositiveButton(L.t("開始"), (d, w) -> pick(a))
                 .setNegativeButton(L.t("取消"), null);
         if (last != null) b.setNeutralButton(L.t("上次結果"), (d, w) -> showResult(a, last));
@@ -50,7 +50,50 @@ final class AbTestUi {
                     if (chosen.isEmpty()) return;
                     confirmRun(a, chosen);
                 })
+                .setNeutralButton(L.t("自訂組合…"), (d, w) -> addCustom(a))
                 .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    /** 自己挑服務和模型：選一個已經存了 Key 的服務 → 向它查詢現有模型 → 選便宜與看圖各一個 → 加進清單。 */
+    private static void addCustom(Activity a) {
+        List<LlmPresets.Preset> have = new ArrayList<>();
+        for (LlmPresets.Preset ps : LlmPresets.ALL)
+            if (!ps.base.isEmpty() && LlmConfig.readKey(a, new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.cheap)) != null) have.add(ps);
+        if (have.isEmpty()) {
+            new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 比較測試")).setMessage(L.t("還沒有存好 Key 的服務：先到「功能 → AI 服務與 API Key」設定。")).setPositiveButton(L.t("知道了"), (d, w) -> pick(a)).show();
+            return;
+        }
+        String[] names = new String[have.size()];
+        for (int i = 0; i < names.length; i++) names[i] = L.t(have.get(i).name);
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("選服務"))
+                .setItems(names, (d, which) -> {
+                    LlmPresets.Preset ps = have.get(which);
+                    android.widget.Toast.makeText(a, L.t("查詢中…"), android.widget.Toast.LENGTH_SHORT).show();
+                    new Thread(() -> {
+                        List<String> models = new ArrayList<>();
+                        try { models = AiServiceUi.listModels(ps.base, LlmConfig.readKey(a, new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.cheap))); } catch (Exception ignored) { }
+                        final List<String> list = models;
+                        a.runOnUiThread(() -> pickModel(a, ps, list, true, null));
+                    }).start();
+                })
+                .setNegativeButton(L.t("取消"), (d, w) -> pick(a)).show();
+    }
+
+    /** 先選便宜模型再選看圖模型；查不到清單就用預設值。清單第一項是預設值。 */
+    private static void pickModel(Activity a, LlmPresets.Preset ps, List<String> models, boolean cheap, String cheapChoice) {
+        String def = cheap ? ps.cheap : ps.vision;
+        List<String> items = new ArrayList<>();
+        items.add(L.t("預設：") + def);
+        items.addAll(models);
+        new MaterialAlertDialogBuilder(a).setTitle(cheap ? L.t("選便宜模型（判斷、讀元件清單）") : L.t("選看圖模型（要能看圖）"))
+                .setItems(items.toArray(new String[0]), (d, which) -> {
+                    String m = which == 0 ? def : models.get(which - 1);
+                    if (cheap) { pickModel(a, ps, models, false, m); return; }
+                    LlmConfig.Slot c = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, cheapChoice), v = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, m);
+                    AbTest.custom.add(new AbTest.Config(ps.shortName() + "：" + cheapChoice + (cheapChoice.equals(m) ? "" : " / " + m), c, v));
+                    pick(a);
+                })
+                .setNegativeButton(L.t("取消"), (d, w) -> pick(a)).show();
     }
 
     private static void confirmRun(Activity a, List<AbTest.Config> chosen) {
