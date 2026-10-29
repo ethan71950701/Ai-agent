@@ -138,7 +138,7 @@ final class Updater {
         busy = false;
     }
 
-    /** 不用 root 安裝：把 APK 交給系統安裝程式（跟瀏覽器下載的 APK 同一個畫面，有「安裝中／完成」），需要允許「安裝未知應用程式」。 */
+    /** （更新測試 4）不用 root 安裝：把 APK 交給系統安裝程式（跟瀏覽器下載的 APK 同一個畫面，有「安裝中／完成」），需要允許「安裝未知應用程式」。 */
     private static void installWithoutRoot(Activity a, File apk, String v) {
         try {
             if (!a.getPackageManager().canRequestPackageInstalls()) {
