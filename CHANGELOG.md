@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1344
+
 - 背景模式：你在預覽視窗上用手接手時，AI 會暫停，放手後（或按「完成」）才繼續，並知道畫面可能已被你改過｜Background mode: when you take over on the preview window by hand the AI pauses and continues after you let go (or tap Done), knowing the screen may have changed
+
 ## 1.0.1343
 
 - 「測試背景螢幕」的結果會一併顯示背景螢幕截到的畫面｜The "Test background screen" result now also shows the screenshot taken on the background screen
