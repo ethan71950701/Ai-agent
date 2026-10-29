@@ -175,6 +175,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         MemoryActivity.warm();   // 先在背景讀好記憶，點進去就不用等
+        final boolean hadRoot = Root.knownRoot();
+        new Thread(() -> {   // 背景判斷有沒有 root；跟畫面上畫的不一樣就重建（背景模式等只有 root 才顯示的項目）
+            boolean r = Root.isRoot();
+            if (r != hadRoot) runOnUiThread(this::recreate);
+        }, "root-probe").start();
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
         LinearLayout[] c = new LinearLayout[1];
@@ -786,19 +791,22 @@ public class MainActivity extends Activity {
                 (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
 
         g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
-        Ui.switchRow(this, g, 0, 8, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
+        final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
+        final int n = hasRoot ? 8 : 6;
+        int k = 0;
+        Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                 (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-        Ui.switchRow(this, g, 1, 8, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
+        if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
                 (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
-        Ui.switchRow(this, g, 2, 8, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
+        if (hasRoot) Ui.switchRow(this, g, k++, n, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
                 (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
-        Ui.switchRow(this, g, 3, 8, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
+        Ui.switchRow(this, g, k++, n, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
                 cfg().getBoolean("tree_on", true), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());
-        Ui.row(this, g, 4, 8, "shield", L.t("保護的 App"), L.t("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）"), Ui.chevron(this), v -> chooseProtectedApps());
-        Ui.switchRow(this, g, 5, 8, "flask", L.t("記住成功的步驟（巨集）"), L.t("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省"),
+        Ui.row(this, g, k++, n, "shield", L.t("保護的 App"), L.t("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）"), Ui.chevron(this), v -> chooseProtectedApps());
+        Ui.switchRow(this, g, k++, n, "flask", L.t("記住成功的步驟（巨集）"), L.t("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省"),
                 cfg().getBoolean("macro_on", true), (v, on) -> cfg().edit().putBoolean("macro_on", on).apply());
-        Ui.row(this, g, 6, 8, "list", L.t("清除記住的步驟"), String.format(L.t("目前記住 %d 個任務"), Macros.count(this)), Ui.chevron(this), v -> { Macros.clear(this); recreate(); });
-        Ui.row(this, g, 7, 8, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
+        Ui.row(this, g, k++, n, "list", L.t("清除記住的步驟"), String.format(L.t("目前記住 %d 個任務"), Macros.count(this)), Ui.chevron(this), v -> { Macros.clear(this); recreate(); });
+        Ui.row(this, g, k++, n, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
     }
 
     private static String modeName(String m) {

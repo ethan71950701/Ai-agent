@@ -29,6 +29,11 @@ final class Root {
         }
     }
 
+    /** 不會卡住的版本：已經判斷過、而且真的有 root 才回 true（畫面建好時用；還沒判斷過回 false）。 */
+    static boolean knownRoot() {
+        return rootOk != null && rootOk && (App.ctx == null || ExecMode.ROOT.equals(ExecMode.get(App.ctx)));
+    }
+
     /** 真的有 root（用 su）：安裝 APK 這類 Shizuku 做不到的事要看這個，而不是 available()。 */
     static boolean isRoot() {
         return (App.ctx == null || ExecMode.ROOT.equals(ExecMode.get(App.ctx))) && rootAvailable();
