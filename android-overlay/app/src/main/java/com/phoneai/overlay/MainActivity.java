@@ -620,6 +620,7 @@ public class MainActivity extends Activity {
         Ui.section(this, box, L.t("資料"));
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), true, v -> AiServiceUi.open(this, this::recreate)),
+                new Ui.Tile("flask", L.t("AI 比較測試"), L.t("同一批任務用不同 AI 各跑一遍，比成功率與花費"), false, v -> AbTestUi.open(this)),
                 new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                 new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))),
                 new Ui.Tile("transfer", L.t("互傳檔案"), L.t("在自己的裝置之間互傳檔案"), false, v -> startActivity(new Intent(this, TransferActivity.class))));
@@ -854,6 +855,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        AbTestUi.showUnseen(this);
         if (!myTheme.equals(App.themeKey(this))) {   // 在教學或設定換了主題色：這一頁要跟著換（功能頁以前不會更新）
             recreate();
             return;

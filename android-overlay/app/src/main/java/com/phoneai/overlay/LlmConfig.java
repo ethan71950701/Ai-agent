@@ -32,7 +32,12 @@ final class LlmConfig {
     /** 依 Claude 模型名稱挑欄位：haiku 級走便宜模型，其餘（sonnet 級、看截圖）走看圖模型。 */
     static Slot forModel(Context c, String model) { return model != null && model.contains("haiku") ? cheap(c) : vision(c); }
 
+    /** AI 比較測試用：暫時指定便宜／看圖兩個欄位（[0]＝便宜、[1]＝看圖），不改使用者存的設定。 */
+    static volatile Slot[] override;
+
     private static Slot slot(Context c, String name) {
+        Slot[] ov = override;
+        if (ov != null) return CHEAP.equals(name) ? ov[0] : ov[1];
         SharedPreferences p = p(c);
         String prov = p.getString(name + "_provider", null);
         if (prov == null) {   // 舊版只有一組設定：兩個欄位都用同一個

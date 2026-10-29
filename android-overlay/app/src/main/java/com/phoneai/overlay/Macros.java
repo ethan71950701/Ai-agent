@@ -21,7 +21,7 @@ final class Macros {
     static final int MAX_STEPS = 12, MAX_MACROS = 100;
 
     static boolean enabled(Context c) {
-        return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("macro_on", true);
+        return !AbTest.running && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("macro_on", true);   // 比較測試時不重播巨集，不然沒有用到 AI
     }
 
     private static File file(Context c) { return new File(c.getFilesDir(), "macros.json"); }

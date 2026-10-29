@@ -142,6 +142,19 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void summarizesAbTestResults() {
+        java.util.List<AbTest.Result> rs = java.util.Arrays.asList(
+                new AbTest.Result("A", "t1", true, 3, 10_000, 0.001, ""),
+                new AbTest.Result("A", "t2", false, 5, 20_000, 0.003, "why"),
+                new AbTest.Result("B", "t1", true, 2, 8_000, 0.0005, ""));
+        String s = AbTest.summarize(rs);
+        assertTrue(s.contains("■ A"));
+        assertTrue(s.contains("成功 1／2"));
+        assertTrue(s.contains("✗ t2"));
+        assertTrue(s.contains("■ B"));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));
