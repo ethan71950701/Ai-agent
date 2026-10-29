@@ -37,6 +37,7 @@ public class TaskDetailActivity extends Activity {
         q.setTextSize(16);
         head.addView(q);
         if (!t.optString("reply").isEmpty()) head.addView(Ui.body(this, t.optString("reply")));
+        if (!t.optString("card").isEmpty()) head.addView(Ui.body(this, L.t("回答卡片：") + t.optString("card")));
 
         LinearLayout total = Ui.card(this, box);
         total.addView(Ui.body(this, L.t("共用了 ") + String.format(Locale.US, "%,d", tokens) + " token"

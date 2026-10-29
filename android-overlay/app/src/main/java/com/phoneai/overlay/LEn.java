@@ -451,6 +451,8 @@ final class LEn {
         m.put("已送出截圖", "Screenshot sent");
         m.put("已鎖定螢幕", "Screen locked");
         m.put("已打開最近使用的 App", "Recent apps opened");
+        m.put("點一下關閉", "Tap to close");
+        m.put("回答卡片：", "Answer card: ");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

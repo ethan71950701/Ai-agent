@@ -503,8 +503,7 @@ public class MainActivity extends Activity {
                 if (answerView != null) answerView.setText(Md.render(fr));
                 Notify.say(this, fr);
                 // 操作手機時 App 已經退到背景，首頁的文字看不到：需要的話把回答卡片叫出來（跟助理面板一樣）
-                if (AgentLoop.showCard) getApplicationContext().startActivity(new Intent(getApplicationContext(), AskActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("reply_text", fr).putExtra("voice", false));
+                if (AgentLoop.showCard) AnswerCard.show(this, fr);
             });
         }, "home-ask").start();
     }

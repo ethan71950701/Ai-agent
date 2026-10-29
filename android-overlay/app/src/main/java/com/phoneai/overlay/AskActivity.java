@@ -8,10 +8,12 @@ import android.window.OnBackInvokedDispatcher;
 /** 助理面板（仿 Gemini 的底部面板）。磁貼、浮動按鈕、電源鍵助理都開這個；預設一開就開始聽（extra "voice" 預設 true）。 */
 public class AskActivity extends Activity {
     private AssistantSheet sheet;
+    static volatile long lastCreated;   // 畫面最近一次真的建立的時間；AnswerCard 用它確認卡片有沒有被系統擋掉
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        lastCreated = System.currentTimeMillis();
         setShowWhenLocked(true);
         sheet = new AssistantSheet(this);
         setContentView(sheet.view());

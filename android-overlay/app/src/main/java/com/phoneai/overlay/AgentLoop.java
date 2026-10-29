@@ -51,6 +51,7 @@ final class AgentLoop {
     private static volatile boolean cancelled;
     /** 這一輪自動操作的結果是不是要用回答卡片顯示（搜尋結果或較長的回答）；「完成了」這類短的只通知。 */
     static volatile boolean showCard;
+    static volatile String cardNote = "";   // 這次為什麼顯示／不顯示回答卡片（記進任務過程，方便除錯）
 
     private static volatile List<String> lastSteps;
     private static volatile List<JSONObject> lastDetails;
@@ -147,6 +148,7 @@ final class AgentLoop {
     static String run(Context c, String task, Ui ui, String preOpen) {
         cancelled = false;
         showCard = false;
+        cardNote = "";
         lastSteps = null;
         try {
             return runInner(c, task, ui, preOpen);
@@ -336,8 +338,13 @@ final class AgentLoop {
         }
         if (finalSay != null) {
             String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
-            showCard = "always".equals(mode) || (!"never".equals(mode)
-                    && (st.searches > 0 || finalSay.length() > 30 || wantShow || isQuestion(task)));   // 問資訊的任務，答案再短也要讓使用者看到
+            boolean always = "always".equals(mode), never = "never".equals(mode);
+            String why = always ? "設定是一律顯示" : never ? "設定是一律不顯示" : st.searches > 0 ? "有網路搜尋" : finalSay.length() > 30 ? "答案超過 30 字"
+                    : wantShow ? "模型標記要顯示" : isQuestion(task) ? "任務是問句" : null;   // 問資訊的任務，答案再短也要讓使用者看到
+            showCard = always || (!never && why != null);
+            cardNote = (showCard ? "判斷要顯示卡片：" : "判斷不顯示卡片：") + (why != null ? why : "答案短、不是問句、模型沒標記");
+        } else {
+            cardNote = "任務沒有正常結束，沒有判斷卡片";
         }   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
         return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
     }

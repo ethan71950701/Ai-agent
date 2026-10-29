@@ -57,6 +57,18 @@ final class TaskLog {
         }
     }
 
+    /** 在最新一筆任務加一條備註（「回答卡片」那一行）；已經有備註就接在後面。 */
+    static synchronized void noteLatest(Context c, String note) {
+        try {
+            JSONArray a = load(c);
+            if (a.length() == 0) return;
+            JSONObject o = a.getJSONObject(a.length() - 1);
+            String old = o.optString("card");
+            o.put("card", old.isEmpty() ? note : old + "；" + note);
+            save(c, a);
+        } catch (Exception ignored) { }
+    }
+
     private static JSONArray trim(JSONArray a) throws Exception {
         while (a.length() > MAX) {
             int victim = -1;

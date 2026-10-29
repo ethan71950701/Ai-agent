@@ -728,8 +728,7 @@ public class AssistantSheet {
             act.runOnUiThread(() -> {
                 if (!dismissing) { showReply("", fr); return; }
                 // 面板已經收起來（自動操作時會收）：搜尋結果這類較長的回答，重新叫出面板顯示回答卡片
-                if (AgentLoop.showCard) act.getApplicationContext().startActivity(new Intent(act.getApplicationContext(), AskActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK).putExtra("reply_text", fr).putExtra("voice", false));
+                if (AgentLoop.showCard) AnswerCard.show(act, fr);
             });
         }, "local-reply").start();
     }
