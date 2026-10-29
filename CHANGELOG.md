@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 「AI 服務」可以讓便宜模型和看圖模型各用不同的服務（例如便宜的 DeepSeek＋看圖的 Gemini）；Key 存好後可以向服務查詢現有的模型再選，不怕模型改名；OpenRouter 預設改用 openrouter/free，Groq 與 DeepSeek 的教學加上混搭建議｜"AI service" now lets the cheap model and the vision model use different services (e.g. DeepSeek for cheap + Gemini for vision); after saving the key you can look up the service's current models and pick one so renamed models don't matter; OpenRouter defaults to openrouter/free, and the Groq and DeepSeek guides suggest mixing services
+## 1.0.1329
 
 - 「AI 服務」改成先選服務：Claude、Google Gemini（有免費額度）、OpenAI、Groq、OpenRouter、DeepSeek 或其他；選了會顯示怎麼申請 Key 的步驟（可直接開申請頁面），網址和便宜／看圖模型自動填好預設值｜"AI service" now starts with a picker: Claude, Google Gemini (free tier), OpenAI, Groq, OpenRouter, DeepSeek or Other; it shows how to get a key (with a button to open the sign-up page) and pre-fills the URL and cheap/vision models
+
 ## 1.0.1328
 
 - 新增 OpenAI 相容的 API 支援（OpenAI、DeepSeek、Groq、OpenRouter、Ollama 等）：到「設定 → 執行任務時 → AI 服務」填網址、便宜模型、看圖模型與 Key。操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋與費用統計仍只支援 Claude｜Added OpenAI-compatible API support (OpenAI, DeepSeek, Groq, OpenRouter, Ollama...): Settings → While running tasks → AI service, enter the URL, a cheap model, a vision model and the key. The phone-operating prompts are tuned for Claude so test other models yourself; web search and cost stats remain Claude-only
