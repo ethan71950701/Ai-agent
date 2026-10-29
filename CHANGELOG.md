@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1311
+
 - 在 root 管理器撤銷 PhoneAI 的 root 之後，下一個任務會自動改用無障礙模式，不用重開 App｜After root is revoked for PhoneAI in the root manager, the next task automatically switches to the accessibility mode without restarting the app
+
 ## 1.0.1310
 
 - 設定導覽把 root 改成「選用」：沒有 root 或還沒給可以直接跳過；更正無障礙服務的說明（現在也會讀畫面上的按鈕與文字）；判斷成沒有 root 只記一分鐘，之後才給 root 也會自動生效｜The setup guide now marks root as optional: skip it if you have no root or have not granted it yet; the accessibility description is corrected (it now also reads the buttons and text on screen); "no root" is remembered for only a minute, so granting root later takes effect automatically
