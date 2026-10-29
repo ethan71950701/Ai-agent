@@ -129,6 +129,7 @@ final class AgentLoop {
         final List<String> opened = new ArrayList<>();
         final List<String> remembered = new ArrayList<>();
         int measures, remembers, searches;
+        final java.util.Set<String> approved = new java.util.HashSet<>();   // 這次任務使用者已經同意讓 AI 操作的受保護 App
         boolean dragDown;
         int dx, dy;
     }
@@ -192,6 +193,13 @@ final class AgentLoop {
                 if (cancelled) return L.t("已停止。");
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
+                // 銀行、支付類（或使用者標記保護的）App：沒問過就不把畫面送給 AI
+                String fgNow = ElementList.foregroundPackage();
+                if (fgNow != null && !st.approved.contains(fgNow) && ProtectedApps.isProtected(c, fgNow)) {
+                    if (!ui.confirm(String.format(L.t("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？"), ProtectedApps.label(c, fgNow))))
+                        return L.t("已取消，沒有讓 AI 操作這個 App。");
+                    st.approved.add(fgNow);
+                }
                 // 元件清單模式：不截圖，改給 Haiku 看元件編號清單；編號點不到時這一步改回截圖＋Sonnet。
                 boolean wasForced = forceShot;
                 List<JSONObject> tree = treeOn && !forceShot ? ElementList.collect(wh[0], wh[1]) : null;

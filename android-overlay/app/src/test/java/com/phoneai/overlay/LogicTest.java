@@ -191,6 +191,18 @@ public class LogicTest {
         assertNull(AgentLoop.sensitiveLabel(new JSONObject().put("action", "tap").put("label", "Display"), "調整螢幕"));
     }
 
+    @Test
+    public void financeAppsAreRecognisedAutomatically() {
+        assertTrue(ProtectedApps.autoMatch("國泰世華銀行", "tw.com.cathaybk"));
+        assertTrue(ProtectedApps.autoMatch("Samsung Pay", "com.samsung.android.spay"));
+        assertTrue(ProtectedApps.autoMatch("Google Wallet", "com.google.android.apps.walletnfc"));
+        assertTrue(ProtectedApps.autoMatch("街口支付", "com.jkos.app"));
+        assertFalse(ProtectedApps.autoMatch("LINE", "jp.naver.line.android"));
+        assertFalse(ProtectedApps.autoMatch("設定", "com.android.settings"));
+        assertFalse(ProtectedApps.autoMatch("Display", "com.example.display"));
+        assertFalse(ProtectedApps.autoMatch("Google Play 商店", "com.android.vending"));
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

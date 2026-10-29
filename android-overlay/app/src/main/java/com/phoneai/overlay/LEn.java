@@ -454,6 +454,11 @@ final class LEn {
         m.put("點一下關閉", "Tap to close");
         m.put("回答卡片：", "Answer card: ");
         m.put("畫面上的「%s」看起來是敏感操作，而且不是你的任務要求的。要讓 AI 點它嗎？", "The \"%s\" on screen looks like a sensitive action that your task did not ask for. Let the AI tap it?");
+        m.put("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？", "The screen is \"%s\" (a finance/payment app, or one you marked as protected). Let the AI see and operate it?");
+        m.put("已取消，沒有讓 AI 操作這個 App。", "Cancelled. The AI did not operate this app.");
+        m.put("保護的 App", "Protected apps");
+        m.put("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）", "Ask you before the AI operates these apps (banking and payment apps are protected automatically)");
+        m.put("選擇要保護的 App", "Choose apps to protect");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

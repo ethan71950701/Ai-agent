@@ -685,6 +685,32 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 選要保護的 App：AI 操作之前先問你；銀行、支付類不用勾，會自動保護。 */
+    private void chooseProtectedApps() {
+        android.content.pm.PackageManager pm = getPackageManager();
+        android.content.Intent launcher = new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER);
+        final java.util.TreeMap<String, String> byLabel = new java.util.TreeMap<>();
+        for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(launcher, 0)) {
+            String pkg = ri.activityInfo.packageName;
+            if (pkg.equals(getPackageName())) continue;
+            byLabel.put(String.valueOf(ri.loadLabel(pm)) + "\u0000" + pkg, pkg);
+        }
+        final java.util.List<String> pkgs = new java.util.ArrayList<>(byLabel.values());
+        final String[] names = new String[pkgs.size()];
+        final boolean[] checked = new boolean[pkgs.size()];
+        final java.util.Set<String> chosen = ProtectedApps.userSet(this);
+        for (int i = 0; i < pkgs.size(); i++) {
+            names[i] = ProtectedApps.label(this, pkgs.get(i));
+            checked[i] = chosen.contains(pkgs.get(i));
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle(L.t("選擇要保護的 App"))
+                .setMultiChoiceItems(names, checked, (d, which, on) -> { if (on) chosen.add(pkgs.get(which)); else chosen.remove(pkgs.get(which)); })
+                .setPositiveButton(L.t("儲存"), (d, w) -> ProtectedApps.setUserSet(this, chosen))
+                .setNegativeButton(L.t("取消"), null)
+                .show();
+    }
+
     private View wrapIcon(View icon) {
         android.widget.FrameLayout f = new android.widget.FrameLayout(this);
         f.addView(icon, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24), android.view.Gravity.CENTER));
@@ -764,14 +790,15 @@ public class MainActivity extends Activity {
                 (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
 
         g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
-        Ui.switchRow(this, g, 0, 4, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
+        Ui.switchRow(this, g, 0, 5, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                 (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-        Ui.switchRow(this, g, 1, 4, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
+        Ui.switchRow(this, g, 1, 5, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
                 (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
-        Ui.switchRow(this, g, 2, 4, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
+        Ui.switchRow(this, g, 2, 5, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
                 (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
-        Ui.switchRow(this, g, 3, 4, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
+        Ui.switchRow(this, g, 3, 5, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
                 cfg().getBoolean("tree_on", true), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());
+        Ui.row(this, g, 4, 5, "shield", L.t("保護的 App"), L.t("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）"), Ui.chevron(this), v -> chooseProtectedApps());
     }
 
     @Override
