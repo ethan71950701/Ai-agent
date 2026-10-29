@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - AI 比較測試：「目前設定」改顯示實際的模型名稱，新增「自訂組合」可以自己挑服務並向它查詢模型、各選便宜與看圖模型｜AI comparison test: "Current settings" now shows the actual models, and a new "Custom combination" lets you pick a service, look up its models and choose the cheap and vision models
+## 1.0.1347
 
 - 新增「功能 → AI 比較測試」：同一批小任務（Wi-Fi 頁面、算 123＋45、時鐘碼錶、設定搜尋藍牙）用不同的 AI 服務各跑一遍，比成功與否、步數、時間與預估花費（需要 root 或 Shizuku，每個任務後強制關閉 App 以公平比較）｜New Functions → AI comparison test: runs the same small tasks with different AI services and compares success, steps, time and estimated cost (needs root or Shizuku; the app is force-stopped after each task for fairness)
+
 ## 1.0.1346
 
 - AI 服務出錯時改用看得懂的說明：429＝額度用完（含重設時間與建議）、401 Key 不對、404 模型不存在、400 不支援看圖等，後面附原始回應｜AI service errors now come with a readable explanation: 429 = quota used up (with the reset time and what to do), 401 wrong key, 404 model not found, 400 vision not supported and so on, followed by the raw response
