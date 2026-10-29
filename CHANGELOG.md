@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1308
+
 - 鬧鐘改成宣告系統的設鬧鐘權限，不用 root 也能直接設好、不開時鐘畫面；行事曆事件也改成直接建立（需要行事曆權限，已 root 的手機會自動補上），不用再按儲存｜Alarms now declare the system set-alarm permission, so they are set directly without opening the clock and without root; calendar events are now created directly too (needs calendar permission, granted automatically on rooted phones), so there is no need to press save
 
 ## 1.0.1307
