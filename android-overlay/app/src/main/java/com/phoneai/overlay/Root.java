@@ -36,6 +36,11 @@ final class Root {
         }
     }
 
+    /** 距離上次判斷超過 10 秒才重新判斷：每個任務開始時呼叫，使用者在 root 管理器撤銷（或剛允許）root 之後，下一個任務就會自動換做法。 */
+    static void recheckIfStale() {
+        if (System.currentTimeMillis() - rootCheckedAt > 10_000) recheck();
+    }
+
     /** 使用者剛允許（或撤銷）root 之後，重新判斷。 */
     static void recheck() {
         synchronized (Root.class) {

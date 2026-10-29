@@ -34,6 +34,7 @@ final class Maintenance {
                 last = String.valueOf(e);
             }
         }
+        Root.recheck();   // su 都失敗：可能是 root 被撤銷了，下次用 Root.available() 時重新判斷
         return "ERR:" + last;
     }
 

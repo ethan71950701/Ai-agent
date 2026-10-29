@@ -19,6 +19,7 @@ final class Brain {
     }
 
     static String answer(Activity act, String t, AgentLoop.Ui ui) {
+        Root.recheckIfStale();   // 使用者可能剛撤銷或允許 root：每個任務開始前重新確認
         AgentLoop.showCard = false;
         AgentLoop.cardNote = "";
         AgentLoop.macroNote = "";   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
