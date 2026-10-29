@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1331
+
 - 修正「AI 服務」選單只顯示說明、選不了的問題；入口改到「功能 → 資料 → AI 服務與 API Key」（設定裡的那一列移除），設定導覽第 6 步也改成同一個流程｜Fixed the "AI service" dialog showing only text with nothing to pick; the entry moved to Functions → Data → "AI service and API key" (the Settings row is gone) and setup guide step 6 now uses the same flow
+
 ## 1.0.1330
 
 - 「AI 服務」可以讓便宜模型和看圖模型各用不同的服務（例如便宜的 DeepSeek＋看圖的 Gemini）；Key 存好後可以向服務查詢現有的模型再選，不怕模型改名；OpenRouter 預設改用 openrouter/free，Groq 與 DeepSeek 的教學加上混搭建議｜"AI service" now lets the cheap model and the vision model use different services (e.g. DeepSeek for cheap + Gemini for vision); after saving the key you can look up the service's current models and pick one so renamed models don't matter; OpenRouter defaults to openrouter/free, and the Groq and DeepSeek guides suggest mixing services
