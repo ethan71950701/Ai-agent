@@ -94,8 +94,8 @@ final class Memory {
         } catch (Exception ignored) { }
     }
 
-    /** 開始任務前要帶進提示的經驗：通用的最新 4 則 + 這些 App 的最新 8 則（照 memory.py 的 lessons）。 */
-    static synchronized List<String> lessonsFor(Context c, List<String> apps) {
+    /** 開始任務前要帶進提示的經驗：通用的 6 則（依跟任務文字的相關程度挑，不夠相關的用最新的補）+ 這些 App 的最新 8 則。 */
+    static synchronized List<String> lessonsFor(Context c, List<String> apps, String task) {
         JSONObject d = load(c);
         List<String> gen = new ArrayList<>(), mine = new ArrayList<>();
         for (JSONObject it : items(d)) {
@@ -103,9 +103,40 @@ final class Memory {
             if (!it.has("app")) gen.add(it.optString("text"));
             else if (apps.contains(it.optString("app"))) mine.add(it.optString("text"));
         }
-        List<String> out = new ArrayList<>(gen.subList(Math.max(0, gen.size() - 4), gen.size()));
+        List<String> out = pickRelevant(gen, task, 6);
         out.addAll(mine.subList(Math.max(0, mine.size() - 8), mine.size()));
         return out;
+    }
+
+    /** 從 all（舊到新）挑 n 則：跟任務文字重疊的詞越多越優先，同分的新的優先；回傳順序是舊到新。 */
+    private static List<String> pickRelevant(List<String> all, String task, int n) {
+        if (all.size() <= n) return new ArrayList<>(all);
+        final java.util.Set<String> tb = bigrams(task);
+        List<Integer> idx = new ArrayList<>();
+        for (int i = 0; i < all.size(); i++) idx.add(i);
+        idx.sort((a, b) -> {
+            int sa = overlap(tb, all.get(a)), sb = overlap(tb, all.get(b));
+            return sa != sb ? sb - sa : b - a;
+        });
+        List<Integer> chosen = new ArrayList<>(idx.subList(0, n));
+        java.util.Collections.sort(chosen);
+        List<String> out = new ArrayList<>();
+        for (int i : chosen) out.add(all.get(i));
+        return out;
+    }
+
+    /** 兩個字一組的片段（中文沒有空格，用相鄰兩字當作「詞」比較）。 */
+    private static java.util.Set<String> bigrams(String s) {
+        java.util.Set<String> out = new java.util.HashSet<>();
+        String n = s == null ? "" : s.toLowerCase(java.util.Locale.ROOT).replaceAll("[\\s\\p{Punct}，。、；：「」（）]", "");
+        for (int i = 0; i + 1 < n.length(); i++) out.add(n.substring(i, i + 2));
+        return out;
+    }
+
+    private static int overlap(java.util.Set<String> taskBigrams, String lesson) {
+        int k = 0;
+        for (String g : bigrams(lesson)) if (taskBigrams.contains(g)) k++;
+        return k;
     }
 
     private static String now() { return new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US).format(new java.util.Date()); }

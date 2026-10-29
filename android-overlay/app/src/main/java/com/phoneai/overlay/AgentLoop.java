@@ -189,7 +189,7 @@ final class AgentLoop {
                 List<String> lessonApps = new ArrayList<>(st.opened);   // 只帶「這次用到的 App」的經驗，不是全部
                 String fg = ElementList.foregroundPackage();
                 if (fg != null && !lessonApps.contains(fg)) lessonApps.add(fg);
-                List<String> lessons = Memory.lessonsFor(c, lessonApps);
+                List<String> lessons = Memory.lessonsFor(c, lessonApps, task);
                 JSONObject action;
                 long tokBefore = Usage.tallyNow();
                 long[] cntBefore = Usage.tallyCounts();
