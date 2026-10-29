@@ -475,6 +475,16 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("AI 服務", "AI service");
+        m.put("OpenAI 相容：", "OpenAI-compatible: ");
+        m.put("（點一下設定）", " (tap to set up)");
+        m.put("OpenAI 相容的 API", "OpenAI-compatible API");
+        m.put("OpenAI 相容 API Key", "OpenAI-compatible API key");
+        m.put("填 OpenAI 相容服務的網址（到 /v1 為止）和兩個模型：便宜的負責判斷與讀元件清單，看圖的負責截圖。Key 只存在手機裡。注意：操作手機的提示是照 Claude 調的，換別家要自己實測，看圖與工具呼叫弱的模型可能常出錯；網頁搜尋是 Claude 專屬，換別家就沒有；任務過程的費用會顯示 $0（價格表只有 Claude）。", "Enter the OpenAI-compatible service URL (up to /v1) and two models: the cheap one routes and reads the element list, the vision one reads screenshots. The key stays on the phone. Note: the phone-operating prompts are tuned for Claude, so test other models yourself; models weak at vision or tool calls may fail often. Web search is Claude-only and unavailable elsewhere. Task cost shows $0 (the price table only has Claude).");
+        m.put("網址", "URL");
+        m.put("便宜模型", "Cheap model");
+        m.put("看圖模型", "Vision model");
+        m.put("儲存並輸入 Key", "Save and enter key");
         m.put(GuideActivity.COMPARE,
                 "[Root] most complete and fastest\n"
                 + "• Toggle Wi-Fi, Bluetooth, mobile data, NFC, location, dark mode, Do Not Disturb, rotation, brightness in one sentence, no prompts\n"

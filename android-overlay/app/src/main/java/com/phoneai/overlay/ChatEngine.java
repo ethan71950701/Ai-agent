@@ -124,7 +124,7 @@ final class ChatEngine {
 
     /** API 金鑰：只讀 App 自己的檔案（設定時用「功能 → 維護 → Claude API Key」存進來）。 */
     static String key(Context c) {
-        File k = new File(c.getFilesDir(), "claude_key");
+        File k = new File(c.getFilesDir(), LlmConfig.keyFile(c));
         try {
             return new String(Files.readAllBytes(k.toPath()), StandardCharsets.UTF_8).trim();
         } catch (Exception e) {
@@ -156,6 +156,7 @@ final class ChatEngine {
             String over = Usage.overLimit(app);
             if (over != null) throw new Exception(over);
         }
+        if (app != null && LlmConfig.openai(app)) return postOpenAi(app, body, key);
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;
         con.setRequestMethod("POST");
@@ -177,6 +178,34 @@ final class ChatEngine {
             long cw = u.optLong("cache_creation_input_tokens"), cr = u.optLong("cache_read_input_tokens");
             Usage.add(app, u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
             Usage.tallyAdd(body.optString("model"), u.optLong("input_tokens") + cw + cr, u.optLong("output_tokens"), cw, cr);
+        }
+        return r;
+    }
+
+    /** OpenAI 相容的 API：請求轉成 chat/completions，回應轉回 Claude 的格式，其他程式不用知道換了服務。 */
+    private static JSONObject postOpenAi(Context app, JSONObject body, String key) throws Exception {
+        String base = LlmConfig.base(app);
+        JSONObject req = LlmAdapter.toOpenAi(body, LlmConfig.cheap(app), LlmConfig.vision(app), base.contains("api.openai.com"));
+        HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
+        inflight = con;
+        con.setRequestMethod("POST");
+        con.setConnectTimeout(20000);
+        con.setReadTimeout(60000);
+        con.setDoOutput(true);
+        con.setRequestProperty("Authorization", "Bearer " + key);
+        con.setRequestProperty("content-type", "application/json");
+        try (OutputStream out = con.getOutputStream()) { out.write(req.toString().getBytes(StandardCharsets.UTF_8)); }
+        int code = con.getResponseCode();
+        InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
+        String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
+        inflight = null;
+        if (code >= 400) throw new Exception("HTTP " + code + " " + text);
+        JSONObject r = LlmAdapter.fromOpenAi(new JSONObject(text));
+        JSONObject u = r.optJSONObject("usage");
+        if (u != null) {
+            long cr = u.optLong("cache_read_input_tokens");
+            Usage.add(app, u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr);
+            Usage.tallyAdd(req.optString("model"), u.optLong("input_tokens") + cr, u.optLong("output_tokens"), 0, cr);
         }
         return r;
     }

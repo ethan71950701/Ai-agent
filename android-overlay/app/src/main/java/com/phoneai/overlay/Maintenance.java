@@ -78,12 +78,15 @@ final class Maintenance {
 
     // ---------- API Key ----------
     /** 存 API Key 到 App 私有資料夾的 claude_key（權限 600）。不印出、不寫 log。 */
-    static String saveKey(String key) {
+    static String saveKey(String key) { return saveKey(key, "claude_key"); }
+
+    /** 存到 App 私有資料夾的指定檔案（claude_key／openai_key），權限 600。 */
+    static String saveKey(String key, String fileName) {
         key = key == null ? "" : key.trim();
         if (key.length() < 20 || key.contains("\n") || key.contains("'") || key.contains(" ")) return L.t("金鑰格式不對（太短、有空白、換行或引號）");
-        if (key.startsWith("sk-ant-usr-")) return L.t("這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」");
+        if (fileName.equals("claude_key") && key.startsWith("sk-ant-usr-")) return L.t("這是「個人 Key」（sk-ant-usr-），這個專案用它會 401；請在 Console 重建 Key：Linked account 選「未連結」、工作區選「預設工作區」");
         try {
-            java.io.File f = new java.io.File(App.ctx.getFilesDir(), "claude_key"), tmp = new java.io.File(f.getPath() + ".tmp");
+            java.io.File f = new java.io.File(App.ctx.getFilesDir(), fileName), tmp = new java.io.File(f.getPath() + ".tmp");
             try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) { out.write(key.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
             tmp.setReadable(false, false);
             tmp.setReadable(true, true);
@@ -115,11 +118,11 @@ final class Maintenance {
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(Ui.body(a, L.t("Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。")));
         form.addView(til);
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle("Claude API Key").setView(form)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(LlmConfig.openai(a) ? L.t("OpenAI 相容 API Key") : "Claude API Key").setView(form)
                 .setPositiveButton(L.t("儲存"), (d, w) -> {
                     final String k = et.getText().toString();
                     new Thread(() -> {
-                        final String r = saveKey(k);
+                        final String r = saveKey(k, LlmConfig.keyFile(a));
                         a.runOnUiThread(() -> {
                             android.widget.Toast.makeText(a, r == null ? L.t("已儲存") : r, android.widget.Toast.LENGTH_LONG).show();
                             if (r == null && after != null) after.run();
