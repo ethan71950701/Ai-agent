@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 任務過程頁新增「回答卡片」一行，說明這次為什麼顯示或不顯示卡片，以及卡片有沒有真的出現；卡片被系統擋下時，自動改用懸浮卡片顯示答案｜The task details page has a new "Answer card" line explaining why a card was or was not shown and whether it really appeared; when the system blocks the card, the answer is shown in a floating card instead
 
+## 1.0.1300
+
 - 修正：從首頁輸入列或麥克風下的任務，操作手機後也會跳出回答卡片（以前只有通知，因為首頁在背景看不到）｜Fix: tasks started from the home input bar or microphone now also show the answer card after operating the phone (before, only a notification appeared because the home page was in the background)
 
 ## 1.0.1299
