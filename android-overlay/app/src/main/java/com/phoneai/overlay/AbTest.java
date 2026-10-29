@@ -48,19 +48,38 @@ final class AbTest {
         Config(String name, LlmConfig.Slot cheap, LlmConfig.Slot vision) { this.name = name; this.cheap = cheap; this.vision = vision; }
     }
 
-    /** 可以比較的組合：目前的設定、Claude，以及每個已經存了 Key 的服務（預設模型）。 */
+    /**
+     * 可以比較的 API：Claude（有 Key 的話）和每個已經存了 Key 的服務。模型用你現在在「AI 服務與 API Key」設定的（如果那個服務正在用），
+     * 沒有就用預設模型。想換模型可以用「自訂組合」。
+     */
     static List<Config> candidates(Context c) {
         List<Config> out = new ArrayList<>();
-        out.add(new Config(L.t("目前設定：") + LlmConfig.cheap(c).label() + (LlmConfig.cheap(c).label().equals(LlmConfig.vision(c).label()) ? "" : " / " + LlmConfig.vision(c).label()), LlmConfig.cheap(c), LlmConfig.vision(c)));
         if (new File(c.getFilesDir(), "claude_key").length() > 0)
             out.add(new Config("Claude（Haiku 5.5＋Sonnet 5.5）", new LlmConfig.Slot(LlmConfig.ANTHROPIC, "", ""), new LlmConfig.Slot(LlmConfig.ANTHROPIC, "", "")));
+        List<String> hosts = new ArrayList<>();
         for (LlmPresets.Preset ps : LlmPresets.ALL) {
             if (ps.base.isEmpty()) continue;
-            LlmConfig.Slot a = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.cheap), b = new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ps.vision);
-            if (LlmConfig.readKey(c, a) != null) out.add(new Config(L.t(ps.name) + "：" + ps.cheap + (ps.cheap.equals(ps.vision) ? "" : " / " + ps.vision), a, b));
+            LlmConfig.Slot a = modelsFor(c, ps.base, ps.cheap, true), b = modelsFor(c, ps.base, ps.vision, false);
+            hosts.add(LlmConfig.host(ps.base));
+            if (LlmConfig.readKey(c, a) != null) out.add(new Config(L.t(ps.shortName()) + "：" + label(a.model, b.model), a, b));
+        }
+        for (LlmConfig.Slot s : new LlmConfig.Slot[]{LlmConfig.cheap(c), LlmConfig.vision(c)}) {   // 自己填網址的服務（Ollama 等）
+            if (!s.openai() || hosts.contains(LlmConfig.host(s.base)) || LlmConfig.readKey(c, s) == null) continue;
+            hosts.add(LlmConfig.host(s.base));
+            LlmConfig.Slot a = modelsFor(c, s.base, s.model, true), b = modelsFor(c, s.base, s.model, false);
+            out.add(new Config(LlmConfig.host(s.base) + "：" + label(a.model, b.model), a, b));
         }
         out.addAll(custom);
         return out;
+    }
+
+    private static String label(String cheap, String vision) { return cheap.equals(vision) ? cheap : cheap + " / " + vision; }
+
+    /** 這個服務現在如果正在用（便宜／看圖欄位的網址相同），就用你設定的模型；否則用預設。 */
+    private static LlmConfig.Slot modelsFor(Context c, String base, String def, boolean cheap) {
+        LlmConfig.Slot cur = cheap ? LlmConfig.cheap(c) : LlmConfig.vision(c);
+        boolean same = cur.openai() && LlmConfig.host(cur.base) != null && LlmConfig.host(cur.base).equals(LlmConfig.host(base)) && !cur.model.isEmpty();
+        return new LlmConfig.Slot(LlmConfig.OPENAI, base, same ? cur.model : def);
     }
 
     /** 使用者在比較測試裡臨時自訂的組合（只在這次 App 執行期間有效）。 */

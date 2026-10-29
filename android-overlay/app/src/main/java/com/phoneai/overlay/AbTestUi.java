@@ -22,7 +22,7 @@ final class AbTestUi {
         }
         String last = AbTest.last(a);
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 比較測試"))
-                .setMessage(L.t("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步勾選要比的組合：「目前設定」就是你現在在「AI 服務與 API Key」設定的便宜／看圖模型；也可以按「自訂組合」自己挑服務和模型。"))
+                .setMessage(L.t("同一批小任務（Wi-Fi 頁面、計算 123＋45、時鐘碼錶、設定搜尋藍牙），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。"))
                 .setPositiveButton(L.t("開始"), (d, w) -> pick(a))
                 .setNegativeButton(L.t("取消"), null);
         if (last != null) b.setNeutralButton(L.t("上次結果"), (d, w) -> showResult(a, last));
