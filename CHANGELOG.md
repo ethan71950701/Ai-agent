@@ -6,6 +6,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 固定指令：說「音量調到 30%」「聲音百分之八十」之類（0～100 的數字）會直接設定媒體音量，不經 AI、不花 token、不用 root｜Fixed command: saying "volume to 30%" (any number 0-100) sets the media volume directly, with no AI call, no tokens and no root
+## 1.0.1324
 
 - AI 新增「直接設定音量」動作：調到最小、最大或某個百分比一步完成（有沒有 root 都可以），不用一格一格按｜New "set volume" action for the AI: minimum, maximum or any percentage in one step (with or without root) instead of pressing one notch at a time
 
