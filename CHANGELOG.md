@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1313
+
 - 沒 root 時調亮度、自動旋轉缺「修改系統設定」權限，會先收起助理面板，不再蓋住系統的權限說明頁｜Without root, when brightness or auto-rotate needs the "modify system settings" permission, the assistant panel now closes first so it no longer covers the system permission page
+
 ## 1.0.1312
 
 - 調音量後會回報目前音量（例如 3/15，0 就是最小），AI 不用再一格一格猜｜After changing the volume the result now reports the current level (e.g. 3/15; 0 = minimum), so the AI no longer has to guess step by step
