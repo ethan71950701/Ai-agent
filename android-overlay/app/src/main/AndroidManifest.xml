@@ -27,6 +27,7 @@
 
     <!-- 只需要看得到桌面上有圖示的 App（匯出 App 名稱清單用），不需要 QUERY_ALL_PACKAGES -->
     <queries>
+        <package android:name="moe.shizuku.privileged.api" />
         <!-- 朗讀：要能找到系統的語音合成（TTS）引擎 -->
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
@@ -211,6 +212,14 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="com.phoneai.overlay.shizuku"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

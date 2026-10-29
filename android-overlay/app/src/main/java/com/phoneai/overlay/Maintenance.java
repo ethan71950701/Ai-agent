@@ -17,6 +17,7 @@ final class Maintenance {
 
     /** 用 root 跑腳本（標準輸入餵進去）；回傳輸出。依序試幾種 su 寫法，第一個「結束碼 0」的就用。 */
     static String suRun(String script) {
+        if (App.ctx != null && ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) return ShizukuBackend.run(script);
         String last = "";
         for (String[] cmd : SU) {
             try {
@@ -58,6 +59,7 @@ final class Maintenance {
 
     /** 只用第一個找到的 su 跑一次（不重試，避免同一個指令被執行好幾次）；不管結束碼，回傳輸出。 */
     static String suOnce(String script) {
+        if (App.ctx != null && ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) return ShizukuBackend.run(script);
         try {
             Process p = new ProcessBuilder(Root.su()).redirectErrorStream(true).start();
             p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));

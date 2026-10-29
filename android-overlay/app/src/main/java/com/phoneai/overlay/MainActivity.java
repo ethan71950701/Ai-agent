@@ -802,8 +802,25 @@ public class MainActivity extends Activity {
         Ui.switchRow(this, g, 5, 8, "flask", L.t("記住成功的步驟（巨集）"), L.t("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省"),
                 cfg().getBoolean("macro_on", true), (v, on) -> cfg().edit().putBoolean("macro_on", on).apply());
         Ui.row(this, g, 6, 8, "list", L.t("清除記住的步驟"), String.format(L.t("目前記住 %d 個任務"), Macros.count(this)), Ui.chevron(this), v -> { Macros.clear(this); recreate(); });
-        Ui.switchRow(this, g, 7, 8, "shield", L.t("不使用 root（測試用）"), L.t("不做任何 root 動作，改用無障礙與系統 API，用來測試沒有 root 的情況；有些功能（Wi-Fi、藍牙、深色模式…）只能打開設定頁"),
-                cfg().getBoolean("no_root", false), (v, on) -> { cfg().edit().putBoolean("no_root", on).apply(); Root.recheck(); });
+        Ui.row(this, g, 7, 8, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
+    }
+
+    private static String modeName(String m) {
+        return ExecMode.SHIZUKU.equals(m) ? "Shizuku" : ExecMode.NORMAL.equals(m) ? L.t("普通") : "root";
+    }
+
+    /** 執行模式：root（用 su）、Shizuku（adb 權限，不用 root）、普通（只用無障礙與系統 API）。 */
+    private void chooseMode() {
+        String[] modes = {ExecMode.ROOT, ExecMode.SHIZUKU, ExecMode.NORMAL};
+        String[] names = {"root", "Shizuku", L.t("普通")};
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle(L.t("執行模式"))
+                .setSingleChoiceItems(names, java.util.Arrays.asList(modes).indexOf(ExecMode.get(this)), (d, which) -> {
+                    ExecMode.set(this, modes[which]);
+                    d.dismiss();
+                    recreate();
+                })
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     @Override

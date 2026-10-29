@@ -28,10 +28,10 @@ public class GuideActivity extends Activity {
     private static final int N = 9;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
-            "1. 授權 root（選用）", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
+            "1. 選擇執行模式", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
             "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
-            "root 是選用的。有 root：更快也更完整（開關 Wi-Fi、藍牙、深色模式等一句話直接做好）。沒有 root 或還沒給：一樣能用，點擊、截圖、按鍵改用無障礙服務，Wi-Fi、藍牙等只能打開設定頁，之後隨時可以回來給。",
+            "選一種執行模式，之後隨時可以在「設定 → 執行任務時」改。root：最快最完整，開關 Wi-Fi、藍牙、深色模式等一句話直接做好。Shizuku：不用 root，用 adb 等級權限做到大部分同樣的事，要先裝並啟動 Shizuku。普通：什麼都不用裝，點擊、截圖、按鍵靠無障礙服務，Wi-Fi、藍牙等只能打開設定頁。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
             "讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。",
@@ -60,7 +60,18 @@ public class GuideActivity extends Activity {
             {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
             {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
             {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
-    private static final String[] BTN = {"檢查 root", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
+    private static final String[][] MODE_STEPS = {
+            {"想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
+                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
+                    "回到這裡，按下面的「檢查 root」。"},
+            {"先安裝 Shizuku App（Google Play 或它的 GitHub），打開它，照它的說明啟動服務（無線偵錯或 root；手機重開機後要再啟動一次）。",
+                    "回到這裡按「授權 Shizuku」，在 Shizuku 跳出的視窗按「允許」。",
+                    "狀態變成「已可用」就完成了。"},
+            {"這個模式不用安裝或授權任何東西，直接往下走。", "之後想要更完整，隨時可以回到這一頁改選 root 或 Shizuku。"}};
+    private static final String[] MODE_NAMES = {ExecMode.ROOT, ExecMode.SHIZUKU, ExecMode.NORMAL};
+    private static final String[] MODE_LABELS = {"root", "Shizuku", "普通"};
+    private rikka.shizuku.Shizuku.OnRequestPermissionResultListener shizukuListener;
+    private static final String[] BTN = {"檢查", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
             "輸入 API Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
     private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
 
@@ -78,6 +89,8 @@ public class GuideActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         for (int i = 0; i < N; i++) label[i] = L.t("檢查中…");
+        shizukuListener = (code, result) -> refresh();
+        try { rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuListener); } catch (Throwable ignored) { }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Ui.attr(this, com.google.android.material.R.attr.colorSurface));
         root.setFitsSystemWindows(true);
@@ -157,7 +170,13 @@ public class GuideActivity extends Activity {
     /** 每一頁的按鈕動作。 */
     private void act(int i) {
         switch (i) {
-            case 0: refresh(); break;
+            case 0:
+                if (ExecMode.SHIZUKU.equals(ExecMode.get(this))) {
+                    if (!ShizukuBackend.installed(this)) android.widget.Toast.makeText(this, L.t("還沒安裝 Shizuku：先安裝並啟動它"), android.widget.Toast.LENGTH_LONG).show();
+                    else ShizukuBackend.requestPermission();
+                }
+                refresh();
+                break;
             case 1: startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))); break;
             case 2: requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF); break;
             case 3: startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); break;
@@ -247,9 +266,25 @@ public class GuideActivity extends Activity {
             wl.topMargin = Ui.dp(a, 12);
             col.addView(w, wl);
 
+            String mode = ExecMode.get(a);
+            if (i == 0) {   // 第一頁：選執行模式
+                LinearLayout row = new LinearLayout(a);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                for (int k = 0; k < MODE_NAMES.length; k++) {
+                    final String m = MODE_NAMES[k];
+                    MaterialButton mb = Ui.pill(a, L.t(MODE_LABELS[k]), m.equals(mode), v -> { ExecMode.set(a, m); refresh(); });
+                    LinearLayout.LayoutParams ml = new LinearLayout.LayoutParams(0, Ui.dp(a, 48), 1f);
+                    ml.setMarginEnd(k < MODE_NAMES.length - 1 ? Ui.dp(a, 8) : 0);
+                    row.addView(mb, ml);
+                }
+                LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
+                rl.topMargin = Ui.dp(a, 16);
+                col.addView(row, rl);
+            }
+            String[] steps = i == 0 ? MODE_STEPS[java.util.Arrays.asList(MODE_NAMES).indexOf(mode)] : STEPS[i];
             LinearLayout card = Ui.card(a, col);
-            for (int k = 0; k < STEPS[i].length; k++) {
-                TextView s = Ui.body(a, (k + 1) + ". " + L.t(STEPS[i][k]));
+            for (int k = 0; k < steps.length; k++) {
+                TextView s = Ui.body(a, (k + 1) + ". " + L.t(steps[k]));
                 LinearLayout.LayoutParams sl = new LinearLayout.LayoutParams(-1, -2);
                 sl.topMargin = Ui.dp(a, 6);
                 card.addView(s, sl);
@@ -273,12 +308,19 @@ public class GuideActivity extends Activity {
             stl.topMargin = Ui.dp(a, 16);
             col.addView(st, stl);
 
-            MaterialButton b = Ui.pill(a, L.t(BTN[i]), !ok[i] || i == N - 1, v -> act(i));
+            String btnText = i != 0 ? BTN[i] : ExecMode.SHIZUKU.equals(mode) ? "授權 Shizuku" : "檢查 root";
+            MaterialButton b = Ui.pill(a, L.t(btnText), !ok[i] || i == N - 1, v -> act(i));
             b.setVisibility(!ok[i] || i == N - 1 ? View.VISIBLE : View.GONE);   // 已經完成的項目不再顯示按鈕
             LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-1, Ui.dp(a, 52));
             bl.topMargin = Ui.dp(a, 12);
             col.addView(b, bl);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        try { rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuListener); } catch (Throwable ignored) { }
+        super.onDestroy();
     }
 
     @Override
@@ -293,18 +335,25 @@ public class GuideActivity extends Activity {
         refresh();
     }
 
+    private boolean installedShizuku() { return ShizukuBackend.installed(this); }
+
     /** 逐項檢查；root、Key 要用 su，放在背景執行，結果回到主執行緒更新各頁。 */
     private void refresh() {
         new Thread(() -> {
             Root.recheck();   // 使用者可能剛在 root 管理器裡允許：重新判斷，不要沿用舊結果
-            boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");
+            final String mode = ExecMode.get(this);
+            final boolean root = ExecMode.ROOT.equals(mode) && Root.isRoot();
+            final int sz = ShizukuBackend.state();
+            final boolean shz = installedShizuku();
             boolean key = new java.io.File(getFilesDir(), "claude_key").length() > 0;
             runOnUiThread(() -> {
                 boolean ov = Settings.canDrawOverlays(this);
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                 boolean a11y = A11yGuard.listed(this);
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                set(0, root, root ? L.t("✓ 已授權（會優先用 root，更快更完整）") : L.t("未授權（選用）：沒有 root 也能用；之後想給，到 root 管理器允許 PhoneAI，回來按「檢查 root」"));
+                if (ExecMode.NORMAL.equals(mode)) set(0, true, L.t("✓ 普通模式（不需要額外授權）"));
+                else if (ExecMode.SHIZUKU.equals(mode)) set(0, sz == 0, sz == 0 ? L.t("✓ Shizuku 已可用") : !shz ? L.t("尚未安裝 Shizuku") : sz == 1 ? L.t("Shizuku 沒有在執行：打開 Shizuku 啟動它") : sz == 2 ? L.t("還沒授權：按「授權 Shizuku」") : L.t("Shizuku 版本太舊，請更新"));
+                else set(0, root, root ? L.t("✓ 已授權（會優先用 root，更快更完整）") : L.t("未授權：到 root 管理器允許 PhoneAI，回來按「檢查 root」；沒有 root 可以改選 Shizuku 或普通模式"));
                 set(1, ov, ov ? L.t("✓ 已開啟") : L.t("尚未開啟"));
                 set(2, nt, nt ? L.t("✓ 已允許") : L.t("尚未允許"));
                 set(3, a11y, a11y ? L.t("✓ 已開啟") : L.t("尚未開啟"));

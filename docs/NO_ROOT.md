@@ -34,3 +34,8 @@
 ## 怎麼測
 設定 → 執行任務時 → **不使用 root（測試用）**，在有 root 的手機上也能模擬沒有 root 的情況，
 不用另外找一支沒 root 的手機。單元測試（`AssistTest`）會確認每個固定指令都有不用 root 的做法。
+
+## Shizuku 模式（不用 root，用 adb 等級權限）
+
+引導頁第一頁（或「設定 → 執行任務時 → 執行模式」）可以選 root／Shizuku／普通。Shizuku 模式要先安裝並啟動 Shizuku App，再在 PhoneAI 授權。
+開關 Wi-Fi／藍牙、`settings put`、`input`、`screencap` 這些指令改走 Shizuku；需要真正 root 的功能（背景螢幕、即時觸控等）不支援。手機重開機後 Shizuku 要再啟動一次。

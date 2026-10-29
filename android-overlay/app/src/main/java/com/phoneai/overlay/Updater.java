@@ -86,7 +86,7 @@ final class Updater {
         nm.createNotificationChannel(new NotificationChannel(CH, L.t("App 更新"), NotificationManager.IMPORTANCE_LOW));
         File out = new File(a.getCacheDir(), "update.apk");
         try {
-            boolean cached = !Root.available() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
+            boolean cached = !Root.isRoot() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setInstanceFollowRedirects(true);
             c.setConnectTimeout(20000);
@@ -108,7 +108,7 @@ final class Updater {
                     }
                 }
             }
-            if (!Root.available()) {   // 沒有 root：交給系統安裝程式，使用者按一下「安裝」
+            if (!Root.isRoot()) {   // 沒有 root：交給系統安裝程式，使用者按一下「安裝」
                 nm.cancel(NOTE);
                 installWithoutRoot(a, out, v);
                 return;

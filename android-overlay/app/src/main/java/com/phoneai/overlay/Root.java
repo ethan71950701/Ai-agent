@@ -18,10 +18,23 @@ final class Root {
 
     /**
      * 這支手機有沒有可用的 root：第一次會實際跑一次 su，結果記下來（不要在主執行緒呼叫）。
-     * 設定裡勾了「不使用 root」就一律回 false，用來測試沒有 root 的情況。
+     * 執行模式選「普通」就一律回 false，選「Shizuku」就看 Shizuku 能不能用。
      */
     static boolean available() {
-        if (App.ctx != null && App.ctx.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("no_root", false)) return false;
+        if (App.ctx == null) return rootAvailable();
+        switch (ExecMode.get(App.ctx)) {
+            case ExecMode.NORMAL: return false;
+            case ExecMode.SHIZUKU: return ShizukuBackend.ready();   // Shizuku 模式：指令走 Shizuku（adb 權限），其餘跟有 root 時一樣
+            default: return rootAvailable();
+        }
+    }
+
+    /** 真的有 root（用 su）：安裝 APK 這類 Shizuku 做不到的事要看這個，而不是 available()。 */
+    static boolean isRoot() {
+        return (App.ctx == null || ExecMode.ROOT.equals(ExecMode.get(App.ctx))) && rootAvailable();
+    }
+
+    private static boolean rootAvailable() {
         Boolean r = rootOk;
         if (r != null && (r || System.currentTimeMillis() - rootCheckedAt < RECHECK_MS)) return r;
         synchronized (Root.class) {

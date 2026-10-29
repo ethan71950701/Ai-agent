@@ -57,6 +57,8 @@ android {
 dependencies {
     // Material 3 元件（按鈕、開關、卡片、文字欄位）：讓 App 介面用 Android 原生的 Material 風格
     implementation "com.google.android.material:material:1.12.0"
+    implementation "dev.rikka.shizuku:api:13.1.5"        // Shizuku 模式：用 adb 等級權限執行指令，不需要 root
+    implementation "dev.rikka.shizuku:provider:13.1.5"
     implementation "androidx.dynamicanimation:dynamicanimation:1.0.0"   // 彈簧動畫（底欄、展開、按壓回彈）
     // 離線語音辨識（SenseVoice，sherpa-onnx 的 Java 介面；原生函式庫由 GitHub 編譯時下載，見 SherpaEngine）
     // 單元測試（不需要手機）：純邏輯的解析與挑選；Android 內建的 org.json 在電腦上是空殼，測試要用真的

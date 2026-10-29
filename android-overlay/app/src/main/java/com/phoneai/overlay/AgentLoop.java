@@ -425,10 +425,16 @@ final class AgentLoop {
             return shot == null ? null : encodeJpeg(shot);
         }
         try {
-            Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
-            p.getOutputStream().close();
-            byte[] png = readAll(p.getInputStream());
-            p.waitFor();
+            byte[] png;
+            if (ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) {
+                png = ShizukuBackend.runBytes("screencap -p");
+                if (png == null) return null;
+            } else {
+                Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
+                p.getOutputStream().close();
+                png = readAll(p.getInputStream());
+                p.waitFor();
+            }
             if (png.length < 100) return null;
             Bitmap bmp = BitmapFactory.decodeByteArray(png, 0, png.length);
             if (bmp == null) return null;
