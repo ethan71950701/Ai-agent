@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 鬧鐘改成宣告系統的設鬧鐘權限，不用 root 也能直接設好、不開時鐘畫面；行事曆事件也改成直接建立（需要行事曆權限，已 root 的手機會自動補上），不用再按儲存｜Alarms now declare the system set-alarm permission, so they are set directly without opening the clock and without root; calendar events are now created directly too (needs calendar permission, granted automatically on rooted phones), so there is no need to press save
 
+## 1.0.1307
+
 - 新增雙擊動作；助理新增三個工具：新增行事曆事件、在地圖上找地方、撥號（都只是打開對應的 App 並填好，要自己按儲存或撥出）｜Added a double-tap action; the assistant has three new tools: add a calendar event, show a place on the map, and dial a number (they only open the app prefilled; you press save or call yourself)
 
 ## 1.0.1306
