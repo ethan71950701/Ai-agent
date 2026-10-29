@@ -174,6 +174,7 @@ final class AgentLoop {
         List<JSONObject> details = new ArrayList<>();
         lastDetails = details;
         if (preOpen != null && preOpen.matches("[A-Za-z0-9._]+")) {   // 路由已判斷第一步是開 App：不用再花一次模型呼叫
+            hideBeforeOperate(ui, panelHidden, "open");   // 開 App 會把面板蓋住：先收起面板，不然任務結束時以為面板還開著、答案只顯示在被蓋住的面板裡
             sh("monkey -p " + preOpen + " -c android.intent.category.LAUNCHER 1");
             st.opened.add(preOpen);
             history.add("0. 任務開始前，程式已先開啟 " + preOpen + "，不用再 open");
