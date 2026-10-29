@@ -46,14 +46,20 @@ final class Usage {
 
     /** 記一次呼叫的用量（在背景執行緒呼叫）。 */
     /** in＝輸入 token（含快取的寫入與讀取），out＝輸出，cw＝快取寫入，cr＝快取讀取（cw、cr 是 in 裡的明細）。 */
-    static synchronized void add(Context c, long in, long out, long cw, long cr) {
+    static synchronized void add(Context c, long in, long out, long cw, long cr) { add(c, "Claude", in, out, cw, cr); }
+
+    /** service＝這次請求用的服務（Claude 或網址的主機名稱），另外記每個服務當天的請求次數與 token。 */
+    static synchronized void add(Context c, String service, long in, long out, long cw, long cr) {
         try {
             JSONObject d = load(c);
             String k = today();
             JSONObject e = d.optJSONObject(k);
             long i = (e == null ? 0 : e.optLong("in")) + in, o = (e == null ? 0 : e.optLong("out")) + out;
             long w = (e == null ? 0 : e.optLong("cw")) + cw, r = (e == null ? 0 : e.optLong("cr")) + cr;
-            d.put(k, new JSONObject().put("in", i).put("out", o).put("cw", w).put("cr", r));
+            JSONObject svc = e == null || e.optJSONObject("svc") == null ? new JSONObject() : e.getJSONObject("svc");
+            JSONObject one = svc.optJSONObject(service) == null ? new JSONObject() : svc.getJSONObject(service);
+            svc.put(service, new JSONObject().put("req", one.optLong("req") + 1).put("in", one.optLong("in") + in).put("out", one.optLong("out") + out));
+            d.put(k, new JSONObject().put("in", i).put("out", o).put("cw", w).put("cr", r).put("svc", svc));
             String cutoff = day(System.currentTimeMillis() - KEEP_DAYS * 86400000L);
             List<String> old = new ArrayList<>();
             java.util.Iterator<String> keys = d.keys();
@@ -86,6 +92,31 @@ final class Usage {
             s[3] += e.optLong("cr");
         }
         return s;
+    }
+
+    /** 各服務在日期前綴範圍內的 [請求次數, 輸入, 輸出]，依服務名稱。 */
+    static synchronized java.util.Map<String, long[]> byService(Context c, String prefix) {
+        java.util.Map<String, long[]> out = new java.util.TreeMap<>();
+        JSONObject d = load(c);
+        java.util.Iterator<String> keys = d.keys();
+        while (keys.hasNext()) {
+            String k = keys.next();
+            JSONObject e = k.startsWith(prefix) ? d.optJSONObject(k) : null;
+            JSONObject svc = e == null ? null : e.optJSONObject("svc");
+            if (svc == null) continue;
+            java.util.Iterator<String> names = svc.keys();
+            while (names.hasNext()) {
+                String n = names.next();
+                JSONObject o = svc.optJSONObject(n);
+                if (o == null) continue;
+                long[] a = out.get(n);
+                if (a == null) out.put(n, a = new long[3]);
+                a[0] += o.optLong("req");
+                a[1] += o.optLong("in");
+                a[2] += o.optLong("out");
+            }
+        }
+        return out;
     }
 
     static long limitDay(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getLong("budget_day", 0); }
@@ -134,6 +165,9 @@ final class Usage {
         int p = (int) (20 * d);
         form.setPadding(p, p / 2, p, 0);
         form.addView(info);
+        form.addView(breakdown(a, today(), L.t("今天各服務")));
+        form.addView(breakdown(a, today().substring(0, 7), L.t("這個月各服務")));
+        addUsageLinks(a, form, info);
         EditText dayEt = new EditText(a);
         dayEt.setHint(L.t("每日上限（千 token）"));
         dayEt.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -147,6 +181,48 @@ final class Usage {
         new MaterialAlertDialogBuilder(a).setTitle(L.t("用量與上限")).setView(form)
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> setLimits(a, parseK(dayEt) * 1000, parseK(monEt) * 1000))
                 .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    private static TextView breakdown(Activity a, String prefix, String title) {
+        StringBuilder sb = new StringBuilder("\n").append(title).append("：");
+        java.util.Map<String, long[]> m = byService(a, prefix);
+        if (m.isEmpty()) sb.append(L.t("（還沒有紀錄）"));
+        for (java.util.Map.Entry<String, long[]> e : m.entrySet())
+            sb.append("\n　").append(e.getKey()).append("　").append(e.getValue()[0]).append(L.t(" 次、")).append(String.format(Locale.US, "%,d", e.getValue()[1] + e.getValue()[2])).append(" token");
+        TextView t = new TextView(a);
+        t.setText(sb.toString());
+        t.setTextSize(14);
+        return t;
+    }
+
+    /** 「查詢餘額」（OpenRouter、DeepSeek 有公開的餘額查詢）與各服務官網的用量頁連結。 */
+    private static void addUsageLinks(Activity a, LinearLayout form, TextView info) {
+        java.util.LinkedHashMap<String, String> pages = new java.util.LinkedHashMap<>();
+        boolean balance = false;
+        for (LlmConfig.Slot s : new LlmConfig.Slot[]{LlmConfig.cheap(a), LlmConfig.vision(a)}) {
+            LlmPresets.Preset ps = LlmPresets.forSlot(s);
+            if (ps != null && !ps.usageUrl.isEmpty()) pages.put(ps.shortName(), ps.usageUrl);
+            if (s.openai() && (LlmConfig.host(s.base).contains("openrouter") || LlmConfig.host(s.base).contains("deepseek"))) balance = true;
+        }
+        if (!LlmConfig.cheap(a).openai() || !LlmConfig.vision(a).openai()) pages.put("Claude", "https://console.anthropic.com/settings/usage");
+        if (balance) {
+            com.google.android.material.button.MaterialButton b = Ui.pill(a, L.t("查詢餘額（OpenRouter／DeepSeek）"), false, v -> {
+                info.setText(L.t("查詢中…"));
+                new Thread(() -> {
+                    String r = LlmBalance.query(a);
+                    a.runOnUiThread(() -> info.setText(r));
+                }).start();
+            });
+            form.addView(b, new LinearLayout.LayoutParams(-1, Ui.dp(a, 44)));
+        }
+        for (java.util.Map.Entry<String, String> e : pages.entrySet()) {
+            com.google.android.material.button.MaterialButton b = Ui.pill(a, L.t("開啟官網用量頁：") + e.getKey(), false, v -> {
+                try { a.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(e.getValue()))); } catch (Exception ignored) { }
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, Ui.dp(a, 44));
+            lp.topMargin = Ui.dp(a, 6);
+            form.addView(b, lp);
+        }
     }
 
     // ---------- 任務用量：同一個執行緒裡的 Claude 呼叫，累加到目前這個任務（給任務過程用） ----------

@@ -80,6 +80,13 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void parsesBalanceResponses() throws Exception {
+        assertEquals("餘額 12.50 USD", LlmBalance.parseDeepSeek("{\"balance_infos\":[{\"currency\":\"USD\",\"total_balance\":\"12.50\"}]}"));
+        assertTrue(LlmBalance.parseOpenRouter("{\"data\":{\"usage\":0.25,\"limit\":1.0,\"limit_remaining\":0.75}}").contains("0.7500"));
+        assertTrue(LlmBalance.parseOpenRouter("{\"data\":{\"usage\":0.25,\"limit\":null}}").contains("0.2500"));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));
