@@ -86,6 +86,7 @@ final class Updater {
         nm.createNotificationChannel(new NotificationChannel(CH, L.t("App 更新"), NotificationManager.IMPORTANCE_LOW));
         File out = new File(a.getCacheDir(), "update.apk");
         try {
+            boolean cached = !Root.available() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setInstanceFollowRedirects(true);
             c.setConnectTimeout(20000);
@@ -94,7 +95,7 @@ final class Updater {
             long total = size > 0 ? size : c.getContentLengthLong();
             long got = 0;
             int lastPct = -1;
-            try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(out)) {
+            if (!cached) try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(out)) {
                 byte[] buf = new byte[65536];
                 int n;
                 while ((n = in.read(buf)) > 0) {
@@ -139,19 +140,19 @@ final class Updater {
                     toast(a, L.t("請先允許 PhoneAI「安裝未知應用程式」，再按一次更新"));
                     a.startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:" + a.getPackageName())));
                 });
-                apk.delete();
-                busy = false;
+                busy = false;   // APK 留著：授權後再按更新，直接安裝不用重下載
                 return;
             }
             android.content.pm.PackageInstaller pi = a.getPackageManager().getPackageInstaller();
             android.content.pm.PackageInstaller.SessionParams sp = new android.content.pm.PackageInstaller.SessionParams(android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL);
             int id = pi.createSession(sp);
-            try (android.content.pm.PackageInstaller.Session s = pi.openSession(id);
-                 InputStream in = new java.io.FileInputStream(apk); OutputStream o = s.openWrite("update.apk", 0, apk.length())) {
-                byte[] buf = new byte[65536];
-                int n;
-                while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
-                s.fsync(o);
+            try (android.content.pm.PackageInstaller.Session s = pi.openSession(id)) {
+                try (InputStream in = new java.io.FileInputStream(apk); OutputStream o = s.openWrite("update.apk", 0, apk.length())) {
+                    byte[] buf = new byte[65536];
+                    int n;
+                    while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
+                    s.fsync(o);
+                }   // 先關掉檔案再 commit，不然會出現 Files still open
                 String action = a.getPackageName() + ".UPDATE_RESULT";
                 a.getApplicationContext().registerReceiver(new android.content.BroadcastReceiver() {
                     @Override public void onReceive(Context c, Intent i) {
