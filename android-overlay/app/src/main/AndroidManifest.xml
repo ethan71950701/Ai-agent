@@ -204,6 +204,10 @@
             android:name=".DirectTestActivity"
             android:exported="false" />
 
+        <receiver
+            android:name=".InstallResultReceiver"
+            android:exported="false" />
+
         <provider
             android:name=".SurfaceProvider"
             android:authorities="com.phoneai.overlay.surface"

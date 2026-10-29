@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 沒 root 更新：安裝結果改由系統回呼處理，App 被收掉也不會漏掉安裝確認；背景被擋時用通知「點這裡完成安裝」，失敗會用通知顯示原因｜Non-root update: the install result is now handled by a manifest receiver so it isn't lost if the app is killed; if a background launch is blocked a "tap to finish installing" notification appears, and failures show their reason in a notification
+
 - 記憶頁不再需要 root：直接讀寫 App 自己的檔案（之前沒 root 會顯示「每種 su 寫法都讀不到」）；匯出／匯入沒 root 時改用檔案權限｜The memory page no longer needs root: it reads and writes the app's own file directly (before, without root it showed "every su variant failed"); export/import use file access when there is no root
 
 ## 1.0.1316

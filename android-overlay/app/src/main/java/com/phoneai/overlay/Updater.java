@@ -27,7 +27,7 @@ final class Updater {
     private Updater() { }
 
     private static final String CH = "update";
-    private static final int NOTE = 9001;
+    static final int NOTE = 9001;
     private static volatile boolean busy;
 
     /** 按一次「檢查並更新」：檢查 → 有新版本才問 → 下載（通知列顯示進度）→ 安裝。 */
@@ -133,6 +133,12 @@ final class Updater {
     }
 
     /** 不用 root 安裝：PackageInstaller 一次寫入 APK，系統跳出安裝確認（需要允許「安裝未知應用程式」）。 */
+    /** 安裝回呼（InstallResultReceiver）收到結果後：清掉下載好的 APK、解除忙碌。 */
+    static void finishInstall(Context c) {
+        new File(c.getCacheDir(), "update.apk").delete();
+        busy = false;
+    }
+
     private static void installWithoutRoot(Activity a, File apk, String v) {
         try {
             if (!a.getPackageManager().canRequestPackageInstalls()) {
@@ -153,23 +159,7 @@ final class Updater {
                     while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
                     s.fsync(o);
                 }   // 先關掉檔案再 commit，不然會出現 Files still open
-                String action = a.getPackageName() + ".UPDATE_RESULT";
-                a.getApplicationContext().registerReceiver(new android.content.BroadcastReceiver() {
-                    @Override public void onReceive(Context c, Intent i) {
-                        int st = i.getIntExtra(android.content.pm.PackageInstaller.EXTRA_STATUS, -1);
-                        if (st == android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION) {
-                            Intent ask = i.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-                            if (ask != null) c.startActivity(ask.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                            return;
-                        }
-                        c.getApplicationContext().unregisterReceiver(this);
-                        apk.delete();
-                        busy = false;
-                        if (st != android.content.pm.PackageInstaller.STATUS_SUCCESS)
-                            Toast.makeText(c, L.t("安裝失敗：") + i.getStringExtra(android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE), Toast.LENGTH_LONG).show();
-                    }
-                }, new android.content.IntentFilter(action), Context.RECEIVER_NOT_EXPORTED);
-                Intent cb = new Intent(action).setPackage(a.getPackageName());
+                Intent cb = new Intent(a, InstallResultReceiver.class);   // 明確指定元件：Android 14 不允許可變的隱含 PendingIntent
                 s.commit(android.app.PendingIntent.getBroadcast(a, id, cb, android.app.PendingIntent.FLAG_MUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender());
             }
             a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」"))   /* 沒 root 的更新：系統安裝畫面要使用者按一下（測試用的版本號推進） */);
