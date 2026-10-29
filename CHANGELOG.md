@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 查手機本身的資訊（Android 版本、電量、容量、時間）時，不再先打開設定等 App，直接用指令查｜When asking for the phone's own information (Android version, battery, storage, time), the assistant no longer opens Settings or another app first and queries it with a command directly
 
+## 1.0.1297
+
 - 問資訊的任務（例如「告訴我最上面一個聊天室的名稱」），答案再短也會跳出回答卡片，不再只有通知｜Tasks that ask for information (e.g. "tell me the name of the top chat") now always show the answer card, even when the answer is short, instead of only a notification
 
 ## 1.0.1296
