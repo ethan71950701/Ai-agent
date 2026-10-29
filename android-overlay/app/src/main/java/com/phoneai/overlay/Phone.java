@@ -262,6 +262,18 @@ final class Phone {
         }
     }
 
+    /** 媒體音量直接設成 0～100%（不用 root，也不用一格一格按）。 */
+    static String setVolume(Context c, int pct) {
+        try {
+            AudioManager am = c.getSystemService(AudioManager.class);
+            int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, Math.round(max * Math.max(0, Math.min(100, pct)) / 100f), AudioManager.FLAG_SHOW_UI);
+            return "已把媒體音量調到 " + pct + "%" + volumeNow(c);
+        } catch (Exception e) {
+            return "調整音量失敗：" + e.getMessage();
+        }
+    }
+
     private static String volume(Context c, boolean up) {
         try {
             c.getSystemService(AudioManager.class).adjustStreamVolume(AudioManager.STREAM_MUSIC,

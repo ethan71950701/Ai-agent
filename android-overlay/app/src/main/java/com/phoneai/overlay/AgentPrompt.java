@@ -26,7 +26,8 @@ final class AgentPrompt {
             "{\"action\":\"open\",\"name\":\"App顯示名稱\",\"pkg\":\"套件名稱\"}，用指令直接開啟已安裝的App，比在桌面找圖示快；一定要寫name（例如Chrome、設定、LINE），pkg只在你很確定時才寫，程式會用name自己查套件\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}，直接開關Wi-Fi、藍牙、深色模式、勿擾、自動旋轉、定位、調音量、打開或收起通知欄／快速設定，不用點畫面；這些設定一律先用cmd\n" +
             "{\"action\":\"brightness\",\"level\":0到100}，直接設定螢幕亮度（0最暗、100最亮），不用拖滑桿。調亮度一律用這個，shell是唯讀的不能改設定\n" +
-            "brightness和cmd可以多加\"finish\":\"要告訴使用者的話\"（寫在think前面）：只有做完這個動作任務就整個完成時才加，程式成功執行後會直接結束，不會再給你看畫面確認；後面還有別的事要做就不要加\n" +
+            "{\"action\":\"volume\",\"level\":0到100}，直接把媒體音量設成百分比（0＝靜音／最小、100＝最大），一步到位；要調到最小、最大或某個大小時用這個，不要一格一格按volume_up／volume_down\n" +
+            "brightness、volume和cmd可以多加\"finish\":\"要告訴使用者的話\"（寫在think前面）：只有做完這個動作任務就整個完成時才加，程式成功執行後會直接結束，不會再給你看畫面確認；後面還有別的事要做就不要加\n" +
             "{\"action\":\"open_url\",\"url\":\"網址\"}，用網址開網頁或App頁面。在Google Play搜尋App用 market://search?q=關鍵字（關鍵字要做URL編碼，空白寫成%20）。搜尋中文或特殊字時一律用這個，不要靠輸入框貼上。\n" +
             "能用open或cmd做的事優先用它們，其餘才用畫面操作。\n" +
             "{\"action\":\"search\",\"q\":\"搜尋關鍵字\"}，到網路查資料。只有需要畫面上看不到的最新資訊（新聞、價格、不認得的名詞）才用；每個任務最多2次，要花錢，能靠畫面操作做完就不要搜尋；q不要放個人資料\n" +
@@ -61,7 +62,8 @@ final class AgentPrompt {
             "{\"action\":\"open\",\"name\":\"App name\",\"pkg\":\"package name\"}  (open an installed app directly; always give name)\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}  (use these first for these settings)\n" +
             "{\"action\":\"brightness\",\"level\":0 to 100}  (set the screen brightness directly, 0 is darkest; always use this for brightness, shell is read-only)\n" +
-            "brightness and cmd may add \"finish\":\"what to tell the user\" (before think): only when the whole task is complete after this action; the program ends right after it succeeds without showing you the screen. Do not add it if more work remains.\n" +
+            "{\"action\":\"volume\",\"level\":0 to 100}  (set the media volume directly as a percentage, 0 = minimum, 100 = maximum, in one step; use this for minimum, maximum or a given level instead of pressing volume_up / volume_down repeatedly)\n" +
+            "brightness, volume and cmd may add \"finish\":\"what to tell the user\" (before think): only when the whole task is complete after this action; the program ends right after it succeeds without showing you the screen. Do not add it if more work remains.\n" +
             "{\"action\":\"open_url\",\"url\":\"URL\"}  (open a web page or app page by URL; to search Google Play use market://search?q=KEYWORD with %20 for spaces; prefer this over typing non-ASCII text)\n" +
             "Prefer open and cmd over screen actions when they can do the job.\n" +
             "{\"action\":\"search\",\"q\":\"keywords\"}  (web search; only for information not on screen; at most 2 per task; it costs money)\n" +

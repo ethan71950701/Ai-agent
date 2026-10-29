@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- AI 新增「直接設定音量」動作：調到最小、最大或某個百分比一步完成（有沒有 root 都可以），不用一格一格按｜New "set volume" action for the AI: minimum, maximum or any percentage in one step (with or without root) instead of pressing one notch at a time
+
 ## 1.0.1322
 
 - 沒 root 更新改用系統安裝程式的標準畫面（跟從瀏覽器安裝 APK 一樣，有「安裝中／完成／開啟」），不再按下確認後畫面就消失｜Non-root update now uses the system installer's normal screen (same as installing an APK from the browser, with installing / done / open) instead of the confirm screen closing right after you tap

@@ -376,7 +376,7 @@ final class AgentLoop {
                         recordStep(recorded, macroValid, action, tree, useTree, result.startsWith("已"));
                         // 指令類動作（亮度、Wi-Fi、藍牙、音量）：模型說「做完任務就完成」(finish) 而且指令成功，就直接結束，不再多問一次模型
                         String fin = action.optString("finish", "").trim();
-                        if (!fin.isEmpty() && (name.equals("brightness") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
+                        if (!fin.isEmpty() && (name.equals("brightness") || name.equals("volume") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
                         break;
                     }
                 }
@@ -736,6 +736,8 @@ final class AgentLoop {
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
                 }
+                case "volume":
+                    return Phone.setVolume(c, clamp(a.optInt("level", 50), 0, 100));
                 case "brightness": {
                     int pct = clamp(a.optInt("level", 50), 0, 100);
                     sh("settings put system screen_brightness_mode 0");   // 手動亮度；自動亮度開著會把設定蓋掉
@@ -907,6 +909,8 @@ final class AgentLoop {
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;
             }
+            case "volume":
+                return Phone.setVolume(c, clamp(a.optInt("level", 50), 0, 100));
             case "brightness":
                 return Phone.setBrightness(c, clamp(a.optInt("level", 50), 0, 100));
             case "shell": {
