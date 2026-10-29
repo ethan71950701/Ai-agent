@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 final class AgentLoop {
     static final String MODEL = "claude-sonnet-5-5";
     static final String SEARCH_MODEL = "claude-sonnet-5-5";
+    static volatile String lastRaw = "";   // 最近一次模型回覆的開頭，解析不出動作時放進錯誤訊息
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 8;
@@ -169,6 +170,7 @@ final class AgentLoop {
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
+        int waits = 0;               // 連續 wait 的次數（相機取景這種本來就不會變的畫面，不能只看清單有沒有變）
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 if (cancelled) return L.t("已停止。");
@@ -183,7 +185,7 @@ final class AgentLoop {
                 String treeText = useTree ? ElementList.describe(tree) : null;
                 sameTree = treeText != null && treeText.equals(lastTreeText) ? sameTree + 1 : 0;
                 lastTreeText = treeText;
-                if (useTree && sameTree >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 清單連續三次沒變：這一步改用截圖＋Sonnet 看看
+                if (useTree && sameTree >= 1 && waits >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 連續等了兩次、清單還是沒變：可能卡住，這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot();
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
                 List<String> lessonApps = new ArrayList<>(st.opened);   // 只帶「這次用到的 App」的經驗，不是全部
@@ -203,11 +205,21 @@ final class AgentLoop {
                         model = MODEL;
                         action = askModel(key, task, history, img, lessons, model, null);
                     }
+                    if (action == null && model.equals(TREE_MODEL)) {   // Haiku 的回覆解析不出動作：用 Sonnet＋截圖重問一次
+                        String shot = img != null ? img : screenshot();
+                        if (shot != null) {
+                            model = MODEL;
+                            action = askModel(key, task, history, shot, lessons, model, null);
+                        }
+                    }
                 } catch (Exception e) {
                     if (cancelled) return L.t("已停止。");
                     return L.t("連不上 AI：") + e.getMessage();
                 }
-                if (action == null) return L.t("AI 的回答看不懂，已停止。");
+                if (action == null) {
+                    String raw = lastRaw == null ? "" : lastRaw;
+                    return L.t("AI 的回答看不懂，已停止。") + (raw.isEmpty() ? "" : String.format(L.t("（模型回覆開頭：%s）"), raw));
+                }
                 if (cancelled) return L.t("已停止。");
                 if (useTree && !ElementList.pickAll(action, tree)) {
                     history.add(step + ". 有找不到的元件編號，下一步改看截圖");
@@ -219,6 +231,7 @@ final class AgentLoop {
                 int historyBefore = history.size();
                 double wait = action.optDouble("wait", 1.2);
                 String name = action.optString("action");
+                waits = "wait".equals(name) ? waits + 1 : 0;
                 if (st.dragDown && !name.startsWith("drag_") && !name.equals("wait")) {
                     releaseDrag(st);
                     history.add(step + ". 拖曳到一半，因為換了別的動作，已放開手指");
@@ -368,9 +381,11 @@ final class AgentLoop {
                 .put("messages", messages);
         JSONObject r = ChatEngine.post(body, key);
         JSONArray out = r.optJSONArray("content");
-        if (out == null) return null;
+        lastRaw = "";
+        if (out == null) { lastRaw = "（沒有內容）"; return null; }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < out.length(); i++) if ("text".equals(out.getJSONObject(i).optString("type"))) sb.append(out.getJSONObject(i).optString("text"));
+        lastRaw = sb.length() == 0 ? "（空）" + r.optString("stop_reason") : sb.substring(0, Math.min(sb.length(), 80));
         return parseLast(sb.toString());
     }
 
@@ -554,6 +569,12 @@ final class AgentLoop {
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
+                }
+                case "brightness": {
+                    int pct = clamp(a.optInt("level", 50), 0, 100);
+                    sh("settings put system screen_brightness_mode 0");   // 手動亮度；自動亮度開著會把設定蓋掉
+                    sh("settings put system screen_brightness " + Math.max(1, pct * 255 / 100));
+                    return "已把亮度調到 " + pct + "%（自動亮度已關閉）";
                 }
                 case "cmd":
                     return cmd(a.optString("name"));

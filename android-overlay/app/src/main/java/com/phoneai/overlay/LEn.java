@@ -428,6 +428,7 @@ final class LEn {
         m.put("估價約 $%.4f（第三方價格，以 Console 為準）", "Est. $%.4f (third-party prices; check Console)");
         m.put("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f", "%s · input %,d, output %,d · est. $%.4f");
         m.put(" · 估價約 $%.4f", " · est. $%.4f");
+        m.put("（模型回覆開頭：%s）", " (start of the model reply: %s)");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

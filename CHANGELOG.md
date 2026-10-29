@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 新增直接調亮度的動作（不用拖滑桿）；Haiku 的回覆看不懂時自動用 Sonnet 重問一次，錯誤訊息會附上回覆開頭；相機這類本來不會變的畫面不再被誤判成卡住｜Added a direct brightness action (no slider drag); when a Haiku reply cannot be understood it retries once with Sonnet and the error shows the start of the reply; screens that normally do not change, like the camera, are no longer mistaken for being stuck
+
 ## 1.0.1287
 
 - 通用經驗改成依任務相關程度挑 6 則（不夠相關的才用最新的補），不再只取最新 4 則，舊經驗也用得上｜General lessons are now picked by relevance to the task (6 of them, topped up with the newest), instead of only the newest 4, so older lessons are still used
