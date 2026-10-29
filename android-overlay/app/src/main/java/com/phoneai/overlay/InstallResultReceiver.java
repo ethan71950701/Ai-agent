@@ -17,6 +17,12 @@ public class InstallResultReceiver extends BroadcastReceiver {
     static final String CH = "app_update_result";
 
     @Override public void onReceive(Context c, Intent i) {
+        if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(i.getAction())) {   // 更新完成：App 被系統關掉又換成新版，用通知告訴使用者
+            Intent launch = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
+            notify(c, L.t("PhoneAI 已更新"), L.t("已更新到 1.0.") + BuildConfig.VERSION_CODE + L.t("，點這裡開啟"),
+                    launch == null ? null : PendingIntent.getActivity(c, 2, launch, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
+            return;
+        }
         int st = i.getIntExtra(PackageInstaller.EXTRA_STATUS, -1);
         String msg = i.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
         if (st == PackageInstaller.STATUS_PENDING_USER_ACTION) {

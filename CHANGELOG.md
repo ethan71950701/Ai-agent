@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 更新完成後會跳通知「已更新到 1.0.xxxx，點這裡開啟」（沒 root 更新時系統確認畫面按下後就收起，原本沒有任何完成提示）｜After an update finishes a notification says "Updated to 1.0.xxxx, tap here to open" (without root the system confirm screen closes as soon as you tap and there was no completion hint)
+
 ## 1.0.1320
 
 - 沒 root 更新：安裝結果改由系統回呼處理，App 被收掉也不會漏掉安裝確認；背景被擋時用通知「點這裡完成安裝」，失敗會用通知顯示原因｜Non-root update: the install result is now handled by a manifest receiver so it isn't lost if the app is killed; if a background launch is blocked a "tap to finish installing" notification appears, and failures show their reason in a notification

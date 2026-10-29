@@ -394,11 +394,14 @@ final class LEn {
         m.put("安裝 ", "Installing ");
         m.put(" 中…", "…");
         m.put("已更新到 ", "Updated to ");
+        m.put("已更新到 1.0.", "Updated to 1.0.");
         m.put("，App 會重新開啟", "; the app will reopen");
         m.put("簽章不同，無法直接覆蓋（請看「設定導覽」的說明）", "The signature differs so it cannot be installed over the old one (see the Setup guide)");
         m.put("安裝失敗：", "Install failed: ");
         m.put("點這裡完成安裝", "Tap here to finish installing");
         m.put("PhoneAI 更新失敗", "PhoneAI update failed");
+        m.put("PhoneAI 已更新", "PhoneAI updated");
+        m.put("，點這裡開啟", ", tap here to open");
         m.put("App 更新結果", "App update result");
         m.put("請先允許 PhoneAI「安裝未知應用程式」，再按一次更新", "Please allow PhoneAI to \"install unknown apps\", then tap Update again");
         m.put("請在跳出的畫面按「安裝」", "Tap \"Install\" on the screen that appears");
