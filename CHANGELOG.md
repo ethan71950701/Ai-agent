@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1340
+
 - 沒有 root 時，助理面板的背景模式按鈕和設定裡的「背景模式」「無障礙自動修復」不再顯示（這些都要 root）｜Without root the background-mode button in the assistant panel and the Background mode and Accessibility auto-repair rows in Settings are no longer shown (they need root)
+
 ## 1.0.1339
 
 - 加入 Gemini Flash／Flash-Lite 的官網價格（含快取讀取價；3.6／3.8 Flash 在 2027-01-01 起自動改用翻倍後的價格）｜Added the official Gemini Flash / Flash-Lite prices (including the cache read rate; the 3.6 / 3.8 Flash prices automatically double from 2027-01-01)
