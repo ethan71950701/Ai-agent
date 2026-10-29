@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 「用量與上限」現在會分服務顯示今天與這個月的請求次數和 token（Claude、Gemini…）；OpenRouter、DeepSeek 可以直接在 App 查餘額，其他服務有按鈕開啟官網用量頁｜"Usage and limits" now shows requests and tokens per service for today and this month (Claude, Gemini...); OpenRouter and DeepSeek balances can be checked in the app, and other services get a button that opens their usage page
+## 1.0.1334
 
 - 任務過程顯示實際用的模型（換成 Gemini 等服務後不再顯示成 Haiku 5.5）｜The task log now shows the model actually used (no more "Haiku 5.5" after switching to Gemini or another service)
+
 ## 1.0.1333
 
 - 選常見服務（Gemini、OpenAI…）時不再顯示網址與模型表單：直接輸入 Key，再選要不要查詢模型；只有「其他」才需要填網址｜Picking a known service (Gemini, OpenAI...) no longer shows the URL/model form: you just enter the key and choose whether to look up models; only "Other" asks for a URL
