@@ -298,7 +298,7 @@ final class Usage {
      * 每百萬 token 的美元價 [輸入, 輸出, 快取寫入, 快取讀取]。
      * Claude 與 DeepSeek 照官網價格頁（使用者提供的截圖，2026-10-29）：Claude 的 Haiku 5.5 輸入是「提示詞不超過 10 萬 token」的價，
      * Sonnet 5.5 與 Opus 5.5 的快取讀取是輸入價的 0.05 倍；DeepSeek 用尖峰價（離峰是一半）。
-     * OpenAI GPT-6 系列也是官網截圖；Gemini、GPT-4o 是第三方整理的粗估（各來源不一致），請在用量頁改成官網的價格。
+     * OpenAI GPT-6 系列也是官網截圖；Gemini Flash 系列是官網價格頁（見 geminiFlash）；只有舊的 GPT-4o 是第三方粗估，請在用量頁改成官網的價格。
      */
     static double[] guessPrice(String model) {
         String m = model == null ? "" : model.toLowerCase(Locale.ROOT);
@@ -313,13 +313,32 @@ final class Usage {
         if (m.contains("sol")) return new double[]{2.00, 10.00, 2.00, 0.10};
         if (m.contains("terra")) return new double[]{1.00, 5.00, 1.00, 0.05};
         if (m.contains("luna")) return new double[]{0.10, 0.50, 0.10, 0.01};
+        if (m.contains("gemini") && m.contains("flash")) return geminiFlash(m);
         double[] g = null;
-        if (m.contains("gemini") && m.contains("flash-lite")) g = new double[]{0.30, 2.50};
-        else if (m.contains("gemini") && m.contains("flash")) g = new double[]{1.50, 7.50};
-        else if (m.contains("gpt-4o-mini")) g = new double[]{0.15, 0.60};
+        if (m.contains("gpt-4o-mini")) g = new double[]{0.15, 0.60};
         else if (m.contains("gpt-4o")) g = new double[]{2.50, 10.00};
         if (g == null) return new double[]{0, 0, 0, 0};
         return new double[]{g[0], g[1], g[0], g[0] * 0.10};
+    }
+
+    /**
+     * Gemini Flash 系列（官網價格頁，2026-10-29，標準層付費價，文字／圖片輸入；快取讀取另計，快取儲存費沒算）。
+     * -latest 別名頁面沒寫對應哪一版，這裡假設是最新的（flash-lite → 3.5 flash-lite、flash → 3.8 flash）。
+     * 3.6／3.8 Flash 的價格 2027-01-01 起翻倍。
+     */
+    private static double[] geminiFlash(String m) {
+        double in, out, cr;
+        if (m.contains("flash-lite")) {
+            if (m.contains("3.1")) { in = 0.25; out = 1.50; cr = 0.025; }
+            else if (m.contains("2.5")) { in = 0.10; out = 0.40; cr = 0.01; }
+            else { in = 0.30; out = 2.50; cr = 0.03; }   // 3.5 flash-lite 與 flash-lite-latest
+        } else if (m.contains("2.5")) { in = 0.30; out = 2.50; cr = 0.03; }
+        else if (m.contains("3-flash")) { in = 0.50; out = 3.00; cr = 0.05; }
+        else {   // 3.8／3.6 Flash 與 flash-latest
+            double f = System.currentTimeMillis() >= 1798761600000L ? 2 : 1;   // 2027-01-01 UTC
+            in = 0.75 * f; out = 3.75 * f; cr = 0.075 * f;
+        }
+        return new double[]{in, out, in, cr};
     }
 
     static boolean priceKnown(Context c, String model) {

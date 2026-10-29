@@ -94,6 +94,10 @@ public class LlmAdapterTest {
         assertEquals(0.10, Usage.guessPrice("claude-sonnet-5-5")[3], 1e-9);   // Sonnet 5.5 的快取讀取是 $0.10（輸入價的 0.05 倍）
         assertEquals(0.30, Usage.guessPrice("deepseek-flash")[0], 1e-9);
         assertEquals(0.30, Usage.guessPrice("gemini-flash-lite-latest")[0], 1e-9);
+        assertEquals(2.50, Usage.guessPrice("gemini-3.5-flash-lite")[1], 1e-9);
+        assertEquals(0.025, Usage.guessPrice("gemini-3.1-flash-lite")[3], 1e-9);
+        assertEquals(0.10, Usage.guessPrice("gemini-2.5-flash-lite")[0], 1e-9);
+        assertEquals(0.50, Usage.guessPrice("gemini-3-flash-preview")[0], 1e-9);
         assertEquals(0.15, Usage.guessPrice("gpt-4o-mini")[0], 1e-9);
         assertEquals(1.00, Usage.guessPrice("gpt-6.1-terra")[0], 1e-9);
         assertEquals(0.01, Usage.guessPrice("gpt-6-luna")[3], 1e-9);

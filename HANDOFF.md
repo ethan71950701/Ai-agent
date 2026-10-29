@@ -41,7 +41,7 @@ The user is a non-expert who needs **one small step at a time**, and speaks Trad
 6. 測試完提醒清理截圖（`rm ~/s.png ~/s_small.png`、`/sdcard/Download/` 裡的測試圖）。截圖可能含通知欄/私人畫面。
 7. **不確定的事要說不確定**。這個專案裡好幾次我（前一個 AI）推測錯誤（例如以為是「設定被殺掉」其實是回去的方式不對；
    以為 Key 開頭是 `sk-ant-api`）。給推測時標明「這是推測，需實測」，並設計小實驗驗證。
-8. 價格：Claude 與 DeepSeek 已照官網價格頁（使用者 2026-10-29 提供截圖：Claude Haiku 5.5 $0.10/$0.50（提示詞 ≤10 萬 token）、Sonnet 5.5 $2/$10、Opus 5.5 $4/$20，快取寫入 1.25 倍、Haiku 快取讀取 $0.01、Sonnet／Opus 快取讀取 $0.10／$0.20；DeepSeek flash 尖峰 $0.30 入／$1.20 出／快取命中 $0.006，離峰半價）。OpenAI GPT-6 系列也照官網截圖（Astra $10/$50、Sol $2/$10、Terra $1/$5、Luna $0.10/$0.50，快取讀取各為 $1／$0.10／$0.05／$0.01）；Gemini、GPT-4o 仍是第三方粗估，在 `Usage.guessPrice`，使用者可在用量頁改。其餘價格引用時仍要註明並建議看 Console 的 Usage。
+8. 價格：Claude 與 DeepSeek 已照官網價格頁（使用者 2026-10-29 提供截圖：Claude Haiku 5.5 $0.10/$0.50（提示詞 ≤10 萬 token）、Sonnet 5.5 $2/$10、Opus 5.5 $4/$20，快取寫入 1.25 倍、Haiku 快取讀取 $0.01、Sonnet／Opus 快取讀取 $0.10／$0.20；DeepSeek flash 尖峰 $0.30 入／$1.20 出／快取命中 $0.006，離峰半價）。OpenAI GPT-6 系列也照官網截圖（Astra $10/$50、Sol $2/$10、Terra $1/$5、Luna $0.10/$0.50，快取讀取各為 $1／$0.10／$0.05／$0.01）；Gemini Flash 系列照官網頁（2026-10-29：3.8／3.6 Flash $0.75/$3.75（2027-01-01 起翻倍）、3.5 Flash-Lite $0.30/$2.50、3.1 Flash-Lite $0.25/$1.50、2.5 Flash-Lite $0.10/$0.40；`-latest` 別名頁面沒寫對應哪版，假設最新）；只有舊的 GPT-4o 仍是第三方粗估，在 `Usage.guessPrice`，使用者可在用量頁改。其餘價格引用時仍要註明並建議看 Console 的 Usage。
 9. **請使用者測試 agent 時，叫他不要切換 App、不要碰手機**：agent 照眼前畫面做事。曾有一次使用者在執行途中切到 Claude App，
    agent 第 4 步看到的是 Claude 聊天畫面而回 fail，我們花了好幾輪才查出來。先問「中途有沒有切 App」，再怪程式。
 10. 觀察不到的事不要編。例如曾推測「AI 去點了貼上按鈕」，後來看紀錄根本沒有那個動作。要用 `AGENT_DEBUG=1` 看實際畫面。
