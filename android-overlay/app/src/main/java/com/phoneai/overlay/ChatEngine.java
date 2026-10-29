@@ -146,7 +146,11 @@ final class ChatEngine {
         }, "abort-request").start();
     }
 
+    /** 最近一次請求實際用的模型（任務過程要顯示真正用的，不是程式裡請求的 Claude 名稱）。 */
+    static volatile String lastModel = "";
+
     static JSONObject post(JSONObject body, String key) throws Exception {
+        lastModel = body.optString("model");
         Context app = App.ctx;
         if (app != null) {
             String over = Usage.overLimit(app);
@@ -157,6 +161,7 @@ final class ChatEngine {
             String own = LlmConfig.readKey(app, slot);
             if (own == null) throw new Exception(L.t("還沒有設定這個模型的 API Key：") + slot.label());
             key = own;
+            if (slot.openai()) lastModel = slot.model;
             if (slot.openai()) return postOpenAi(app, body, slot, key);
         }
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();

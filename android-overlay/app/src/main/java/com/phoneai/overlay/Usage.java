@@ -161,6 +161,7 @@ final class Usage {
     /** 模型代號轉成給人看的名字，例如 claude-haiku-5-5 → Haiku 5.5。 */
     static String modelName(String model) {
         if (model == null || model.isEmpty()) return "";
+        if (!model.startsWith("claude-")) return model;   // 別家的模型名稱照原樣顯示
         String s = model.replace("claude-", "");
         int dash = s.indexOf('-');
         if (dash < 0) return s;
