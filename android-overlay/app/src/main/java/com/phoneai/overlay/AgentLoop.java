@@ -74,6 +74,15 @@ final class AgentLoop {
         return o;
     }
 
+    private static final Pattern QUESTION = Pattern.compile(
+            "告訴我|告诉我|是什麼|是什么|是誰|是谁|多少|幾|几|有沒有|有没有|哪|怎麼|怎么|為什麼|为什么|\\?|？|查一下|看一下|\\b(what|which|who|how|tell me|show me)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    /** 任務是在問資訊（要看答案），不是單純叫手機做事。 */
+    static boolean isQuestion(String task) {
+        return task != null && QUESTION.matcher(task).find();
+    }
+
     /** 這一步的模型、輸入／輸出 token 與估價，在這一步的 token 都算完之後呼叫。 */
     private static void usage(JSONObject det, String model, long[] before, double costBefore) {
         long[] now = Usage.tallyCounts();
@@ -166,6 +175,7 @@ final class AgentLoop {
             sleep(2500);
         }
         String finalSay = null;
+        boolean wantShow = false;   // 模型說這次的回答是使用者要看的資訊（名稱、數字、結果），不只是「完成了」
         boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true);
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
@@ -251,6 +261,7 @@ final class AgentLoop {
                 switch (name) {
                     case "done":
                         finalSay = action.optString("say", L.t("完成了。"));
+                        wantShow = action.optBoolean("show");
                         break;
                     case "fail":
                         finalSay = L.t("做不到：") + action.optString("say", L.t("（沒有原因）"));
@@ -322,7 +333,8 @@ final class AgentLoop {
         }
         if (finalSay != null) {
             String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
-            showCard = "always".equals(mode) || (!"never".equals(mode) && (st.searches > 0 || finalSay.length() > 30));
+            showCard = "always".equals(mode) || (!"never".equals(mode)
+                    && (st.searches > 0 || finalSay.length() > 30 || wantShow || isQuestion(task)));   // 問資訊的任務，答案再短也要讓使用者看到
         }   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
         return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
     }

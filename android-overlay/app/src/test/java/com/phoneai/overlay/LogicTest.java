@@ -127,6 +127,18 @@ public class LogicTest {
         assertEquals(2, Memory.pickRelevant(Arrays.asList("a", "b"), "任務", 6).size());
     }
 
+    // ---------- 要不要顯示回答卡片 ----------
+
+    @Test
+    public void questionTasksNeedAVisibleAnswer() {
+        assertTrue(AgentLoop.isQuestion("打開 LINE，告訴我最上面一個聊天室的名稱"));
+        assertTrue(AgentLoop.isQuestion("打開設定，告訴我電池剩多少"));
+        assertTrue(AgentLoop.isQuestion("What is my Android version"));
+        assertFalse(AgentLoop.isQuestion("把螢幕亮度調到最低"));
+        assertFalse(AgentLoop.isQuestion("打開計算機，算 123 乘 45"));
+        assertFalse(AgentLoop.isQuestion(null));
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

@@ -33,7 +33,7 @@ final class AgentPrompt {
             "{\"action\":\"back\"}、{\"action\":\"home\"}\n" +
             "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、驗證碼、指紋、授權）時manual設true，使用者做完會按是，之後你再看畫面繼續；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
             "{\"action\":\"ask_user\",\"question\":\"要問使用者的問題\"}，需要使用者選擇做法、補充說明、回答你的問題，或任務太模糊時用；會跳出助理面板，使用者可以用語音或打字回答，答案會寫在下一步的歷史裡（使用者沒回答就視為取消任務）；問題要具體、一次只問一件事，可以附上你想到的選項（例如「要依類型分資料夾，還是依使用頻率排列？」）\n" +
-            "{\"action\":\"done\",\"say\":\"要告訴使用者的話\"}，只有確定任務已完成才用\n" +
+            "{\"action\":\"done\",\"say\":\"要告訴使用者的話\"}，只有確定任務已完成才用；say如果是使用者要查的資訊（名稱、數字、結果…），多加\"show\":true（寫在think前面），會跳出卡片讓他看；只是「完成了」就不要加\n" +
             "{\"action\":\"fail\",\"say\":\"原因\"}，真的做不到時用（不是因為內容敏感）\n" +
             "每個回答都要加一個\"think\":\"一句話（40字內）：上一步的結果跟預期一樣嗎？不一樣的話原因是什麼？這一步為什麼這樣做\"，例如\"上次方塊落在目標左邊一格，所以終點往右修正一格\"。我會把它記在已執行的動作裡，下一步你看得到自己的想法。think 一定要放在 JSON 的最後一個欄位（在 wait 之後）：我讀到 think 之前就會先開始動作，所以動作需要的欄位都要寫在它前面\n" +
             "決定之前先在心裡走一遍：①上一步有沒有達到目的（看畫面，不要假設成功）②沒達到的話，是位置偏了、時機不對、手勢不對，還是根本方向錯了 ③有沒有完全不同、更省步的路。偏一點就微調；同樣的做法失敗兩次，就退一步換一個完全不同的思路，例如換起點、換手勢、換入口、先關掉擋住的東西、去查資料或請使用者幫忙\n" +
@@ -63,7 +63,7 @@ final class AgentPrompt {
             "{\"action\":\"search\",\"q\":\"keywords\"}  (web search; only for information not on screen; at most 2 per task; it costs money)\n" +
             "{\"action\":\"ask\",\"why\":\"reason\",\"manual\":false}  (for payment, transfer, deleting, installing, sending, login or other sensitive actions; manual true when the user must type a password, code or fingerprint)\n" +
             "{\"action\":\"ask_user\",\"question\":\"question\"}  (when you need the user to choose, explain or answer; one clear question)\n" +
-            "{\"action\":\"done\",\"say\":\"what to tell the user\"}  (only when the task is really finished)\n" +
+            "{\"action\":\"done\",\"say\":\"what to tell the user\"}  (only when the task is really finished; add \"show\":true before think when say is information the user asked for, such as a name, number or result, so a card is shown; leave it out for a plain \"done\")\n" +
             "{\"action\":\"fail\",\"say\":\"reason\"}  (only when it truly cannot be done)\n" +
             "Every answer must also include \"think\":\"one sentence (under 40 words): did the last step do what you expected, and why this step\", as the last field.\n" +
             "Before deciding, check: did the last step reach its goal (look at the screen, do not assume)? If not, is it the position, timing or gesture, or the whole approach? If the same approach failed twice, switch to a different one.\n" +

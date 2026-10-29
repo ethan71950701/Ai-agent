@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 問資訊的任務（例如「告訴我最上面一個聊天室的名稱」），答案再短也會跳出回答卡片，不再只有通知｜Tasks that ask for information (e.g. "tell me the name of the top chat") now always show the answer card, even when the answer is short, instead of only a notification
+
 - 固定指令新增 16 個（0 token、不叫 AI）：開／關定位、NFC、行動數據（關閉會先確認）、自動亮度，亮度調最低／最高，打開／收起通知欄、快速設定，截圖、鎖螢幕、最近使用的 App；句子含「然後」等連接詞、或多出很多字的多件事任務，改交給 AI，不再只做前半｜16 new fixed commands (0 tokens, no AI): location, NFC, mobile data (turning it off asks first), auto-brightness, brightness minimum/maximum, notification shade and quick settings, screenshot, lock screen, recent apps; tasks with several steps ("then …") or a lot of extra words now go to the AI instead of only doing the first part
 
 ## 1.0.1295
