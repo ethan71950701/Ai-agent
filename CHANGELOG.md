@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1302
+
 - 修正：先開 App 的任務（例如「打開 LINE，告訴我…」）結束後，答案會跳出卡片，不再被蓋住面板的 App 擋住、只剩通知｜Fix: for tasks that start by opening an app (e.g. "open LINE and tell me…"), the answer now appears as a card instead of being hidden behind the app and only showing as a notification
 
 ## 1.0.1301
