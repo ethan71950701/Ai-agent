@@ -28,27 +28,28 @@ public class GuideActivity extends Activity {
     private static final int N = 9;
     private static final int REQ_NOTIF = 21, REQ_MIC = 22;
     private static final String[] TITLES = {
-            "1. 授權 root", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
+            "1. 授權 root（選用）", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
             "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
-            "PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。",
+            "root 是選用的。有 root：更快也更完整（開關 Wi-Fi、藍牙、深色模式等一句話直接做好）。沒有 root 或還沒給：一樣能用，點擊、截圖、按鍵改用無障礙服務，Wi-Fi、藍牙等只能打開設定頁，之後隨時可以回來給。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
-            "讓 App 能幫你點擊、滑動、拖曳、輸入文字，並畫出點擊的漣漪。只讀取正在輸入的文字欄位，其他畫面只用截圖。",
+            "讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。",
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
             "AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
             "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
             "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
             "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
     private static final String[][] STEPS = {
-            {"第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
+            {"沒有 root、或還不想給：這一步可以直接跳過，按下面的箭頭往下走。",
+                    "想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
                     "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
                     "回到這裡，按下面的「檢查 root」。"},
             {"按「開啟權限頁」。", "在清單裡找到 PhoneAI Overlay，把開關打開。", "按返回鍵回到這裡，狀態會自動更新。"},
             {"按「允許通知」，在系統跳出的視窗按「允許」。"},
             {"按「開啟無障礙設定」。",
                     "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
-                    "有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。"},
+                    "有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。"},
             {"按「允許麥克風」，在系統視窗按「允許」。"},
             {"用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
                     "到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。",
@@ -295,6 +296,7 @@ public class GuideActivity extends Activity {
     /** 逐項檢查；root、Key 要用 su，放在背景執行，結果回到主執行緒更新各頁。 */
     private void refresh() {
         new Thread(() -> {
+            Root.recheck();   // 使用者可能剛在 root 管理器裡允許：重新判斷，不要沿用舊結果
             boolean root = Maintenance.suRun("id -u; echo done").trim().startsWith("0");
             boolean key = new java.io.File(getFilesDir(), "claude_key").length() > 0;
             runOnUiThread(() -> {
@@ -302,7 +304,7 @@ public class GuideActivity extends Activity {
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
                 boolean a11y = A11yGuard.listed(this);
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-                set(0, root, root ? L.t("✓ 已授權") : L.t("未授權：請到 root 管理器（KernelSU、Magisk…）給 PhoneAI 超級使用者權限，回來再按「檢查 root」"));
+                set(0, root, root ? L.t("✓ 已授權（會優先用 root，更快更完整）") : L.t("未授權（選用）：沒有 root 也能用；之後想給，到 root 管理器允許 PhoneAI，回來按「檢查 root」"));
                 set(1, ov, ov ? L.t("✓ 已開啟") : L.t("尚未開啟"));
                 set(2, nt, nt ? L.t("✓ 已允許") : L.t("尚未允許"));
                 set(3, a11y, a11y ? L.t("✓ 已開啟") : L.t("尚未開啟"));

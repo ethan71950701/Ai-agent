@@ -13,6 +13,8 @@ final class Root {
 
     private static String found;
     private static volatile Boolean rootOk;
+    private static volatile long rootCheckedAt;
+    private static final long RECHECK_MS = 60_000;
 
     /**
      * 這支手機有沒有可用的 root：第一次會實際跑一次 su，結果記下來（不要在主執行緒呼叫）。
@@ -21,11 +23,14 @@ final class Root {
     static boolean available() {
         if (App.ctx != null && App.ctx.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getBoolean("no_root", false)) return false;
         Boolean r = rootOk;
-        if (r != null) return r;
+        if (r != null && (r || System.currentTimeMillis() - rootCheckedAt < RECHECK_MS)) return r;
         synchronized (Root.class) {
-            if (rootOk == null) {
+            // 判斷成「沒有 root」只記一分鐘：使用者可能之後才在 root 管理器裡允許，不要永遠當成沒有
+            if (rootOk == null || (!rootOk && System.currentTimeMillis() - rootCheckedAt >= RECHECK_MS)) {
+                found = null;
                 su();
                 rootOk = found != null;
+                rootCheckedAt = System.currentTimeMillis();
             }
             return rootOk;
         }

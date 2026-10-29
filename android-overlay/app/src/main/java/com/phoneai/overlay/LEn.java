@@ -104,7 +104,6 @@ final class LEn {
         m.put("強度 ", "Strength ");
         m.put("、模糊倍率 ", ", blur factor ");
         m.put("、歪斜 ", ", skew ");
-        m.put("1. 授權 root", "1. Grant root");
         m.put("2. 懸浮層權限", "2. Overlay permission");
         m.put("3. 通知權限", "3. Notification permission");
         m.put("4. 無障礙服務", "4. Accessibility service");
@@ -112,16 +111,13 @@ final class LEn {
         m.put("7. 離線語音辨識模型", "7. Offline speech model");
         m.put("8. 長按電源鍵叫出（選用）", "8. Long-press the power key (optional)");
         m.put("9. 試試看", "9. Try it");
-        m.put("PhoneAI 需要 root 權限：用來讀取系統資訊、執行手機操作（點擊、開 App、開關 Wi-Fi 等）。沒有 root 的手機目前無法使用大部分功能。", "PhoneAI needs root to read system information and perform phone actions (tapping, opening apps, toggling Wi-Fi and so on). Without root most features do not work.");
         m.put("讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。", "Lets the assistant panel, the glow and the floating button appear on top of other apps.");
         m.put("任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。", "While a task runs, a progress capsule appears in the status bar so you know what the AI is doing.");
-        m.put("讓 App 能幫你點擊、滑動、拖曳、輸入文字，並畫出點擊的漣漪。只讀取正在輸入的文字欄位，其他畫面只用截圖。", "Lets the app tap, swipe, drag and type for you, and draws the tap ripples. It only reads the text field you type into; other screen content is read only from screenshots.");
         m.put("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。", "Talk to the assistant by voice. Speech recognition runs offline on the phone and your voice is not uploaded.");
         m.put("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。", "The AI needs an Anthropic API key to think. The key is stored only in this app's folder on the phone and is not uploaded anywhere else.");
         m.put("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。", "The speech model (SenseVoice) is downloaded to the phone and then works offline; your voice is not uploaded. About 228 MB, Wi-Fi recommended. Without it you cannot use offline speech recognition; you can come back and download it any time.");
         m.put("設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。", "After setting this up, a long-press of the power key opens PhoneAI. Samsung phones: a long-press already opens the native voice assistant, so just change the default digital assistant to PhoneAI. Xiaomi and other phones: go to \"Features → Settings → Invocation\" and turn on \"Long-press power key opens the assistant\" (needs root).");
         m.put("回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。", "Go back to Home, type a sentence in \"Ask\", for example \"what time is it\" or \"turn on Bluetooth\", and press send. The first time you will see the assistant panel; after that you can use it directly.");
-        m.put("第一次需要 root 時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。", "The first time root is needed, your root manager (Magisk, KernelSU and so on) shows a permission dialog. Tap \"Allow\".");
         m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。", "If no dialog appears: open your root manager, find the Superuser list and set PhoneAI Overlay to allowed.");
         m.put("回到這裡，按下面的「檢查 root」。", "Come back here and tap \"Check root\" below.");
         m.put("按「開啟權限頁」。", "Tap \"Open permission page\".");
@@ -130,7 +126,6 @@ final class LEn {
         m.put("按「允許通知」，在系統跳出的視窗按「允許」。", "Tap \"Allow notifications\" and press \"Allow\" in the system dialog.");
         m.put("按「開啟無障礙設定」。", "Tap \"Open accessibility settings\".");
         m.put("找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。", "Find \"Downloaded apps\" or PhoneAI Overlay, open it, turn the switch on and press \"Allow\" in the prompt.");
-        m.put("有些手機重裝後會自動把它關掉。之後如果不能操作，到「功能 → 進階與診斷 → 修復權限」，用 root 補回來。", "Some phones turn it off after a reinstall. If it stops working, go to \"Features → Advanced & diagnostics → Repair permissions\" and restore it with root.");
         m.put("按「允許麥克風」，在系統視窗按「允許」。", "Tap \"Allow microphone\" and press \"Allow\" in the system dialog.");
         m.put("用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。", "Open console.anthropic.com on a computer or phone browser and sign up or log in.");
         m.put("到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。", "Go to Plans & Billing and add credit (prepaid; the amount is up to you). Setting a monthly limit under Limits is recommended.");
@@ -158,8 +153,6 @@ final class LEn {
         m.put("上一步", "Back");
         m.put("下載失敗：", "Download failed: ");
         m.put("（可以再按一次）", " (you can tap again)");
-        m.put("✓ 已授權", "✓ Granted");
-        m.put("未授權：請到 root 管理器（KernelSU、Magisk…）給 PhoneAI 超級使用者權限，回來再按「檢查 root」", "Not granted: open your root manager (KernelSU, Magisk…), give PhoneAI superuser access, then come back and tap \"Check root\"");
         m.put("✓ 已開啟", "✓ Enabled");
         m.put("尚未開啟", "Not enabled yet");
         m.put("✓ 已允許", "✓ Allowed");
@@ -204,7 +197,6 @@ final class LEn {
         m.put("解除安裝", "Uninstall");
         m.put("還原設定、刪除 Key，最後移除本 App", "Restore settings, delete the key, then remove this app");
         m.put("設定導覽", "Setup guide");
-        m.put("逐步檢查 root、權限、Key", "Check root, permissions and key step by step");
         m.put("進階", "Advanced");
         m.put("版本、狀態、測試", "Version, status, tests");
         m.put("功能介紹", "Feature tour");
@@ -471,6 +463,15 @@ final class LEn {
         m.put("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。", "Without root, operating the phone relies on the accessibility service: please turn on PhoneAI's accessibility service in system settings first.");
         m.put("不使用 root（測試用）", "Do not use root (for testing)");
         m.put("不做任何 root 動作，改用無障礙與系統 API，用來測試沒有 root 的情況；有些功能（Wi-Fi、藍牙、深色模式…）只能打開設定頁", "No root actions at all; accessibility and system APIs are used instead, to test the no-root case. Some features (Wi-Fi, Bluetooth, dark mode…) can only open the settings page");
+        m.put("1. 授權 root（選用）", "1. Grant root (optional)");
+        m.put("root 是選用的。有 root：更快也更完整（開關 Wi-Fi、藍牙、深色模式等一句話直接做好）。沒有 root 或還沒給：一樣能用，點擊、截圖、按鍵改用無障礙服務，Wi-Fi、藍牙等只能打開設定頁，之後隨時可以回來給。", "Root is optional. With root it is faster and more complete (Wi-Fi, Bluetooth, dark mode and more are switched directly with one sentence). Without root, or if you have not granted it yet, everything still works: taps, screenshots and keys use the accessibility service, and Wi-Fi, Bluetooth and the like can only open the settings page. You can come back and grant it any time.");
+        m.put("沒有 root、或還不想給：這一步可以直接跳過，按下面的箭頭往下走。", "No root, or not ready to grant it: you can skip this step and tap the arrow below to continue.");
+        m.put("想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。", "To use root: the first time it is needed, your root manager (Magisk, KernelSU, etc.) shows an authorization window; tap \"Allow\".");
+        m.put("讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。", "Lets the app tap, swipe, type, read the buttons and text on screen, and draw tap ripples. Without root it also takes screenshots and presses Back and Home, so it must be on if you do not have root.");
+        m.put("有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。", "Some phones turn it off after a reinstall. With root you can restore it later under \"Features → Advanced and diagnostics → Repair permissions\"; without root you have to turn it on again yourself.");
+        m.put("✓ 已授權（會優先用 root，更快更完整）", "✓ Granted (root is used first: faster and more complete)");
+        m.put("未授權（選用）：沒有 root 也能用；之後想給，到 root 管理器允許 PhoneAI，回來按「檢查 root」", "Not granted (optional): it works without root; to grant it later, allow PhoneAI in your root manager and tap \"Check root\" here");
+        m.put("逐步檢查權限、Key（root 選用）", "Check permissions and the key step by step (root is optional)");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");
