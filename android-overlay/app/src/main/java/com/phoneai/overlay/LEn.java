@@ -466,7 +466,7 @@ final class LEn {
         m.put("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省", "The same task is replayed directly next time and the AI only checks the result; if the screen does not match, the AI takes over. Faster and cheaper");
         m.put("清除記住的步驟", "Clear remembered steps");
         m.put("目前記住 %d 個任務", "%d tasks remembered");
-        m.put("新增行事曆事件（打開行事曆填好，按儲存才建立）", "Add a calendar event (opens the calendar prefilled; the event is created when you save)");
+        m.put("新增行事曆事件（直接建立，沒有權限才打開畫面）", "Add a calendar event (created directly; the screen only opens when permission is missing)");
         m.put("在地圖上找地方、撥號（只打開並填好，不會自動導航或撥出）", "Find a place on the map, dial a number (only opens and prefills; it does not navigate or call by itself)");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");

@@ -56,10 +56,53 @@ final class SystemIntents {
                 .append(" --es title ").append(q(t)).append(" --el beginTime ").append(b).append(" --el endTime ").append(e);
         Intent it = new Intent(Intent.ACTION_INSERT).setData(android.provider.CalendarContract.Events.CONTENT_URI)
                 .putExtra("title", t).putExtra("beginTime", b).putExtra("endTime", e);
+        String direct = addDirect(c, t, b, e, location, description);   // 有行事曆權限就直接建立，不用打開畫面按儲存
+        if (direct != null) return direct;
         if (location != null && !location.isEmpty()) { am.append(" --es eventLocation ").append(q(location)); it.putExtra("eventLocation", location); }
         if (description != null && !description.isEmpty()) { am.append(" --es description ").append(q(description)); it.putExtra("description", description); }
         if (!start(c, am.toString(), it)) return "錯誤：找不到可以新增行事曆事件的 App";
         return String.format(Locale.US, "已打開行事曆的新增畫面（%s），要在行事曆裡按儲存才會建立", new SimpleDateFormat("MM/dd HH:mm", Locale.TAIWAN).format(new Date(b)));
+    }
+
+    /** 直接寫進行事曆資料庫（需要行事曆權限；已 root 的手機會用 pm grant 自己補上）。成功回說明，做不到回 null（改用新增畫面）。 */
+    private static String addDirect(Context c, String title, long begin, long end, String location, String description) {
+        try {
+            if (c.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Maintenance.suRun("pm grant " + c.getPackageName() + " android.permission.WRITE_CALENDAR; pm grant " + c.getPackageName() + " android.permission.READ_CALENDAR");
+            }
+            if (c.checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) != android.content.pm.PackageManager.PERMISSION_GRANTED) return null;
+            android.content.ContentResolver cr = c.getContentResolver();
+            long calId = -1;
+            try (android.database.Cursor cur = cr.query(android.provider.CalendarContract.Calendars.CONTENT_URI,
+                    new String[]{android.provider.CalendarContract.Calendars._ID, android.provider.CalendarContract.Calendars.IS_PRIMARY},
+                    android.provider.CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL + ">=? AND " + android.provider.CalendarContract.Calendars.VISIBLE + "=1",
+                    new String[]{String.valueOf(android.provider.CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR)}, null)) {
+                while (cur != null && cur.moveToNext()) {
+                    if (calId < 0 || cur.getInt(1) == 1) calId = cur.getLong(0);   // 有主要行事曆就用它，沒有就用第一個可寫的
+                }
+            }
+            if (calId < 0) return null;
+            android.content.ContentValues v = new android.content.ContentValues();
+            v.put(android.provider.CalendarContract.Events.CALENDAR_ID, calId);
+            v.put(android.provider.CalendarContract.Events.TITLE, title);
+            v.put(android.provider.CalendarContract.Events.DTSTART, begin);
+            v.put(android.provider.CalendarContract.Events.DTEND, end);
+            v.put(android.provider.CalendarContract.Events.EVENT_TIMEZONE, java.util.TimeZone.getDefault().getID());
+            if (location != null && !location.isEmpty()) v.put(android.provider.CalendarContract.Events.EVENT_LOCATION, location);
+            if (description != null && !description.isEmpty()) v.put(android.provider.CalendarContract.Events.DESCRIPTION, description);
+            Uri u = cr.insert(android.provider.CalendarContract.Events.CONTENT_URI, v);
+            if (u == null) return null;
+            try {   // 開始前 10 分鐘提醒
+                android.content.ContentValues r = new android.content.ContentValues();
+                r.put(android.provider.CalendarContract.Reminders.EVENT_ID, android.content.ContentUris.parseId(u));
+                r.put(android.provider.CalendarContract.Reminders.MINUTES, 10);
+                r.put(android.provider.CalendarContract.Reminders.METHOD, android.provider.CalendarContract.Reminders.METHOD_ALERT);
+                cr.insert(android.provider.CalendarContract.Reminders.CONTENT_URI, r);
+            } catch (Exception ignored) { }
+            return String.format(Locale.US, "已新增行事曆事件「%s」（%s），開始前 10 分鐘會提醒", title, new SimpleDateFormat("MM/dd HH:mm", Locale.TAIWAN).format(new Date(begin)));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** 撥號：打開撥號畫面並填好號碼，要自己按撥出。 */
