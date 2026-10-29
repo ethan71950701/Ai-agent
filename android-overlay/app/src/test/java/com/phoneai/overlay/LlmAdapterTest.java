@@ -111,6 +111,27 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void rewritesShellCommandsForTheBackgroundDisplay() {
+        assertEquals("input -d 7 tap 10 20", BgDisplay.rewrite("input tap 10 20", 7));
+        assertEquals("input -d 7 tap 1 2; input -d 7 tap 1 2", BgDisplay.rewrite("input tap 1 2; input tap 1 2", 7));
+        assertEquals("input -d 7 keyevent 4", BgDisplay.rewrite("input keyevent 4", 7));
+        assertEquals("input keyevent 24", BgDisplay.rewrite("input keyevent 24", 7));   // 音量鍵留在主螢幕
+        assertEquals("input -d 7 swipe 1 2 3 4 300", BgDisplay.rewrite("input swipe 1 2 3 4 300", 7));
+        assertTrue(BgDisplay.rewrite("monkey -p com.android.settings -c android.intent.category.LAUNCHER 1", 7).contains("am start --display 7 -n"));
+        assertTrue(BgDisplay.rewrite("am start -a android.intent.action.VIEW -d 'https://x'", 7).startsWith("am start --display 7 -a"));
+        assertEquals("settings put system a 1", BgDisplay.rewrite("settings put system a 1", 7));
+    }
+
+    @Test
+    public void parsesBackgroundDisplayOutput() {
+        assertEquals(12, BgDisplay.parseDisplayLine("display 12"));
+        assertEquals(-1, BgDisplay.parseDisplayLine("registered"));
+        java.util.Set<String> ids = BgDisplay.sfIds("Display 4619827259835644672 (Physical display)\nDisplay 1234 (Virtual display)\n");
+        assertEquals(1, ids.size());
+        assertTrue(ids.contains("1234"));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

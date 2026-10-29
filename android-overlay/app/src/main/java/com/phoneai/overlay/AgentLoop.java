@@ -119,7 +119,7 @@ final class AgentLoop {
 
     /** 第一次要真的操作手機時才收起面板（之後不再收）；在這之前光球一直留著。 */
     private static void hideBeforeOperate(Ui ui, boolean[] hidden, String name) {
-        if (hidden[0] || !operatesPhone(name)) return;
+        if (BgDisplay.active || hidden[0] || !operatesPhone(name)) return;   // 背景螢幕不會擋到助理面板
         hidden[0] = true;
         ui.hide();
         sleep(600);
@@ -153,9 +153,12 @@ final class AgentLoop {
         cardNote = "";
         macroNote = "";
         lastSteps = null;
+        boolean bg = BgDisplay.wanted(c);
+        if (bg && !BgDisplay.start(c)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
         try {
             return runInner(c, task, ui, preOpen);
         } finally {
+            if (bg) BgDisplay.stop();   // 任務結束就收掉背景螢幕，上面開的 App 一起消失
             // 要跳回答卡片時，進度條多留一下：Android 只允許「有看得見的懸浮視窗」的 App 在背景啟動畫面，
             // 太早收掉的話，面板接著要叫出的回答卡片可能被系統靜默擋掉
             if (showCard) MAIN.postDelayed(() -> OverlayService.endSteps(c), 2500);
@@ -180,6 +183,7 @@ final class AgentLoop {
         lastDetails = details;
         if (preOpen != null && preOpen.matches("[A-Za-z0-9._]+")) {   // 路由已判斷第一步是開 App：不用再花一次模型呼叫
             hideBeforeOperate(ui, panelHidden, "open");   // 開 App 會把面板蓋住：先收起面板，不然任務結束時以為面板還開著、答案只顯示在被蓋住的面板裡
+            if (BgDisplay.active && ProtectedApps.isProtected(c, preOpen)) return L.t("背景模式不會操作銀行、支付這類受保護的 App；請關掉背景模式，改在主螢幕做（會先問你）。");
             if (Root.available()) sh("monkey -p " + preOpen + " -c android.intent.category.LAUNCHER 1"); else Phone.launch(c, preOpen);
             st.opened.add(preOpen);
             history.add("0. 任務開始前，程式已先開啟 " + preOpen + "，不用再 open");
@@ -196,7 +200,7 @@ final class AgentLoop {
                 if (o != null) recorded.add(o);
             } catch (Exception ignored) { }
         }
-        JSONArray macro = Macros.enabled(c) && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !isQuestion(task)
+        JSONArray macro = Macros.enabled(c) && !BgDisplay.active && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !isQuestion(task)
                 ? Macros.get(c, task) : null;
         if (macro != null) {
             macroTried = true;
@@ -214,7 +218,7 @@ final class AgentLoop {
         }
         String finalSay = null;
         boolean wantShow = false;   // 模型說這次的回答是使用者要看的資訊（名稱、數字、結果），不只是「完成了」
-        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true);
+        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !BgDisplay.active;   // 背景螢幕：元件清單讀的是主螢幕，不適用
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
@@ -411,6 +415,7 @@ final class AgentLoop {
     // ---------- 螢幕 ----------
 
     static int[] screenSize() {
+        if (BgDisplay.active) return new int[]{BgDisplay.W, BgDisplay.H};
         if (!Root.available()) return Phone.screenSize(App.ctx);
         Matcher m = Pattern.compile("(\\d+)x(\\d+)").matcher(Maintenance.suRun("wm size"));
         int w = 1080, h = 2340;
@@ -430,7 +435,7 @@ final class AgentLoop {
                 png = ShizukuBackend.runBytes("screencap -p");
                 if (png == null) return null;
             } else {
-                Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
+                Process p = new ProcessBuilder(Root.su(), "-c", BgDisplay.active ? "screencap -d " + BgDisplay.sf + " -p" : "screencap -p").redirectErrorStream(false).start();
                 p.getOutputStream().close();
                 png = readAll(p.getInputStream());
                 p.waitFor();
@@ -618,7 +623,7 @@ final class AgentLoop {
 
     private static int px(double rel, int total) { return (int) Math.round(rel * total / 1000.0); }
 
-    private static String sh(String cmd) { return Maintenance.suRun(cmd); }
+    private static String sh(String cmd) { return Maintenance.suRun(BgDisplay.active ? BgDisplay.rewrite(cmd, BgDisplay.id) : cmd); }
 
     private static List<JSONObject> filterBatch(JSONArray arr) {
         List<JSONObject> out = new ArrayList<>();
@@ -631,6 +636,7 @@ final class AgentLoop {
 
     /** 點擊或滑動後畫漣漪（無障礙服務開著時才有；在主執行緒畫）。起點等於終點就是點擊。 */
     private static void ripple(int x1, int y1, int x2, int y2) {
+        if (BgDisplay.active) return;   // 漣漪畫在主螢幕，背景螢幕上不畫
         MAIN.post(() -> {
             RippleView v = RippleAccessibilityService.view();
             if (v == null) return;
@@ -657,7 +663,7 @@ final class AgentLoop {
                 }
                 case "double_tap": {
                     int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
-                    if (!RippleAccessibilityService.doubleTap(x, y)) sh("input tap " + x + " " + y + "; input tap " + x + " " + y);   // 備援：兩次 input 可能太慢，不一定算雙擊
+                    if (BgDisplay.active || !RippleAccessibilityService.doubleTap(x, y)) sh("input tap " + x + " " + y + "; input tap " + x + " " + y);   // 備援：兩次 input 可能太慢，不一定算雙擊
                     ripple(x, y, x, y);
                     return "已雙擊";
                 }
@@ -738,6 +744,7 @@ final class AgentLoop {
                     String pkg = a.optString("pkg", "");
                     if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));   // 提示寫「程式會用 name 查套件」，這裡真的去查
                     if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App";
+                    if (BgDisplay.active && ProtectedApps.isProtected(c, pkg)) return "背景模式不會操作銀行、支付這類受保護的 App（" + pkg + "）；請關掉背景模式，改在主螢幕做（會先問你）";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
@@ -1126,14 +1133,14 @@ final class AgentLoop {
 
     /** 送出輸入框：先用輸入法的動作鍵（搜尋／前往），沒用才送假的 Enter 鍵。 */
     private static void pressEnter() {
-        if (!RippleAccessibilityService.imeEnter()) sh("input keyevent 66");
+        if (BgDisplay.active || !RippleAccessibilityService.imeEnter()) sh("input keyevent 66");
     }
 
     /** 文字輸入：ASCII 直接 input text；中文等用剪貼簿貼上。clear = 先全選再刪。 */
     private static String type(String text, boolean clear, boolean enter, Context c) {
         if (text == null) text = "";
         if (!Root.available()) return typeNoRoot(text, clear, enter, c);
-        if (!text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
+        if (!BgDisplay.active && !text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
             // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
             if (enter) { sleep(200); pressEnter(); }
             return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);

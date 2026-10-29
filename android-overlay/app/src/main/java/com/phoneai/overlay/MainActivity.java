@@ -792,12 +792,19 @@ public class MainActivity extends Activity {
 
         g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
         final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
-        final int n = hasRoot ? 8 : 6;
+        final int n = hasRoot ? 9 : 6;
         int k = 0;
         Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                 (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-        if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式（實驗）"), L.t("任務在第二螢幕執行，不動目前的畫面"), cfg().getBoolean("bg_on", false),
+        if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式（實驗）"), L.t("任務在隱形的第二螢幕執行，不動目前的畫面。只用截圖模式（Sonnet 看圖，費用較高）；銀行、支付類 App 不會在背景操作"), cfg().getBoolean("bg_on", false),
                 (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
+        if (hasRoot) Ui.row(this, g, k++, n, "monitor", L.t("測試背景螢幕"), L.t("建立一次背景螢幕、開「設定」截圖，看畫面是不是正常"), Ui.chevron(this), v -> {
+            android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                String r = BgDisplay.selfTest(this);
+                runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("測試背景螢幕")).setMessage(r).setPositiveButton(L.t("知道了"), null).show());
+            }).start();
+        });
         if (hasRoot) Ui.switchRow(this, g, k++, n, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
                 (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
         Ui.switchRow(this, g, k++, n, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
