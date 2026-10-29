@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1305
+
 - 新增「保護的 App」（設定 → 執行任務時）：銀行、支付、錢包類會自動保護，也可以自己勾選；AI 看這些 App 的畫面或操作之前，一定先問你，沒問過就不會把畫面送出去｜New "Protected apps" setting (Settings → While running a task): banking, payment and wallet apps are protected automatically and you can add more; before the AI looks at or operates one, it always asks you first, and the screen is not sent out until you agree
 
 ## 1.0.1304
