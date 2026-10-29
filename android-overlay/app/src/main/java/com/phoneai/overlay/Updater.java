@@ -162,7 +162,7 @@ final class Updater {
                 Intent cb = new Intent(a, InstallResultReceiver.class);   // 明確指定元件：Android 14 不允許可變的隱含 PendingIntent
                 s.commit(android.app.PendingIntent.getBroadcast(a, id, cb, android.app.PendingIntent.FLAG_MUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender());
             }
-            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」"))   /* 沒 root 的更新：系統安裝畫面要使用者按一下（測試用的版本號推進） */);
+            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」"))   /* 沒 root 的更新：系統安裝畫面要使用者按一下（測試用的版本號推進 2） */);
         } catch (Exception e) {
             apk.delete();
             done(a, L.t("安裝失敗：") + e.getMessage());
