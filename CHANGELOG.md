@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1314
+
 - 沒 root 也能在 App 內更新：改用系統安裝程式，按一下「安裝」即可（第一次要允許「安裝未知應用程式」）｜In-app update now works without root: it uses the system installer and you tap "Install" (allow "install unknown apps" the first time)
+
 ## 1.0.1313
 
 - 沒 root 時調亮度、自動旋轉缺「修改系統設定」權限，會先收起助理面板，不再蓋住系統的權限說明頁｜Without root, when brightness or auto-rotate needs the "modify system settings" permission, the assistant panel now closes first so it no longer covers the system permission page
