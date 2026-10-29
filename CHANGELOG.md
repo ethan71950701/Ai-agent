@@ -6,6 +6,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 沒 root 更新改用系統安裝程式的標準畫面（跟從瀏覽器安裝 APK 一樣，有「安裝中／完成／開啟」），不再按下確認後畫面就消失｜Non-root update now uses the system installer's normal screen (same as installing an APK from the browser, with installing / done / open) instead of the confirm screen closing right after you tap
+## 1.0.1321
 
 - 更新完成後會跳通知「已更新到 1.0.xxxx，點這裡開啟」（沒 root 更新時系統確認畫面按下後就收起，原本沒有任何完成提示）｜After an update finishes a notification says "Updated to 1.0.xxxx, tap here to open" (without root the system confirm screen closes as soon as you tap and there was no completion hint)
 
