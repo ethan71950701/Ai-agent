@@ -19,6 +19,7 @@ final class Brain {
     }
 
     static String answer(Activity act, String t, AgentLoop.Ui ui) {
+        AgentLoop.showCard = false;   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
         Usage.beginTally();
         String reply = null;
         try {

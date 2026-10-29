@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正：從首頁輸入列或麥克風下的任務，操作手機後也會跳出回答卡片（以前只有通知，因為首頁在背景看不到）｜Fix: tasks started from the home input bar or microphone now also show the answer card after operating the phone (before, only a notification appeared because the home page was in the background)
+
 - 嘗試修正回答卡片有時沒跳出：要跳卡片時，進度條多留 2.5 秒，避免被系統當成背景啟動而擋掉｜Attempted fix for the answer card sometimes not appearing: the progress bar stays 2.5 seconds longer when a card is about to show, so the system does not block it as a background launch
 
 ## 1.0.1298
