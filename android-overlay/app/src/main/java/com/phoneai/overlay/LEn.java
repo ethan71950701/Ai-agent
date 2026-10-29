@@ -429,6 +429,10 @@ final class LEn {
         m.put("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f", "%s · input %,d, output %,d · est. $%.4f");
         m.put(" · 估價約 $%.4f", " · est. $%.4f");
         m.put("（模型回覆開頭：%s）", " (start of the model reply: %s)");
+        m.put("操作完成後的回答卡片", "Answer card after operating the phone");
+        m.put("自動（回答較長或有搜尋才顯示）", "Auto (only for long answers or searches)");
+        m.put("一律顯示", "Always show");
+        m.put("一律不顯示（只用通知）", "Never show (notification only)");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

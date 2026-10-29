@@ -308,7 +308,10 @@ final class AgentLoop {
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
-        if (finalSay != null) showCard = st.searches > 0 || finalSay.length() > 30;   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
+        if (finalSay != null) {
+            String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
+            showCard = "always".equals(mode) || (!"never".equals(mode) && (st.searches > 0 || finalSay.length() > 30));
+        }   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
         return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
     }
 

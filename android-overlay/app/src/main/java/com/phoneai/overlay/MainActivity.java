@@ -665,6 +665,24 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 操作手機完成後，要不要把回答卡片叫出來（面板在操作時已經收起）；聊天問答的回答永遠顯示在面板裡，不受影響。 */
+    private void buildReplyCardGroup() {
+        final String[] values = {"auto", "always", "never"};
+        final String[] labels = {L.t("自動（回答較長或有搜尋才顯示）"), L.t("一律顯示"), L.t("一律不顯示（只用通知）")};
+        String cur = cfg().getString("reply_card", "auto");
+        int ci = Math.max(0, java.util.Arrays.asList(values).indexOf(cur));
+        LinearLayout rg = Ui.expandGroup(this, box, "window", L.t("操作完成後的回答卡片"), labels[ci], false);
+        for (int k = 0; k < values.length; k++) {
+            final String v = values[k];
+            View trailing = k == ci ? wrapIcon(new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary))) : null;
+            Ui.row(this, rg, k, values.length, null, labels[k], null, trailing, x -> {
+                if (v.equals(cfg().getString("reply_card", "auto"))) return;
+                cfg().edit().putString("reply_card", v).apply();
+                recreate();
+            });
+        }
+    }
+
     private View wrapIcon(View icon) {
         android.widget.FrameLayout f = new android.widget.FrameLayout(this);
         f.addView(icon, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24), android.view.Gravity.CENTER));
@@ -676,6 +694,7 @@ public class MainActivity extends Activity {
         LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
         Ui.themePicker(this, g);
         buildLanguageGroup();
+        buildReplyCardGroup();
 
         LinearLayout p = Ui.expandGroup(this, box, "shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
         Ui.row(this, p, 0, 3, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(

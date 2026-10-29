@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 設定新增「操作完成後的回答卡片」：自動（預設）、一律顯示、一律不顯示；聊天問答的回答不受影響｜New setting "Answer card after operating the phone": auto (default), always show, never show; chat answers are not affected
+
 ## 1.0.1289
 
 - 調亮度、開關 Wi-Fi／藍牙、調音量這類指令，成功後若任務已完成就直接結束，不再多問一次 AI，更快也更省｜Commands like brightness, Wi-Fi, Bluetooth and volume now finish the task right after they succeed when nothing else is needed, without asking the AI once more, so they are faster and cheaper
