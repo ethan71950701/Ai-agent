@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1349
+
 - AI 比較測試：不再有「目前設定」，直接列出所有存好 Key 的 API（Claude、Gemini…），勾選要比的兩個以上即可；模型沿用你現在設定的｜AI comparison test: no more "Current settings"; it lists every API with a saved key (Claude, Gemini...) and you tick two or more to compare, using the models you have set
+
 ## 1.0.1348
 
 - AI 比較測試：「目前設定」改顯示實際的模型名稱，新增「自訂組合」可以自己挑服務並向它查詢模型、各選便宜與看圖模型｜AI comparison test: "Current settings" now shows the actual models, and a new "Custom combination" lets you pick a service, look up its models and choose the cheap and vision models
