@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 固定指令新增 16 個（0 token、不叫 AI）：開／關定位、NFC、行動數據（關閉會先確認）、自動亮度，亮度調最低／最高，打開／收起通知欄、快速設定，截圖、鎖螢幕、最近使用的 App；句子含「然後」等連接詞、或多出很多字的多件事任務，改交給 AI，不再只做前半｜16 new fixed commands (0 tokens, no AI): location, NFC, mobile data (turning it off asks first), auto-brightness, brightness minimum/maximum, notification shade and quick settings, screenshot, lock screen, recent apps; tasks with several steps ("then …") or a lot of extra words now go to the AI instead of only doing the first part
+
 - 「元件清單模式（省錢）」改成預設開啟（設定 → 執行任務時，可以關掉）；已經設定過的人不受影響｜"Element list mode (saves money)" is now on by default (Settings → While running a task, can be turned off); people who already set it are not affected
 
 ## 1.0.1294

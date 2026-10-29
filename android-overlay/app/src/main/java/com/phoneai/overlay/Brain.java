@@ -59,7 +59,7 @@ final class Brain {
     }
 
     static String runFixed(Activity act, Assist.Route r) {
-        if (r.confirm && !confirm(act, L.t("這會開關飛航模式，可能會斷網，要繼續嗎？"))) return L.t("已取消");
+        if (r.confirm && !confirm(act, L.t("這個動作可能會斷網（連 AI 也會連不上），要繼續嗎？"))) return L.t("已取消");
         Maintenance.suRun(r.cmd);
         return r.reply;
     }

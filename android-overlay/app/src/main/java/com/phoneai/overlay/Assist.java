@@ -39,6 +39,22 @@ final class Assist {
             // 飛航模式會斷掉網路（連 AI 都連不上），所以先跳確認框
             new Cmd(new String[]{"開飛航", "打開飛航", "開啟飛航", "turnonairplanemode", "airplanemodeon", "enableairplanemode", "flightmodeon"}, "cmd connectivity airplane-mode enable", "已開啟飛航模式", true),
             new Cmd(new String[]{"關飛航", "關閉飛航", "turnoffairplanemode", "airplanemodeoff", "disableairplanemode", "flightmodeoff"}, "cmd connectivity airplane-mode disable", "已關閉飛航模式", true),
+            new Cmd(new String[]{"開定位", "打開定位", "開啟定位", "开定位", "打开定位", "开启定位", "turnonlocation", "locationon", "enablelocation"}, "cmd location set-location-enabled true", "已開啟定位", false),
+            new Cmd(new String[]{"關定位", "關閉定位", "关定位", "关闭定位", "turnofflocation", "locationoff", "disablelocation"}, "cmd location set-location-enabled false", "已關閉定位", false),
+            new Cmd(new String[]{"開nfc", "打開nfc", "開啟nfc", "开nfc", "打开nfc", "开启nfc", "turnonnfc", "nfcon", "enablenfc"}, "svc nfc enable", "已開啟 NFC", false),
+            new Cmd(new String[]{"關nfc", "關閉nfc", "关nfc", "关闭nfc", "turnoffnfc", "nfcoff", "disablenfc"}, "svc nfc disable", "已關閉 NFC", false),
+            new Cmd(new String[]{"開行動數據", "打開行動數據", "開啟行動數據", "開數據", "開流量", "开行动数据", "打开行动数据", "开启行动数据", "开流量", "turnonmobiledata", "mobiledataon", "enablemobiledata"}, "svc data enable", "已開啟行動數據", false),
+            new Cmd(new String[]{"關行動數據", "關閉行動數據", "關數據", "關流量", "关行动数据", "关闭行动数据", "关流量", "turnoffmobiledata", "mobiledataoff", "disablemobiledata"}, "svc data disable", "已關閉行動數據", true),
+            new Cmd(new String[]{"開自動亮度", "打開自動亮度", "開啟自動亮度", "开自动亮度", "打开自动亮度", "turnonautobrightness", "autobrightnesson"}, "settings put system screen_brightness_mode 1", "已開啟自動亮度", false),
+            new Cmd(new String[]{"關自動亮度", "關閉自動亮度", "关自动亮度", "关闭自动亮度", "turnoffautobrightness", "autobrightnessoff"}, "settings put system screen_brightness_mode 0", "已關閉自動亮度", false),
+            new Cmd(new String[]{"亮度最低", "亮度調到最低", "亮度调到最低", "調到最暗", "调到最暗", "螢幕最暗", "屏幕最暗", "brightnessminimum", "minimumbrightness", "dimscreenfully"}, "settings put system screen_brightness_mode 0; settings put system screen_brightness 1", "已把亮度調到最低（自動亮度已關閉）", false),
+            new Cmd(new String[]{"亮度最高", "亮度調到最高", "亮度调到最高", "調到最亮", "调到最亮", "螢幕最亮", "屏幕最亮", "brightnessmaximum", "maximumbrightness", "maxbrightness"}, "settings put system screen_brightness_mode 0; settings put system screen_brightness 255", "已把亮度調到最高（自動亮度已關閉）", false),
+            new Cmd(new String[]{"打開通知欄", "下拉通知欄", "打開通知列", "下拉通知列", "打开通知栏", "下拉通知栏", "opennotificationshade", "pulldownnotifications"}, "cmd statusbar expand-notifications", "已打開通知欄", false),
+            new Cmd(new String[]{"收起通知欄", "關閉通知欄", "收起通知列", "收起通知栏", "关闭通知栏", "closenotificationshade"}, "cmd statusbar collapse", "已收起通知欄", false),
+            new Cmd(new String[]{"打開快速設定", "下拉快速設定", "打開控制中心", "打开快速设定", "打开控制中心", "openquicksettings"}, "cmd statusbar expand-settings", "已打開快速設定", false),
+            new Cmd(new String[]{"截圖", "螢幕截圖", "截屏", "截图", "屏幕截图", "screenshot", "takeascreenshot"}, "input keyevent 120", "已送出截圖", false),
+            new Cmd(new String[]{"鎖螢幕", "鎖定螢幕", "關螢幕", "熄屏", "锁屏", "锁定屏幕", "lockthescreen", "lockscreen", "turnoffthescreen"}, "input keyevent 223", "已鎖定螢幕", false),
+            new Cmd(new String[]{"最近使用的app", "最近的app", "多工畫面", "多任務", "多任务", "recentapps", "appswitcher"}, "input keyevent 187", "已打開最近使用的 App", false),
     };
 
 
@@ -81,19 +97,27 @@ final class Assist {
     }
     private static final String[] EN_LABELS = {"turn Wi-Fi on", "turn Wi-Fi off", "turn Bluetooth on", "turn Bluetooth off", "go to the home screen",
             "go back", "volume up", "volume down", "Do Not Disturb on", "Do Not Disturb off", "auto-rotate on", "auto-rotate off",
-            "dark mode on", "dark mode off", "battery saver on", "battery saver off", "airplane mode on", "airplane mode off"};
+            "dark mode on", "dark mode off", "battery saver on", "battery saver off", "airplane mode on", "airplane mode off",
+            "turn location on", "turn location off", "turn NFC on", "turn NFC off", "turn mobile data on", "turn mobile data off", "auto-brightness on", "auto-brightness off", "brightness to minimum", "brightness to maximum", "open the notification shade", "close the notification shade", "open quick settings", "take a screenshot", "lock the screen", "recent apps"};
 
     static String commandKey(int i) { return L.en() && i < EN_LABELS.length ? EN_LABELS[i] : COMMANDS[i].keys[0]; }
     static String commandReply(int i) { return L.t(COMMANDS[i].reply); }
 
+    /** 句子裡除了關鍵字，最多還能有幾個字（「請幫我…」「…好嗎」）才算固定指令；更長的像「關閉定位，然後打開地圖」是多件事，交給 AI。 */
+    static final int EXTRA_MAX = 8;
+
+    /** 有這些連接詞就是多件事（比對的是已經去掉空白與標點的句子）。 */
+    private static final java.util.regex.Pattern MULTI = java.util.regex.Pattern.compile("然後|然后|接著|接着|之後|之后|並且|并且|同時|同时|andthen|afterthat");
+
     /** 關鍵字命中固定指令（最長的那個關鍵字優先）回 FIXED；沒命中回 NONE，交給 Haiku 路由判斷。 */
     static Route route(String text) {
         String t = norm(text);
+        if (MULTI.matcher(t).find()) return new Route(NONE, null, null, false);   // 多件事：不能只做前半就結束，交給 AI
         Cmd best = null;
         int bestLen = 0;
         for (Cmd c : COMMANDS)
             for (String k : c.keys)
-                if (!t.isEmpty() && t.contains(k) && k.length() > bestLen) { best = c; bestLen = k.length(); }
+                if (!t.isEmpty() && t.contains(k) && t.length() <= k.length() + EXTRA_MAX && k.length() > bestLen) { best = c; bestLen = k.length(); }
         if (best != null) return new Route(FIXED, best.cmd, L.t(best.reply), best.confirm);
         return new Route(NONE, null, null, false);
     }
