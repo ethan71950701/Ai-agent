@@ -369,7 +369,7 @@ public class GuideActivity extends Activity {
             final boolean root = ExecMode.ROOT.equals(mode) && Root.isRoot();
             final int sz = ShizukuBackend.state();
             final boolean shz = installedShizuku();
-            boolean key = new java.io.File(getFilesDir(), LlmConfig.keyFile(this)).length() > 0;
+            boolean key = ChatEngine.key(this) != null;
             runOnUiThread(() -> {
                 boolean ov = Settings.canDrawOverlays(this);
                 boolean nt = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;

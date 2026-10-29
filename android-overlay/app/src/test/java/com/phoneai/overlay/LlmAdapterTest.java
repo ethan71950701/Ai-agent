@@ -74,6 +74,12 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void parsesModelListsAndStripsGeminiPrefix() throws Exception {
+        java.util.List<String> ids = AiServiceUi.parseModelIds("{\"data\":[{\"id\":\"models/gemini-flash\"},{\"id\":\"b\"},{\"id\":\"b\"}]}");
+        assertEquals(java.util.Arrays.asList("b", "gemini-flash"), ids);
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

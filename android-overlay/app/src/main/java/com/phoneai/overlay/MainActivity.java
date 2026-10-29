@@ -803,66 +803,7 @@ public class MainActivity extends Activity {
                 cfg().getBoolean("macro_on", true), (v, on) -> cfg().edit().putBoolean("macro_on", on).apply());
         Ui.row(this, g, 6, 9, "list", L.t("清除記住的步驟"), String.format(L.t("目前記住 %d 個任務"), Macros.count(this)), Ui.chevron(this), v -> { Macros.clear(this); recreate(); });
         Ui.row(this, g, 7, 9, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
-        Ui.row(this, g, 8, 9, "flask", L.t("AI 服務"), (LlmConfig.openai(this) ? L.t("OpenAI 相容：") + LlmConfig.cheap(this) + " / " + LlmConfig.vision(this) : "Claude") + L.t("（點一下設定）"), Ui.chevron(this), v -> chooseProvider());
-    }
-
-    /** AI 服務：Claude（預設，路由與操作畫面都調校過）或 OpenAI 相容的 API（OpenAI、DeepSeek、Groq、OpenRouter、Ollama…）。 */
-    private void chooseProvider() {
-        String[] names = new String[LlmPresets.ALL.length + 1];
-        names[0] = "Claude";
-        for (int i = 0; i < LlmPresets.ALL.length; i++) names[i + 1] = L.t(LlmPresets.ALL[i].name);
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle(L.t("選擇 AI 服務"))
-                .setItems(names, (d, which) -> {
-                    if (which == 0) { LlmConfig.setProvider(this, LlmConfig.ANTHROPIC); recreate(); }
-                    else presetGuide(LlmPresets.ALL[which - 1]);
-                })
-                .setNegativeButton(L.t("取消"), null).show();
-    }
-
-    /** 選了常見服務：先講怎麼申請 Key（可以直接開網頁），再進到預設好網址與模型的表單。 */
-    private void presetGuide(LlmPresets.Preset ps) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ps.steps.length; i++) sb.append(i + 1).append(". ").append(L.t(ps.steps[i])).append("\n\n");
-        sb.append(L.t("Key 只會存在這支手機的 App 私有資料夾，不要貼給任何人（包括 AI 助手）。"));
-        com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle(ps.name).setMessage(sb.toString())
-                .setPositiveButton(L.t("下一步"), (d, w) -> openAiForm(ps))
-                .setNegativeButton(L.t("取消"), null);
-        if (!ps.keyUrl.isEmpty()) b.setNeutralButton(L.t("開啟申請頁面"), (d, w) -> {
-            try { startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(ps.keyUrl))); } catch (Exception ignored) { }
-        });
-        b.show();
-    }
-
-    private void openAiForm(LlmPresets.Preset ps) {
-        android.widget.LinearLayout form = new android.widget.LinearLayout(this);
-        form.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int fp = Ui.dp(this, 20);
-        form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(this, L.t("網址和模型已經照這個服務填好預設值，通常不用改（模型被改名了才需要改）。便宜的模型負責判斷與讀元件清單，看圖的負責截圖。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
-        final android.widget.EditText[] f = new android.widget.EditText[3];
-        String[] hints = {L.t("網址"), L.t("便宜模型"), L.t("看圖模型")};
-        boolean same = LlmConfig.openai(this) && !ps.base.isEmpty() && ps.base.equals(LlmConfig.base(this));
-        String[] vals = {ps.base.isEmpty() ? LlmConfig.base(this) : ps.base, ps.cheap.isEmpty() ? LlmConfig.cheap(this) : same ? LlmConfig.cheap(this) : ps.cheap,
-                ps.vision.isEmpty() ? LlmConfig.vision(this) : same ? LlmConfig.vision(this) : ps.vision};
-        for (int i = 0; i < 3; i++) {
-            com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(this);
-            til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
-            til.setHint(hints[i]);
-            com.google.android.material.textfield.TextInputEditText et = new com.google.android.material.textfield.TextInputEditText(til.getContext());
-            et.setSingleLine(true);
-            et.setText(vals[i]);
-            til.addView(et);
-            f[i] = et;
-            form.addView(til);
-        }
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("OpenAI 相容的 API")).setView(form)
-                .setPositiveButton(L.t("儲存並輸入 Key"), (d, w) -> {
-                    LlmConfig.save(this, f[0].getText().toString(), f[1].getText().toString(), f[2].getText().toString());
-                    LlmConfig.setProvider(this, LlmConfig.OPENAI);
-                    Maintenance.askKey(this, this::recreate);
-                }).setNegativeButton(L.t("取消"), null).show();
+        Ui.row(this, g, 8, 9, "flask", L.t("AI 服務"), L.t("便宜模型：") + LlmConfig.cheap(this).label() + L.t("｜看圖模型：") + LlmConfig.vision(this).label(), Ui.chevron(this), v -> AiServiceUi.open(this, this::recreate));
     }
 
     private static String modeName(String m) {

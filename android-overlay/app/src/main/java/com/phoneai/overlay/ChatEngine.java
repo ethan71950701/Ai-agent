@@ -124,12 +124,8 @@ final class ChatEngine {
 
     /** API 金鑰：只讀 App 自己的檔案（設定時用「功能 → 維護 → Claude API Key」存進來）。 */
     static String key(Context c) {
-        File k = new File(c.getFilesDir(), LlmConfig.keyFile(c));
-        try {
-            return new String(Files.readAllBytes(k.toPath()), StandardCharsets.UTF_8).trim();
-        } catch (Exception e) {
-            return null;
-        }
+        String k = LlmConfig.readKey(c, LlmConfig.cheap(c));   // 有任何一個欄位的 Key 就算設定好了；實際送出時 post 會依模型挑自己的 Key
+        return k != null ? k : LlmConfig.readKey(c, LlmConfig.vision(c));
     }
 
     private static JSONObject call(JSONArray messages, String system, String key) throws Exception {
@@ -156,7 +152,13 @@ final class ChatEngine {
             String over = Usage.overLimit(app);
             if (over != null) throw new Exception(over);
         }
-        if (app != null && LlmConfig.openai(app)) return postOpenAi(app, body, key);
+        LlmConfig.Slot slot = app == null ? null : LlmConfig.forModel(app, body.optString("model"));
+        if (slot != null) {
+            String own = LlmConfig.readKey(app, slot);
+            if (own == null) throw new Exception(L.t("還沒有設定這個模型的 API Key：") + slot.label());
+            key = own;
+            if (slot.openai()) return postOpenAi(app, body, slot, key);
+        }
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;
         con.setRequestMethod("POST");
@@ -183,9 +185,9 @@ final class ChatEngine {
     }
 
     /** OpenAI 相容的 API：請求轉成 chat/completions，回應轉回 Claude 的格式，其他程式不用知道換了服務。 */
-    private static JSONObject postOpenAi(Context app, JSONObject body, String key) throws Exception {
-        String base = LlmConfig.base(app);
-        JSONObject req = LlmAdapter.toOpenAi(body, LlmConfig.cheap(app), LlmConfig.vision(app), base.contains("api.openai.com"));
+    private static JSONObject postOpenAi(Context app, JSONObject body, LlmConfig.Slot slot, String key) throws Exception {
+        String base = slot.base;
+        JSONObject req = LlmAdapter.toOpenAi(body, slot.model, slot.model, slot.official());
         HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
         inflight = con;
         con.setRequestMethod("POST");

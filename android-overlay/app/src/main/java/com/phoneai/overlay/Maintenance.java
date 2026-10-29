@@ -104,7 +104,10 @@ final class Maintenance {
     
 
     /** 輸入 Claude API Key 的對話框（主畫面與設定導覽共用）。儲存成功後呼叫 after（在主執行緒）。 */
-    static void askKey(final android.app.Activity a, final Runnable after) {
+    static void askKey(final android.app.Activity a, final Runnable after) { askKeyFor(a, "claude_key", "Claude API Key", after); }
+
+    /** 輸入某個服務的 Key，存進 App 私有資料夾的指定檔案。 */
+    static void askKeyFor(final android.app.Activity a, final String fileName, final String title, final Runnable after) {
         final com.google.android.material.textfield.TextInputLayout til = new com.google.android.material.textfield.TextInputLayout(a);
         til.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
         til.setHint(L.t("貼上 API Key"));
@@ -118,11 +121,11 @@ final class Maintenance {
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(Ui.body(a, L.t("Key 只存在這支手機的 App 私有資料夾（權限 600），不會顯示、不進 repo，也不要貼給任何人。在 Console 建立時：Linked account 選「未連結」、工作區選「預設工作區」。")));
         form.addView(til);
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(LlmConfig.openai(a) ? L.t("OpenAI 相容 API Key") : "Claude API Key").setView(form)
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(title).setView(form)
                 .setPositiveButton(L.t("儲存"), (d, w) -> {
                     final String k = et.getText().toString();
                     new Thread(() -> {
-                        final String r = saveKey(k, LlmConfig.keyFile(a));
+                        final String r = saveKey(k, fileName);
                         a.runOnUiThread(() -> {
                             android.widget.Toast.makeText(a, r == null ? L.t("已儲存") : r, android.widget.Toast.LENGTH_LONG).show();
                             if (r == null && after != null) after.run();
