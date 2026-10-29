@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1303
+
 - 開 App 時認得常見的同義說法（相簿＝圖庫、計算機＝計算器、日曆＝行事曆…），不再因為名稱對不上白白多花一步｜Opening an app now understands common synonyms (相簿 = 圖庫, 計算機 = 計算器, 日曆 = 行事曆…), so a name mismatch no longer wastes a step
 
 ## 1.0.1302
