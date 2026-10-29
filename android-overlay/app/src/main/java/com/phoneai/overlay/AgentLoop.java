@@ -37,7 +37,7 @@ final class AgentLoop {
             "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout", "install", "subscribe"};   // 中文與英文的敏感詞
     private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
     private static final String[] PIPE_OK = {"grep", "head", "tail", "sort", "cut", "wc", "uniq", "tr"};
-    private static final String[] BATCH_OK = {"tap", "swipe", "longpress", "drag", "multitouch", "scroll", "wait", "back", "home", "enter", "type"};
+    private static final String[] BATCH_OK = {"tap", "double_tap", "swipe", "longpress", "drag", "multitouch", "scroll", "wait", "back", "home", "enter", "type"};
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     interface Ui {
@@ -630,6 +630,12 @@ final class AgentLoop {
                     ripple(x, y, x, y);
                     return "已點擊";
                 }
+                case "double_tap": {
+                    int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
+                    if (!RippleAccessibilityService.doubleTap(x, y)) sh("input tap " + x + " " + y + "; input tap " + x + " " + y);   // 備援：兩次 input 可能太慢，不一定算雙擊
+                    ripple(x, y, x, y);
+                    return "已雙擊";
+                }
                 case "longpress": {
                     int x = px(a.optDouble("x"), w), y = px(a.optDouble("y"), h);
                     sh("input swipe " + x + " " + y + " " + x + " " + y + " " + clamp(a.optInt("ms", 800), 300, 5000));
@@ -830,7 +836,7 @@ final class AgentLoop {
     /** 這類動作要靠截圖算座標，Haiku 常點錯。 */
     private static boolean needsCoords(String name) {
         switch (name) {
-            case "tap": case "longpress": case "swipe": case "drag": case "drag_start": case "multitouch": case "batch": return true;
+            case "tap": case "double_tap": case "longpress": case "swipe": case "drag": case "drag_start": case "multitouch": case "batch": return true;
             default: return false;
         }
     }

@@ -261,6 +261,47 @@ public class LogicTest {
         assertEquals(Macros.key("打開設定，把深色模式打開"), Macros.key("打開設定 把深色模式打開。"));
     }
 
+    // ---------- 聊天工具與系統意圖 ----------
+
+    @Test
+    public void chatToolDefinitionsAreValidJson() throws Exception {
+        java.lang.reflect.Field f = ChatEngine.class.getDeclaredField("TOOLS");
+        f.setAccessible(true);
+        JSONArray tools = new JSONArray((String) f.get(null));
+        java.util.Set<String> names = new java.util.HashSet<>();
+        for (int i = 0; i < tools.length(); i++) {
+            JSONObject t = tools.getJSONObject(i);
+            names.add(t.getString("name"));
+            assertNotNull(t.getJSONObject("input_schema"));
+        }
+        for (String n : new String[]{"get_time", "set_alarm", "add_calendar_event", "show_on_map", "dial", "memory_add"})
+            assertTrue("缺工具 " + n, names.contains(n));
+    }
+
+    @Test
+    public void systemPromptsStillEndCleanly() throws Exception {
+        for (String name : new String[]{"SYSTEM", "SYSTEM_EN"}) {
+            java.lang.reflect.Field f = ChatEngine.class.getDeclaredField(name);
+            f.setAccessible(true);
+            String s = (String) f.get(null);
+            assertTrue(name + " 缺行事曆規則", s.contains("add_calendar_event"));
+            assertTrue(name + " 缺鬧鐘規則", s.contains("set_alarm"));
+        }
+    }
+
+    @Test
+    public void calendarTimesAndPhoneNumbersAreParsedSafely() {
+        long t = SystemIntents.parseTime("2026-10-30 15:00");
+        assertTrue(t > 0);
+        assertEquals(t, SystemIntents.parseTime("2026-10-30T15:00"));
+        assertEquals(t + 60_000L, SystemIntents.parseTime("2026-10-30 15:01"));
+        assertEquals(-1L, SystemIntents.parseTime("明天下午三點"));
+        assertEquals(-1L, SystemIntents.parseTime(null));
+        assertEquals("0223456789", SystemIntents.cleanNumber("(02) 2345-6789"));
+        assertEquals("+886912345678", SystemIntents.cleanNumber("+886 912-345-678; rm -rf /"));
+        assertEquals("'it'\\''s'", SystemIntents.q("it's"));   // 單引號要跳脫，避免被當成 shell 指令
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

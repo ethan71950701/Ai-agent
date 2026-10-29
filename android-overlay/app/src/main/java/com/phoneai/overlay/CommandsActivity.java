@@ -33,6 +33,8 @@ public class CommandsActivity extends Activity {
         LinearLayout tools = Ui.card(this, box);
         row(tools, "get_time", L.t("查現在的日期與時間"));
         row(tools, "set_alarm", L.t("設鬧鐘（幾分鐘後，或指定幾點）"));
+        row(tools, "add_calendar_event", L.t("新增行事曆事件（打開行事曆填好，按儲存才建立）"));
+        row(tools, "show_on_map / dial", L.t("在地圖上找地方、撥號（只打開並填好，不會自動導航或撥出）"));
         row(tools, "memory_add / list / update / delete / clear", L.t("記住、列出、修改、刪除待辦與筆記"));
         row(tools, "device_list", L.t("列出已配對的裝置與是否在線"));
         row(tools, "file_find / file_list", L.t("搜尋、瀏覽手機或電腦的檔案"));

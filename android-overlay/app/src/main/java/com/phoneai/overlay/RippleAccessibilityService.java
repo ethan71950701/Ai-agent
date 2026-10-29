@@ -283,6 +283,33 @@ public class RippleAccessibilityService extends AccessibilityService {
         return node.performAction(android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.getId());
     }
 
+    /** 雙擊：同一點連點兩下，中間隔約 0.14 秒（系統要求 0.3 秒內才算雙擊，用 root 連下兩次 input 太慢）。成功回 true。 */
+    static boolean doubleTap(int x, int y) {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return false;
+        try {
+            android.graphics.Path p = new android.graphics.Path();
+            p.moveTo(x, y);
+            android.accessibilityservice.GestureDescription.Builder b = new android.accessibilityservice.GestureDescription.Builder();
+            b.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(p, 0, 40));
+            b.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(p, 140, 40));
+            final android.accessibilityservice.GestureDescription g = b.build();
+            final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+            final boolean[] ok = {false};
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                boolean sent = s.dispatchGesture(g, new GestureResultCallback() {
+                    @Override public void onCompleted(android.accessibilityservice.GestureDescription d) { ok[0] = true; done.countDown(); }
+                    @Override public void onCancelled(android.accessibilityservice.GestureDescription d) { done.countDown(); }
+                }, null);
+                if (!sent) done.countDown();
+            });
+            done.await(3, java.util.concurrent.TimeUnit.SECONDS);
+            return ok[0];
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     static RippleView view() {
         RippleAccessibilityService s = instance;
         return s == null ? null : s.view;

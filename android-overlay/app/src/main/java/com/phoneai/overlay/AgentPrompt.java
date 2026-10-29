@@ -12,6 +12,7 @@ final class AgentPrompt {
             "{\"action\":\"tap\",\"x\":整數,\"y\":整數,\"what\":\"點的是什麼\"}，x和y是0到1000的相對位置\n" +
             "{\"action\":\"scroll\",\"dir\":\"down或up\"}，down代表往下看更多內容\n" +
             "{\"action\":\"swipe\",\"x1\":整數,\"y1\":整數,\"x2\":整數,\"y2\":整數,\"ms\":毫秒}，手指從(x1,y1)滑到(x2,y2)，座標0到1000，可以斜著滑。ms是滑動花多久（50到5000，不寫是300）：快速甩動用100到200，慢慢拖用800以上。下拉控制中心要從螢幕右上角往下滑（x1、x2約900，y1約5，y2約500）；下拉通知欄才從正中間上方往下滑（x約500）。兩者不一樣，不要搞混\n" +
+            "{\"action\":\"double_tap\",\"x\":整數,\"y\":整數}，在同一點快速點兩下（雙擊，例如放大圖片、按讚）；有元件清單時也可以寫\"pick\":編號\n" +
             "{\"action\":\"longpress\",\"x\":整數,\"y\":整數,\"ms\":毫秒}，長按（ms不寫是800，300到5000）\n" +
             "{\"action\":\"drag\",\"x1\":整數,\"y1\":整數,\"x2\":整數,\"y2\":整數,\"hold_ms\":整數,\"ms\":整數}，先在(x1,y1)按住hold_ms（不寫是600）再拖到(x2,y2)，拖動花ms（不寫是500），用於移動桌面圖示、排序、拖曳滑桿\n" +
             "{\"action\":\"batch\",\"actions\":[動作1,動作2,...]}，一次連續做完最多6個動作，中間不截圖也不問我（可用tap、swipe、longpress、drag、multitouch、scroll、wait、back、home、enter、type）。已經摸清楚規律、而且你能預測每個動作之後的畫面時才用，例如已經知道方塊放下的位置怎麼換算，就把同一回合的三個方塊一次放完，做完我才給你看新畫面。畫面可能被前一個動作改變（彈出視窗、換頁）而不確定時，不要用batch\n" +
@@ -50,6 +51,7 @@ final class AgentPrompt {
             "{\"action\":\"tap\",\"x\":int,\"y\":int,\"what\":\"what was tapped\"}\n" +
             "{\"action\":\"scroll\",\"dir\":\"down or up\"}  (down shows more content)\n" +
             "{\"action\":\"swipe\",\"x1\":int,\"y1\":int,\"x2\":int,\"y2\":int,\"ms\":ms}  (50 to 5000 ms, default 300)\n" +
+            "{\"action\":\"double_tap\",\"x\":int,\"y\":int}  (two quick taps at the same point, e.g. zoom a picture or like; with an element list you may use \"pick\":number)\n" +
             "{\"action\":\"longpress\",\"x\":int,\"y\":int,\"ms\":ms}  (default 800)\n" +
             "{\"action\":\"drag\",\"x1\":int,\"y1\":int,\"x2\":int,\"y2\":int,\"hold_ms\":int,\"ms\":int}  (hold at start, then drag; for moving icons and sorting)\n" +
             "{\"action\":\"batch\",\"actions\":[...]}  (up to 6 actions in a row without looking at the screen between them)\n" +
