@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 沒有 root 也能用：點擊、滑動、按鍵、截圖改走無障礙服務，開 App 走一般方式，亮度、旋轉、勿擾、音量用系統 API，Wi-Fi、藍牙、深色模式等只能打開對應的設定頁；設定裡可勾「不使用 root」模擬測試｜Works without root: taps, swipes, keys and screenshots use the accessibility service, apps open the normal way, brightness, rotation, Do Not Disturb and volume use system APIs, and Wi-Fi, Bluetooth, dark mode etc. can only open the matching settings page; a "Do not use root" switch in the settings simulates it for testing
 
+## 1.0.1308
+
 - 鬧鐘改成宣告系統的設鬧鐘權限，不用 root 也能直接設好、不開時鐘畫面；行事曆事件也改成直接建立（需要行事曆權限，已 root 的手機會自動補上），不用再按儲存｜Alarms now declare the system set-alarm permission, so they are set directly without opening the clock and without root; calendar events are now created directly too (needs calendar permission, granted automatically on rooted phones), so there is no need to press save
 
 ## 1.0.1307
