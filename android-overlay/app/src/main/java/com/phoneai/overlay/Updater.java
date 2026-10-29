@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -106,6 +107,11 @@ final class Updater {
                     }
                 }
             }
+            if (!Root.available()) {   // 沒有 root：交給系統安裝程式，使用者按一下「安裝」
+                nm.cancel(NOTE);
+                installWithoutRoot(a, out, v);
+                return;
+            }
             nm.notify(NOTE, progress(a, L.t("安裝 ") + v + L.t(" 中…"), 100, true));
             String r = Maintenance.suOnce("cp '" + out.getAbsolutePath() + "' /data/local/tmp/phoneai_update.apk && chmod 644 /data/local/tmp/phoneai_update.apk\n"
                     + "pm install -r --user 0 -i com.google.android.packageinstaller /data/local/tmp/phoneai_update.apk 2>&1\n"
@@ -122,6 +128,53 @@ final class Updater {
         } catch (Exception e) {
             nm.cancel(NOTE);
             done(a, L.t("下載失敗：") + e.getMessage());
+        }
+    }
+
+    /** 不用 root 安裝：PackageInstaller 一次寫入 APK，系統跳出安裝確認（需要允許「安裝未知應用程式」）。 */
+    private static void installWithoutRoot(Activity a, File apk, String v) {
+        try {
+            if (!a.getPackageManager().canRequestPackageInstalls()) {
+                a.runOnUiThread(() -> {
+                    toast(a, L.t("請先允許 PhoneAI「安裝未知應用程式」，再按一次更新"));
+                    a.startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:" + a.getPackageName())));
+                });
+                apk.delete();
+                busy = false;
+                return;
+            }
+            android.content.pm.PackageInstaller pi = a.getPackageManager().getPackageInstaller();
+            android.content.pm.PackageInstaller.SessionParams sp = new android.content.pm.PackageInstaller.SessionParams(android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            int id = pi.createSession(sp);
+            try (android.content.pm.PackageInstaller.Session s = pi.openSession(id);
+                 InputStream in = new java.io.FileInputStream(apk); OutputStream o = s.openWrite("update.apk", 0, apk.length())) {
+                byte[] buf = new byte[65536];
+                int n;
+                while ((n = in.read(buf)) > 0) o.write(buf, 0, n);
+                s.fsync(o);
+                String action = a.getPackageName() + ".UPDATE_RESULT";
+                a.getApplicationContext().registerReceiver(new android.content.BroadcastReceiver() {
+                    @Override public void onReceive(Context c, Intent i) {
+                        int st = i.getIntExtra(android.content.pm.PackageInstaller.EXTRA_STATUS, -1);
+                        if (st == android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                            Intent ask = i.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
+                            if (ask != null) c.startActivity(ask.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                            return;
+                        }
+                        c.getApplicationContext().unregisterReceiver(this);
+                        apk.delete();
+                        busy = false;
+                        if (st != android.content.pm.PackageInstaller.STATUS_SUCCESS)
+                            Toast.makeText(c, L.t("安裝失敗：") + i.getStringExtra(android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE), Toast.LENGTH_LONG).show();
+                    }
+                }, new android.content.IntentFilter(action), Context.RECEIVER_NOT_EXPORTED);
+                Intent cb = new Intent(action).setPackage(a.getPackageName());
+                s.commit(android.app.PendingIntent.getBroadcast(a, id, cb, android.app.PendingIntent.FLAG_MUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT).getIntentSender());
+            }
+            a.runOnUiThread(() -> toast(a, L.t("請在跳出的畫面按「安裝」")));
+        } catch (Exception e) {
+            apk.delete();
+            done(a, L.t("安裝失敗：") + e.getMessage());
         }
     }
 
