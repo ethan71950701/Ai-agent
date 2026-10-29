@@ -471,7 +471,26 @@ final class LEn {
         m.put("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。", "Without root, operating the phone relies on the accessibility service: please turn on PhoneAI's accessibility service in system settings first.");
         m.put("不使用 root（測試用）", "Do not use root (for testing)");
         m.put("1. 選擇執行模式", "1. Choose an execution mode");
-        m.put("選一種執行模式，之後隨時可以在「設定 → 執行任務時」改。root：最快最完整，開關 Wi-Fi、藍牙、深色模式等一句話直接做好。Shizuku：不用 root，用 adb 等級權限做到大部分同樣的事，要先裝並啟動 Shizuku。普通：什麼都不用裝，點擊、截圖、按鍵靠無障礙服務，Wi-Fi、藍牙等只能打開設定頁。", "Pick an execution mode; you can change it later in Settings. Root: fastest and most complete, one sentence toggles Wi-Fi, Bluetooth, dark mode and more. Shizuku: no root needed, uses adb-level permission for most of the same things; install and start Shizuku first. Normal: nothing to install, taps, screenshots and keys use the accessibility service, and Wi-Fi, Bluetooth and similar can only open their settings pages.");
+        m.put("選一種執行模式，之後隨時可以在設定改。不確定就選「普通」，什麼都不用裝。", "Pick an execution mode; you can change it any time in Settings. Not sure? Choose Normal, nothing to install.");
+        m.put("三種模式比較 ›", "Compare the three modes ›");
+        m.put("三種模式比較", "Compare the three modes");
+        m.put("知道了", "Got it");
+        m.put(GuideActivity.COMPARE,
+                "[Root] most complete and fastest\n"
+                + "• Toggle Wi-Fi, Bluetooth, mobile data, NFC, location, dark mode, Do Not Disturb, rotation, brightness in one sentence, no prompts\n"
+                + "• Screenshots, taps and typing all through root, very stable\n"
+                + "• Only root: background screen, live touch, auto-repair when accessibility is turned off, in-app update installs directly\n"
+                + "• Needs: a rooted phone\n\n"
+                + "[Shizuku] no root, close to root\n"
+                + "• All of the toggles above, typing and screenshots work directly, no settings pages\n"
+                + "• Cannot: background screen, live touch, accessibility auto-repair (these need real root); updating needs you to tap Install\n"
+                + "• Needs: the Shizuku app installed and started; start it again after every reboot\n\n"
+                + "[Normal] nothing to install\n"
+                + "• Taps, swipes, typing and screenshots use the accessibility service (must be on)\n"
+                + "• Wi-Fi, Bluetooth, mobile data, NFC, location, dark mode: only opens the settings page, you tap it yourself\n"
+                + "• Do Not Disturb, brightness, auto-rotate: allow the matching permission once in system settings first\n"
+                + "• Volume, Back, Home, notification shade and screenshot work directly\n\n"
+                + "Not sure? Start with Normal and upgrade later.");
         m.put("想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。", "To use root: the first time it is needed, your root manager (Magisk, KernelSU...) shows a prompt; tap Allow.");
         m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。", "If no prompt appears: open your root manager, find the Superuser list and allow PhoneAI Overlay.");
         m.put("回到這裡，按下面的「檢查 root」。", "Come back here and tap \"Check root\" below.");

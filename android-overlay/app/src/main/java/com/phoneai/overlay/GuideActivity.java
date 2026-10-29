@@ -31,7 +31,7 @@ public class GuideActivity extends Activity {
             "1. 選擇執行模式", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
             "6. Claude API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
     private static final String[] WHY = {
-            "選一種執行模式，之後隨時可以在「設定 → 執行任務時」改。root：最快最完整，開關 Wi-Fi、藍牙、深色模式等一句話直接做好。Shizuku：不用 root，用 adb 等級權限做到大部分同樣的事，要先裝並啟動 Shizuku。普通：什麼都不用裝，點擊、截圖、按鍵靠無障礙服務，Wi-Fi、藍牙等只能打開設定頁。",
+            "選一種執行模式，之後隨時可以在設定改。不確定就選「普通」，什麼都不用裝。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
             "讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。",
@@ -60,6 +60,23 @@ public class GuideActivity extends Activity {
             {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
             {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
             {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
+    /** 三種模式的比較（引導頁第一頁的「三種模式比較」按鈕）。 */
+    static final String COMPARE =
+            "【root】最完整最快\n"
+            + "• 開關 Wi-Fi、藍牙、行動數據、NFC、定位、深色模式、勿擾、旋轉、亮度：一句話直接做好，不跳任何提示\n"
+            + "• 截圖、點擊、輸入都用 root，穩定\n"
+            + "• 獨有：背景螢幕、即時觸控、無障礙被關掉時自動修復、App 內更新直接安裝\n"
+            + "• 需要：已 root 的手機\n\n"
+            + "【Shizuku】不用 root，接近 root\n"
+            + "• 上面那些開關、輸入、截圖都能直接做，不用跳設定頁\n"
+            + "• 不能：背景螢幕、即時觸控、無障礙自動修復（這些要真的 root）；更新要按系統的「安裝」\n"
+            + "• 需要：安裝並啟動 Shizuku App；手機每次重開機後要再啟動一次\n\n"
+            + "【普通】什麼都不用裝\n"
+            + "• 點擊、滑動、輸入、截圖靠無障礙服務（一定要開）\n"
+            + "• Wi-Fi、藍牙、行動數據、NFC、定位、深色模式：只能打開設定頁，要你自己按\n"
+            + "• 勿擾、亮度、自動旋轉：要先在系統允許對應權限一次\n"
+            + "• 音量、返回、首頁、通知欄、截圖都可以直接做\n\n"
+            + "不確定就先選「普通」，想要更完整再改。";
     private static final String[][] MODE_STEPS = {
             {"想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
                     "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
@@ -278,8 +295,15 @@ public class GuideActivity extends Activity {
                     row.addView(mb, ml);
                 }
                 LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
-                rl.topMargin = Ui.dp(a, 16);
+                rl.topMargin = Ui.dp(a, 12);
                 col.addView(row, rl);
+                TextView cmp = Ui.body(a, L.t("三種模式比較 ›"));
+                cmp.setGravity(Gravity.CENTER);
+                cmp.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorPrimary));
+                cmp.setPadding(0, Ui.dp(a, 10), 0, Ui.dp(a, 4));
+                cmp.setOnClickListener(v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                        .setTitle(L.t("三種模式比較")).setMessage(L.t(COMPARE)).setPositiveButton(L.t("知道了"), null).show());
+                col.addView(cmp, new LinearLayout.LayoutParams(-1, -2));
             }
             String[] steps = i == 0 ? MODE_STEPS[java.util.Arrays.asList(MODE_NAMES).indexOf(mode)] : STEPS[i];
             LinearLayout card = Ui.card(a, col);
