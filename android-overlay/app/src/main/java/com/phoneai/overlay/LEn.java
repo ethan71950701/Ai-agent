@@ -475,6 +475,7 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("填這個服務的網址（到 /v1 為止）和模型。下一步輸入 Key 之後，可以查詢這個服務現在有哪些模型再選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。", "Enter this service's URL (up to /v1) and models. After entering the key you can look up which models the service has now. Note: the phone-operating prompts are tuned for Claude so test other models yourself; web search is Claude-only; task cost shows $0.");
         m.put("AI 服務與 API Key", "AI service and API key");
         m.put("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡", "Pick Claude, Gemini, OpenAI and more; the key stays on the phone");
         m.put("6. AI 服務與 API Key", "6. AI service and API key");

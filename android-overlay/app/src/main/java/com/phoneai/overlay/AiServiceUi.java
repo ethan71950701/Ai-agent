@@ -71,7 +71,10 @@ final class AiServiceUi {
         for (int i = 0; i < ps.steps.length; i++) sb.append(i + 1).append(". ").append(L.t(ps.steps[i])).append("\n\n");
         sb.append(L.t("Key 只會存在這支手機的 App 私有資料夾，不要貼給任何人（包括 AI 助手）。"));
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(L.t(ps.name)).setMessage(sb.toString())
-                .setPositiveButton(L.t("下一步"), (d, w) -> form(a, scope, ps, done))
+                .setPositiveButton(L.t("下一步"), (d, w) -> {
+                    if (!ps.base.isEmpty()) saveAndAskKey(a, scope, ps.base, ps.cheap, ps.vision, done);   // 網址與預設模型都是固定的，不用再填表單
+                    else form(a, scope, ps, done);   // 「其他」才要自己填網址
+                })
                 .setNegativeButton(L.t("取消"), null);
         if (!ps.keyUrl.isEmpty()) b.setNeutralButton(L.t("開啟申請頁面"), (d, w) -> {
             try { a.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(ps.keyUrl))); } catch (Exception ignored) { }
@@ -96,19 +99,23 @@ final class AiServiceUi {
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, L.t("網址和模型已經照這個服務填好預設值，通常不用改。下一步輸入 Key 之後，可以查詢這個服務現在有哪些模型再選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
+        form.addView(Ui.body(a, L.t("填這個服務的網址（到 /v1 為止）和模型。下一步輸入 Key 之後，可以查詢這個服務現在有哪些模型再選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
         boolean both = ALL.equals(scope);
         EditText base = field(a, form, L.t("網址"), ps.base.isEmpty() ? LlmConfig.DEF_BASE : ps.base);
         EditText cheap = LlmConfig.VISION.equals(scope) ? null : field(a, form, L.t("便宜模型"), ps.cheap);
         EditText vision = LlmConfig.CHEAP.equals(scope) ? null : field(a, form, L.t("看圖模型"), ps.vision);
         new MaterialAlertDialogBuilder(a).setTitle(L.t(ps.name)).setView(form)
-                .setPositiveButton(L.t("儲存並輸入 Key"), (d, w) -> {
-                    String b = base.getText().toString();
-                    if (cheap != null) LlmConfig.set(a, LlmConfig.CHEAP, LlmConfig.OPENAI, b, cheap.getText().toString());
-                    if (vision != null) LlmConfig.set(a, LlmConfig.VISION, LlmConfig.OPENAI, b, vision.getText().toString());
-                    LlmConfig.Slot s = cheap != null ? LlmConfig.cheap(a) : LlmConfig.vision(a);
-                    Maintenance.askKeyFor(a, LlmConfig.keyFile(s), L.t("API Key：") + LlmConfig.host(b), () -> offerModelList(a, scope, done));
-                }).setNegativeButton(L.t("取消"), null).show();
+                .setPositiveButton(L.t("儲存並輸入 Key"), (d, w) -> saveAndAskKey(a, scope, base.getText().toString(),
+                        cheap == null ? "" : cheap.getText().toString(), vision == null ? "" : vision.getText().toString(), done))
+                .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    /** 存下網址與模型，接著輸入 Key，再問要不要查詢模型清單。 */
+    private static void saveAndAskKey(Activity a, String scope, String b, String cheapModel, String visionModel, Runnable done) {
+        if (!LlmConfig.VISION.equals(scope)) LlmConfig.set(a, LlmConfig.CHEAP, LlmConfig.OPENAI, b, cheapModel);
+        if (!LlmConfig.CHEAP.equals(scope)) LlmConfig.set(a, LlmConfig.VISION, LlmConfig.OPENAI, b, visionModel);
+        LlmConfig.Slot s = LlmConfig.VISION.equals(scope) ? LlmConfig.vision(a) : LlmConfig.cheap(a);
+        Maintenance.askKeyFor(a, LlmConfig.keyFile(s), L.t("API Key：") + LlmConfig.host(b), () -> offerModelList(a, scope, done));
     }
 
     /** Key 存好後：問要不要查這個服務現有的模型（模型常改名，查了比猜準）。 */
