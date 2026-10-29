@@ -30,6 +30,14 @@ final class ElementList {
         return out;
     }
 
+    /** 目前前景（目標）App 的套件名稱；讀不到回 null。經驗要記在哪個 App、要帶哪個 App 的經驗，都用它。 */
+    static String foregroundPackage() {
+        RippleAccessibilityService svc = RippleAccessibilityService.instance;
+        if (svc == null) return null;
+        AccessibilityNodeInfo r = targetRoot(svc);
+        return r == null || r.getPackageName() == null ? null : r.getPackageName().toString();
+    }
+
     /** 不是 PhoneAI 自己的應用程式視窗；優先取活動中的那個（助理面板也是 PhoneAI 的視窗，要略過）。 */
     private static AccessibilityNodeInfo targetRoot(RippleAccessibilityService svc) {
         AccessibilityNodeInfo fallback = null;

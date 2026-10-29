@@ -150,6 +150,7 @@ final class AgentLoop {
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
+        Memory.seedLessons(c);
         int[] wh = screenSize();
         State st = new State();
         boolean[] panelHidden = {false};   // 面板只在真的要操作手機時才收起（只收一次）；思考、提問、確認時光球留著
@@ -185,7 +186,10 @@ final class AgentLoop {
                 if (useTree && sameTree >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 清單連續三次沒變：這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot();
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
-                List<String> lessons = Memory.lessonsFor(c, st.opened);
+                List<String> lessonApps = new ArrayList<>(st.opened);   // 只帶「這次用到的 App」的經驗，不是全部
+                String fg = ElementList.foregroundPackage();
+                if (fg != null && !lessonApps.contains(fg)) lessonApps.add(fg);
+                List<String> lessons = Memory.lessonsFor(c, lessonApps);
                 JSONObject action;
                 long tokBefore = Usage.tallyNow();
                 long[] cntBefore = Usage.tallyCounts();
@@ -352,7 +356,7 @@ final class AgentLoop {
             text.append("\n畫面元件清單（編號. 種類「文字」(大約位置x,y，0到1000)）：\n").append(elements);
             text.append("這一步沒有截圖。要點哪個元件就回 {\"action\":\"tap\",\"pick\":編號}，不要給 x、y；清單裡沒有你要的，就先 scroll 看看。\n");
             text.append("連續點好幾個、而且點完畫面不會換頁的（例如計算機的數字鍵），用 {\"action\":\"batch\",\"actions\":[{\"action\":\"tap\",\"pick\":編號},...]}，一次做完。\n");
-            text.append("要確認輸入了什麼或結果是什麼，看種類是「輸入框」或位置在最上方的大顯示區；位置在按鍵上方的小膠囊（常是剪貼簿的建議數字或文字）不是已經輸入的內容，不要當成輸入完成。畫面連續幾步都沒變，就換個方法，不要一直 wait。\n");
+            text.append("要確認輸入了什麼或結果是什麼，看種類是「輸入框」或位置在最上方的大顯示區。畫面連續幾步都沒變，就換個方法，不要一直 wait。\n");
         }
         text.append("\n請決定下一步，只輸出一行 JSON。");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
@@ -425,7 +429,7 @@ final class AgentLoop {
         if (rem.isEmpty() || st.remembers >= MAX_REMEMBER || rem.length() > 200) return;
         st.remembers++;
         try {
-            String app = st.opened.isEmpty() ? null : st.opened.get(0);
+            String app = !st.opened.isEmpty() ? st.opened.get(0) : ElementList.foregroundPackage();   // 都沒有才存成通用
             if (Memory.addLesson(c, rem, app)) {
                 st.remembered.add(rem);
                 Notify.notifyText(c, L.t("AI 學到的經驗（可在 App 記憶頁刪除）"), rem, 7195);

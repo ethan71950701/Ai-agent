@@ -82,6 +82,18 @@ final class Memory {
         return true;
     }
 
+    /** 內建經驗：只對指定的 App 才會帶進提示；只種一次（用 cfg 旗標記），使用者刪掉就不會再冒出來。 */
+    static void seedLessons(Context c) {
+        android.content.SharedPreferences sp = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+        if (sp.getBoolean("seed_lessons_v1", false)) return;
+        String calc = "計算機：按鍵上方的小膠囊（例如 123、45）是剪貼簿的建議，不是已輸入的內容；要確認輸入或結果，看最上方的大顯示區。數字和運算鍵一個一個點，用 batch 一次連點，最後點 =。";
+        try {
+            for (String pkg : new String[]{"com.sec.android.app.popupcalculator", "com.google.android.calculator", "com.android.calculator2"})
+                addLesson(c, calc, pkg);
+            sp.edit().putBoolean("seed_lessons_v1", true).apply();
+        } catch (Exception ignored) { }
+    }
+
     /** 開始任務前要帶進提示的經驗：通用的最新 4 則 + 這些 App 的最新 8 則（照 memory.py 的 lessons）。 */
     static synchronized List<String> lessonsFor(Context c, List<String> apps) {
         JSONObject d = load(c);
