@@ -298,7 +298,7 @@ final class Usage {
      * 每百萬 token 的美元價 [輸入, 輸出, 快取寫入, 快取讀取]。
      * Claude 與 DeepSeek 照官網價格頁（使用者提供的截圖，2026-10-29）：Claude 的 Haiku 5.5 輸入是「提示詞不超過 10 萬 token」的價，
      * Sonnet 5.5 與 Opus 5.5 的快取讀取是輸入價的 0.05 倍；DeepSeek 用尖峰價（離峰是一半）。
-     * Gemini、GPT-4o 是第三方整理的粗估（各來源不一致），請在用量頁改成官網的價格。
+     * OpenAI GPT-6 系列也是官網截圖；Gemini、GPT-4o 是第三方整理的粗估（各來源不一致），請在用量頁改成官網的價格。
      */
     static double[] guessPrice(String model) {
         String m = model == null ? "" : model.toLowerCase(Locale.ROOT);
@@ -308,6 +308,11 @@ final class Usage {
         if (m.contains("fable")) return new double[]{10.00, 50.00, 12.50, 0.25};
         if (m.contains("deepseek") && m.contains("pro")) return new double[]{1.32, 3.96, 1.32, 0.044};
         if (m.contains("deepseek")) return new double[]{0.30, 1.20, 0.30, 0.006};
+        // OpenAI GPT-6 系列（使用者提供的官網截圖，2026-10-29；上下文低於 272K 的標準費率）：[輸入, 輸出, 快取寫入, 快取讀取]
+        if (m.contains("astra")) return new double[]{10.00, 50.00, 10.00, 1.00};
+        if (m.contains("sol")) return new double[]{2.00, 10.00, 2.00, 0.10};
+        if (m.contains("terra")) return new double[]{1.00, 5.00, 1.00, 0.05};
+        if (m.contains("luna")) return new double[]{0.10, 0.50, 0.10, 0.01};
         double[] g = null;
         if (m.contains("gemini") && m.contains("flash-lite")) g = new double[]{0.30, 2.50};
         else if (m.contains("gemini") && m.contains("flash")) g = new double[]{1.50, 7.50};

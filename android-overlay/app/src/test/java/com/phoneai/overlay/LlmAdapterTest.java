@@ -95,6 +95,10 @@ public class LlmAdapterTest {
         assertEquals(0.30, Usage.guessPrice("deepseek-flash")[0], 1e-9);
         assertEquals(0.30, Usage.guessPrice("gemini-flash-lite-latest")[0], 1e-9);
         assertEquals(0.15, Usage.guessPrice("gpt-4o-mini")[0], 1e-9);
+        assertEquals(1.00, Usage.guessPrice("gpt-6.1-terra")[0], 1e-9);
+        assertEquals(0.01, Usage.guessPrice("gpt-6-luna")[3], 1e-9);
+        assertEquals(50.00, Usage.guessPrice("gpt-6-astra")[1], 1e-9);
+        assertEquals(10.00, Usage.guessPrice("gpt-6.1-sol")[1], 1e-9);
         assertEquals(0.0, Usage.guessPrice("some-unknown-model")[0], 1e-9);
         // Sonnet 5.5：1M 一般輸入 + 1M 輸出 = 2 + 10
         assertEquals(12.0, Usage.costOf("claude-sonnet-5-5", 1_000_000, 1_000_000, 0, 0), 1e-9);

@@ -475,6 +475,7 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("預設便宜模型用 GPT-6 Luna（最省）、看圖模型用 GPT-6.1 Terra（官網寫擅長視覺推理與電腦操作）。模型代號是我猜的，Key 存好後按「查詢」從清單選最準。", "The cheap model defaults to GPT-6 Luna (most economical) and the vision model to GPT-6.1 Terra (the website says it is good at visual reasoning and computer use). The model ids are guesses; after saving the key tap Look up and pick from the list to be sure.");
         m.put("DeepSeek（便宜）", "DeepSeek (cheap)");
         m.put("官網寫 deepseek-flash 支援看圖（deepseek-v4-pro 不支援），這裡便宜與看圖都預設用它；看圖是否穩定還沒實測，不穩就用「只設定看圖模型」改選 Gemini 或 OpenAI。", "The website says deepseek-flash supports vision (deepseek-v4-pro does not), so both the cheap and vision models default to it; vision stability is untested, if it is flaky use \"Set only the vision model\" and pick Gemini or OpenAI.");
         m.put("價格未知", "price unknown");
