@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1291
+
 - 修正：輸入後改用輸入法的「搜尋／前往」鍵送出（Google 地圖搜尋框不吃假的 Enter）；AI 偶爾回成 XML 工具呼叫格式時也能看懂；新增直接打開通知欄、快速設定的指令｜Fixes: text entry now submits with the keyboard's search/go action (Google Maps ignored the fake Enter key); replies in the XML tool-call format are understood; new commands to open the notification shade and quick settings directly
 
 ## 1.0.1290
