@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1318
+
 - 記憶頁不再需要 root：直接讀寫 App 自己的檔案（之前沒 root 會顯示「每種 su 寫法都讀不到」）；匯出／匯入沒 root 時改用檔案權限｜The memory page no longer needs root: it reads and writes the app's own file directly (before, without root it showed "every su variant failed"); export/import use file access when there is no root
 
 ## 1.0.1316
