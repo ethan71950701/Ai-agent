@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1286
+
 - 內建「計算機」經驗（小膠囊不是已輸入的內容），只在用到計算機時才帶進提示；沒有 open 的任務，經驗也會記在目前前景的 App 上，不再存成通用｜Built-in calculator lesson (suggestion chips are not entered text) that is only loaded when the calculator is involved; lessons from tasks that did not open an app are now saved against the foreground app instead of as general ones
 
 - 元件清單實驗：清單標出輸入框／按鈕／文字與位置，避免把計算機上方的建議膠囊當成已輸入；可用 batch 一次連點多個編號；畫面連續沒變時改用截圖＋Sonnet｜Element-list experiment: the list now marks input boxes, buttons and text with positions, so suggestion chips above a calculator are not mistaken for entered text; batch can tap several numbers at once; if the screen does not change for several steps it falls back to a screenshot with Sonnet
