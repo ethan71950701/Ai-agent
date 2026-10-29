@@ -203,6 +203,64 @@ public class LogicTest {
         assertFalse(ProtectedApps.autoMatch("Google Play 商店", "com.android.vending"));
     }
 
+    // ---------- 巨集 ----------
+
+    @Test
+    public void macroStepKeepsTheLabelNotJustCoordinates() throws Exception {
+        List<JSONObject> tree = Arrays.asList(el(7, "按鈕", "連接", 229, 565, false));
+        JSONObject tap = new JSONObject().put("action", "tap").put("pick", 7).put("label", "連接").put("x", 229).put("y", 565).put("wait", 2);
+        JSONObject step = Macros.stepFrom(tap, tree);
+        assertNotNull(step);
+        assertEquals("tap", step.optString("a"));
+        assertEquals("連接", step.optString("label"));
+        assertEquals("按鈕", step.optString("kind"));
+        assertEquals(2.0, step.optDouble("wait"), 1e-9);
+    }
+
+    @Test
+    public void macroCannotRecordWhatItCannotFindAgain() throws Exception {
+        List<JSONObject> tree = Arrays.asList(el(1, "按鈕", "", 100, 100, false));
+        // 沒有名稱的圖示、用座標點的、查資訊、問使用者、拖曳：都不能重播
+        assertNull(Macros.stepFrom(new JSONObject().put("action", "tap").put("pick", 1).put("label", "").put("x", 1).put("y", 1), tree));
+        assertNull(Macros.stepFrom(new JSONObject().put("action", "tap").put("x", 300).put("y", 400), tree));
+        assertNull(Macros.stepFrom(new JSONObject().put("action", "shell").put("cmd", "getprop"), tree));
+        assertNull(Macros.stepFrom(new JSONObject().put("action", "swipe").put("x1", 1), tree));
+        assertNull(Macros.stepFrom(new JSONObject().put("action", "ask_user").put("question", "?"), tree));
+    }
+
+    @Test
+    public void macroRecordsTypingScrollingAndBatches() throws Exception {
+        JSONObject type = Macros.stepFrom(new JSONObject().put("action", "type").put("text", "周杰倫").put("clear", false).put("enter", true), null);
+        assertEquals("周杰倫", type.optString("text"));
+        assertTrue(type.optBoolean("enter"));
+        assertEquals("down", Macros.stepFrom(new JSONObject().put("action", "scroll"), null).optString("dir"));
+        List<JSONObject> tree = Arrays.asList(el(1, "按鈕", "1", 150, 840, false), el(2, "按鈕", "2", 370, 840, false));
+        JSONObject batch = new JSONObject().put("action", "batch").put("actions", new JSONArray()
+                .put(new JSONObject().put("action", "tap").put("pick", 1).put("label", "1").put("x", 150).put("y", 840))
+                .put(new JSONObject().put("action", "tap").put("pick", 2).put("label", "2").put("x", 370).put("y", 840)));
+        assertEquals(2, Macros.stepFrom(batch, tree).optJSONArray("taps").length());
+        // batch 裡只要有一個不能重播，整個步驟就不記
+        batch.getJSONArray("actions").put(new JSONObject().put("action", "swipe"));
+        assertNull(Macros.stepFrom(batch, tree));
+    }
+
+    @Test
+    public void macroFindsTheSameElementAgainEvenWhenNumbersChange() throws Exception {
+        // 編號變了、位置略有不同，但名稱還在：找得回來
+        List<JSONObject> now = Arrays.asList(el(3, "文字", "連接", 500, 300, false), el(9, "按鈕", "連接", 235, 560, false), el(10, "按鈕", "Wi-Fi", 140, 160, false));
+        JSONObject hit = Macros.find(now, "連接", "按鈕", 229, 565);
+        assertEquals(9, hit.optInt("n"));                          // 種類相同優先
+        assertEquals(10, Macros.find(now, "wi-fi", "按鈕", 0, 0).optInt("n"));   // 名稱不分大小寫與空白
+        assertEquals(3, Macros.find(now, "連接", "輸入框", 500, 300).optInt("n"));   // 種類對不上就放寬，取位置最近的
+        assertNull(Macros.find(now, "藍牙", "按鈕", 0, 0));
+        assertNull(Macros.find(now, "", "按鈕", 0, 0));
+    }
+
+    @Test
+    public void macroKeyIgnoresSpacesAndPunctuation() {
+        assertEquals(Macros.key("打開設定，把深色模式打開"), Macros.key("打開設定 把深色模式打開。"));
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

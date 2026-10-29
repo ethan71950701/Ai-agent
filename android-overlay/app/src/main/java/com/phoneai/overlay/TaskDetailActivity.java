@@ -38,6 +38,7 @@ public class TaskDetailActivity extends Activity {
         head.addView(q);
         if (!t.optString("reply").isEmpty()) head.addView(Ui.body(this, t.optString("reply")));
         if (!t.optString("card").isEmpty()) head.addView(Ui.body(this, L.t("回答卡片：") + t.optString("card")));
+        if (!t.optString("macro").isEmpty()) head.addView(Ui.body(this, L.t("巨集：") + t.optString("macro")));
 
         LinearLayout total = Ui.card(this, box);
         total.addView(Ui.body(this, L.t("共用了 ") + String.format(Locale.US, "%,d", tokens) + " token"
@@ -53,15 +54,17 @@ public class TaskDetailActivity extends Activity {
             JSONObject d = detail.optJSONObject(i);
             if (d == null) continue;
             LinearLayout card = Ui.card(this, box);
-            TextView title = Ui.body(this, L.t("第 ") + d.optInt("step") + L.t(" 步 · ") + d.optString("action"));
+            boolean macroStep = d.optBoolean("macro");   // 巨集重播的步驟：沒有 AI 思考、沒有 token
+            TextView title = Ui.body(this, macroStep ? L.t("巨集重播 · ") + d.optString("action")
+                    : L.t("第 ") + d.optInt("step") + L.t(" 步 · ") + d.optString("action"));
             title.setTextSize(15);
             title.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
             card.addView(title);
             String think = d.optString("think");
-            card.addView(Ui.body(this, L.t("思考：") + (think.isEmpty() ? L.t("（沒有寫）") : think)));
+            if (!macroStep) card.addView(Ui.body(this, L.t("思考：") + (think.isEmpty() ? L.t("（沒有寫）") : think)));
             String result = d.optString("result");
             if (!result.isEmpty()) card.addView(Ui.body(this, L.t("結果：") + result));
-            card.addView(Ui.body(this, L.t("這一步用了 ") + String.format(Locale.US, "%,d", d.optLong("tokens")) + " token"));
+            if (!macroStep) card.addView(Ui.body(this, L.t("這一步用了 ") + String.format(Locale.US, "%,d", d.optLong("tokens")) + " token"));
             if (!d.optString("model").isEmpty()) {   // 這一步用的模型與估價（舊紀錄沒有這些欄位就不顯示）
                 card.addView(Ui.body(this, String.format(Locale.US, L.t("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f"),
                         d.optString("model"), d.optLong("in"), d.optLong("out"), d.optDouble("cost"))));

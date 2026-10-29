@@ -51,6 +51,7 @@ final class AgentLoop {
     private static volatile boolean cancelled;
     /** 這一輪自動操作的結果是不是要用回答卡片顯示（搜尋結果或較長的回答）；「完成了」這類短的只通知。 */
     static volatile boolean showCard;
+    static volatile String macroNote = "";   // 這次有沒有用巨集重播（記進任務過程）
     static volatile String cardNote = "";   // 這次為什麼顯示／不顯示回答卡片（記進任務過程，方便除錯）
 
     private static volatile List<String> lastSteps;
@@ -150,6 +151,7 @@ final class AgentLoop {
         cancelled = false;
         showCard = false;
         cardNote = "";
+        macroNote = "";
         lastSteps = null;
         try {
             return runInner(c, task, ui, preOpen);
@@ -180,6 +182,33 @@ final class AgentLoop {
             st.opened.add(preOpen);
             history.add("0. 任務開始前，程式已先開啟 " + preOpen + "，不用再 open");
             sleep(2500);
+        }
+        // 巨集重播：同樣的任務以前成功過，就照記住的步驟直接做，不用一步步問 AI；做完只讓 AI 看一眼確認結果
+        boolean macroTried = false;
+        final List<JSONObject> recorded = new ArrayList<>();
+        final boolean[] macroValid = {true};
+        boolean doneOk = false;
+        if (preOpen != null && preOpen.matches("[A-Za-z0-9._]+")) {   // 路由先開的 App 也是巨集的第一步（重播時路由沒預先開也能自己打開）
+            try {
+                JSONObject o = Macros.stepFrom(new JSONObject().put("action", "open").put("pkg", preOpen).put("wait", 2.5), null);
+                if (o != null) recorded.add(o);
+            } catch (Exception ignored) { }
+        }
+        JSONArray macro = Macros.enabled(c) && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !isQuestion(task)
+                ? Macros.get(c, task) : null;
+        if (macro != null) {
+            macroTried = true;
+            String fail = replayMacro(c, task, macro, ui, st, wh, panelHidden, history, details);
+            if ("__cancel__".equals(fail)) return L.t("已取消，沒有執行。");
+            if (fail == null) {
+                Macros.ok(c, task);
+                macroNote = "重播記住的 " + macro.length() + " 步，AI 只確認結果";
+                history.add("0. 已經照記住的步驟重播 " + macro.length() + " 步；請看畫面確認任務是否完成，完成就 done，還沒完成就繼續做");
+            } else {
+                Macros.fail(c, task);
+                macroNote = "重播中斷（" + fail + "），改由 AI 接手";
+                history.add("0. 重播記住的步驟時中斷（" + fail + "），請從目前畫面接手完成任務");
+            }
         }
         String finalSay = null;
         boolean wantShow = false;   // 模型說這次的回答是使用者要看的資訊（名稱、數字、結果），不只是「完成了」
@@ -281,6 +310,7 @@ final class AgentLoop {
                 rememberLesson(c, action, st, history);
                 switch (name) {
                     case "done":
+                        doneOk = true;
                         finalSay = action.optString("say", L.t("完成了。"));
                         wantShow = action.optBoolean("show");
                         break;
@@ -288,6 +318,7 @@ final class AgentLoop {
                         finalSay = L.t("做不到：") + action.optString("say", L.t("（沒有原因）"));
                         break;
                     case "ask_user": {
+                        macroValid[0] = false;
                         String q = action.optString("question", L.t("請告訴我你要怎麼做。"));
                         OverlayService.showStep(c, L.t("等你回答問題"), step, MAX_STEPS);
                         String ans = ui.ask(q);
@@ -297,6 +328,7 @@ final class AgentLoop {
                         break;
                     }
                     case "ask": {
+                        macroValid[0] = false;
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
                         OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
@@ -305,6 +337,7 @@ final class AgentLoop {
                         break;
                     }
                     case "search": {
+                        macroValid[0] = false;
                         String q = action.optString("q").trim();
                         if (q.isEmpty() || st.searches >= SEARCH_MAX) {
                             history.add(step + ". 搜尋次數已用完或沒有關鍵字，請改用畫面操作");
@@ -322,12 +355,15 @@ final class AgentLoop {
                         if (subs.isEmpty()) { history.add(step + ". batch 裡沒有可執行的動作，請直接給單一動作"); break; }
                         StringBuilder log = new StringBuilder(step + ". 連續執行" + subs.size() + "個動作（中間不看畫面）：");
                         hideBeforeOperate(ui, panelHidden, "batch");
+                        boolean allOk = true;
                         for (JSONObject sub : subs) {
                             String r = execute(sub, wh, c, st);
+                            if (!r.startsWith("已")) allOk = false;
                             log.append(" [").append(sub.optString("action")).append(" → ").append(r).append("]");
                             sleep(400);
                         }
                         history.add(log.toString());
+                        recordStep(recorded, macroValid, action, tree, useTree, allOk);
                         break;
                     }
                     default: {
@@ -335,6 +371,7 @@ final class AgentLoop {
                         String result = execute(action, wh, c, st);
                         String think = action.optString("think");
                         history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
+                        recordStep(recorded, macroValid, action, tree, useTree, result.startsWith("已"));
                         // 指令類動作（亮度、Wi-Fi、藍牙、音量）：模型說「做完任務就完成」(finish) 而且指令成功，就直接結束，不再多問一次模型
                         String fin = action.optString("finish", "").trim();
                         if (!fin.isEmpty() && (name.equals("brightness") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
@@ -351,6 +388,10 @@ final class AgentLoop {
             }
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
+        }
+        if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task)) {
+            Macros.put(c, task, new JSONArray(recorded));   // 成功做完、每一步都能重播：記起來，下次同樣的任務直接重播
+            macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
         }
         if (finalSay != null) {
             String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
@@ -792,6 +833,99 @@ final class AgentLoop {
             case "tap": case "longpress": case "swipe": case "drag": case "drag_start": case "multitouch": case "batch": return true;
             default: return false;
         }
+    }
+
+    private static void recordStep(List<JSONObject> rec, boolean[] valid, JSONObject action, List<JSONObject> tree, boolean useTree, boolean ok) {
+        if (!valid[0]) return;
+        JSONObject s = useTree && ok ? Macros.stepFrom(action, tree) : null;
+        if (s == null) valid[0] = false; else rec.add(s);   // 有一步不能重播（用座標點、查資訊、問使用者…）整個任務就不記
+    }
+
+    private static boolean hasBlockWord(String task) {
+        for (String w : TASK_BLOCK) if (hit(task, w)) return true;
+        return false;
+    }
+
+    /** 重播記住的步驟；全部成功回 null，失敗回原因，使用者不同意敏感操作回 "__cancel__"。 */
+    private static String replayMacro(Context c, String task, JSONArray steps, Ui ui, State st, int[] wh, boolean[] panelHidden,
+                                      List<String> history, List<JSONObject> details) {
+        int n = steps.length();
+        for (int i = 0; i < n; i++) {
+            if (cancelled) return "使用者停止";
+            JSONObject s = steps.optJSONObject(i);
+            if (s == null) return "紀錄損壞";
+            OverlayService.showStep(c, L.t("重播記住的步驟 ") + (i + 1) + L.t("／") + n, i + 1, n);
+            hideBeforeOperate(ui, panelHidden, "tap");
+            String fg = ElementList.foregroundPackage();
+            if (fg != null && !st.approved.contains(fg) && ProtectedApps.isProtected(c, fg)) {
+                if (!ui.confirm(String.format(L.t("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？"), ProtectedApps.label(c, fg)))) return "__cancel__";
+                st.approved.add(fg);
+            }
+            String a = s.optString("a");
+            String result;
+            try {
+                switch (a) {
+                    case "tap":
+                        result = macroTap(c, task, s, ui, st, wh);
+                        break;
+                    case "batch": {
+                        JSONArray taps = s.optJSONArray("taps");
+                        result = "已點擊";
+                        for (int k = 0; taps != null && k < taps.length(); k++) {
+                            String r = macroTap(c, task, taps.getJSONObject(k), ui, st, wh);
+                            if (!r.startsWith("已")) { result = r; break; }
+                            sleep(400);
+                        }
+                        break;
+                    }
+                    case "type":
+                        result = execute(new JSONObject().put("action", "type").put("text", s.optString("text"))
+                                .put("clear", s.optBoolean("clear", true)).put("enter", s.optBoolean("enter")), wh, c, st);
+                        break;
+                    case "scroll":
+                        result = execute(new JSONObject().put("action", "scroll").put("dir", s.optString("dir", "down")), wh, c, st);
+                        break;
+                    case "back": case "home": case "enter":
+                        result = execute(new JSONObject().put("action", a), wh, c, st);
+                        break;
+                    case "wait":
+                        result = "已等待";
+                        break;
+                    case "open":
+                        result = execute(new JSONObject().put("action", "open").put("name", s.optString("name")).put("pkg", s.optString("pkg")), wh, c, st);
+                        break;
+                    default:
+                        return "不認識的步驟 " + a;
+                }
+            } catch (Exception e) {
+                return "執行失敗：" + e.getMessage();
+            }
+            if ("__cancel__".equals(result)) return result;
+            JSONObject det = new JSONObject();
+            try {
+                det.put("step", i + 1).put("macro", true).put("action", a).put("result", result).put("tokens", 0);
+            } catch (Exception ignored) { }
+            details.add(det);
+            history.add("巨集" + (i + 1) + ". " + a + " → " + result);
+            if (!result.startsWith("已")) return result.startsWith("ERR:") ? result.substring(4) : "第 " + (i + 1) + " 步結果不如預期：" + result;
+            sleep((long) (Math.min(Math.max(s.optDouble("wait", 1.2), 0.5), 6) * 1000));
+        }
+        return null;
+    }
+
+    /** 重播一次點擊：在目前畫面找回記住的元件再點；找不到回 "ERR:…"，使用者不同意敏感按鈕回 "__cancel__"。 */
+    private static String macroTap(Context c, String task, JSONObject t, Ui ui, State st, int[] wh) throws Exception {
+        String label = t.optString("label");
+        JSONObject el = null;
+        for (int tries = 0; tries < 3 && el == null; tries++) {   // 頁面還在載入時，等一下再找
+            if (tries > 0) sleep(1200);
+            el = Macros.find(ElementList.collect(wh[0], wh[1]), label, t.optString("kind"), t.optInt("x"), t.optInt("y"));
+        }
+        if (el == null) return "ERR:畫面上找不到「" + label + "」";
+        JSONObject act = new JSONObject().put("action", "tap").put("x", el.optInt("x")).put("y", el.optInt("y")).put("label", label);
+        String bad = sensitiveLabel(act, task);
+        if (bad != null && !ui.confirm(String.format(L.t("畫面上的「%s」看起來是敏感操作，而且不是你的任務要求的。要讓 AI 點它嗎？"), bad))) return "__cancel__";
+        return execute(act, wh, c, st);
     }
 
     private static final String[] SENSITIVE_LABELS = {"付款", "支付", "轉帳", "转账", "匯款", "汇款", "購買", "购买", "下單", "下单", "訂購", "刪除", "删除",

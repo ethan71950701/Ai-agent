@@ -459,6 +459,13 @@ final class LEn {
         m.put("保護的 App", "Protected apps");
         m.put("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）", "Ask you before the AI operates these apps (banking and payment apps are protected automatically)");
         m.put("選擇要保護的 App", "Choose apps to protect");
+        m.put("重播記住的步驟 ", "Replaying remembered steps ");
+        m.put("巨集：", "Macro: ");
+        m.put("巨集重播 · ", "Macro replay · ");
+        m.put("記住成功的步驟（巨集）", "Remember successful steps (macros)");
+        m.put("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省", "The same task is replayed directly next time and the AI only checks the result; if the screen does not match, the AI takes over. Faster and cheaper");
+        m.put("清除記住的步驟", "Clear remembered steps");
+        m.put("目前記住 %d 個任務", "%d tasks remembered");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");

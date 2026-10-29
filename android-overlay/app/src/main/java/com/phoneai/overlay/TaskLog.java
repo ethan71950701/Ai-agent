@@ -58,13 +58,16 @@ final class TaskLog {
     }
 
     /** 在最新一筆任務加一條備註（「回答卡片」那一行）；已經有備註就接在後面。 */
-    static synchronized void noteLatest(Context c, String note) {
+    static void noteLatest(Context c, String note) { noteLatest(c, "card", note); }
+
+    /** 同上，但可以指定欄位（card＝回答卡片、macro＝巨集）。 */
+    static synchronized void noteLatest(Context c, String field, String note) {
         try {
             JSONArray a = load(c);
             if (a.length() == 0) return;
             JSONObject o = a.getJSONObject(a.length() - 1);
-            String old = o.optString("card");
-            o.put("card", old.isEmpty() ? note : old + "；" + note);
+            String old = o.optString(field);
+            o.put(field, old.isEmpty() ? note : old + "；" + note);
             save(c, a);
         } catch (Exception ignored) { }
     }

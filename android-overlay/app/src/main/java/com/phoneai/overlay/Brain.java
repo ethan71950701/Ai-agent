@@ -20,7 +20,8 @@ final class Brain {
 
     static String answer(Activity act, String t, AgentLoop.Ui ui) {
         AgentLoop.showCard = false;
-        AgentLoop.cardNote = "";   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
+        AgentLoop.cardNote = "";
+        AgentLoop.macroNote = "";   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
         Usage.beginTally();
         String reply = null;
         try {
@@ -29,7 +30,8 @@ final class Brain {
             double cost = Usage.tallyCost();
             long tokens = Usage.endTally();
             TaskLog.add(act, t, reply, AgentLoop.takeDetails(), tokens, cost);
-            if (!AgentLoop.cardNote.isEmpty()) TaskLog.noteLatest(act, AgentLoop.cardNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
+            if (!AgentLoop.cardNote.isEmpty()) TaskLog.noteLatest(act, AgentLoop.cardNote);
+            if (!AgentLoop.macroNote.isEmpty()) TaskLog.noteLatest(act, "macro", AgentLoop.macroNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         }
         return reply;
     }
