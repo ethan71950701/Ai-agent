@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1284
+
 - 任務一開始要先開某個 App 時，由判斷路由的 Haiku 5.5 直接指定，程式先打開它，不用再花一步請模型決定，更快也更省｜When a task starts by opening an app, the routing step (Haiku 5.5) now names it and the app opens it first, saving a model step so tasks are faster and cheaper
 
 ## 1.0.1283
