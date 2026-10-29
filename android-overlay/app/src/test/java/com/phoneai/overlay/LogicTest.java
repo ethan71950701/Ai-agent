@@ -149,6 +149,22 @@ public class LogicTest {
         assertFalse(Router.isSystemInfoQuestion("打開設定的 Wi-Fi 頁面"));
     }
 
+    @Test
+    public void findAppUsesSynonyms() {
+        java.util.Map<String, String> apps = new java.util.HashMap<>();
+        apps.put("圖庫", "com.sec.android.gallery3d");
+        apps.put("設定", "com.android.settings");
+        apps.put("google地圖", "com.google.android.apps.maps");
+        assertEquals("com.sec.android.gallery3d", Router.findApp(apps, "相簿"));
+        assertEquals("com.sec.android.gallery3d", Router.findApp(apps, "照片"));
+        assertEquals("com.android.settings", Router.findApp(apps, "Settings"));
+        assertEquals("com.google.android.apps.maps", Router.findApp(apps, "地圖"));
+        assertEquals("com.android.settings", Router.findApp(apps, "設定"));
+        assertNull(Router.findApp(apps, "不存在的軟體"));
+        apps.put("相簿", "x.exact");
+        assertEquals("x.exact", Router.findApp(apps, "相簿"));   // 完全相符優先
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

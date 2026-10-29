@@ -61,6 +61,46 @@ final class Router {
         return out;
     }
 
+    /** 常見 App 的同義說法：三星的相簿叫「圖庫」，使用者說「相簿」時對不上。 */
+    private static final String[][] ALIASES = {
+            {"相簿", "相册", "相冊", "圖庫", "图库", "照片", "gallery", "photos"},
+            {"設定", "设置", "設置", "settings"},
+            {"相機", "相机", "camera"},
+            {"時鐘", "时钟", "鬧鐘", "闹钟", "clock"},
+            {"計算機", "计算机", "計算器", "计算器", "calculator"},
+            {"日曆", "日历", "行事曆", "行事历", "calendar"},
+            {"聯絡人", "联系人", "通訊錄", "通讯录", "contacts"},
+            {"電話", "电话", "撥號", "拨号", "phone"},
+            {"訊息", "信息", "簡訊", "短信", "messages"},
+            {"檔案", "我的檔案", "文件管理", "myfiles", "files"},
+            {"瀏覽器", "浏览器", "browser", "internet", "chrome"},
+            {"商店", "應用商店", "应用商店", "googleplay", "playstore", "play商店"},
+            {"地圖", "地图", "maps"},
+    };
+
+    /** 依顯示名稱找套件：先完全相符，再找同義的說法（相簿＝圖庫）；找不到回 null。 */
+    static String findApp(Map<String, String> apps, String name) {
+        String n = norm(name);
+        if (n.isEmpty()) return null;
+        String hit = apps.get(n);
+        if (hit != null) return hit;
+        for (String[] g : ALIASES) {
+            boolean member = false;
+            for (String a : g) if (norm(a).equals(n)) member = true;
+            if (!member) continue;
+            for (String a : g) {
+                String p = apps.get(norm(a));
+                if (p != null) return p;
+            }
+            for (String a : g) {   // 顯示名稱包含這個說法（例如「Google 地圖」）
+                String na = norm(a);
+                if (na.length() < 2) continue;
+                for (Map.Entry<String, String> e : apps.entrySet()) if (e.getKey().contains(na)) return e.getValue();
+            }
+        }
+        return null;
+    }
+
     /** 回傳判斷結果；Key 讀不到、網路失敗、回答看不懂回 null（呼叫端改用聊天）。 */
     static Decision decide(Context c, String text) {
         String key = ChatEngine.key(c);
@@ -108,7 +148,7 @@ final class Router {
                     return i >= 0 && i < Assist.commandCount() ? new Decision(CMD, i, null, 0) : null;
                 }
                 case APP: {
-                    String pkg = apps.get(norm(d.optString("name")));
+                    String pkg = findApp(apps, d.optString("name"));
                     return pkg != null ? new Decision(APP, -1, pkg, 0) : null;
                 }
                 case CHAT:
@@ -116,7 +156,7 @@ final class Router {
                 case AGENT: {
                     Decision dec = new Decision(AGENT, -1, null, Math.min(Math.max(d.optInt("steps", 8), 3), 15));
                     String name = d.optString("app", "");
-                    if (!name.isEmpty()) dec.openPkg = apps.get(norm(name));   // 只認已安裝的 App；對不上就不先開
+                    if (!name.isEmpty()) dec.openPkg = findApp(apps, name);   // 只認已安裝的 App；對不上就不先開
                     return dec;
                 }
                 default:

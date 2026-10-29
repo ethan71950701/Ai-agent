@@ -783,7 +783,7 @@ final class AgentLoop {
         String n = Router.norm(name);
         if (n.isEmpty()) return null;
         java.util.Map<String, String> apps = Router.apps(c);
-        String hit = apps.get(n);
+        String hit = Router.findApp(apps, name);   // 完全相符＋同義說法（相簿＝圖庫）
         if (hit != null) return hit;
         for (java.util.Map.Entry<String, String> e : apps.entrySet()) {
             String k = e.getKey();
