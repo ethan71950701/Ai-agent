@@ -94,7 +94,10 @@ final class BgDisplay {
     }
 
     /** 自我檢查（設定裡的「測試背景螢幕」）：建立 → 在上面開「設定」→ 截圖 → 判斷是不是全黑 → 收掉。回傳給人看的結果。 */
+    static volatile android.graphics.Bitmap lastTestShot;   // 測試時截到的畫面，給設定頁的結果視窗顯示
+
     static String selfTest(Context c) {
+        lastTestShot = null;
         StringBuilder sb = new StringBuilder();
         if (!Root.isRoot()) return L.t("背景螢幕需要 root。");
         boolean ok = start(c);
@@ -111,6 +114,7 @@ final class BgDisplay {
             if (bmp == null) {
                 sb.append(L.t("截圖失敗：讀不到背景螢幕的畫面。"));
             } else {
+                lastTestShot = bmp;
                 Set<Integer> colors = new HashSet<>();
                 for (int y = 0; y < bmp.getHeight(); y += 17)
                     for (int x = 0; x < bmp.getWidth(); x += 13) colors.add(bmp.getPixel(x, y));

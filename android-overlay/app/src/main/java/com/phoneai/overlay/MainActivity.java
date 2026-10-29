@@ -802,7 +802,24 @@ public class MainActivity extends Activity {
             android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
             new Thread(() -> {
                 String r = BgDisplay.selfTest(this);
-                runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("測試背景螢幕")).setMessage(r).setPositiveButton(L.t("知道了"), null).show());
+                final android.graphics.Bitmap shot = BgDisplay.lastTestShot;
+                runOnUiThread(() -> {
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("測試背景螢幕")).setPositiveButton(L.t("知道了"), null);
+                    if (shot == null) b.setMessage(r);
+                    else {   // 把背景螢幕截到的畫面一起顯示，才看得出它真的拍到了東西
+                        android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+                        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+                        int pad = Ui.dp(this, 20);
+                        col.setPadding(pad, pad / 2, pad, 0);
+                        col.addView(Ui.body(this, r));
+                        android.widget.ImageView iv = new android.widget.ImageView(this);
+                        iv.setImageBitmap(shot);
+                        iv.setAdjustViewBounds(true);
+                        col.addView(iv, new android.widget.LinearLayout.LayoutParams(Ui.dp(this, 160), -2));
+                        b.setView(col);
+                    }
+                    b.show();
+                });
             }).start();
         });
         if (hasRoot) Ui.switchRow(this, g, k++, n, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
