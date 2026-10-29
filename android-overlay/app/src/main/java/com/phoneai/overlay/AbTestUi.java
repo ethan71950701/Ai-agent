@@ -39,19 +39,48 @@ final class AbTestUi {
             new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 比較測試")).setMessage(L.t("至少要有兩種組合才能比較：到「功能 → AI 服務與 API Key」再設定一個服務（存好 Key）。")).setPositiveButton(L.t("知道了"), null).show();
             return;
         }
-        String[] names = new String[all.size()];
-        boolean[] on = new boolean[all.size()];
-        for (int i = 0; i < names.length; i++) { names[i] = all.get(i).name; on[i] = i < 2; }
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("選要比較的組合"))
-                .setMultiChoiceItems(names, on, (d, which, checked) -> on[which] = checked)
+        // 自己畫勾選框：系統的多選清單在這個主題下看不到方框，不知道勾了哪個
+        final boolean[] on = new boolean[all.size()];
+        android.widget.LinearLayout col = new android.widget.LinearLayout(a);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = Ui.dp(a, 20);
+        col.setPadding(pad, pad / 2, pad, 0);
+        final android.widget.TextView count = Ui.body(a, "");
+        for (int i = 0; i < on.length; i++) {
+            final int idx = i;
+            on[i] = i < 2;
+            com.google.android.material.checkbox.MaterialCheckBox cb = new com.google.android.material.checkbox.MaterialCheckBox(a);
+            cb.setText(all.get(i).name);
+            cb.setTextSize(15);
+            cb.setChecked(on[i]);
+            cb.setOnCheckedChangeListener((v, checked) -> { on[idx] = checked; count.setText(summary(on)); });
+            col.addView(cb, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        }
+        count.setText(summary(on));
+        count.setPadding(0, Ui.dp(a, 12), 0, 0);
+        col.addView(count);
+        android.widget.ScrollView sv = new android.widget.ScrollView(a);
+        sv.addView(col);
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("選要比較的 API"))
+                .setView(sv)
                 .setPositiveButton(L.t("下一步"), (d, w) -> {
                     List<AbTest.Config> chosen = new ArrayList<>();
                     for (int i = 0; i < on.length; i++) if (on[i]) chosen.add(all.get(i));
-                    if (chosen.isEmpty()) return;
+                    if (chosen.size() < 2) {
+                        android.widget.Toast.makeText(a, L.t("至少勾兩個才能比較"), android.widget.Toast.LENGTH_SHORT).show();
+                        pick(a);
+                        return;
+                    }
                     confirmRun(a, chosen);
                 })
                 .setNeutralButton(L.t("自訂組合…"), (d, w) -> addCustom(a))
                 .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    private static String summary(boolean[] on) {
+        int n = 0;
+        for (boolean b : on) if (b) n++;
+        return String.format(L.t("已勾選 %d 個（至少要 2 個）"), n);
     }
 
     /** 自己挑服務和模型：選一個已經存了 Key 的服務 → 向它查詢現有模型 → 選便宜與看圖各一個 → 加進清單。 */

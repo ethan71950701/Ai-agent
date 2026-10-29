@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- AI 比較測試的選單改成看得見的勾選框，並顯示「已勾選 N 個」｜The AI comparison picker now has visible checkboxes and shows how many are selected
+
 - AI 比較測試：不再有「目前設定」，直接列出所有存好 Key 的 API（Claude、Gemini…），勾選要比的兩個以上即可；模型沿用你現在設定的｜AI comparison test: no more "Current settings"; it lists every API with a saved key (Claude, Gemini...) and you tick two or more to compare, using the models you have set
 ## 1.0.1348
 

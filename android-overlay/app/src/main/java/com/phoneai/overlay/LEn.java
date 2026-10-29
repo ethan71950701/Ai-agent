@@ -475,6 +475,9 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("選要比較的 API", "Pick the APIs to compare");
+        m.put("至少勾兩個才能比較", "Tick at least two to compare");
+        m.put("已勾選 %d 個（至少要 2 個）", "%d selected (at least 2)");
         m.put("目前設定：", "Current settings: ");
         m.put("自訂組合…", "Custom combination…");
         m.put("選服務", "Pick a service");
