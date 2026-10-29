@@ -39,7 +39,11 @@ final class Brain {
 
     private static String run(Activity act, String t, AgentLoop.Ui ui) {
         Assist.Route route = Assist.route(t);
-        if (route.kind == Assist.FIXED) return runFixed(act, route);
+        if (route.kind == Assist.FIXED) {
+            // 缺權限時系統的「修改系統設定」頁會被助理面板蓋住：先收起面板
+            if (!Root.available() && Phone.willAskWriteSettings(act, route.cmd)) { ui.hide(); try { Thread.sleep(600); } catch (InterruptedException ignored) { } }
+            return runFixed(act, route);
+        }
         String over = Usage.overLimit(act);   // 超過用量上限：不送出 Claude 的請求
         if (over != null) return over;
         Router.Decision d = Router.decide(act, t);

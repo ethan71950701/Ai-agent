@@ -297,6 +297,12 @@ final class Phone {
         }
     }
 
+    /** 這個固定指令（shell 字串）在沒 root 時，是否會因為缺「修改系統設定」權限而跳出設定頁。 */
+    static boolean willAskWriteSettings(Context c, String shell) {
+        String id = noRootAction(shell);
+        return id != null && (id.startsWith("rotate.") || id.startsWith("autobright.") || id.startsWith("bright.")) && !Settings.System.canWrite(c);
+    }
+
     private static String askWriteSettings(Context c) {
         try {
             c.startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
