@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 元件清單實驗：第一步讀不到元件（桌面）時，先用 Haiku＋截圖，需要座標時才升級 Sonnet，省下第一步的花費｜Element-list experiment: when the first step reads no elements (home screen), it now uses Haiku with a screenshot first and only escalates to Sonnet when coordinates are needed, saving the first step's cost
+
 - 修正：AI 只給 App 名稱（沒給套件名稱）時會打不開，現在會依名稱自己找已安裝的 App；任務過程也顯示這一步有沒有用元件清單｜Fix: when the AI gives only an app name (no package), the app now looks the package up by name instead of failing; task details also show whether each step used the element list
 
 ## 1.0.1281

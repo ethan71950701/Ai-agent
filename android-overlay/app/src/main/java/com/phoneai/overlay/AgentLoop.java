@@ -173,8 +173,15 @@ final class AgentLoop {
                 long tokBefore = Usage.tallyNow();
                 long[] cntBefore = Usage.tallyCounts();
                 double costBefore = Usage.tallyCost();
+                // 元件清單開著、但第一步讀不到元件（桌面）：第一步通常只是開 App，先用 Haiku＋截圖；它回了要座標的動作再升級 Sonnet。
+                boolean cheapFirst = treeOn && step == 1 && !useTree;
+                String model = useTree || cheapFirst ? TREE_MODEL : MODEL;
                 try {
-                    action = askModel(key, task, history, img, lessons, useTree ? TREE_MODEL : MODEL, useTree ? ElementList.describe(tree) : null);
+                    action = askModel(key, task, history, img, lessons, model, useTree ? ElementList.describe(tree) : null);
+                    if (cheapFirst && action != null && needsCoords(action.optString("action"))) {
+                        model = MODEL;
+                        action = askModel(key, task, history, img, lessons, model, null);
+                    }
                 } catch (Exception e) {
                     if (cancelled) return L.t("已停止。");
                     return L.t("連不上 AI：") + e.getMessage();
@@ -256,7 +263,7 @@ final class AgentLoop {
                 }
                 try {
                     if (treeOn) det.put("tree", useTree ? tree.size() : tree == null ? -2 : 0);   // 診斷：這一步有沒有用元件清單
-                    usage(det, useTree ? TREE_MODEL : MODEL, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
+                    usage(det, model, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
                 } catch (Exception ignored) { }
                 if (finalSay == null) sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));
@@ -633,6 +640,14 @@ final class AgentLoop {
     private static void releaseDrag(State st) {
         sh(dragScript("end", st.dx, st.dy, st.dx, st.dy));
         st.dragDown = false;
+    }
+
+    /** 這類動作要靠截圖算座標，Haiku 常點錯。 */
+    private static boolean needsCoords(String name) {
+        switch (name) {
+            case "tap": case "longpress": case "swipe": case "drag": case "drag_start": case "multitouch": case "batch": return true;
+            default: return false;
+        }
     }
 
     /** 依 App 顯示名稱找已安裝的套件名稱：先完全相符，再找名稱互相包含的；找不到回 null。 */
