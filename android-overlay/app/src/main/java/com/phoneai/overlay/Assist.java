@@ -109,10 +109,20 @@ final class Assist {
     /** 有這些連接詞就是多件事（比對的是已經去掉空白與標點的句子）。 */
     private static final java.util.regex.Pattern MULTI = java.util.regex.Pattern.compile("然後|然后|接著|接着|之後|之后|並且|并且|同時|同时|andthen|afterthat");
 
+    /** 「音量調到 30%」「音量50」「聲音 百分之八十」：整句只有音量加一個數字（0～100）。 */
+    private static final java.util.regex.Pattern VOLUME_PCT = java.util.regex.Pattern.compile(
+            "^(?:把|將|将)?(?:媒體|媒体)?(?:音量|聲音|声音|volume)(?:調到|调到|調成|调成|設成|设成|設為|设为|設定為|设定为|設定成|设定成|to|at|=|是)?(?:百分之)?(\\d{1,3})(?:%|％|趴|百分比)?$");
+    static final String VOLUME_PREFIX = "phoneai:volume:";
+
     /** 關鍵字命中固定指令（最長的那個關鍵字優先）回 FIXED；沒命中回 NONE，交給 Haiku 路由判斷。 */
     static Route route(String text) {
         String t = norm(text);
         if (MULTI.matcher(t).find()) return new Route(NONE, null, null, false);   // 多件事：不能只做前半就結束，交給 AI
+        java.util.regex.Matcher vm = VOLUME_PCT.matcher(t);
+        if (vm.matches()) {
+            int pct = Integer.parseInt(vm.group(1));
+            if (pct <= 100) return new Route(FIXED, VOLUME_PREFIX + pct, "", false);
+        }
         Cmd best = null;
         int bestLen = 0;
         for (Cmd c : COMMANDS)

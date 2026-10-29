@@ -13,6 +13,16 @@ public class AssistTest {
     private static Assist.Route r(String t) { return Assist.route(t); }
 
     @Test
+    public void volumePercentIsAFixedCommand() {
+        assertEquals("phoneai:volume:30", r("音量調到 30%").cmd);
+        assertEquals("phoneai:volume:50", r("把音量設成50").cmd);
+        assertEquals("phoneai:volume:80", r("聲音百分之80").cmd);
+        assertEquals("phoneai:volume:0", r("volume to 0").cmd);
+        assertEquals(Assist.NONE, r("音量調到 300%").kind);
+        assertEquals(Assist.NONE, r("音量30然後打開計算機").kind);
+    }
+
+    @Test
     public void exactCommandsMatch() {
         assertEquals(Assist.FIXED, r("關閉定位").kind);
         assertTrue(r("關閉定位").cmd.contains("set-location-enabled false"));
