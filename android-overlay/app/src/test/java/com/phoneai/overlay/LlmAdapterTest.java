@@ -87,14 +87,19 @@ public class LlmAdapterTest {
     }
 
     @Test
-    public void estimatesCostsForKnownModels() {
+    public void estimatesCostsFromTheOfficialPriceTables() {
+        double[] haiku = Usage.guessPrice("claude-haiku-5-5");
+        assertEquals(0.10, haiku[0], 1e-9);
+        assertEquals(0.01, haiku[3], 1e-9);
+        assertEquals(0.10, Usage.guessPrice("claude-sonnet-5-5")[3], 1e-9);   // Sonnet 5.5 的快取讀取是 $0.10（輸入價的 0.05 倍）
+        assertEquals(0.30, Usage.guessPrice("deepseek-flash")[0], 1e-9);
         assertEquals(0.30, Usage.guessPrice("gemini-flash-lite-latest")[0], 1e-9);
-        assertEquals(1.50, Usage.guessPrice("gemini-flash-latest")[0], 1e-9);
         assertEquals(0.15, Usage.guessPrice("gpt-4o-mini")[0], 1e-9);
-        assertEquals(2.50, Usage.guessPrice("gpt-4o")[0], 1e-9);
         assertEquals(0.0, Usage.guessPrice("some-unknown-model")[0], 1e-9);
-        // 1M 輸入 + 1M 輸出（沒有快取）
-        assertEquals(0.15 + 0.60, Usage.costOf("gpt-4o-mini", 1_000_000, 1_000_000, 0, 0), 1e-9);
+        // Sonnet 5.5：1M 一般輸入 + 1M 輸出 = 2 + 10
+        assertEquals(12.0, Usage.costOf("claude-sonnet-5-5", 1_000_000, 1_000_000, 0, 0), 1e-9);
+        // 1M 輸入裡有 600K 快取讀取 + 400K 一般：0.4*2 + 0.6*0.10
+        assertEquals(0.8 + 0.06, Usage.costOf("claude-sonnet-5-5", 1_000_000, 0, 0, 600_000), 1e-9);
     }
 
     @Test

@@ -475,6 +475,8 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("DeepSeek（便宜）", "DeepSeek (cheap)");
+        m.put("官網寫 deepseek-flash 支援看圖（deepseek-v4-pro 不支援），這裡便宜與看圖都預設用它；看圖是否穩定還沒實測，不穩就用「只設定看圖模型」改選 Gemini 或 OpenAI。", "The website says deepseek-flash supports vision (deepseek-v4-pro does not), so both the cheap and vision models default to it; vision stability is untested, if it is flaky use \"Set only the vision model\" and pick Gemini or OpenAI.");
         m.put("價格未知", "price unknown");
         m.put("每百萬 token 的美元價（看那家官網的 Pricing 頁）。留空＝用內建的粗估值。免費方案實際不收費，這裡是「如果付費大約多少」。", "US dollars per million tokens (see that service's Pricing page). Leave empty to use the built-in rough value. Free tiers are not actually charged; this is roughly what it would cost if paid.");
         m.put("輸入價（$／百萬 token）", "Input price ($ per million tokens)");

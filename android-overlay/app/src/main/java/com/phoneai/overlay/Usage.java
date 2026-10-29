@@ -288,24 +288,33 @@ final class Usage {
 
     // ---------- 任務用量：同一個執行緒裡的 Claude 呼叫，累加到目前這個任務（給任務過程用） ----------
 
-    /** 每百萬 token 的美元價 [輸入, 輸出]（第三方整理，請以 Console 為準）；快取寫入約 1.25 倍輸入價，快取讀取 0.1 倍。 */
-    static double[] price(String model) {
+        static double[] price(String model) {
         double[] custom = customPrice(model);
         if (custom != null) return custom;
         return guessPrice(model);
     }
 
-    /** 內建的粗估價（美元／百萬 token）：第三方整理、各來源不一致，只是預估，請以官網為準；可在用量頁改成自己的價格。 */
+    /**
+     * 每百萬 token 的美元價 [輸入, 輸出, 快取寫入, 快取讀取]。
+     * Claude 與 DeepSeek 照官網價格頁（使用者提供的截圖，2026-10-29）：Claude 的 Haiku 5.5 輸入是「提示詞不超過 10 萬 token」的價，
+     * Sonnet 5.5 與 Opus 5.5 的快取讀取是輸入價的 0.05 倍；DeepSeek 用尖峰價（離峰是一半）。
+     * Gemini、GPT-4o 是第三方整理的粗估（各來源不一致），請在用量頁改成官網的價格。
+     */
     static double[] guessPrice(String model) {
         String m = model == null ? "" : model.toLowerCase(Locale.ROOT);
-        if (m.contains("haiku")) return new double[]{0.10, 0.50};
-        if (m.contains("sonnet")) return new double[]{2.00, 10.00};
-        if (m.contains("gemini") && m.contains("flash-lite")) return new double[]{0.30, 2.50};
-        if (m.contains("gemini") && m.contains("flash")) return new double[]{1.50, 7.50};
-        if (m.contains("gpt-4o-mini")) return new double[]{0.15, 0.60};
-        if (m.contains("gpt-4o")) return new double[]{2.50, 10.00};
-        if (m.contains("deepseek")) return new double[]{0.28, 0.42};
-        return new double[]{0, 0};
+        if (m.contains("haiku")) return new double[]{0.10, 0.50, 0.125, 0.01};
+        if (m.contains("sonnet")) return new double[]{2.00, 10.00, 2.50, 0.10};
+        if (m.contains("opus")) return new double[]{4.00, 20.00, 5.00, 0.20};
+        if (m.contains("fable")) return new double[]{10.00, 50.00, 12.50, 0.25};
+        if (m.contains("deepseek") && m.contains("pro")) return new double[]{1.32, 3.96, 1.32, 0.044};
+        if (m.contains("deepseek")) return new double[]{0.30, 1.20, 0.30, 0.006};
+        double[] g = null;
+        if (m.contains("gemini") && m.contains("flash-lite")) g = new double[]{0.30, 2.50};
+        else if (m.contains("gemini") && m.contains("flash")) g = new double[]{1.50, 7.50};
+        else if (m.contains("gpt-4o-mini")) g = new double[]{0.15, 0.60};
+        else if (m.contains("gpt-4o")) g = new double[]{2.50, 10.00};
+        if (g == null) return new double[]{0, 0, 0, 0};
+        return new double[]{g[0], g[1], g[0], g[0] * 0.10};
     }
 
     static boolean priceKnown(Context c, String model) {
@@ -319,7 +328,8 @@ final class Usage {
         if (v == null) return null;
         try {
             String[] p = v.split(",");
-            return new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1])};
+            double in = Double.parseDouble(p[0]);
+            return new double[]{in, Double.parseDouble(p[1]), in, in * 0.10};
         } catch (Exception e) {
             return null;
         }
@@ -334,7 +344,7 @@ final class Usage {
     static double costOf(String model, long in, long out, long cw, long cr) {
         double[] p = price(model);
         long base = in - cw - cr;
-        return (base * p[0] + cw * p[0] * 1.25 + cr * p[0] * 0.10 + out * p[1]) / 1000000.0;
+        return (base * p[0] + cw * p[2] + cr * p[3] + out * p[1]) / 1000000.0;
     }
 
     /** 模型代號轉成給人看的名字，例如 claude-haiku-5-5 → Haiku 5.5。 */
