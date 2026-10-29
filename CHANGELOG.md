@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1299
+
 - 嘗試修正回答卡片有時沒跳出：要跳卡片時，進度條多留 2.5 秒，避免被系統當成背景啟動而擋掉｜Attempted fix for the answer card sometimes not appearing: the progress bar stays 2.5 seconds longer when a card is about to show, so the system does not block it as a background launch
 
 ## 1.0.1298
