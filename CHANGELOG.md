@@ -5,9 +5,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1333
+
 - 選常見服務（Gemini、OpenAI…）時不再顯示網址與模型表單：直接輸入 Key，再選要不要查詢模型；只有「其他」才需要填網址｜Picking a known service (Gemini, OpenAI...) no longer shows the URL/model form: you just enter the key and choose whether to look up models; only "Other" asks for a URL
 
 - Gemini 教學更正：Key 也可能以 AQ. 開頭｜Gemini guide corrected: keys may also start with AQ.
+
 ## 1.0.1331
 
 - 修正「AI 服務」選單只顯示說明、選不了的問題；入口改到「功能 → 資料 → AI 服務與 API Key」（設定裡的那一列移除），設定導覽第 6 步也改成同一個流程｜Fixed the "AI service" dialog showing only text with nothing to pick; the entry moved to Functions → Data → "AI service and API key" (the Settings row is gone) and setup guide step 6 now uses the same flow
