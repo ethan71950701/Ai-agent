@@ -29,6 +29,7 @@ final class Router {
         final int cmdIndex;     // kind == cmd
         final String pkg;       // kind == app
         final int steps;        // kind == agent
+        String openPkg;         // kind == agent：任務一開始要先開的 App（沒有就是 null）
         Decision(String kind, int cmdIndex, String pkg, int steps) { this.kind = kind; this.cmdIndex = cmdIndex; this.pkg = pkg; this.steps = steps; }
     }
 
@@ -71,11 +72,12 @@ final class Router {
                 + "鬧鐘：使用者要設鬧鐘、幾點叫我，都回 chat（聊天助理有設鬧鐘的工具）。"
                 + "傳檔案：使用者要在自己的裝置之間傳檔案、找檔案、從另一台手機或電腦拿檔案、傳到另一台裝置，都回 chat（聊天助理有傳檔案工具）。"
                 + "只輸出一行JSON，不要解釋：\n"
-                + "{\"route\":\"cmd\",\"i\":指令編號} 或 {\"route\":\"app\",\"name\":\"App名稱\"} 或 {\"route\":\"chat\"} 或 {\"route\":\"agent\",\"steps\":整數}\n"
+                + "{\"route\":\"cmd\",\"i\":指令編號} 或 {\"route\":\"app\",\"name\":\"App名稱\"} 或 {\"route\":\"chat\"} 或 {\"route\":\"agent\",\"steps\":整數,\"app\":\"要先開的App名稱，沒有就省略\"}\n"
                 + "chat = 純聊天或問答：問知識、解釋、翻譯、建議、閒聊、寫文字、算數，答案用你的常識就能直接說，完全不需要操作手機或查即時資料。使用者問他自己的東西或他說過的事（車停哪、東西放哪、之前告訴你的資訊），也回 chat，因為要先查記憶。"
                 + "需要即時資訊（今天天氣、新聞、股價、營業時間）或要操作手機的，回 agent。\n"
                 + "不是上述任何一項，或需要看畫面、點擊、輸入文字、搜尋、多步驟操作，一律回 agent。"
-                + "回 agent 時 steps 是預估完成需要的畫面操作次數（每次點擊、滑動、輸入算一步；能直接用指令開App或開關Wi-Fi/藍牙的不算步數），再多留2步緩衝，範圍3到15。";
+                + "回 agent 時 steps 是預估完成需要的畫面操作次數（每次點擊、滑動、輸入算一步；能直接用指令開App或開關Wi-Fi/藍牙的不算步數），再多留2步緩衝，範圍3到15。"
+                + "回 agent 時，如果任務一開始要先開某個已安裝的App（任務有指名，或明顯就是那個App，例如「去設定的Wi-Fi頁面」要先開設定），多回 app，名稱要用上面App名稱清單裡的；任務是對目前畫面操作、或沒有指名App，就不要寫 app。";
         try {
             JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 400)
                     .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
@@ -102,8 +104,12 @@ final class Router {
                 }
                 case CHAT:
                     return new Decision(CHAT, -1, null, 0);
-                case AGENT:
-                    return new Decision(AGENT, -1, null, Math.min(Math.max(d.optInt("steps", 8), 3), 15));
+                case AGENT: {
+                    Decision dec = new Decision(AGENT, -1, null, Math.min(Math.max(d.optInt("steps", 8), 3), 15));
+                    String name = d.optString("app", "");
+                    if (!name.isEmpty()) dec.openPkg = apps.get(norm(name));   // 只認已安裝的 App；對不上就不先開
+                    return dec;
+                }
                 default:
                     return null;
             }

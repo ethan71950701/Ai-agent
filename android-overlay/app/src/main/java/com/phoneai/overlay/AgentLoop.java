@@ -131,18 +131,21 @@ final class AgentLoop {
     }
 
     /** 執行任務；回傳要告訴使用者的文字。結束時收掉 Now Bar。 */
-    static String run(Context c, String task, Ui ui) {
+    static String run(Context c, String task, Ui ui) { return run(c, task, ui, null); }
+
+    /** preOpen：任務一開始由程式先開啟的 App 套件名稱（路由判斷出來的）；沒有就是 null。 */
+    static String run(Context c, String task, Ui ui, String preOpen) {
         cancelled = false;
         showCard = false;
         lastSteps = null;
         try {
-            return runInner(c, task, ui);
+            return runInner(c, task, ui, preOpen);
         } finally {
             OverlayService.endSteps(c);
         }
     }
 
-    private static String runInner(Context c, String task, Ui ui) {
+    private static String runInner(Context c, String task, Ui ui, String preOpen) {
         for (String w : TASK_BLOCK)
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
@@ -154,6 +157,12 @@ final class AgentLoop {
         lastSteps = history;
         List<JSONObject> details = new ArrayList<>();
         lastDetails = details;
+        if (preOpen != null && preOpen.matches("[A-Za-z0-9._]+")) {   // 路由已判斷第一步是開 App：不用再花一次模型呼叫
+            sh("monkey -p " + preOpen + " -c android.intent.category.LAUNCHER 1");
+            st.opened.add(preOpen);
+            history.add("0. 任務開始前，程式已先開啟 " + preOpen + "，不用再 open");
+            sleep(2500);
+        }
         String finalSay = null;
         boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", false);
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
