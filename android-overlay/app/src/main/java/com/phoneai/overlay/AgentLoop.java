@@ -226,6 +226,14 @@ final class AgentLoop {
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 if (cancelled) return L.t("已停止。");
+                if (BgDisplay.active && OverlayService.takeover) {   // 使用者在預覽視窗接手背景螢幕：AI 先停住，等他放手（預覽最後一次觸碰後 4 秒自動交回，或按「完成」）
+                    ui.status(L.t("你接手中，AI 暫停"));
+                    long until = System.currentTimeMillis() + 10 * 60_000L;
+                    while (OverlayService.takeover && !cancelled && System.currentTimeMillis() < until) sleep(300);
+                    if (cancelled) return L.t("已停止。");
+                    OverlayService.takeoverEnded = false;
+                    history.add("（使用者剛在背景螢幕上親自操作過，畫面可能已經變了，請以最新的畫面為準）");
+                }
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
                 // 銀行、支付類（或使用者標記保護的）App：沒問過就不把畫面送給 AI
