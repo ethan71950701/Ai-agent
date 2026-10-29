@@ -49,6 +49,9 @@ public class OverlayService extends Service {
     static final String CHANNEL = "status_low";  // 舊的 "status" 是預設重要性，頻道建立後改不了，所以換新 id
     static final String ACTION_TEST = "com.phoneai.overlay.TEST";
     static final String ACTION_STOP = "com.phoneai.overlay.STOP";
+    /** Now Bar 的「暫停／繼續」：AI 在下一步開始前停住，等你按繼續（主螢幕和背景螢幕都能用）。 */
+    static final String ACTION_PAUSE = "com.phoneai.overlay.PAUSE";
+    static volatile boolean paused;
     static final String ACTION_BEGIN = "com.phoneai.overlay.BEGIN";
     /** 目前執行中的服務（給 App 內的自動操作更新 Now Bar 用）；沒在跑就是 null。 */
     static volatile OverlayService instance;
@@ -56,6 +59,7 @@ public class OverlayService extends Service {
     /** App 內的自動操作每一步呼叫：更新 Now Bar 的文字與步數；服務沒在跑就先啟動。 */
     /** 自動操作結束：收掉 Now Bar（前景服務與它的通知）。 */
     static void endSteps(android.content.Context c) {
+        paused = false;
         OverlayService s = instance;
         if (s != null) s.main.post(s::finish);
     }
@@ -157,6 +161,7 @@ public class OverlayService extends Service {
         A11yGuard.ensure(this);
         if (ACTION_TEST.equals(a)) runTest();
         else if (ACTION_STOP.equals(a)) stopAgent();
+        else if (ACTION_PAUSE.equals(a)) { paused = !paused; refreshNotification(); }
         else if (ACTION_BEGIN.equals(a)) postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
         else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
@@ -278,7 +283,10 @@ public class OverlayService extends Service {
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
-                .addAction(new Notification.Action.Builder(icon, L.t("停止"), pi).build());
+                .addAction(new Notification.Action.Builder(icon, L.t("停止"), pi).build())
+                .addAction(new Notification.Action.Builder(icon, paused ? L.t("繼續") : L.t("暫停"),
+                        PendingIntent.getService(this, 4, new Intent(this, OverlayService.class).setAction(ACTION_PAUSE),
+                                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)).build());
         if (vd) {  // 有背景虛擬螢幕：Now Bar 上只有「停止」和「接手／完成」；要預覽就點通知本身
             PendingIntent take = PendingIntent.getService(this, 3, new Intent(this, OverlayService.class).setAction(ACTION_TAKEOVER),
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);

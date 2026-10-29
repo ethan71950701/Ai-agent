@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- Now Bar 新增「暫停／繼續」：AI 在下一步開始前停住，等你按繼續（主螢幕與背景螢幕都能用），繼續時 AI 會知道畫面可能已被你改過｜The Now Bar gets a Pause / Resume button: the AI stops before its next step and waits for you to resume (main and background screens), and knows the screen may have changed when it continues
+
 - 背景模式：你在預覽視窗上用手接手時，AI 會暫停，放手後（或按「完成」）才繼續，並知道畫面可能已被你改過｜Background mode: when you take over on the preview window by hand the AI pauses and continues after you let go (or tap Done), knowing the screen may have changed
 ## 1.0.1343
 

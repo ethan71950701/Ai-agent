@@ -475,6 +475,8 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("暫停", "Pause");
+        m.put("已暫停，按 Now Bar 的「繼續」", "Paused, tap Resume on the Now Bar");
         m.put("你接手中，AI 暫停", "You have taken over, the AI is paused");
         m.put("背景模式按鈕（實驗）", "Background mode button (experimental)");
         m.put("在助理面板顯示背景模式按鈕。按鈕要自己按開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows the background-mode button in the assistant panel. You turn the button on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");

@@ -226,14 +226,8 @@ final class AgentLoop {
         try {
             for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
                 if (cancelled) return L.t("已停止。");
-                if (BgDisplay.active && OverlayService.takeover) {   // 使用者在預覽視窗接手背景螢幕：AI 先停住，等他放手（預覽最後一次觸碰後 4 秒自動交回，或按「完成」）
-                    ui.status(L.t("你接手中，AI 暫停"));
-                    long until = System.currentTimeMillis() + 10 * 60_000L;
-                    while (OverlayService.takeover && !cancelled && System.currentTimeMillis() < until) sleep(300);
-                    if (cancelled) return L.t("已停止。");
-                    OverlayService.takeoverEnded = false;
-                    history.add("（使用者剛在背景螢幕上親自操作過，畫面可能已經變了，請以最新的畫面為準）");
-                }
+                if (waitWhilePaused(ui)) history.add("（使用者剛暫停過、或親自操作過，畫面可能已經變了，請以最新的畫面為準）");
+                if (cancelled) return L.t("已停止。");
                 ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
                 // 銀行、支付類（或使用者標記保護的）App：沒問過就不把畫面送給 AI
@@ -653,6 +647,21 @@ final class AgentLoop {
         });
     }
 
+    /**
+     * 使用者按了 Now Bar 的「暫停」、或在預覽視窗接手背景螢幕時，在這裡停住，等他按「繼續」／放手（最多 30 分鐘，按停止會立刻跳出）。
+     * 回傳這次有沒有真的停過（要告訴 AI 畫面可能變了）。
+     */
+    private static boolean waitWhilePaused(Ui ui) {
+        if (!OverlayService.paused && !(BgDisplay.active && OverlayService.takeover)) return false;
+        ui.status(OverlayService.paused ? L.t("已暫停，按 Now Bar 的「繼續」") : L.t("你接手中，AI 暫停"));
+        long until = System.currentTimeMillis() + 30 * 60_000L;
+        while ((OverlayService.paused || (BgDisplay.active && OverlayService.takeover)) && !cancelled && System.currentTimeMillis() < until) sleep(300);
+        OverlayService.takeoverEnded = false;
+        OverlayService.paused = false;
+        OverlayService.refreshNotification();
+        return true;
+    }
+
     /** 執行一個動作，回傳給下一步看的結果文字。 */
     static String execute(JSONObject a, int[] wh, Context c, State st) {
         int w = wh[0], h = wh[1];
@@ -1001,6 +1010,8 @@ final class AgentLoop {
                                       List<String> history, List<JSONObject> details) {
         int n = steps.length();
         for (int i = 0; i < n; i++) {
+            if (cancelled) return "使用者停止";
+            waitWhilePaused(ui);
             if (cancelled) return "使用者停止";
             JSONObject s = steps.optJSONObject(i);
             if (s == null) return "紀錄損壞";
