@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1309
+
 - 沒有 root 也能用：點擊、滑動、按鍵、截圖改走無障礙服務，開 App 走一般方式，亮度、旋轉、勿擾、音量用系統 API，Wi-Fi、藍牙、深色模式等只能打開對應的設定頁；設定裡可勾「不使用 root」模擬測試｜Works without root: taps, swipes, keys and screenshots use the accessibility service, apps open the normal way, brightness, rotation, Do Not Disturb and volume use system APIs, and Wi-Fi, Bluetooth, dark mode etc. can only open the matching settings page; a "Do not use root" switch in the settings simulates it for testing
 
 ## 1.0.1308
