@@ -132,6 +132,16 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void explainsHttpErrors() {
+        String e429 = LlmErrors.explain(429, "{\"error\":{\"message\":\"quota\"}}", "gemini");
+        assertTrue(e429.startsWith("gemini：HTTP 429"));
+        assertTrue(e429.contains("額度用完了"));
+        assertTrue(e429.contains("quota"));
+        assertTrue(LlmErrors.explain(401, "", "").contains("Key"));
+        assertTrue(LlmErrors.explain(503, "", "x").contains("伺服器"));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

@@ -178,7 +178,7 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         inflight = null;
-        if (code >= 400) throw new Exception("HTTP " + code + " " + text);
+        if (code >= 400) throw new Exception(LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
         JSONObject r = new JSONObject(text);
         JSONObject u = r.optJSONObject("usage");
         if (app != null && u != null) {
@@ -207,7 +207,7 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         inflight = null;
-        if (code >= 400) throw new Exception("HTTP " + code + " " + text);
+        if (code >= 400) throw new Exception(LlmErrors.explain(code, text, slot.label()));
         JSONObject r = LlmAdapter.fromOpenAi(new JSONObject(text));
         JSONObject u = r.optJSONObject("usage");
         if (u != null) {

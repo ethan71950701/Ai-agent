@@ -475,6 +475,14 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("額度用完了：這一分鐘或今天的使用次數（或 token）超過上限。免費方案的上限很小，每日額度在太平洋時間午夜重設（台灣約下午 3～4 點）。等一下再試，或到「功能 → AI 服務與 API Key」換一個服務／改用 Claude。", "Quota used up: you went over the per-minute or daily limit (requests or tokens). Free tiers have small limits and the daily quota resets at midnight Pacific time (about 3-4 pm in Taiwan). Wait a moment and retry, or switch service / go back to Claude under Functions → AI service and API key.");
+        m.put("Key 不對或已失效：到「功能 → AI 服務與 API Key」重新輸入這個服務的 Key。", "The key is wrong or no longer valid: enter this service's key again under Functions → AI service and API key.");
+        m.put("沒有權限：Key 可能沒開這個功能或這個模型，或這個地區不能用（免費方案有地區限制時會這樣）。", "No permission: the key may not allow this feature or model, or the service is not available in your region (this happens when a free tier is region-restricted).");
+        m.put("找不到這個模型：模型名稱可能已改名或下架。到「功能 → AI 服務與 API Key」重選服務，Key 存好後按「查詢」從清單選。", "Model not found: it may have been renamed or retired. Pick the service again under Functions → AI service and API key and use Look up to choose from the list.");
+        m.put("請求被拒絕：這個模型可能不支援看圖、工具，或內容太長。換一個支援看圖的模型再試。", "Request rejected: this model may not support images or tools, or the input is too long. Try a model that supports vision.");
+        m.put("餘額不足：到這個服務的網站儲值。", "Insufficient balance: add credit on the service's website.");
+        m.put("這個服務暫時有問題（伺服器錯誤），稍後再試。", "The service is having a problem (server error), try again later.");
+        m.put("服務回傳了錯誤。", "The service returned an error.");
         m.put("暫停", "Pause");
         m.put("已暫停，按 Now Bar 的「繼續」", "Paused, tap Resume on the Now Bar");
         m.put("你接手中，AI 暫停", "You have taken over, the AI is paused");
