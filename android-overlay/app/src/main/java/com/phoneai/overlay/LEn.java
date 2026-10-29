@@ -263,7 +263,7 @@ final class LEn {
         m.put("任務在第二螢幕執行，不動目前的畫面", "Run the task on a second display without touching the current screen");
         m.put("無障礙自動修復", "Accessibility auto-repair");
         m.put("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）", "Re-enable it with root when the system turns it off (only PhoneAI's own)");
-        m.put("省錢實驗：元件清單", "Cost experiment: element list");
+        m.put("元件清單模式（省錢）", "Element list mode (saves money)");
         m.put("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用", "No screenshot; the AI gets an element list and Haiku picks a number to tap (escalates to Sonnet when stuck). On-screen text is sent to the AI; not available in background mode");
         m.put("沒有記錄原本的值，所以不動它。請到「設定」裡改回你要的長按電源鍵動作", "The original value was not recorded, so it is left alone. Please set the power-key long-press action you want in Settings");
         m.put("一切就緒", "All set");

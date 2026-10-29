@@ -768,8 +768,8 @@ public class MainActivity extends Activity {
                 (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
         Ui.switchRow(this, g, 2, 4, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
                 (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
-        Ui.switchRow(this, g, 3, 4, "flask", L.t("省錢實驗：元件清單"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
-                cfg().getBoolean("tree_on", false), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());
+        Ui.switchRow(this, g, 3, 4, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
+                cfg().getBoolean("tree_on", true), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());
     }
 
     @Override

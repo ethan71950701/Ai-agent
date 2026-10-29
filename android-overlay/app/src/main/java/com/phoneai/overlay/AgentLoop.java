@@ -166,7 +166,7 @@ final class AgentLoop {
             sleep(2500);
         }
         String finalSay = null;
-        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", false);
+        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true);
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
