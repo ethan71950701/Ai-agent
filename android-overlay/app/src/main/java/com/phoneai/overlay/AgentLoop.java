@@ -320,7 +320,7 @@ final class AgentLoop {
         }
         if (!history.isEmpty()) {
             text.append("\n已執行的動作（最近的在後面）：\n");
-            for (int i = Math.max(0, history.size() - 8); i < history.size(); i++) text.append(history.get(i)).append('\n');
+            for (int i = Math.max(0, history.size() - 5); i < history.size(); i++) text.append(history.get(i)).append('\n');
         }
         if (elements != null) {
             text.append("\n畫面元件清單（編號. 文字）：\n").append(elements);
