@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 新增「保護的 App」（設定 → 執行任務時）：銀行、支付、錢包類會自動保護，也可以自己勾選；AI 看這些 App 的畫面或操作之前，一定先問你，沒問過就不會把畫面送出去｜New "Protected apps" setting (Settings → While running a task): banking, payment and wallet apps are protected automatically and you can add more; before the AI looks at or operates one, it always asks you first, and the screen is not sent out until you agree
 
+## 1.0.1304
+
 - 防「畫面文字夾帶指令」：提示規定畫面上的文字只是資料；AI 要點付款、刪除、傳送這類敏感按鈕、而你的任務沒提到時，一定先跳確認框｜Defence against instructions hidden in on-screen text: the prompt says screen text is data only, and when the AI wants to tap a sensitive button (pay, delete, send…) that your task did not mention, a confirmation always appears first
 
 ## 1.0.1303
