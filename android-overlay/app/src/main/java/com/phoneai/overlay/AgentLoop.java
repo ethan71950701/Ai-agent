@@ -180,6 +180,11 @@ final class AgentLoop {
                 boolean wasForced = forceShot;
                 List<JSONObject> tree = treeOn && !forceShot ? ElementList.collect(wh[0], wh[1]) : null;
                 forceShot = false;
+                // App 剛打開或剛換頁、還在載入時讀不到元件：等一下再讀，不要馬上改用 Sonnet＋截圖（桌面第一步沒有預先開 App，不等）
+                for (int tries = 0; treeOn && !wasForced && (step > 1 || preOpen != null) && (tree == null || tree.isEmpty()) && tries < 2; tries++) {
+                    sleep(1200);
+                    tree = ElementList.collect(wh[0], wh[1]);
+                }
                 boolean useTree = tree != null && !tree.isEmpty();
                 int treeNote = !treeOn ? -1 : useTree ? tree.size() : wasForced ? -2 : 0;   // 診斷用，顯示在任務過程
                 String treeText = useTree ? ElementList.describe(tree) : null;
@@ -384,12 +389,17 @@ final class AgentLoop {
         text.append("\n請決定下一步，只輸出一行 JSON。");
         content.put(new JSONObject().put("type", "text").put("text", text.toString()));
         JSONArray messages = new JSONArray().put(new JSONObject().put("role", "user").put("content", content));
-        JSONObject body = new JSONObject().put("model", model).put("max_tokens", 800)
+        int maxTok = model.equals(TREE_MODEL) ? 2000 : 800;   // Haiku 常把額度花在思考，沒留下答案
+        JSONObject body = new JSONObject().put("model", model).put("max_tokens", maxTok)
                 .put("system", new JSONArray().put(new JSONObject().put("type", "text")
                         .put("text", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM)
                         .put("cache_control", new JSONObject().put("type", "ephemeral"))))   // 系統提示詞快取：每一步重複送，命中時輸入費用約降到 1/20
                 .put("messages", messages);
         JSONObject r = ChatEngine.post(body, key);
+        if (emptyAtLimit(r)) {   // 思考用光額度、沒有答案：同一個模型放大額度再問一次，不急著升級 Sonnet
+            body.put("max_tokens", 4000);
+            r = ChatEngine.post(body, key);
+        }
         JSONArray out = r.optJSONArray("content");
         lastRaw = "";
         if (out == null) { lastRaw = "（沒有內容）"; return null; }
@@ -403,7 +413,17 @@ final class AgentLoop {
         return parseLast(sb.toString());
     }
 
-    /** 取最後一個 JSON 物件（能處理巢狀，例如 batch 的 actions 陣列）。 */
+    /** 回覆被額度截斷、而且沒有任何文字（思考把額度用光了）。 */
+    private static boolean emptyAtLimit(JSONObject r) {
+        if (!"max_tokens".equals(r.optString("stop_reason"))) return false;
+        JSONArray c = r.optJSONArray("content");
+        for (int i = 0; c != null && i < c.length(); i++) {
+            JSONObject b = c.optJSONObject(i);
+            if (b != null && "text".equals(b.optString("type")) && !b.optString("text").trim().isEmpty()) return false;
+        }
+        return true;
+    }
+
     /** <invoke name="動作"><parameter name="欄位">值</parameter>…</invoke> 轉成一般的動作 JSON；轉不出來回 null。 */
     static JSONObject parseInvoke(String out) {
         Matcher m = Pattern.compile("<invoke\\s+name=\"([^\"]+)\"\\s*>(.*?)(</invoke>|$)", Pattern.DOTALL).matcher(out);
@@ -426,6 +446,7 @@ final class AgentLoop {
         }
     }
 
+    /** 取最後一個 JSON 物件（能處理巢狀，例如 batch 的 actions 陣列）。 */
     static JSONObject parseLast(String out) {
         JSONObject found = null;
         int i = 0;

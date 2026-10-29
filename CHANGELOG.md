@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正：Haiku 把額度花在思考、沒留下答案時，先放大額度再問一次，不再直接升級 Sonnet；App 還在載入、讀不到元件時先等一下再讀｜Fixes: when Haiku uses its whole budget thinking and leaves no answer, it is asked again with a bigger budget before escalating to Sonnet; when an app is still loading and no elements can be read, it waits and reads again
+
 - 元件清單標出「已聚焦」的輸入框，AI 不會再為了確認焦點而多點一次搜尋欄；Haiku 的回覆看不懂而改用 Sonnet 時，任務過程會顯示 Haiku 回覆的開頭｜The element list marks the focused input box so the AI no longer taps the search bar twice just to check focus; when Haiku's reply is not understood and Sonnet is asked again, the task details show the start of that reply
 
 ## 1.0.1291
