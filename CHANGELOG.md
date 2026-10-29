@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1330
+
 - 「AI 服務」可以讓便宜模型和看圖模型各用不同的服務（例如便宜的 DeepSeek＋看圖的 Gemini）；Key 存好後可以向服務查詢現有的模型再選，不怕模型改名；OpenRouter 預設改用 openrouter/free，Groq 與 DeepSeek 的教學加上混搭建議｜"AI service" now lets the cheap model and the vision model use different services (e.g. DeepSeek for cheap + Gemini for vision); after saving the key you can look up the service's current models and pick one so renamed models don't matter; OpenRouter defaults to openrouter/free, and the Groq and DeepSeek guides suggest mixing services
+
 ## 1.0.1329
 
 - 「AI 服務」改成先選服務：Claude、Google Gemini（有免費額度）、OpenAI、Groq、OpenRouter、DeepSeek 或其他；選了會顯示怎麼申請 Key 的步驟（可直接開申請頁面），網址和便宜／看圖模型自動填好預設值｜"AI service" now starts with a picker: Claude, Google Gemini (free tier), OpenAI, Groq, OpenRouter, DeepSeek or Other; it shows how to get a key (with a button to open the sign-up page) and pre-fills the URL and cheap/vision models
