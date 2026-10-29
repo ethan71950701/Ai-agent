@@ -93,6 +93,8 @@ public class MemoryActivity extends Activity {
 
     /** 用 root 讀 memory.json（主畫面也會呼叫，先在背景讀好）。結果說明寫進 info。 */
     static JSONObject readMemory(StringBuilder info) {
+        // 檔案就在 App 自己的資料夾：直接讀，不需要 root
+        if (App.ctx != null) return Memory.load(App.ctx);
         JSONObject got = null;
         String script = "id -u; ls -l " + FILE + " 2>&1; echo =====; cat " + FILE + " 2>&1";
         for (int n = 0; n < ATTEMPTS && got == null; n++) {
@@ -145,19 +147,18 @@ public class MemoryActivity extends Activity {
         new Thread(() -> {
             String err = null;
             try {
-                String json = data.toString();
-                // 命令用標準輸入餵給 sh：cat > 檔案 是覆蓋內容，不換檔案，所以擁有者與權限不變
-                Process p = new ProcessBuilder(attempt(suMode, "sh")).redirectErrorStream(true).start();
-                p.getOutputStream().write(("cat > " + FILE + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\nexit\n").getBytes(StandardCharsets.UTF_8));
-                p.getOutputStream().close();
-                String out = readAll(p.getInputStream());
-                if (p.waitFor() != 0) err = L.t("寫入失敗：") + out;
+                Memory.save(this, data);   // 檔案在 App 自己的資料夾，直接寫，不需要 root
             } catch (Exception e) {
                 err = L.t("寫入失敗：") + e.getMessage();
             }
             final String e = err;
             runOnUiThread(() -> { if (e != null) status.setText(e); after.run(); });
         }).start();
+    }
+
+    /** 匯出／匯入備份要讀寫下載資料夾：有 root 用 root，沒有就用 App 自己的檔案權限（需要「所有檔案存取」）。 */
+    private static String run(String script) {
+        return Root.available() ? Maintenance.suRun(script) : Phone.shellRead(script);
     }
 
     private static String readAll(InputStream in) throws Exception {
@@ -235,7 +236,7 @@ public class MemoryActivity extends Activity {
         final String name = BACKUP_PREFIX + "_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(new java.util.Date()) + ".json";
         final String path = BACKUP_DIR + name;
         new Thread(() -> {
-            String res = Maintenance.suRun("cat > " + path + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\n[ -s " + path + " ] && echo PHONEAI_OK");
+            String res = run("cat > " + path + " <<'PHONEAI_EOF'\n" + json + "\nPHONEAI_EOF\n[ -s " + path + " ] && echo PHONEAI_OK");
             final boolean ok = res.contains("PHONEAI_OK");
             runOnUiThread(() -> status.setText(ok ? L.t("已匯出到下載資料夾：") + name : L.t("匯出失敗：") + res.trim()));
         }).start();
@@ -244,7 +245,7 @@ public class MemoryActivity extends Activity {
     /** 匯入：列出下載資料夾裡的備份（新的在前）讓使用者選一個，再確認；只加入還沒有的項目。 */
     private void importMemory() {
         new Thread(() -> {
-            String out = Maintenance.suRun("ls -1t " + BACKUP_DIR + BACKUP_PREFIX + "*.json 2>/dev/null");
+            String out = run("ls -1t " + BACKUP_DIR + BACKUP_PREFIX + "*.json 2>/dev/null");
             final java.util.List<String> names = new java.util.ArrayList<>();
             for (String line : out.split("\n")) {
                 String l = line.trim();
@@ -267,7 +268,7 @@ public class MemoryActivity extends Activity {
 
     private void confirmImport(String name) {
         new Thread(() -> {
-            JSONArray in = parseItems(Maintenance.suRun("cat " + BACKUP_DIR + name + " 2>/dev/null"));
+            JSONArray in = parseItems(run("cat " + BACKUP_DIR + name + " 2>/dev/null"));
             runOnUiThread(() -> {
                 if (in == null) {
                     status.setText(L.t("這個備份讀不了"));
