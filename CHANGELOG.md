@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 新增「巨集」：任務成功做完後記住每一步（記的是元件名稱，不是座標），下次同樣的任務直接重播，AI 只確認結果；畫面對不上就交回 AI，連續失敗兩次就刪掉；可在設定 → 執行任務時關閉或清除｜New "macros": after a task succeeds, every step is remembered (by element name, not coordinates) and the same task is replayed directly next time with the AI only checking the result; if the screen does not match, the AI takes over, and a macro that fails twice in a row is deleted; it can be turned off or cleared under Settings → While running a task
 
+## 1.0.1305
+
 - 新增「保護的 App」（設定 → 執行任務時）：銀行、支付、錢包類會自動保護，也可以自己勾選；AI 看這些 App 的畫面或操作之前，一定先問你，沒問過就不會把畫面送出去｜New "Protected apps" setting (Settings → While running a task): banking, payment and wallet apps are protected automatically and you can add more; before the AI looks at or operates one, it always asks you first, and the screen is not sent out until you agree
 
 ## 1.0.1304
