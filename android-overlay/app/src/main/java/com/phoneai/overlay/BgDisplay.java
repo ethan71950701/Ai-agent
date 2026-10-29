@@ -26,7 +26,8 @@ final class BgDisplay {
     private static Process host;
 
     static boolean wanted(Context c) {
-        return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_on", false) && Root.isRoot();
+        android.content.SharedPreferences p = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+        return p.getBoolean("bg_feature", true) && p.getBoolean("bg_on", false) && Root.isRoot();   // bg_feature＝設定裡的功能開關（有 root 預設開）；bg_on＝助理面板上的按鈕（每次自己決定，預設關）
     }
 
     /** 建立背景螢幕；成功回 true。在背景執行緒呼叫（最多等約 15 秒）。 */

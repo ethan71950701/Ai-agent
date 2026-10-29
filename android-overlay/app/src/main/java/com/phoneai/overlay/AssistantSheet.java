@@ -192,7 +192,7 @@ public class AssistantSheet {
         final android.content.SharedPreferences cfg = a.getSharedPreferences("cfg", Activity.MODE_PRIVATE);
         final BgIconView bgBtn = new BgIconView(a);
         bgBtn.setOn(cfg.getBoolean("bg_on", false));
-        bgBtn.setVisibility(Root.knownRoot() ? android.view.View.VISIBLE : android.view.View.GONE);   // 背景模式要 root：沒 root 不顯示
+        bgBtn.setVisibility(Root.knownRoot() && cfg.getBoolean("bg_feature", true) ? android.view.View.VISIBLE : android.view.View.GONE);   // 背景模式要 root：沒 root 不顯示；設定裡可以關掉這個按鈕
         bgBtn.setOnClickListener(v -> {
             boolean on = !cfg.getBoolean("bg_on", false);
             cfg.edit().putBoolean("bg_on", on).apply();

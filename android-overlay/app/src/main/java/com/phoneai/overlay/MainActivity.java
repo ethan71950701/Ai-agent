@@ -796,8 +796,8 @@ public class MainActivity extends Activity {
         int k = 0;
         Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                 (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-        if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式（實驗）"), L.t("任務在隱形的第二螢幕執行，不動目前的畫面。只用截圖模式（Sonnet 看圖，費用較高）；銀行、支付類 App 不會在背景操作"), cfg().getBoolean("bg_on", false),
-                (v, on) -> cfg().edit().putBoolean("bg_on", on).apply());
+        if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式按鈕（實驗）"), L.t("在助理面板顯示背景模式按鈕。按鈕要自己按開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作"),
+                cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());
         if (hasRoot) Ui.row(this, g, k++, n, "monitor", L.t("測試背景螢幕"), L.t("建立一次背景螢幕、開「設定」截圖，看畫面是不是正常"), Ui.chevron(this), v -> {
             android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
             new Thread(() -> {
