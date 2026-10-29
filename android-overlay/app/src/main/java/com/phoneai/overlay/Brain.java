@@ -47,7 +47,7 @@ final class Brain {
                 Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
                 return L.t("已開啟 App");
             case Router.AGENT:
-                return AgentLoop.run(act, t, ui, d == null ? null : d.openPkg);
+                return AgentLoop.run(act, t, ui, d == null || Router.isSystemInfoQuestion(t) ? null : d.openPkg);   // 查系統資訊不先開 App，讓模型用指令查
             default: {
                 String reply = localAnswer(act, t);
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));

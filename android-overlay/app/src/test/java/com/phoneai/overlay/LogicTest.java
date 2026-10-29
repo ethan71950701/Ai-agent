@@ -139,6 +139,16 @@ public class LogicTest {
         assertFalse(AgentLoop.isQuestion(null));
     }
 
+    @Test
+    public void systemInfoQuestionsDoNotPreOpenAnApp() {
+        assertTrue(Router.isSystemInfoQuestion("打開設定，告訴我 Android 版本"));
+        assertTrue(Router.isSystemInfoQuestion("打開設定，告訴我電池剩多少"));
+        assertTrue(Router.isSystemInfoQuestion("現在幾點"));
+        assertFalse(Router.isSystemInfoQuestion("打開設定，把深色模式打開"));
+        assertFalse(Router.isSystemInfoQuestion("打開 LINE，告訴我最上面一個聊天室的名稱"));
+        assertFalse(Router.isSystemInfoQuestion("打開設定的 Wi-Fi 頁面"));
+    }
+
     // ---------- 其他小工具 ----------
 
     @Test

@@ -35,6 +35,15 @@ final class Router {
 
     private Router() { }
 
+    private static final java.util.regex.Pattern SYSTEM_INFO = java.util.regex.Pattern.compile(
+            "版本|型號|型号|電量|电量|電池|电池|容量|儲存空間|储存空间|存儲|存储|記憶體|内存|內存|現在幾點|现在几点|現在時間|现在时间|幾點|几点|"
+                    + "\\b(android version|battery|storage|model|what time)\\b", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    /** 查手機本身的資訊（版本、電量、容量、時間…）：用指令就查得到，不必先打開任何 App。 */
+    static boolean isSystemInfoQuestion(String task) {
+        return AgentLoop.isQuestion(task) && task != null && SYSTEM_INFO.matcher(task).find();
+    }
+
     static String norm(String t) {
         return (t == null ? "" : t).replaceAll("[\\s\\-_，。,.]", "").toLowerCase(java.util.Locale.ROOT);
     }
