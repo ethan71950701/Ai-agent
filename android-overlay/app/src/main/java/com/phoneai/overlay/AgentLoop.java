@@ -138,6 +138,7 @@ final class AgentLoop {
         boolean typedAny;   // 這次任務有沒有輸入過文字
         String lastTyped;   // 最近一次輸入的文字：done 前要確認它已經送出（不再留在輸入框）
         int doneRejects;
+        int backs;   // 這次任務按了幾次返回（走錯路退回來的訊號）
         boolean dragDown;
         int dx, dy;
     }
@@ -471,8 +472,8 @@ final class AgentLoop {
             macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
             macroSaved = true;
         }
-        // 繞了路才完成（6 步以上）、而且 AI 自己沒有記經驗：請便宜模型用一句話總結「下次可以直接走的路徑」存進這個 App 的經驗
-        if (doneOk && finalSay != null && details.size() >= 6 && st.remembers == 0 && !isMessageTask(task) && !hasBlockWord(task)) autoLesson(c, task, history, st, key);
+        // 繞了路才完成（5 步以上，或中途走錯按過返回）、而且 AI 自己沒有記經驗：請便宜模型用一句話總結「下次可以直接走的路徑」存進這個 App 的經驗
+        if (doneOk && finalSay != null && (details.size() >= 5 || st.backs > 0) && st.remembers == 0 && !isMessageTask(task) && !hasBlockWord(task)) autoLesson(c, task, history, st, key);
         if (!macroSaved && doneOk && !macroTried && Macros.enabled(c)) {   // 做完了卻沒記住：把原因寫進任務過程，不用猜
             macroNote = "這次沒有記住成巨集：" + (isQuestion(task) ? "任務像是在問問題" : hasBlockWord(task) ? "任務含敏感字（付款、刪除…）" : isMessageTask(task) ? "傳訊息任務不記"
                     : !macroValid[0] ? (macroWhy.isEmpty() ? "有步驟不能重播（問使用者、搜尋或看截圖）" : macroWhy)
@@ -775,7 +776,7 @@ final class AgentLoop {
                 sb.append(h.length() > 220 ? h.substring(0, 220) : h).append('\n');
             }
             String prompt = "任務：" + task + "\n過程（最近的在後面）：\n" + sb
-                    + "\n這次花了不少步才完成。如果過程裡找到了「下次可以直接走的路徑或規律」（例如某個功能在哪個頁面裡、要先點哪裡），用一句話（40 字內、具體、不要寫這次任務的細節）寫出，例如「三星設定：藍牙在「連接」頁裡」。"
+                    + "\n這次花了不少步、或走錯路退回來過才完成。如果過程裡找到了「下次可以直接走的路徑或規律」（例如某個功能在哪個頁面裡、要先點哪裡），用一句話（40 字內、具體、不要寫這次任務的細節）寫出，例如「三星設定：藍牙在「連接」頁裡」。"
                     + "沒有明確、可以重複使用的規律就只回「無」。只輸出那一句話。";
             JSONObject body = new JSONObject().put("model", TREE_MODEL).put("max_tokens", 120)
                     .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
@@ -825,6 +826,7 @@ final class AgentLoop {
     /** 執行一個動作，並記下最近輸入的文字（給 done 前的「是否已送出」檢查用）。 */
     static String execute(JSONObject a, int[] wh, Context c, State st) {
         String r = executeInner(a, wh, c, st);
+        if ("back".equals(a.optString("action"))) st.backs++;
         if ("type".equals(a.optString("action")) && r != null && r.startsWith("已輸入")) { st.lastTyped = a.optString("text"); st.typedAny = true; }
         return r;
     }
