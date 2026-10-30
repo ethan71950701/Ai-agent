@@ -693,23 +693,14 @@ public class MainActivity extends Activity {
         // 讀 App 清單與名稱很慢（幾百個 App）：放在背景執行緒，讀好再顯示，不卡住畫面
         android.widget.Toast.makeText(this, L.t("讀取 App 清單…"), android.widget.Toast.LENGTH_SHORT).show();
         new Thread(() -> {
-            android.content.pm.PackageManager pm = getPackageManager();
-            android.content.Intent launcher = new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-            final java.util.TreeMap<String, String> byLabel = new java.util.TreeMap<>();
-            final java.util.Map<String, String> labelOf = new java.util.HashMap<>();
-            for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(launcher, 0)) {
-                String pkg = ri.activityInfo.packageName;
-                if (pkg.equals(getPackageName())) continue;
-                String label = String.valueOf(ri.loadLabel(pm));
-                byLabel.put(label + "\u0000" + pkg, pkg);
-                labelOf.put(pkg, label);
-            }
-            final java.util.List<String> pkgs = new java.util.ArrayList<>(byLabel.values());
+            final java.util.List<String[]> apps = AppLabels.list(this);   // 名稱讀過的有快取，只讀新裝的
+            final java.util.List<String> pkgs = new java.util.ArrayList<>();
+            for (String[] a : apps) pkgs.add(a[0]);
             final String[] names = new String[pkgs.size()];
             final boolean[] checked = new boolean[pkgs.size()];
             final java.util.Set<String> chosen = ProtectedApps.userSet(this);
             for (int i = 0; i < pkgs.size(); i++) {
-                names[i] = labelOf.get(pkgs.get(i));
+                names[i] = apps.get(i)[1];
                 checked[i] = chosen.contains(pkgs.get(i));
             }
             runOnUiThread(() -> CheckDialog.show(this, L.t("選擇要保護的 App"), names, checked, () -> {
