@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1395
+
 - 修正助理面板的背景模式（主螢幕／副螢幕）按鈕第二次叫出面板就消失：每個任務開始前重新檢查 root 時，會先把「有 root」的結果清成不知道，面板就當成沒有 root；現在舊結果先留著，檢查完再更新｜Fixed the background-mode (main/second screen) button vanishing the second time the assistant panel opens: the root recheck at the start of every task cleared the known result, so the panel thought there was no root; the old result is now kept until the recheck finishes.
 
 ## 1.0.1394
