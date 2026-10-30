@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1384
+
 - 一句話問了好幾件事（電量加裝了幾個 App）不再只回答第一件，改交給聊天助理｜A question with several parts (battery plus how many apps) is no longer answered with only the first part; it goes to the chat assistant.
 
 ## 1.0.1383
