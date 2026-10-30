@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1366
+
 - 巨集可以認出「說法不同的同一件事」：路由用的便宜模型（同一次呼叫，不多花一次）會看你記住的任務清單，確定是同一件事就改用那個巨集重播；不確定、對象或內容不同（不同的人、數字、頁面）就照原本一步步做｜Macros now recognise the same task said differently: the cheap router model (same call, no extra request) sees your remembered tasks and, when it is sure it is the same thing, replays that macro; if it is unsure or the target or content differs (another person, number or page) it works step by step as before
+
 ## 1.0.1365
 
 - 巨集：可以點的整列（沒有自己文字的容器）會用裡面的第一個文字當名稱，這樣設定頁那類任務才記得下來；任務做完卻沒記住時，任務過程會寫「這次沒有記住成巨集：原因」｜Macros: a clickable row with no text of its own is now named after the first text inside it, so Settings-style tasks can be remembered; when a task finishes but was not remembered the task log now says why
