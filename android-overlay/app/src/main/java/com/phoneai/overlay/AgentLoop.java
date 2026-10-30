@@ -132,6 +132,8 @@ final class AgentLoop {
         int measures, remembers, searches;
         final java.util.Set<String> approved = new java.util.HashSet<>();   // 這次任務使用者已經同意讓 AI 操作的受保護 App
         final java.util.Set<String> askedCats = new java.util.HashSet<>();   // 這次任務使用者已經同意過的敏感類別（傳訊息、付款…）：同一類不用再問第二次
+        int[] sendCand;   // 傳訊息時用座標點到的按鈕（沒有名稱、元件清單裡沒有的傳送鈕）：之後確認訊息真的送出了，就存進經驗
+        String lastHint = "";
         String lastTyped;   // 最近一次輸入的文字：done 前要確認它已經送出（不再留在輸入框）
         int doneRejects;
         boolean dragDown;
@@ -254,6 +256,23 @@ final class AgentLoop {
                     tree = ElementList.collect(wh[0], wh[1]);
                 }
                 boolean useTree = tree != null && !tree.isEmpty();
+                // 傳訊息：只看元件清單就能確認有沒有送出（輸入框還留著剛輸入的字＝還沒送出；清空了＝已送出），不用截圖
+                if (useTree && st.lastTyped != null && isMessageTask(task)) {
+                    boolean still = stillInInput(tree, st.lastTyped);
+                    String short1 = st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped;
+                    String hint = still ? "提示：輸入框裡還留著「" + short1 + "」，訊息還沒送出：請點「傳送／送出」按鈕（Enter 不一定會送出）；清單裡找不到按鈕就用 look 看截圖再用座標 tap"
+                            : "提示：輸入框已清空，訊息應該已經送出；確認對話裡有「" + short1 + "」就可以 done";
+                    if (!hint.equals(st.lastHint)) { history.add(hint); st.lastHint = hint; }
+                    if (!still && st.sendCand != null) {   // 用座標點完、輸入框清空：傳送鈕沒有名稱，把位置記進這個 App 的經驗，下次不用再截圖找
+                        try {
+                            String app = !st.opened.isEmpty() ? st.opened.get(0) : fgNow;
+                            if (Memory.addLesson(c, sendButtonLesson(ProtectedApps.label(c, app == null ? "" : app), st.sendCand[0], st.sendCand[1]), app)) {
+                                Notify.notifyText(c, L.t("AI 學到的經驗（可在 App 記憶頁刪除）"), sendButtonLesson(ProtectedApps.label(c, app == null ? "" : app), st.sendCand[0], st.sendCand[1]), 7195);
+                            }
+                        } catch (Exception ignored) { }
+                        st.sendCand = null;
+                    }
+                }
                 int treeNote = !treeOn ? -1 : useTree ? tree.size() : wasForced ? -2 : 0;   // 診斷用，顯示在任務過程
                 String treeText = useTree ? ElementList.describe(tree) : null;
                 sameTree = treeText != null && treeText.equals(lastTreeText) ? sameTree + 1 : 0;
@@ -319,8 +338,8 @@ final class AgentLoop {
                     history.add(step + ". 拖曳到一半，因為換了別的動作，已放開手指");
                 }
                 rememberLesson(c, action, st, history);
-                // 傳訊息：按了 Enter（或輸入時帶 enter）之後，下一步一定給截圖，才看得出訊息真的送出沒有（元件清單常找不到只有圖示的傳送鈕）
-                if (isMessageTask(task) && (name.equals("enter") || (name.equals("type") && action.optBoolean("enter")))) forceShot = true;
+                if (isMessageTask(task) && st.lastTyped != null && name.equals("tap") && !action.has("pick") && action.has("x") && action.has("y"))
+                    st.sendCand = new int[]{(int) Math.round(action.optDouble("x")), (int) Math.round(action.optDouble("y"))};   // 用座標點的按鈕：可能就是傳送鈕
                 switch (name) {
                     case "done":
                         if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && stillInInput(tree, st.lastTyped)) {
@@ -693,6 +712,11 @@ final class AgentLoop {
         if (w.matches(".*(安裝|安装|下載|下载|install|download).*")) return "安裝";
         if (w.matches(".*(登入|登录|密碼|密码|驗證碼|验证码|login|password).*")) return "登入";
         return null;
+    }
+
+    /** 傳送鈕位置的經驗（座標是 0 到 1000 的相對位置）。 */
+    static String sendButtonLesson(String appLabel, int x, int y) {
+        return "傳訊息：" + appLabel + " 的聊天室，傳送鈕只有圖示、元件清單裡找不到；輸入文字後直接用座標 tap（約 x=" + x + "、y=" + y + "）送出，不用截圖、也不要靠 Enter";
     }
 
     /** 任務是不是在傳訊息／回覆（只有這種任務才要檢查「輸入的字有沒有送出」；搜尋框裡留著字是正常的）。 */

@@ -174,6 +174,7 @@ public class LlmAdapterTest {
         assertTrue(AgentLoop.isMessageTask("去ig傳訊息給謝小明「123」"));
         assertTrue(!AgentLoop.isMessageTask("打開設定，在搜尋欄輸入「藍牙」"));
         assertEquals("傳送訊息", AgentLoop.sensitiveCategory("傳送訊息屬於敏感操作，需要使用者確認"));
+        assertTrue(AgentLoop.sendButtonLesson("Instagram", 930, 960).contains("x=930"));
         org.json.JSONObject sendTap = new org.json.JSONObject().put("action", "tap").put("label", "傳送");
         assertEquals(null, AgentLoop.sensitiveLabel(sendTap, "去ig傳訊息給謝小明「123」"));   // 傳訊息任務點傳送鈕不用再問
         assertEquals("傳送", AgentLoop.sensitiveLabel(sendTap, "打開設定頁面"));
