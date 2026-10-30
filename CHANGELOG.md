@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1352
+
 - 傳訊息任務：AI 說要確認一次後，同一件事不再重複問你；結尾前會檢查輸入的字是不是還留在輸入框，還在就代表沒送出，會擋下 done 並要 AI 點傳送鈕，避免「說傳好了其實沒送出」｜Messaging tasks: after you confirm once the AI no longer asks about the same thing again, and before finishing it checks whether the typed text is still in the input box (meaning it was not sent), blocks done and makes the AI tap Send, so it no longer claims "sent" when it wasn't
 
 ## 1.0.1351
