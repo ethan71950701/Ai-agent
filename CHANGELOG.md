@@ -1,6 +1,7 @@
 # 更新說明 · Changelog
 
 每一條寫成「中文｜English」，App 依介面語言只顯示對應的那一半；Release 說明會用整段 `## Unreleased
+- 要你接手時改用懸浮窗：畫面上方出現說明和「我做完了，繼續」按鈕，其他地方照常可以操作（沒開無障礙服務才退回通知）｜Take-over requests now use a floating card at the top with a "Done, continue" button while the rest of the screen stays usable (falls back to a notification only if the accessibility service is off).
 - 要你接手時：Now Bar 只放短字（避免掉回一般通知），另外跳一則會響、會彈出的「請你接手」通知，上面有「繼續」按鈕｜Take-over requests: the Now Bar shows short text only (so it stays a Live Update) and a separate heads-up "Please take over" notification with a Continue button sounds and pops up.
 - 批次動作一次最多 10 個（原本 6 個），連點版本號碼 7 次這類操作可以一次做完｜Batch actions now allow up to 10 steps (was 6), so things like tapping the build number 7 times fit in one batch.
 - AI 遇到要你親自處理的事（解鎖圖形、PIN、密碼、驗證碼、指紋）會暫停並通知你接手，不再跳出蓋住畫面的對話框；做完按 Now Bar 的「繼續」，等你的這一步不算進步數｜When the AI hits something only you can do (unlock pattern, PIN, password, code, fingerprint) it now pauses and asks you to take over instead of showing a dialog that covers the screen; press Continue on the Now Bar when done, and the wait does not count as a step.

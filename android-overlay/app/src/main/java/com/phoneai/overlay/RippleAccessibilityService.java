@@ -162,6 +162,77 @@ public class RippleAccessibilityService extends AccessibilityService {
     private final ImeWatcher imeWatcher = new ImeWatcher();  // 主螢幕鍵盤跳出時把預覽移到上面
     private PreviewView preview;  // 背景虛擬螢幕的預覽小視窗（使用者點 Now Bar 才出現）
 
+    private android.view.View handoffView;
+
+    /** 要使用者親自處理（解鎖圖形、密碼…）：在最上層放一個小的懸浮條，有說明和「繼續」按鈕，其他地方的觸控照常穿透。沒開無障礙服務回 false。 */
+    static boolean showHandoff(String why) {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return false;
+        final boolean[] ok = {false};
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            try { ok[0] = s.addHandoff(why); } finally { done.countDown(); }
+        });
+        try { done.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        return ok[0];
+    }
+
+    static void hideHandoff() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(s::removeHandoff);
+    }
+
+    private boolean addHandoff(String why) {
+        removeHandoff();
+        try {
+            float d = getResources().getDisplayMetrics().density;
+            android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+            box.setOrientation(android.widget.LinearLayout.VERTICAL);
+            box.setPadding((int) (16 * d), (int) (12 * d), (int) (16 * d), (int) (12 * d));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(0xF2202428);
+            bg.setCornerRadius(22 * d);
+            bg.setStroke((int) (2 * d), OverlayService.CHIP_COLOR);
+            box.setBackground(bg);
+            android.widget.TextView title = new android.widget.TextView(this);
+            title.setText(L.t("請你接手"));
+            title.setTextColor(0xFF8AB4F8);
+            title.setTextSize(15);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            android.widget.TextView msg = new android.widget.TextView(this);
+            msg.setText(why);
+            msg.setTextColor(0xFFFFFFFF);
+            msg.setTextSize(14);
+            android.widget.Button go = new android.widget.Button(this);
+            go.setText(L.t("我做完了，繼續"));
+            go.setAllCaps(false);
+            go.setOnClickListener(v -> { OverlayService.paused = false; removeHandoff(); OverlayService.refreshNotification(); });
+            box.addView(title);
+            box.addView(msg);
+            box.addView(go);
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.92f), WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT);
+            lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+            lp.y = (int) (48 * d);
+            wm.addView(box, lp);
+            handoffView = box;
+            return true;
+        } catch (Exception e) {
+            Log.e(OverlayService.TAG, "handoff addView", e);
+            return false;
+        }
+    }
+
+    private void removeHandoff() {
+        if (handoffView == null) return;
+        try { wm.removeView(handoffView); } catch (Exception ignored) { }
+        handoffView = null;
+    }
+
     /** 點 Now Bar 時呼叫：沒有預覽就開、已經開著就關。sf = 虛擬螢幕的 SurfaceFlinger 編號（只含數字）。 */
     static void togglePreview(String sf) {
         RippleAccessibilityService s = instance;

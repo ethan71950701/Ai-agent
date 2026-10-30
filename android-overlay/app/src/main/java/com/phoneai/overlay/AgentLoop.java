@@ -399,11 +399,12 @@ final class AgentLoop {
                         if (manual) {   // 要使用者自己動手（密碼、圖形、指紋…）：不跳會蓋住畫面的對話框，改暫停，讓他直接操作，做完按 Now Bar 的「繼續」
                             OverlayService.paused = true;
                             OverlayService.showStep(c, L.t("等你接手"), step, MAX_STEPS);
-                            OverlayService.handoffAlert(c, why);
+                            if (!RippleAccessibilityService.showHandoff(why)) OverlayService.handoffAlert(c, why);   // 優先用懸浮窗；沒開無障礙才退回通知
                             OverlayService.refreshNotification();
                             try { c.getSystemService(android.os.Vibrator.class).vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)); } catch (Exception ignored) { }
                             waitWhilePaused(ui);
                             OverlayService.clearHandoffAlert(c);
+                            RippleAccessibilityService.hideHandoff();
                             if (cancelled) return L.t("已取消。");
                             history.add(step + ". 使用者剛親自處理完（" + why + "），畫面已經變了，請看最新的畫面繼續");
                             step--;   // 等人的這一步不算進步數
