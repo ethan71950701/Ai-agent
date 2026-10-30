@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 圈選提問在用 Claude 時可以上網搜尋（需要即時資訊才搜，最多 2 次；搜尋要另外計費）｜Circle to ask can now search the web when using Claude (only when the question needs current information, at most 2 searches; searches are billed separately).
 - 圈選提問的動畫與轉場：按 ◎ 的瞬間面板畫面就藏起來、馬上截圖，圈選畫面開啟時沒有空窗（畫面像直接凍結，帶一下閃光）；圈的線改成流動發光的漸層光（藍紫粉青，跟助理面板的極光同色），手指前有光點，圈完那一瞬間光暈變亮再呼吸，圈外慢慢變暗｜Circle to ask animation and transition: the panel disappears the instant you tap ◎ and the screenshot is taken right away, so there is no empty gap (the screen just freezes, with a flash); the circle line is now a flowing glowing gradient (blue, purple, pink, cyan, the same colors as the panel's aurora) with a light dot at the fingertip, the glow bursts when you finish the circle and then breathes, and the outside fades dark.
 
 ## 1.0.1398
