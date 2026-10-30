@@ -67,6 +67,10 @@ final class AiServiceUi {
     }
 
     private static void guide(Activity a, String scope, LlmPresets.Preset ps, Runnable done) {
+        if (!ps.base.isEmpty() && LlmConfig.hasOwnKey(a, new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ""))) {   // 這個服務的 Key 已經有了：不用再看申請教學
+            saveAndAskKey(a, scope, ps.base, ps.cheap, ps.vision, done);
+            return;
+        }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ps.steps.length; i++) sb.append(i + 1).append(". ").append(L.t(ps.steps[i])).append("\n\n");
         sb.append(L.t("Key 只會存在這支手機的 App 私有資料夾，不要貼給任何人（包括 AI 助手）。"));
