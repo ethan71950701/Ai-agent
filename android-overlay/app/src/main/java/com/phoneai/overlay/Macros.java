@@ -87,6 +87,28 @@ final class Macros {
 
     static synchronized int count(Context c) { return load(c).length(); }
 
+    /** 記住的任務清單：[鍵, 任務文字, 步數, 重播次數]，最常用的在前面。 */
+    static synchronized List<String[]> list(Context c) {
+        List<String[]> out = new java.util.ArrayList<>();
+        JSONObject d = load(c);
+        java.util.Iterator<String> it = d.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            JSONObject m = d.optJSONObject(k);
+            if (m == null) continue;
+            JSONArray steps = m.optJSONArray("steps");
+            out.add(new String[]{k, m.optString("task", k), String.valueOf(steps == null ? 0 : steps.length()), String.valueOf(m.optInt("uses"))});
+        }
+        out.sort((x, y) -> Integer.parseInt(y[3]) - Integer.parseInt(x[3]));
+        return out;
+    }
+
+    static synchronized void remove(Context c, String key) {
+        JSONObject d = load(c);
+        d.remove(key);
+        save(c, d);
+    }
+
     static synchronized void clear(Context c) { save(c, new JSONObject()); }
 
     // ---------- 純邏輯（單元測試用） ----------

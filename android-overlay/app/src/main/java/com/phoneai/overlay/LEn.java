@@ -475,6 +475,15 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("已選 %d 個", "%d selected");
+        m.put("　%s 步，已重播 %s 次", "　%s steps, replayed %s times");
+        m.put("全部清除", "Clear all");
+        m.put("刪除這個記住的步驟？下次同樣的任務會重新請 AI 一步步做。", "Delete this remembered task? Next time the AI will do it step by step again.");
+        m.put("記住的步驟", "Remembered steps");
+        m.put("記住的步驟（%d 個）", "Remembered steps (%d)");
+        m.put("還沒有記住任何任務。同一個任務成功做完一次後，AI 會把步驟記下來，下次同樣的話就直接重播，幾乎不花錢。", "Nothing remembered yet. After a task succeeds once the AI remembers its steps and replays them next time you say the same thing, at almost no cost.");
+        m.put("關閉", "Close");
+        m.put("目前記住 %d 個任務（點進去看、刪除）", "%d tasks remembered (tap to view or delete)");
         m.put("簡單題（%d 個）：Wi-Fi 頁面、算 123＋45、時鐘碼錶、設定搜尋", "Easy set (%d tasks): Wi-Fi page, calculate 123+45, clock stopwatch, search in Settings");
         m.put("困難題（%d 個）：捲動找選項、連續算數、讀取資訊、搜尋後進入、跨 App；不一定做得到", "Hard set (%d tasks): scroll to find an option, chained arithmetic, reading information, search then open, across apps; may not succeed");
         m.put("全部（%d 個）", "Everything (%d tasks)");

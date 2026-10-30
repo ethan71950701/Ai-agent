@@ -705,12 +705,11 @@ public class MainActivity extends Activity {
             names[i] = ProtectedApps.label(this, pkgs.get(i));
             checked[i] = chosen.contains(pkgs.get(i));
         }
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle(L.t("選擇要保護的 App"))
-                .setMultiChoiceItems(names, checked, (d, which, on) -> { if (on) chosen.add(pkgs.get(which)); else chosen.remove(pkgs.get(which)); })
-                .setPositiveButton(L.t("儲存"), (d, w) -> ProtectedApps.setUserSet(this, chosen))
-                .setNegativeButton(L.t("取消"), null)
-                .show();
+        CheckDialog.show(this, L.t("選擇要保護的 App"), names, checked, () -> {
+            java.util.Set<String> out = new java.util.HashSet<>();
+            for (int i = 0; i < pkgs.size(); i++) if (checked[i]) out.add(pkgs.get(i));
+            ProtectedApps.setUserSet(this, out);
+        });
     }
 
     private View wrapIcon(View icon) {
@@ -830,7 +829,7 @@ public class MainActivity extends Activity {
         Ui.row(this, g, k++, n, "shield", L.t("保護的 App"), L.t("AI 操作這些 App 之前先問你（銀行、支付類會自動保護）"), Ui.chevron(this), v -> chooseProtectedApps());
         Ui.switchRow(this, g, k++, n, "flask", L.t("記住成功的步驟（巨集）"), L.t("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省"),
                 cfg().getBoolean("macro_on", true), (v, on) -> cfg().edit().putBoolean("macro_on", on).apply());
-        Ui.row(this, g, k++, n, "list", L.t("清除記住的步驟"), String.format(L.t("目前記住 %d 個任務"), Macros.count(this)), Ui.chevron(this), v -> { Macros.clear(this); recreate(); });
+        Ui.row(this, g, k++, n, "list", L.t("記住的步驟"), String.format(L.t("目前記住 %d 個任務（點進去看、刪除）"), Macros.count(this)), Ui.chevron(this), v -> MacrosUi.open(this, this::recreate));
         Ui.row(this, g, k++, n, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
     }
 
