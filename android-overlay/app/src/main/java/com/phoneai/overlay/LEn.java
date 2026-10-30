@@ -475,6 +475,8 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("已暫停，按「繼續」", "Paused, tap Resume");
+        m.put("繼續中…", "Resuming…");
         m.put("讀取 App 清單…", "Loading the app list…");
         m.put("要送出這則訊息嗎？\n\n「%s」", "Send this message?\n\n\"%s\"");
         m.put("已取消，訊息沒有送出。", "Cancelled, the message was not sent.");

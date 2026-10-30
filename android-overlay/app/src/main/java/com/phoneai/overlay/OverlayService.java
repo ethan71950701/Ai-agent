@@ -161,7 +161,14 @@ public class OverlayService extends Service {
         A11yGuard.ensure(this);
         if (ACTION_TEST.equals(a)) runTest();
         else if (ACTION_STOP.equals(a)) stopAgent();
-        else if (ACTION_PAUSE.equals(a)) { paused = !paused; refreshNotification(); }
+        else if (ACTION_PAUSE.equals(a)) {
+            paused = !paused;
+            try {   // 通知按鈕本身沒有按下的動畫：用短震動當回饋，讓你知道按到了
+                android.os.Vibrator v = getSystemService(android.os.Vibrator.class);
+                if (v != null) v.vibrate(android.os.VibrationEffect.createPredefined(paused ? android.os.VibrationEffect.EFFECT_DOUBLE_CLICK : android.os.VibrationEffect.EFFECT_CLICK));
+            } catch (Exception ignored) { }
+            postStatus(title, paused ? L.t("已暫停，按「繼續」") : L.t("繼續中…"), lastStep, lastMax);   // 文字立刻跟著變
+        }
         else if (ACTION_BEGIN.equals(a)) postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
         else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
