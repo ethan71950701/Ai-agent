@@ -65,6 +65,25 @@ final class LogExport {
         return redact(sb.toString());
     }
 
+    /** 存到「下載/PhoneAI」資料夾（用 MediaStore，不需要儲存權限）。 */
+    static void saveToDownloads(Activity a) {
+        new Thread(() -> {
+            try {
+                String name = "phoneai_log_" + new java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(new java.util.Date()) + ".txt";
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download/PhoneAI");
+                Uri uri = a.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) throw new java.io.IOException("無法建立檔案");
+                try (java.io.OutputStream o = a.getContentResolver().openOutputStream(uri)) { o.write(build(a).getBytes(StandardCharsets.UTF_8)); }
+                a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("已存到 下載/PhoneAI/") + name, android.widget.Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("匯出失敗：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
     /** 存成快取資料夾裡的文字檔，丟給系統的分享選單。 */
     static void share(Activity a) {
         new Thread(() -> {

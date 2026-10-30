@@ -46,7 +46,8 @@ public class LogActivity extends Activity {
             box.addView(Ui.button(this, L.t("匯出紀錄（分享成文字檔）"), v ->
                     new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("匯出紀錄"))
                             .setMessage(L.t("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。"))
-                            .setPositiveButton(L.t("匯出"), (d, w) -> LogExport.share(this))
+                            .setPositiveButton(L.t("分享"), (d, w) -> LogExport.share(this))
+                            .setNeutralButton(L.t("存到下載"), (d, w) -> LogExport.saveToDownloads(this))
                             .setNegativeButton(L.t("取消"), null).show()));
             taskBox = new LinearLayout(this);
             taskBox.setOrientation(LinearLayout.VERTICAL);
