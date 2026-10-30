@@ -1183,7 +1183,7 @@ final class AgentLoop {
      * 直接新增一筆三星提醒（不用操作畫面）：走 Android 16 的 AppFunctions，用 shell 的 cmd app_function 呼叫三星提醒的 createTask。
      * 需要 root 或 Shizuku；呼叫的是系統公開的機制（跟 Gemini 同一條），參數格式是從 App 的程式與實測得來的。
      */
-    private static String reminderCreate(Context c, JSONObject a) {
+    static String reminderCreate(Context c, JSONObject a) {
         String title = a.optString("title", "").trim();
         if (title.isEmpty()) return "沒有給提醒標題";
         if (title.length() > 100) title = title.substring(0, 100);
@@ -1217,6 +1217,21 @@ final class AgentLoop {
     }
 
     /** 開三星提醒的新增畫面並帶入標題（它的分享入口是公開的，不用 root）；時間和儲存要接著在畫面上做。 */
+    /** 聊天助理用：有 root／Shizuku 直接新增，沒有就打開新增畫面。 */
+    static String reminderForChat(Context c, JSONObject a) {
+        if (Root.available()) return reminderCreate(c, a);
+        return reminderDraft(c, a.optString("title")) + "（沒有 root 或 Shizuku，只能打開畫面）";
+    }
+
+    /** 聊天助理用：只跑唯讀指令（跟操作畫面的 shell 動作同一份白名單）。 */
+    static String shellForChat(Context c, String cmd) {
+        if (cmd == null || cmd.trim().isEmpty()) return "沒有給指令";
+        if (!readOnly(cmd)) return "拒絕：這不是唯讀指令";
+        if (!Root.available()) return "沒有 root 或 Shizuku，不能執行系統指令";
+        String out = Maintenance.suRun(cmd);
+        return out.length() > 1500 ? out.substring(0, 1500) + "…（太長已截斷）" : out;
+    }
+
     private static String reminderDraft(Context c, String title) {
         title = title == null ? "" : title.trim();
         if (title.isEmpty()) return "沒有給提醒標題";
