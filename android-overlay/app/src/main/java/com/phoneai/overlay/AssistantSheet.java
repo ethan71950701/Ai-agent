@@ -214,7 +214,7 @@ public class AssistantSheet {
         cb.setShape(GradientDrawable.OVAL);
         circleBtn.setBackground(cb);
         circleBtn.setContentDescription(L.t("圈選提問"));
-        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, AssistantSheet.this::dismiss));
+        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, () -> root.setVisibility(View.INVISIBLE), () -> root.setVisibility(View.VISIBLE), AssistantSheet.this::dismiss));
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
         clp.rightMargin = (int) (4 * d);
         row.addView(circleBtn, clp);

@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Base64;
@@ -38,21 +40,29 @@ import java.io.ByteArrayOutputStream;
 public class CircleActivity extends Activity {
     private static volatile Bitmap shot;
 
-    /** 收起面板、截圖、打開圈選畫面（在主執行緒呼叫）。 */
-    static void begin(final Activity act, Runnable hideSheet) {
+    /**
+     * 圈選的轉場：按下 ◎ 的瞬間把面板「畫面」藏起來（改成不可見，下一個畫面就生效，不等收起動畫），
+     * 馬上截下底下的 App，再打開圈選畫面（沒有轉場動畫：畫面跟底下一模一樣，看起來就是畫面凍結），
+     * 圈選畫面蓋好之後才把面板真的關掉。這樣中間不會有「面板收起、什麼都沒有」的空窗。截不到就把面板還原。
+     */
+    static void begin(final Activity act, final Runnable hideInstant, final Runnable showAgain, final Runnable closeSheet) {
         final Context app = act.getApplicationContext();
-        try { hideSheet.run(); } catch (Throwable t) { toast(app, t); return; }
+        final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
+        try { hideInstant.run(); } catch (Throwable t) { toast(app, t); return; }
         new Thread(() -> {
             try {
-                try { Thread.sleep(500); } catch (InterruptedException ignored) { }   // 等面板收掉再截，才不會截到面板
+                try { Thread.sleep(80); } catch (InterruptedException ignored) { }   // 讓「藏起來」那一幀真的畫出去再截
                 Bitmap b = AgentLoop.screenshotBitmap();
                 if (b == null) {
+                    ui.post(showAgain);
                     toast(app, L.t("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）"));
                     return;
                 }
                 shot = b;
                 app.startActivity(new Intent(app, CircleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS));
+                ui.postDelayed(closeSheet, 450);   // 圈選畫面蓋好之後再關面板
             } catch (Throwable t) {   // 背景執行緒的例外會讓整個 App 當掉：一律攔下來顯示
+                ui.post(showAgain);
                 toast(app, t);
             }
         }, "circle-shot").start();
@@ -112,6 +122,12 @@ public class CircleActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         cv = new CircleView(this);
         root.addView(cv, new FrameLayout.LayoutParams(-1, -1));
+        final View flash = new View(this);   // 截圖的閃光：一瞬間亮一下再淡掉，告訴使用者「畫面凍結了」
+        flash.setBackgroundColor(Color.WHITE);
+        flash.setAlpha(0.35f);
+        flash.setClickable(false);
+        root.addView(flash, new FrameLayout.LayoutParams(-1, -1));
+        flash.animate().alpha(0f).setDuration(320).withEndAction(() -> flash.setVisibility(View.GONE)).start();
 
         scrim = new View(this);   // 提問時底部的暗幕，讓白字讀得到
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x00000000, 0xCC000000}));
@@ -127,6 +143,9 @@ public class CircleActivity extends Activity {
         FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         hlp.topMargin = (int) (56 * d);
         root.addView(hint, hlp);
+        hint.setAlpha(0f);
+        hint.setTranslationY(-12 * d);
+        hint.animate().alpha(1f).translationY(0f).setStartDelay(150).setDuration(350).start();
 
         TextView close = new TextView(this);
         close.setText("✕");
@@ -304,22 +323,27 @@ public class CircleActivity extends Activity {
     private final class CircleView extends View {
         private static final float MAX_ZOOM = 6f;
         private final Path path = new Path();                  // 圖片座標
-        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG), glow = new Paint(Paint.ANTI_ALIAS_FLAG), dim = new Paint(), pic = new Paint(Paint.FILTER_BITMAP_FLAG);
-        private final Matrix m = new Matrix();
+        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG), glow = new Paint(Paint.ANTI_ALIAS_FLAG), core = new Paint(Paint.ANTI_ALIAS_FLAG),
+                dim = new Paint(), pic = new Paint(Paint.FILTER_BITMAP_FLAG), dot = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Matrix m = new Matrix(), gm = new Matrix();
+        private LinearGradient gradient;                       // 流動的光：藍、紫、粉、青（跟助理面板的極光同一組色）
+        private float gradLen = 1f;
         private float s0 = 1f, zoom = 1f, tx, ty;               // s0 = 剛好填滿的比例；zoom = 使用者放大倍數；tx、ty = 平移（畫面像素）
-        private float minX, minY, maxX, maxY, downX, downY;
+        private float minX, minY, maxX, maxY, downX, downY, headX, headY;
         private boolean has, done, drawing, zooming;
+        private long doneAt;
         private float lastDist, lastMx, lastMy;
 
         CircleView(Context c) {
             super(c);
-            line.setStyle(Paint.Style.STROKE);
-            line.setColor(Color.WHITE);
-            line.setStrokeCap(Paint.Cap.ROUND);
-            line.setStrokeJoin(Paint.Join.ROUND);
-            glow.set(line);
-            glow.setColor(0x558AB4F8);
-            dim.setColor(0x99000000);
+            for (Paint p : new Paint[]{line, glow, core}) {
+                p.setStyle(Paint.Style.STROKE);
+                p.setStrokeCap(Paint.Cap.ROUND);
+                p.setStrokeJoin(Paint.Join.ROUND);
+            }
+            core.setColor(0xFFFFFFFF);
+            dim.setColor(0xFF000000);
+            dot.setColor(0xFFFFFFFF);
         }
 
         private float scale() { return s0 * zoom; }
@@ -330,6 +354,9 @@ public class CircleActivity extends Activity {
             zoom = 1f;
             tx = (w - bmp.getWidth() * s0) / 2f;
             ty = (h - bmp.getHeight() * s0) / 2f;
+            gradLen = Math.max(1f, bmp.getWidth() * 0.7f);
+            gradient = new LinearGradient(0, 0, gradLen, gradLen * 0.4f,
+                    new int[]{0xFF4285F4, 0xFFA142F4, 0xFFFF6BB5, 0xFF2DE2E6, 0xFF4285F4}, null, Shader.TileMode.REPEAT);
         }
 
         private void clamp() {   // 放大後畫面邊緣不要拉出空白
@@ -395,6 +422,8 @@ public class CircleActivity extends Activity {
                         has = true;
                     }
                     float px = bx(e.getX()), py = by(e.getY());
+                    headX = px;
+                    headY = py;
                     path.lineTo(px, py);
                     minX = Math.min(minX, px); maxX = Math.max(maxX, px);
                     minY = Math.min(minY, py); maxY = Math.max(maxY, py);
@@ -414,6 +443,7 @@ public class CircleActivity extends Activity {
                         } else {
                             path.close();
                             done = true;
+                            doneAt = android.os.SystemClock.uptimeMillis();
                             onSelected(new RectF(minX, minY, maxX, maxY));
                         }
                     }
@@ -439,20 +469,46 @@ public class CircleActivity extends Activity {
             float S = scale();
             m.setScale(S, S);
             m.postTranslate(tx, ty);
+            long now = android.os.SystemClock.uptimeMillis();
             c.save();
             c.concat(m);
             c.drawBitmap(bmp, 0, 0, pic);
-            if (done) {   // 圈外變暗：只留圈選範圍亮著
-                c.save();
-                c.clipOutPath(path);
-                c.drawRect(0, 0, bmp.getWidth(), bmp.getHeight(), dim);
-                c.restore();
-            }
             if (has) {
-                line.setStrokeWidth(4 * d / S);
-                glow.setStrokeWidth(12 * d / S);
-                c.drawPath(path, glow);
+                float phase = (now % 2600L) / 2600f;
+                float since = done ? now - doneAt : 0f;
+                if (done) {   // 圈外慢慢變暗：只留圈選範圍亮著
+                    dim.setAlpha((int) (0x99 * Math.min(1f, since / 350f)));
+                    c.save();
+                    c.clipOutPath(path);
+                    c.drawRect(0, 0, bmp.getWidth(), bmp.getHeight(), dim);
+                    c.restore();
+                }
+                gm.setTranslate(phase * gradLen, 0);   // 光沿著線流動
+                gradient.setLocalMatrix(gm);
+                line.setShader(gradient);
+                glow.setShader(gradient);
+                // 剛圈完的那一瞬間線條變粗、光暈變亮，再回到平常；之後光暈跟著呼吸
+                float burst = done ? 1f + 0.9f * Math.max(0f, 1f - since / 600f) : 1f;
+                float breathe = done ? 0.7f + 0.3f * (float) Math.sin(phase * 2 * Math.PI) : 0.85f;
+                float[] w = {26f, 17f, 10f}, al = {0.16f, 0.26f, 0.42f};
+                for (int i = 0; i < w.length; i++) {   // 一層一層疊出柔和的光暈（不用模糊濾鏡）
+                    glow.setStrokeWidth(w[i] * d * burst / S);
+                    glow.setAlpha((int) (255 * al[i] * breathe * (done ? 1.2f : 1f)));
+                    c.drawPath(path, glow);
+                }
+                line.setStrokeWidth(4.5f * d * burst / S);
                 c.drawPath(path, line);
+                core.setStrokeWidth(1.6f * d / S);
+                core.setAlpha(0xCC);
+                c.drawPath(path, core);
+                if (drawing && !done) {   // 手指前面一顆發亮的光點
+                    dot.setShader(null);
+                    dot.setAlpha(0x55);
+                    c.drawCircle(headX, headY, 16 * d / S, dot);
+                    dot.setAlpha(0xFF);
+                    c.drawCircle(headX, headY, 6 * d / S, dot);
+                }
+                postInvalidateOnAnimation();   // 有圈選時持續重畫，光才會流動
             }
             c.restore();
         }
