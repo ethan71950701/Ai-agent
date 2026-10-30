@@ -767,8 +767,7 @@ public class AssistantSheet {
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
         stopRecognizer();
-        // 光球留著（縮小，點一下可語音接續），輸入列也留著（打字接續）；背景模式鈕用不到
-        bgBtnView.setVisibility(View.GONE);
+        // 光球留著（縮小，點一下可語音接續），輸入列也留著（打字接續）；背景模式鈕也留著（接續的話可能是要操作手機的任務），不再藏起來，免得旁邊的圈選鈕看起來像把它擠掉
         orb.setVisibility(View.VISIBLE);
         orb.setState(OrbView.IDLE);
         orb.setLevel(0f);

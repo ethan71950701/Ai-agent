@@ -41,18 +41,28 @@ public class CircleActivity extends Activity {
     /** 收起面板、截圖、打開圈選畫面（在主執行緒呼叫）。 */
     static void begin(final Activity act, Runnable hideSheet) {
         final Context app = act.getApplicationContext();
-        hideSheet.run();
+        try { hideSheet.run(); } catch (Throwable t) { toast(app, t); return; }
         new Thread(() -> {
-            try { Thread.sleep(500); } catch (InterruptedException ignored) { }   // 等面板收掉再截，才不會截到面板
-            Bitmap b = AgentLoop.screenshotBitmap();
-            if (b == null) {
-                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
-                        Toast.makeText(app, L.t("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）"), Toast.LENGTH_LONG).show());
-                return;
+            try {
+                try { Thread.sleep(500); } catch (InterruptedException ignored) { }   // 等面板收掉再截，才不會截到面板
+                Bitmap b = AgentLoop.screenshotBitmap();
+                if (b == null) {
+                    toast(app, L.t("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）"));
+                    return;
+                }
+                shot = b;
+                app.startActivity(new Intent(app, CircleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS));
+            } catch (Throwable t) {   // 背景執行緒的例外會讓整個 App 當掉：一律攔下來顯示
+                toast(app, t);
             }
-            shot = b;
-            app.startActivity(new Intent(app, CircleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS));
         }, "circle-shot").start();
+    }
+
+    private static void toast(Context c, Throwable t) { toast(c, L.t("圈選失敗：") + t); }
+
+    private static void toast(Context c, String msg) {
+        android.util.Log.w("CircleActivity", msg);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> Toast.makeText(c, msg, Toast.LENGTH_LONG).show());
     }
 
     private Bitmap bmp;
@@ -74,6 +84,15 @@ public class CircleActivity extends Activity {
         bmp = shot;
         shot = null;
         if (bmp == null) { finish(); return; }
+        try {
+            build();
+        } catch (Throwable t) {
+            toast(getApplicationContext(), t);
+            finish();
+        }
+    }
+
+    private void build() {
         d = getResources().getDisplayMetrics().density;
         getWindow().setDecorFitsSystemWindows(false);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));

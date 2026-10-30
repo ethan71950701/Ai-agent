@@ -888,6 +888,7 @@ final class LEn {
         m.put("送出", "Send");
         m.put("重新圈選", "Circle again");
         m.put("圈選提問", "Circle to ask");
+        m.put("圈選失敗：", "Circle failed: ");
         m.put("AI 沒有回答", "The AI gave no answer");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");
