@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1362
+
 - 「保護的 App」清單改在背景讀取 App 名稱，打開時不再卡一下｜The protected-apps list now loads app names in the background so opening it no longer stutters
 
 ## 1.0.1361
