@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1398
+
 - 圈選提問改版：要重圈直接在畫面上再圈一次（拿掉「重新圈選」鈕）；雙指可以放大縮小、移動截圖，好圈小東西；提問列、送出鈕、回答卡片改成跟助理面板同一種風格｜Circle to ask reworked: to redo a selection just circle again (the "Circle again" button is gone); pinch with two fingers to zoom and pan the screenshot so small things are easier to circle; the question bar, send button and answer card now share the assistant panel's style.
 
 ## 1.0.1397
