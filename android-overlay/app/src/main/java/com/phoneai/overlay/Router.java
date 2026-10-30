@@ -30,6 +30,7 @@ final class Router {
         final String pkg;       // kind == app
         final int steps;        // kind == agent
         String openPkg;         // kind == agent：任務一開始要先開的 App（沒有就是 null）
+        String macroTask;       // kind == agent：路由認為「和這個記住的任務是同一件事（說法不同）」，AgentLoop 改用它的巨集重播；沒有就是 null
         Decision(String kind, int cmdIndex, String pkg, int steps) { this.kind = kind; this.cmdIndex = cmdIndex; this.pkg = pkg; this.steps = steps; }
     }
 
@@ -127,6 +128,14 @@ final class Router {
                 + "不是上述任何一項，或需要看畫面、點擊、輸入文字、搜尋、多步驟操作，一律回 agent。"
                 + "回 agent 時 steps 是預估完成需要的畫面操作次數（每次點擊、滑動、輸入算一步；能直接用指令開App或開關Wi-Fi/藍牙的不算步數），再多留2步緩衝，範圍3到15。"
                 + "回 agent 時，如果任務一開始要先開某個已安裝的App（任務有指名，或明顯就是那個App，例如「去設定的Wi-Fi頁面」要先開設定），多回 app，名稱要用上面App名稱清單裡的；任務是對目前畫面操作、或沒有指名App，就不要寫 app。";
+        // 記住的步驟（巨集）清單：讓便宜模型順便判斷這句話是不是其中一個的另一種說法（語音輸入常常說法不同），不用多呼叫一次
+        final List<String> macros = Macros.enabled(c) && !AgentLoop.isQuestion(text) && !AgentLoop.isMessageTask(text) ? Macros.topTasks(c, 30) : new ArrayList<>();
+        if (!macros.isEmpty()) {
+            StringBuilder ms = new StringBuilder("\n已記住的任務（編號: 任務）：\n");
+            for (int i = 0; i < macros.size(); i++) ms.append(i).append(": ").append(macros.get(i)).append('\n');
+            ms.append("回 agent 時，如果這句話和上面某一個任務是「同一件事」（目的、對象、App、頁面都一樣，只是說法不同），多回 \"macro\":編號；只要有一點不確定、或對象或內容不一樣（例如不同的人、不同的數字、不同的頁面），就不要回 macro。傳訊息和問問題的不要回 macro。");
+            prompt = prompt + ms;
+        }
         try {
             JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 400)
                     .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
@@ -157,6 +166,8 @@ final class Router {
                     Decision dec = new Decision(AGENT, -1, null, Math.min(Math.max(d.optInt("steps", 8), 3), 15));
                     String name = d.optString("app", "");
                     if (!name.isEmpty()) dec.openPkg = findApp(apps, name);   // 只認已安裝的 App；對不上就不先開
+                    int mi = d.optInt("macro", -1);
+                    if (mi >= 0 && mi < macros.size()) dec.macroTask = macros.get(mi);
                     return dec;
                 }
                 default:

@@ -103,6 +103,14 @@ final class Macros {
         return out;
     }
 
+    /** 最常用的 n 個記住的任務文字（給路由比對「說法不同的同一件事」）。 */
+    static List<String> topTasks(Context c, int n) {
+        List<String[]> all = list(c);   // 已依重播次數排序
+        List<String> out = new java.util.ArrayList<>();
+        for (int i = 0; i < all.size() && i < n; i++) out.add(all.get(i)[1]);
+        return out;
+    }
+
     static synchronized void remove(Context c, String key) {
         JSONObject d = load(c);
         d.remove(key);

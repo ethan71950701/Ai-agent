@@ -154,7 +154,10 @@ final class AgentLoop {
     static String run(Context c, String task, Ui ui) { return run(c, task, ui, null); }
 
     /** preOpen：任務一開始由程式先開啟的 App 套件名稱（路由判斷出來的）；沒有就是 null。 */
-    static String run(Context c, String task, Ui ui, String preOpen) {
+    static String run(Context c, String task, Ui ui, String preOpen) { return run(c, task, ui, preOpen, null); }
+
+    /** macroTask：路由認為這句話是某個記住的任務的另一種說法（沒有就 null）。 */
+    static String run(Context c, String task, Ui ui, String preOpen, String macroTask) {
         cancelled = false;
         macroWhy = "";
         showCard = false;
@@ -164,7 +167,7 @@ final class AgentLoop {
         boolean bg = BgDisplay.wanted(c);
         if (bg && !BgDisplay.start(c)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
         try {
-            return runInner(c, task, ui, preOpen);
+            return runInner(c, task, ui, preOpen, macroTask);
         } finally {
             if (bg) BgDisplay.stop();   // 任務結束就收掉背景螢幕，上面開的 App 一起消失
             // 要跳回答卡片時，進度條多留一下：Android 只允許「有看得見的懸浮視窗」的 App 在背景啟動畫面，
@@ -174,7 +177,7 @@ final class AgentLoop {
         }
     }
 
-    private static String runInner(Context c, String task, Ui ui, String preOpen) {
+    private static String runInner(Context c, String task, Ui ui, String preOpen, String macroTask) {
         for (String w : TASK_BLOCK)
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
@@ -210,16 +213,21 @@ final class AgentLoop {
         }
         JSONArray macro = Macros.enabled(c) && !BgDisplay.active && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !isQuestion(task)
                 && !isMessageTask(task) ? Macros.get(c, task) : null;   // 傳訊息的任務不重播巨集：重播會跳過 AI 對「有沒有真的送出」的判斷
+        String mTask = task;   // 實際用哪個任務文字的巨集（記帳：重播成功／失敗算在它身上）
+        if (macro == null && macroTask != null && Macros.enabled(c) && !BgDisplay.active && !isQuestion(task) && !isMessageTask(task)) {
+            macro = Macros.get(c, macroTask);   // 沒有一模一樣的：用路由認出的「同一件事、說法不同」的巨集
+            if (macro != null) mTask = macroTask;
+        }
         if (macro != null) {
             macroTried = true;
             String fail = replayMacro(c, task, macro, ui, st, wh, panelHidden, history, details);
             if ("__cancel__".equals(fail)) return L.t("已取消，沒有執行。");
             if (fail == null) {
-                Macros.ok(c, task);
-                macroNote = "重播記住的 " + macro.length() + " 步，AI 只確認結果";
+                Macros.ok(c, mTask);
+                macroNote = "重播記住的 " + macro.length() + " 步，AI 只確認結果" + (mTask.equals(task) ? "" : "（說法不同，對應到「" + mTask + "」）");
                 history.add("0. 已經照記住的步驟重播 " + macro.length() + " 步；請看畫面確認任務是否完成，完成就 done，還沒完成就繼續做");
             } else {
-                Macros.fail(c, task);
+                Macros.fail(c, mTask);
                 macroNote = "重播中斷（" + fail + "），改由 AI 接手";
                 history.add("0. 重播記住的步驟時中斷（" + fail + "），請從目前畫面接手完成任務");
             }
