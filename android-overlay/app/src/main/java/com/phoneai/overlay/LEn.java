@@ -883,7 +883,7 @@ final class LEn {
         m.put("需要你接手", "Take-over needed");
         m.put("請你接手", "Please take over");
         m.put("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）", "Screenshot failed (turn on the accessibility service, or use root / Shizuku mode)");
-        m.put("用手指圈出想問的地方", "Circle what you want to ask about");
+        m.put("用手指圈出想問的地方（雙指可以放大縮小）", "Circle what you want to ask about (pinch to zoom)");
         m.put("問這個…（可以空白）", "Ask about this… (can be empty)");
         m.put("送出", "Send");
         m.put("重新圈選", "Circle again");

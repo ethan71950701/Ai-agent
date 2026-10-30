@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -15,13 +16,11 @@ import android.util.Base64;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,8 +30,9 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 
 /**
- * 圈選提問：助理面板按「圈選」→ 面板收起、截下目前畫面 → 這裡顯示凍結的畫面，用手指圈出想問的地方 →
- * 把圈起來的區域（加一張縮小的整個畫面當上下文）連同問題交給聊天模型回答，可以接著追問。
+ * 圈選提問：助理面板按「◎」→ 面板收起、截下目前畫面 → 這裡顯示凍結的畫面，用手指圈出想問的地方
+ * （雙指可以放大縮小、移動畫面，比較好圈；要重圈就直接再圈一次）→ 把圈起來的區域（加一張縮小的整個畫面當上下文）
+ * 連同問題交給聊天模型回答，可以接著追問。介面跟助理面板同一種風格（深色玻璃輸入列、送出鈕、回答卡片）。
  * 截圖用無障礙或 root／Shizuku；沒有權限或畫面是受保護的（銀行 App 會是黑的）就截不到。
  */
 public class CircleActivity extends Activity {
@@ -70,13 +70,14 @@ public class CircleActivity extends Activity {
 
     private Bitmap bmp;
     private CircleView cv;
-    private LinearLayout panel;
+    private LinearLayout bottom;
+    private View scrim;
+    private FrameLayout replyHolder;
     private ImageView thumb;
     private EditText input;
-    private TextView reply;
-    private ScrollView replyScroll;
-    private TextView sendBtn;
-    private RectF box;                       // 圈選範圍（螢幕座標）
+    private SendIconView send;
+    private TextView hint;
+    private RectF box;                       // 圈選範圍（圖片座標）
     private final JSONArray msgs = new JSONArray();
     private boolean busy;
     private float d;
@@ -95,147 +96,136 @@ public class CircleActivity extends Activity {
         }
     }
 
+    private GradientDrawable glass(int dp) {   // 跟助理面板輸入列一樣的半透明深色玻璃
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(0x99121218);
+        g.setStroke((int) Math.max(1, d), 0x50FFFFFF);
+        g.setCornerRadius(dp * d);
+        return g;
+    }
+
     private void build() {
         d = getResources().getDisplayMetrics().density;
         getWindow().setDecorFitsSystemWindows(false);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
 
         FrameLayout root = new FrameLayout(this);
-        ImageView img = new ImageView(this);
-        img.setImageBitmap(bmp);
-        img.setScaleType(ImageView.ScaleType.FIT_XY);
-        root.addView(img, new FrameLayout.LayoutParams(-1, -1));
         cv = new CircleView(this);
         root.addView(cv, new FrameLayout.LayoutParams(-1, -1));
 
-        TextView hint = new TextView(this);
-        hint.setText(L.t("用手指圈出想問的地方"));
+        scrim = new View(this);   // 提問時底部的暗幕，讓白字讀得到
+        scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x00000000, 0xCC000000}));
+        scrim.setVisibility(View.GONE);
+        root.addView(scrim, new FrameLayout.LayoutParams(-1, (int) (360 * d), Gravity.BOTTOM));
+
+        hint = new TextView(this);
+        hint.setText(L.t("用手指圈出想問的地方（雙指可以放大縮小）"));
         hint.setTextColor(Color.WHITE);
         hint.setTextSize(15);
-        hint.setPadding((int) (16 * d), (int) (10 * d), (int) (16 * d), (int) (10 * d));
-        hint.setBackground(round(0xB0202428, 24));
+        hint.setPadding((int) (18 * d), (int) (10 * d), (int) (18 * d), (int) (10 * d));
+        hint.setBackground(glass(24));
         FrameLayout.LayoutParams hlp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         hlp.topMargin = (int) (56 * d);
         root.addView(hint, hlp);
-        cv.hint = hint;
 
         TextView close = new TextView(this);
         close.setText("✕");
         close.setTextColor(Color.WHITE);
         close.setTextSize(20);
         close.setGravity(Gravity.CENTER);
-        close.setBackground(round(0xB0202428, 22));
+        GradientDrawable cg = glass(22);
+        cg.setShape(GradientDrawable.OVAL);
+        close.setBackground(cg);
         close.setOnClickListener(v -> finish());
         FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams((int) (44 * d), (int) (44 * d), Gravity.TOP | Gravity.END);
         clp.topMargin = (int) (48 * d);
         clp.rightMargin = (int) (16 * d);
         root.addView(close, clp);
 
-        panel = new LinearLayout(this);
-        panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setBackground(round(0xEE202428, 28));
-        panel.setPadding((int) (14 * d), (int) (12 * d), (int) (14 * d), (int) (14 * d));
-        panel.setVisibility(View.GONE);
-
-        replyScroll = new ScrollView(this);
-        reply = new TextView(this);
-        reply.setTextColor(Color.WHITE);
-        reply.setTextSize(16);
-        reply.setTextIsSelectable(true);
-        reply.setPadding(0, 0, 0, (int) (8 * d));
-        replyScroll.addView(reply);
-        replyScroll.setVisibility(View.GONE);
-        panel.addView(replyScroll, new LinearLayout.LayoutParams(-1, (int) (260 * d)));
+        bottom = new LinearLayout(this);
+        bottom.setOrientation(LinearLayout.VERTICAL);
+        bottom.setVisibility(View.GONE);
+        replyHolder = new FrameLayout(this);
+        replyHolder.setVisibility(View.GONE);
+        LinearLayout.LayoutParams rhp = new LinearLayout.LayoutParams(-1, -2);
+        rhp.bottomMargin = (int) (10 * d);
+        bottom.addView(replyHolder, rhp);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         thumb = new ImageView(this);
         thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        thumb.setBackground(round(0x33FFFFFF, 12));
+        GradientDrawable tg = glass(26);
+        tg.setShape(GradientDrawable.OVAL);
+        thumb.setBackground(tg);
         thumb.setClipToOutline(true);
         thumb.setOutlineProvider(android.view.ViewOutlineProvider.BACKGROUND);
-        row.addView(thumb, new LinearLayout.LayoutParams((int) (56 * d), (int) (56 * d)));
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
+        tlp.rightMargin = (int) (4 * d);
+        row.addView(thumb, tlp);
         input = new EditText(this);
         input.setHint(L.t("問這個…（可以空白）"));
         input.setHintTextColor(0xA0FFFFFF);
         input.setTextColor(Color.WHITE);
-        input.setTextSize(16);
+        input.setTextSize(17);
+        input.setBackground(glass(40));
+        input.setPadding((int) (20 * d), (int) (14 * d), (int) (20 * d), (int) (14 * d));
         input.setSingleLine(true);
         input.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
         input.setOnEditorActionListener((v, id, ev) -> { if (id == android.view.inputmethod.EditorInfo.IME_ACTION_SEND) { submit(); return true; } return false; });
-        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(0, -2, 1f);
-        ilp.leftMargin = (int) (10 * d);
-        row.addView(input, ilp);
-        sendBtn = new TextView(this);
-        sendBtn.setText(L.t("送出"));
-        sendBtn.setTextColor(Color.WHITE);
-        sendBtn.setTextSize(15);
-        sendBtn.setGravity(Gravity.CENTER);
-        sendBtn.setBackground(round(OverlayService.CHIP_COLOR, 22));
-        sendBtn.setPadding((int) (16 * d), (int) (10 * d), (int) (16 * d), (int) (10 * d));
-        sendBtn.setOnClickListener(v -> submit());
-        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(-2, -2);
-        slp.leftMargin = (int) (8 * d);
-        row.addView(sendBtn, slp);
-        panel.addView(row, new LinearLayout.LayoutParams(-1, -2));
+        row.addView(input, new LinearLayout.LayoutParams(0, -2, 1f));
+        send = new SendIconView(this);
+        send.setOnClickListener(v -> submit());
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
+        slp.leftMargin = (int) (4 * d);
+        row.addView(send, slp);
+        bottom.addView(row, new LinearLayout.LayoutParams(-1, -2));
 
-        TextView redo = new TextView(this);
-        redo.setText(L.t("重新圈選"));
-        redo.setTextColor(0xFF8AB4F8);
-        redo.setTextSize(14);
-        redo.setPadding(0, (int) (10 * d), 0, 0);
-        redo.setOnClickListener(v -> resetSelection());
-        panel.addView(redo, new LinearLayout.LayoutParams(-2, -2));
-
-        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
-        plp.leftMargin = plp.rightMargin = (int) (12 * d);
-        plp.bottomMargin = (int) (16 * d);
-        root.addView(panel, plp);
+        final FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        plp.leftMargin = (int) (14 * d);
+        plp.rightMargin = (int) (14 * d);
+        plp.bottomMargin = (int) (18 * d);
+        root.addView(bottom, plp);
         setContentView(root);
         android.view.WindowInsetsController wc = root.getWindowInsetsController();   // 要在 setContentView 之後才拿得到（之前是 null，會當機）
         if (wc != null) wc.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-        root.setOnApplyWindowInsetsListener((v, ins) -> {   // 鍵盤出現時，面板推到鍵盤上面
-            int ime = ins.getInsets(WindowInsets.Type.ime()).bottom;
-            plp.bottomMargin = (int) (16 * d) + ime;
-            panel.setLayoutParams(plp);
+        root.setOnApplyWindowInsetsListener((v, ins) -> {   // 鍵盤出現時，輸入列推到鍵盤上面
+            plp.bottomMargin = (int) (18 * d) + ins.getInsets(WindowInsets.Type.ime()).bottom;
+            bottom.setLayoutParams(plp);
             return ins;
         });
     }
 
-    private GradientDrawable round(int color, int dp) {
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(color);
-        g.setCornerRadius(dp * d);
-        return g;
-    }
-
-    /** 手指圈完了：記下範圍，顯示提問面板。 */
+    /** 手指圈完了：記下範圍（圖片座標），顯示提問列。 */
     private void onSelected(RectF r) {
         box = r;
-        float sx = bmp.getWidth() / (float) cv.getWidth(), sy = bmp.getHeight() / (float) cv.getHeight();
-        Bitmap crop = cropOf(r, sx, sy);
-        thumb.setImageBitmap(crop);
-        panel.setVisibility(View.VISIBLE);
+        thumb.setImageBitmap(cropOf(r));
+        scrim.setVisibility(View.VISIBLE);
+        bottom.setVisibility(View.VISIBLE);
         input.requestFocus();
     }
 
-    private Bitmap cropOf(RectF r, float sx, float sy) {
-        int pad = (int) (12 * d);
-        int l = Math.max(0, (int) (r.left * sx) - pad), t = Math.max(0, (int) (r.top * sy) - pad);
-        int rr = Math.min(bmp.getWidth(), (int) (r.right * sx) + pad), bb = Math.min(bmp.getHeight(), (int) (r.bottom * sy) + pad);
-        if (rr - l < 8 || bb - t < 8) return bmp;
-        return Bitmap.createBitmap(bmp, l, t, rr - l, bb - t);
-    }
-
-    private void resetSelection() {
+    /** 開始畫新的一圈（或圈選被清掉）：提問列收起，這個區域的對話重來。 */
+    private void onCleared() {
         if (busy) return;
-        cv.clear();
         box = null;
         while (msgs.length() > 0) msgs.remove(0);
-        replyScroll.setVisibility(View.GONE);
-        panel.setVisibility(View.GONE);
-        cv.showHint();
+        replyHolder.removeAllViews();
+        replyHolder.setVisibility(View.GONE);
+        bottom.setVisibility(View.GONE);
+        scrim.setVisibility(View.GONE);
+        hint.setVisibility(View.GONE);
+        android.view.inputmethod.InputMethodManager imm = getSystemService(android.view.inputmethod.InputMethodManager.class);
+        if (imm != null) imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
+    }
+
+    private Bitmap cropOf(RectF r) {
+        int pad = (int) (12 * d);
+        int l = Math.max(0, (int) r.left - pad), t = Math.max(0, (int) r.top - pad);
+        int rr = Math.min(bmp.getWidth(), (int) r.right + pad), bb = Math.min(bmp.getHeight(), (int) r.bottom + pad);
+        if (rr - l < 8 || bb - t < 8) return bmp;
+        return Bitmap.createBitmap(bmp, l, t, rr - l, bb - t);
     }
 
     private static String jpeg64(Bitmap b, int maxSide, int quality) {
@@ -246,19 +236,25 @@ public class CircleActivity extends Activity {
         return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
     }
 
+    private void showReply(String text) {   // 回答卡片：跟助理面板同一張卡片
+        replyHolder.removeAllViews();
+        int maxH = (int) (getResources().getDisplayMetrics().heightPixels * 0.42f);
+        FrameLayout card = ReplyCard.build(this, "", text, () -> { }, maxH);
+        replyHolder.addView(card, new FrameLayout.LayoutParams(-1, -2));
+        replyHolder.setVisibility(View.VISIBLE);
+    }
+
     private void submit() {
         if (busy || box == null) return;
         String q = input.getText().toString().trim();
         busy = true;
         input.setText("");
-        sendBtn.setAlpha(0.5f);
-        replyScroll.setVisibility(View.VISIBLE);
-        reply.setText(L.t("思考中…"));
+        send.setAlpha(0.35f);
+        input.setHint(L.t("思考中…"));
         try {
             JSONArray content = new JSONArray();
             if (msgs.length() == 0) {
-                float sx = bmp.getWidth() / (float) cv.getWidth(), sy = bmp.getHeight() / (float) cv.getHeight();
-                content.put(img(jpeg64(cropOf(box, sx, sy), 1280, 85)));
+                content.put(img(jpeg64(cropOf(box), 1280, 85)));
                 content.put(img(jpeg64(bmp, 800, 70)));
                 content.put(new JSONObject().put("type", "text").put("text", (L.en()
                         ? "The first image is the region the user circled; the second is the whole screen for context. The user's question: "
@@ -270,6 +266,7 @@ public class CircleActivity extends Activity {
             msgs.put(new JSONObject().put("role", "user").put("content", content));
         } catch (Exception e) {
             busy = false;
+            send.setAlpha(1f);
             return;
         }
         final Context app = getApplicationContext();
@@ -277,15 +274,15 @@ public class CircleActivity extends Activity {
             String r = ChatEngine.visionChat(app, msgs);
             runOnUiThread(() -> {
                 busy = false;
-                sendBtn.setAlpha(1f);
+                send.setAlpha(1f);
+                input.setHint(L.t("繼續問…"));
                 if (r == null) {
-                    reply.setText(L.t("連不上 AI：") + ChatEngine.lastError);
+                    showReply(L.t("連不上 AI：") + ChatEngine.lastError);
                     if (msgs.length() > 0) msgs.remove(msgs.length() - 1);   // 失敗的這一輪不留，重送才不會疊兩次
                     return;
                 }
                 try { msgs.put(new JSONObject().put("role", "assistant").put("content", r)); } catch (Exception ignored) { }
-                reply.setText(Md.render(r));
-                replyScroll.post(() -> replyScroll.fullScroll(View.FOCUS_UP));
+                showReply(r);
             });
         }, "circle-ask").start();
     }
@@ -300,76 +297,164 @@ public class CircleActivity extends Activity {
         bmp = null;
     }
 
-    /** 全螢幕的畫圈層：手指畫出的軌跡（白色發光線），放開後把範圍外變暗。 */
+    /**
+     * 整個畫面：自己畫截圖（可以雙指放大縮小、移動），單指畫圈。軌跡存成圖片座標，放大縮小後圈選位置不會跑掉；
+     * 放開後圈外變暗，只留圈選範圍亮著。
+     */
     private final class CircleView extends View {
-        private final Path path = new Path();
-        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG), glow = new Paint(Paint.ANTI_ALIAS_FLAG), dim = new Paint();
-        private float minX, minY, maxX, maxY;
-        private boolean has, done;
-        TextView hint;
+        private static final float MAX_ZOOM = 6f;
+        private final Path path = new Path();                  // 圖片座標
+        private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG), glow = new Paint(Paint.ANTI_ALIAS_FLAG), dim = new Paint(), pic = new Paint(Paint.FILTER_BITMAP_FLAG);
+        private final Matrix m = new Matrix();
+        private float s0 = 1f, zoom = 1f, tx, ty;               // s0 = 剛好填滿的比例；zoom = 使用者放大倍數；tx、ty = 平移（畫面像素）
+        private float minX, minY, maxX, maxY, downX, downY;
+        private boolean has, done, drawing, zooming;
+        private float lastDist, lastMx, lastMy;
 
         CircleView(Context c) {
             super(c);
             line.setStyle(Paint.Style.STROKE);
-            line.setStrokeWidth(4 * d);
             line.setColor(Color.WHITE);
             line.setStrokeCap(Paint.Cap.ROUND);
             line.setStrokeJoin(Paint.Join.ROUND);
             glow.set(line);
-            glow.setStrokeWidth(12 * d);
             glow.setColor(0x558AB4F8);
             dim.setColor(0x99000000);
         }
 
-        void clear() {
+        private float scale() { return s0 * zoom; }
+
+        @Override
+        protected void onSizeChanged(int w, int h, int ow, int oh) {
+            s0 = Math.min(w / (float) bmp.getWidth(), h / (float) bmp.getHeight());
+            zoom = 1f;
+            tx = (w - bmp.getWidth() * s0) / 2f;
+            ty = (h - bmp.getHeight() * s0) / 2f;
+        }
+
+        private void clamp() {   // 放大後畫面邊緣不要拉出空白
+            float S = scale(), iw = bmp.getWidth() * S, ih = bmp.getHeight() * S;
+            tx = iw <= getWidth() ? (getWidth() - iw) / 2f : Math.max(getWidth() - iw, Math.min(0, tx));
+            ty = ih <= getHeight() ? (getHeight() - ih) / 2f : Math.max(getHeight() - ih, Math.min(0, ty));
+        }
+
+        private float bx(float x) { return (x - tx) / scale(); }
+        private float by(float y) { return (y - ty) / scale(); }
+
+        void clearSel() {
             path.reset();
             has = done = false;
             invalidate();
         }
 
-        void showHint() { if (hint != null) hint.setVisibility(View.VISIBLE); }
-
         @Override
         public boolean onTouchEvent(MotionEvent e) {
-            if (done) return true;
-            float x = e.getX(), y = e.getY();
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    path.reset();
-                    path.moveTo(x, y);
-                    minX = maxX = x;
-                    minY = maxY = y;
-                    has = true;
-                    if (hint != null) hint.setVisibility(View.GONE);
-                    break;
+                    downX = e.getX();
+                    downY = e.getY();
+                    drawing = false;
+                    zooming = false;
+                    return true;
+                case MotionEvent.ACTION_POINTER_DOWN:   // 第二根手指下來：改成縮放／移動，正在畫的這一圈不算
+                    if (drawing && !done) { path.reset(); has = false; drawing = false; }
+                    zooming = true;
+                    lastDist = dist(e);
+                    lastMx = midX(e);
+                    lastMy = midY(e);
+                    invalidate();
+                    return true;
                 case MotionEvent.ACTION_MOVE:
-                    path.lineTo(x, y);
-                    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-                    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-                    break;
+                    if (zooming) {
+                        if (e.getPointerCount() >= 2) {
+                            float nd = dist(e), mx = midX(e), my = midY(e);
+                            if (lastDist > 0) {
+                                float nz = Math.max(1f, Math.min(MAX_ZOOM, zoom * nd / lastDist));
+                                float r = nz / zoom;
+                                tx = mx - (lastMx - tx) * r;
+                                ty = my - (lastMy - ty) * r;
+                                zoom = nz;
+                            }
+                            clamp();
+                            lastDist = nd;
+                            lastMx = mx;
+                            lastMy = my;
+                            invalidate();
+                        }
+                        return true;
+                    }
+                    if (!drawing) {
+                        if (Math.hypot(e.getX() - downX, e.getY() - downY) < 8 * d) return true;   // 還沒真的在畫（只是點到）
+                        drawing = true;                       // 開始畫新的一圈：舊的圈選與提問列收掉
+                        clearSel();
+                        onCleared();
+                        path.reset();
+                        path.moveTo(bx(downX), by(downY));
+                        minX = maxX = bx(downX);
+                        minY = maxY = by(downY);
+                        has = true;
+                    }
+                    float px = bx(e.getX()), py = by(e.getY());
+                    path.lineTo(px, py);
+                    minX = Math.min(minX, px); maxX = Math.max(maxX, px);
+                    minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+                    invalidate();
+                    return true;
+                case MotionEvent.ACTION_POINTER_UP:
+                    lastDist = 0;   // 放掉一根手指：剩下的手指不要接著畫，等全部放開
+                    lastMx = e.getX(e.getPointerCount() > 1 && e.getActionIndex() == 0 ? 1 : 0);
+                    lastMy = e.getY(e.getPointerCount() > 1 && e.getActionIndex() == 0 ? 1 : 0);
+                    return true;
                 case MotionEvent.ACTION_UP:
-                    if (maxX - minX < 40 * d && maxY - minY < 40 * d) { clear(); if (hint != null) hint.setVisibility(View.VISIBLE); return true; }   // 太小（只是點一下）：不算圈選
-                    path.close();
-                    done = true;
-                    onSelected(new RectF(minX, minY, maxX, maxY));
-                    break;
-                default: break;
+                    if (drawing && has && !zooming) {
+                        float S = scale();
+                        if ((maxX - minX) * S < 40 * d && (maxY - minY) * S < 40 * d) {   // 太小：不算圈選
+                            clearSel();
+                            hint.setVisibility(View.VISIBLE);
+                        } else {
+                            path.close();
+                            done = true;
+                            onSelected(new RectF(minX, minY, maxX, maxY));
+                        }
+                    }
+                    drawing = false;
+                    zooming = false;
+                    invalidate();
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    drawing = false;
+                    zooming = false;
+                    return true;
+                default:
+                    return true;
             }
-            invalidate();
-            return true;
         }
+
+        private float dist(MotionEvent e) { return (float) Math.hypot(e.getX(0) - e.getX(1), e.getY(0) - e.getY(1)); }
+        private float midX(MotionEvent e) { return (e.getX(0) + e.getX(1)) / 2f; }
+        private float midY(MotionEvent e) { return (e.getY(0) + e.getY(1)) / 2f; }
 
         @Override
         protected void onDraw(Canvas c) {
-            if (!has) return;
+            float S = scale();
+            m.setScale(S, S);
+            m.postTranslate(tx, ty);
+            c.save();
+            c.concat(m);
+            c.drawBitmap(bmp, 0, 0, pic);
             if (done) {   // 圈外變暗：只留圈選範圍亮著
                 c.save();
                 c.clipOutPath(path);
-                c.drawRect(0, 0, getWidth(), getHeight(), dim);
+                c.drawRect(0, 0, bmp.getWidth(), bmp.getHeight(), dim);
                 c.restore();
             }
-            c.drawPath(path, glow);
-            c.drawPath(path, line);
+            if (has) {
+                line.setStrokeWidth(4 * d / S);
+                glow.setStrokeWidth(12 * d / S);
+                c.drawPath(path, glow);
+                c.drawPath(path, line);
+            }
+            c.restore();
         }
     }
 }
