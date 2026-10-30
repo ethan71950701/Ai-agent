@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 傳訊息不再一直問你：認得「去ig傳456給謝小明」「跟小明說…」這類說法；對話列表上的「17分鐘前傳送」「看過」是狀態文字，不再當成敏感的傳送按鈕；傳訊息時 AI 自己問過的確認算同意，程式不再多跳第二個｜Messaging no longer keeps asking: phrasings like "send 456 to Xiao Ming" are recognised; status text such as "sent 17 minutes ago" or "seen" in the chat list is no longer treated as a sensitive Send button; in messaging tasks the AI's own confirmation counts as your approval so the app no longer shows a second one
+## 1.0.1360
 
 - 確認框按下後會等它真的關掉、下面的 App 取回焦點再繼續（之前 AI 的下一個點擊可能打在還沒關完的對話框上，造成輸入框點了卻沒跳出鍵盤）｜After you answer a confirmation the app now waits until the dialog is really gone and the app below has regained focus before continuing (before, the AI's next tap could land on the closing dialog, so tapping an input box did not bring up the keyboard)
+
 ## 1.0.1359
 
 - 傳訊息一定先問你：輸入框裡有了要傳的字、AI 要送出之前，程式一定跳確認框「要送出這則訊息嗎？」（不再只靠提示詞，Haiku 有時會跳過）；你同意過一次就不再問｜Messaging always asks first: once the text to send is in the input box and the AI is about to send it, the app itself shows "Send this message?" (no longer relying on the prompt, which Haiku sometimes skipped); asked only once per task
