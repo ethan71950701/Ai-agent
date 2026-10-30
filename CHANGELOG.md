@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1386
+
 - 換 AI 服務時，已經輸入過 Key 的服務不用再輸入；修正 Gemini 用到工具（查電量、App 數量）時連不上（工具回呼要帶回 thought_signature、不送空參數）；系統指令輸出太長時附上行數，數量改用 wc -l｜Switching AI service no longer asks again for a key you already entered; fixed Gemini failing when tools are used (battery, app count): tool calls now carry back the thought_signature and empty parameter schemas are not sent; long command output now reports its line count and counting uses wc -l.
 
 ## 1.0.1385
