@@ -690,27 +690,34 @@ public class MainActivity extends Activity {
 
     /** 選要保護的 App：AI 操作之前先問你；銀行、支付類不用勾，會自動保護。 */
     private void chooseProtectedApps() {
-        android.content.pm.PackageManager pm = getPackageManager();
-        android.content.Intent launcher = new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-        final java.util.TreeMap<String, String> byLabel = new java.util.TreeMap<>();
-        for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(launcher, 0)) {
-            String pkg = ri.activityInfo.packageName;
-            if (pkg.equals(getPackageName())) continue;
-            byLabel.put(String.valueOf(ri.loadLabel(pm)) + "\u0000" + pkg, pkg);
-        }
-        final java.util.List<String> pkgs = new java.util.ArrayList<>(byLabel.values());
-        final String[] names = new String[pkgs.size()];
-        final boolean[] checked = new boolean[pkgs.size()];
-        final java.util.Set<String> chosen = ProtectedApps.userSet(this);
-        for (int i = 0; i < pkgs.size(); i++) {
-            names[i] = ProtectedApps.label(this, pkgs.get(i));
-            checked[i] = chosen.contains(pkgs.get(i));
-        }
-        CheckDialog.show(this, L.t("選擇要保護的 App"), names, checked, () -> {
-            java.util.Set<String> out = new java.util.HashSet<>();
-            for (int i = 0; i < pkgs.size(); i++) if (checked[i]) out.add(pkgs.get(i));
-            ProtectedApps.setUserSet(this, out);
-        });
+        // 讀 App 清單與名稱很慢（幾百個 App）：放在背景執行緒，讀好再顯示，不卡住畫面
+        android.widget.Toast.makeText(this, L.t("讀取 App 清單…"), android.widget.Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            android.content.pm.PackageManager pm = getPackageManager();
+            android.content.Intent launcher = new android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_LAUNCHER);
+            final java.util.TreeMap<String, String> byLabel = new java.util.TreeMap<>();
+            final java.util.Map<String, String> labelOf = new java.util.HashMap<>();
+            for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(launcher, 0)) {
+                String pkg = ri.activityInfo.packageName;
+                if (pkg.equals(getPackageName())) continue;
+                String label = String.valueOf(ri.loadLabel(pm));
+                byLabel.put(label + "\u0000" + pkg, pkg);
+                labelOf.put(pkg, label);
+            }
+            final java.util.List<String> pkgs = new java.util.ArrayList<>(byLabel.values());
+            final String[] names = new String[pkgs.size()];
+            final boolean[] checked = new boolean[pkgs.size()];
+            final java.util.Set<String> chosen = ProtectedApps.userSet(this);
+            for (int i = 0; i < pkgs.size(); i++) {
+                names[i] = labelOf.get(pkgs.get(i));
+                checked[i] = chosen.contains(pkgs.get(i));
+            }
+            runOnUiThread(() -> CheckDialog.show(this, L.t("選擇要保護的 App"), names, checked, () -> {
+                java.util.Set<String> out = new java.util.HashSet<>();
+                for (int i = 0; i < pkgs.size(); i++) if (checked[i]) out.add(pkgs.get(i));
+                ProtectedApps.setUserSet(this, out);
+            }));
+        }, "protected-apps").start();
     }
 
     private View wrapIcon(View icon) {

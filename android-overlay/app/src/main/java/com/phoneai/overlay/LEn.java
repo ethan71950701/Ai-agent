@@ -475,6 +475,7 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("讀取 App 清單…", "Loading the app list…");
         m.put("要送出這則訊息嗎？\n\n「%s」", "Send this message?\n\n\"%s\"");
         m.put("已取消，訊息沒有送出。", "Cancelled, the message was not sent.");
         m.put("已選 %d 個", "%d selected");

@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 「保護的 App」清單改在背景讀取 App 名稱，打開時不再卡一下｜The protected-apps list now loads app names in the background so opening it no longer stutters
+
 ## 1.0.1361
 
 - 傳訊息不再一直問你：認得「去ig傳456給謝小明」「跟小明說…」這類說法；對話列表上的「17分鐘前傳送」「看過」是狀態文字，不再當成敏感的傳送按鈕；傳訊息時 AI 自己問過的確認算同意，程式不再多跳第二個｜Messaging no longer keeps asking: phrasings like "send 456 to Xiao Ming" are recognised; status text such as "sent 17 minutes ago" or "seen" in the chat list is no longer treated as a sensitive Send button; in messaging tasks the AI's own confirmation counts as your approval so the app no longer shows a second one
