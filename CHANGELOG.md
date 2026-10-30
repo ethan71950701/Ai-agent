@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1394
+
 - 圈選提問：截圖或開啟畫面時的錯誤改成顯示提示，不再讓整個 App 當掉；接續對話時背景模式鈕不再被藏起來（以前看起來像被圈選鈕擠掉）｜Circle to ask: errors while taking the screenshot or opening the screen now show a message instead of crashing the whole app; in follow-up replies the background-mode button is no longer hidden (it used to look like the circle button pushed it out).
 
 ## 1.0.1393
