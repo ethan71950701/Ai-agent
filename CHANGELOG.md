@@ -5,6 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 傳訊息任務點「傳送」鈕不再多跳一次敏感操作確認（要不要送出已經問過你了）｜In messaging tasks tapping the Send button no longer triggers an extra sensitive-action confirmation (you were already asked whether to send)
+
+- 修正傳訊息任務卡在 Enter 之後：AI 新增 look 動作（要看截圖時用）、傳訊息按 Enter 後下一步一定給截圖來確認是否送出，最大步數從 8 提高到 12（傳訊息本來就要 8～10 步），提示也改成「要點傳送鈕，找不到就 look」｜Fixed messaging tasks stalling after Enter: the AI gets a look action (ask for a screenshot), the step after pressing Enter in a messaging task always comes with a screenshot to check it was sent, the step limit rose from 8 to 12 (messaging needs 8-10 steps) and the prompt now says tap the Send button and use look when it is not in the element list
+
 - 「記住的步驟」從設定移到「功能 → 資料」｜"Remembered steps" moved from Settings to Functions → Data
 ## 1.0.1353
 

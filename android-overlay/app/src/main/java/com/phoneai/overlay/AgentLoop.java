@@ -31,7 +31,7 @@ final class AgentLoop {
     static volatile String lastRaw = "";   // 最近一次模型回覆的開頭，解析不出動作時放進錯誤訊息
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
-    private static final int MAX_STEPS = 8;
+    private static final int MAX_STEPS = 12;   // 傳訊息這種任務正常就要 8～10 步（開 App、進對話、輸入、確認、送出、檢查）
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
     private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單", "安裝", "訂閱",
             "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout", "install", "subscribe"};   // 中文與英文的敏感詞
@@ -319,6 +319,8 @@ final class AgentLoop {
                     history.add(step + ". 拖曳到一半，因為換了別的動作，已放開手指");
                 }
                 rememberLesson(c, action, st, history);
+                // 傳訊息：按了 Enter（或輸入時帶 enter）之後，下一步一定給截圖，才看得出訊息真的送出沒有（元件清單常找不到只有圖示的傳送鈕）
+                if (isMessageTask(task) && (name.equals("enter") || (name.equals("type") && action.optBoolean("enter")))) forceShot = true;
                 switch (name) {
                     case "done":
                         if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && stillInInput(tree, st.lastTyped)) {
@@ -389,6 +391,11 @@ final class AgentLoop {
                         recordStep(recorded, macroValid, action, tree, useTree, allOk);
                         break;
                     }
+                    case "look":
+                        forceShot = true;   // 下一步給截圖（Sonnet 看圖）：元件清單裡沒有的東西（例如只有圖示的傳送鈕）要靠截圖找位置
+                        macroValid[0] = false;
+                        history.add(step + ". look：下一步會給你截圖，用座標 tap 清單裡沒有的按鈕");
+                        break;
                     default: {
                         hideBeforeOperate(ui, panelHidden, name);
                         String result = execute(action, wh, c, st);
@@ -1149,7 +1156,11 @@ final class AgentLoop {
         }
         for (String l : labels) {
             if (l == null || l.isEmpty()) continue;
-            for (String w : SENSITIVE_LABELS) if (hit(l, w) && !hit(task, w)) return l;
+            for (String w : SENSITIVE_LABELS) {
+                boolean sendWord = w.equals("傳送") || w.equals("发送") || w.equals("發送") || w.equals("send");
+                if (sendWord && isMessageTask(task)) continue;   // 任務本來就是傳訊息：點「傳送」是任務要求的（要不要送出已經在 ask 問過使用者）
+                if (hit(l, w) && !hit(task, w)) return l;
+            }
         }
         return null;
     }
