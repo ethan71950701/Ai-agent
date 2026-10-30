@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 傳訊息的「要送出嗎」確認，在沒有元件清單時（截圖模式、背景螢幕）也會跳出，不再被略過；修正檢查 root 時 `su` 卡住會讓 10 秒逾時失效｜The "send this message?" confirmation now also appears when there is no element list (screenshot mode, background screen) instead of being skipped; fixed the root check where a hung `su` made the 10-second timeout ineffective.
 
 ## 1.0.1390
 

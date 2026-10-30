@@ -99,9 +99,17 @@ final class Root {
         try {
             Process p = new ProcessBuilder(su, "-c", "id -u").redirectErrorStream(true).start();
             p.getOutputStream().close();
-            String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+            final java.io.InputStream in = p.getInputStream();
+            final java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+            Thread reader = new Thread(() -> {   // 在另一個執行緒讀輸出：su 卡住不結束時，下面的 10 秒逾時才真的有用（readAllBytes 會一直等到串流結束）
+                try { byte[] b = new byte[512]; int n; while ((n = in.read(b)) > 0) buf.write(b, 0, n); } catch (Exception ignored) { }
+            });
+            reader.setDaemon(true);
+            reader.start();
             boolean done = p.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
-            if (!done) { p.destroy(); return false; }
+            if (!done) { p.destroyForcibly(); return false; }
+            reader.join(1000);
+            String out = new String(buf.toByteArray(), StandardCharsets.UTF_8).trim();
             return p.exitValue() == 0 && out.endsWith("0");
         } catch (Exception e) {
             return false;

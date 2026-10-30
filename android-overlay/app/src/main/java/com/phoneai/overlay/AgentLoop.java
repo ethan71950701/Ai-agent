@@ -344,8 +344,10 @@ final class AgentLoop {
                 // 程式層的保險：傳訊息任務，輸入框裡已經有要傳的字、AI 下一個動作不是在輸入框裡操作（= 要送出了），一定先問使用者；
                 // 不能只靠提示詞（Haiku 有時會直接送出）。使用者在這個任務裡同意過（AI 自己 ask 過）就不再問第二次。
                 String actName = action.optString("action");
-                if (isMessageTask(task) && st.lastTyped != null && !st.askedCats.contains("傳送訊息") && tree != null && stillInInput(tree, st.lastTyped)
-                        && ("enter".equals(actName) || (("tap".equals(actName) || "batch".equals(actName)) && !"輸入框".equals(pickKind(tree, action))))) {
+                // 沒有元件清單（截圖模式、背景螢幕、清單讀取失敗）時看不出字還在不在輸入框：寧可多問一次，不放行
+                boolean noTree = tree == null;
+                if (isMessageTask(task) && st.lastTyped != null && !st.askedCats.contains("傳送訊息") && (noTree || stillInInput(tree, st.lastTyped))
+                        && ("enter".equals(actName) || (("tap".equals(actName) || "batch".equals(actName)) && (noTree || !"輸入框".equals(pickKind(tree, action)))))) {
                     OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
                     if (!ui.confirm(String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), st.lastTyped))) return L.t("已取消，訊息沒有送出。");
                     st.askedCats.add("傳送訊息");
