@@ -195,6 +195,21 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void macrosOnlyRecordCleanPaths() throws Exception {
+        java.util.List<org.json.JSONObject> clean = java.util.Arrays.asList(
+                new org.json.JSONObject().put("a", "open"), new org.json.JSONObject().put("a", "tap"), new org.json.JSONObject().put("a", "tap"));
+        assertTrue(Macros.isClean(clean));
+        java.util.List<org.json.JSONObject> detour = java.util.Arrays.asList(
+                new org.json.JSONObject().put("a", "tap"), new org.json.JSONObject().put("a", "back"), new org.json.JSONObject().put("a", "tap"));
+        assertTrue(!Macros.isClean(detour));
+        assertEquals("中途有返回（走錯路退回來）", Macros.uncleanWhy(detour));
+        java.util.List<org.json.JSONObject> scrolly = java.util.Arrays.asList(
+                new org.json.JSONObject().put("a", "scroll"), new org.json.JSONObject().put("a", "scroll"), new org.json.JSONObject().put("a", "scroll"));
+        assertTrue(!Macros.isClean(scrolly));
+        assertEquals(null, Macros.uncleanWhy(clean));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));

@@ -466,7 +466,7 @@ final class AgentLoop {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
         boolean macroSaved = false;
-        if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task) && !isMessageTask(task)) {
+        if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task) && !isMessageTask(task) && Macros.isClean(recorded)) {
             Macros.put(c, task, new JSONArray(recorded));   // 成功做完、每一步都能重播：記起來，下次同樣的任務直接重播
             macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
             macroSaved = true;
@@ -476,7 +476,8 @@ final class AgentLoop {
         if (!macroSaved && doneOk && !macroTried && Macros.enabled(c)) {   // 做完了卻沒記住：把原因寫進任務過程，不用猜
             macroNote = "這次沒有記住成巨集：" + (isQuestion(task) ? "任務像是在問問題" : hasBlockWord(task) ? "任務含敏感字（付款、刪除…）" : isMessageTask(task) ? "傳訊息任務不記"
                     : !macroValid[0] ? (macroWhy.isEmpty() ? "有步驟不能重播（問使用者、搜尋或看截圖）" : macroWhy)
-                    : recorded.size() < 2 ? "只有 " + recorded.size() + " 步，至少要 2 步" : "步驟超過 " + Macros.MAX_STEPS + " 步");
+                    : recorded.size() < 2 ? "只有 " + recorded.size() + " 步，至少要 2 步"
+                    : Macros.uncleanWhy(recorded) != null ? "這次繞了路：" + Macros.uncleanWhy(recorded) + "。等經驗引導 AI 走乾淨的那一次才會記成巨集" : "步驟超過 " + Macros.MAX_STEPS + " 步");
         }
         if (finalSay != null) {
             String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
