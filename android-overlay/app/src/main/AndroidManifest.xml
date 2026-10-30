@@ -170,10 +170,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".ErrorLogActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".TransferActivity"
             android:exported="false" />
 

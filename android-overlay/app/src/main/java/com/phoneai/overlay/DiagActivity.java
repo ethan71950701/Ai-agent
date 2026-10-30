@@ -14,6 +14,7 @@ import android.widget.TextView;
 /** 進階與診斷：版本、權限、無障礙、最近任務、語音除錯等原始資訊，和幾個實驗／測試入口。 */
 public class DiagActivity extends Activity {
     private TextView info;
+    private TextView errView;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -40,6 +41,20 @@ public class DiagActivity extends Activity {
         info.setTextSize(14);
         LinearLayout inner = Ui.card(this, box);
         inner.addView(info);
+
+        // 錯誤紀錄：App 當機或出錯時自動記下的（不只是問 AI 的部分），直接在這裡看；可以分享、存到 PhoneAI 資料夾、清除
+        Ui.section(this, box, L.t("錯誤紀錄"));
+        errView = Ui.body(this, "");
+        errView.setTextSize(11);
+        errView.setTypeface(android.graphics.Typeface.MONOSPACE);
+        errView.setTextIsSelectable(true);   // 長按可以選取、複製
+        Ui.card(this, box).addView(errView);
+        Ui.buttons(this, box,
+                Ui.button(this, L.t("分享"), v -> LogExport.shareText(this, CrashLog.read(this), "phoneai_errors_")),
+                Ui.button(this, L.t("存到 PhoneAI 資料夾"), v -> LogExport.saveText(this, CrashLog.read(this), "phoneai_errors_")),
+                Ui.button(this, L.t("清除"), v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("清除錯誤紀錄？"))
+                        .setPositiveButton(L.t("清除"), (d, w) -> { CrashLog.clear(this); refresh(); })
+                        .setNegativeButton(L.t("取消"), null).show()));
     }
 
     @Override
@@ -112,5 +127,9 @@ public class DiagActivity extends Activity {
         } catch (Exception e) { sb.append(L.t("（讀取失敗）\n")); }
         sb.append(L.t("\n最近一次通知診斷：\n")).append(OverlayService.lastDiag).append('\n');
         info.setText(sb);
+        String errs = CrashLog.read(this);
+        errView.setText(errs.trim().isEmpty()
+                ? L.t("目前沒有錯誤紀錄。App 當機或出錯時，會自動記在這裡；分享給開發者就能查原因。不含 API Key。")
+                : L.t("最新的在最下面。長按可以選取文字；分享或存檔前請自己看過。") + "\n\n" + errs);
     }
 }
