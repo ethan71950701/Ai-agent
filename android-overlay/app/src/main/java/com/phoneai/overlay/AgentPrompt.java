@@ -18,7 +18,7 @@ final class AgentPrompt {
             "{\"action\":\"double_tap\",\"x\":整數,\"y\":整數}，在同一點快速點兩下（雙擊，例如放大圖片、按讚）；有元件清單時也可以寫\"pick\":編號\n" +
             "{\"action\":\"longpress\",\"x\":整數,\"y\":整數,\"ms\":毫秒}，長按（ms不寫是800，300到5000）\n" +
             "{\"action\":\"drag\",\"x1\":整數,\"y1\":整數,\"x2\":整數,\"y2\":整數,\"hold_ms\":整數,\"ms\":整數}，先在(x1,y1)按住hold_ms（不寫是600）再拖到(x2,y2)，拖動花ms（不寫是500），用於移動桌面圖示、排序、拖曳滑桿\n" +
-            "{\"action\":\"batch\",\"actions\":[動作1,動作2,...]}，一次連續做完最多6個動作，中間不截圖也不問我（可用tap、swipe、longpress、drag、multitouch、scroll、wait、back、home、enter、type）。已經摸清楚規律、而且你能預測每個動作之後的畫面時才用，例如已經知道方塊放下的位置怎麼換算，就把同一回合的三個方塊一次放完，做完我才給你看新畫面。畫面可能被前一個動作改變（彈出視窗、換頁）而不確定時，不要用batch\n" +
+            "{\"action\":\"batch\",\"actions\":[動作1,動作2,...]}，一次連續做完最多10個動作（連點同一個地方，例如連點版本號碼7次，也可以一次做完），中間不截圖也不問我（可用tap、swipe、longpress、drag、multitouch、scroll、wait、back、home、enter、type）。已經摸清楚規律、而且你能預測每個動作之後的畫面時才用，例如已經知道方塊放下的位置怎麼換算，就把同一回合的三個方塊一次放完，做完我才給你看新畫面。畫面可能被前一個動作改變（彈出視窗、換頁）而不確定時，不要用batch\n" +
             "任何動作都可以多加一個\"remember\":\"一句通用經驗\"，把你摸索出來的規律馬上記起來，之後的任務和下一步都會看到。要寫得具體可用，可以含換算方式。例如玩方塊遊戲，用分段拖曳量出「手指在(x,y)、方塊實際出現在手指上方約120」之後，記成\"remember\":\"Block Blast 拖方塊時方塊會出現在手指上方約12%螢幕高度，目標格的下方約12%就是手指要放的位置\"。沒有新發現就不要寫，一個任務最多記3則，同樣的意思不要換句話重複記。只記「以後同類操作都適用的規則」（座標換算、手指與方塊的位置關係、哪種手勢有效、哪個按鈕在哪），不要記這一刻的畫面狀態（哪格有方塊、目前分數、這一局的盤面），那些下一步就過時了\n" +
             "拖方塊／拖物件的遊戲，常見的規則是「物件跟著手指的『位移』走」，不是跳到手指所在的位置：手指從起點移動多少，物件就移動多少（有些遊戲在按下的瞬間物件會往手指上方浮起一個固定距離L）。所以要把物件從目前中心B放到目標中心T：手指起點放在物件上（最好正中心B），終點 = 起點 +（T − B）；有浮起時再補償L（第一次分段拖曳時量出L = 物件中心與手指的垂直距離，記起來）。不要用「目標位置再往下多少」這種絕對位置的想法，每次起點不一樣就會偏。座標先用肉眼估，放完看結果，偏了就依偏差修正終點，不要整個重量\n" +
             "摸索新規則時：第一次用下面的分段拖曳量出手指和方塊的位置關係，最多量3次就要下結論，確定規律後立刻用remember記起來，之後同類操作直接用drag或batch一次做完，不要每一步都停下來看；只在結果可能出錯時才再用分段拖曳確認\n" +
@@ -61,7 +61,7 @@ final class AgentPrompt {
             "{\"action\":\"double_tap\",\"x\":int,\"y\":int}  (two quick taps at the same point, e.g. zoom a picture or like; with an element list you may use \"pick\":number)\n" +
             "{\"action\":\"longpress\",\"x\":int,\"y\":int,\"ms\":ms}  (default 800)\n" +
             "{\"action\":\"drag\",\"x1\":int,\"y1\":int,\"x2\":int,\"y2\":int,\"hold_ms\":int,\"ms\":int}  (hold at start, then drag; for moving icons and sorting)\n" +
-            "{\"action\":\"batch\",\"actions\":[...]}  (up to 6 actions in a row without looking at the screen between them)\n" +
+            "{\"action\":\"batch\",\"actions\":[...]}  (up to 10 actions in a row (e.g. tapping the build number 7 times fits in one batch) without looking at the screen between them)\n" +
             "Any action may add \"remember\":\"one general lesson\" to save a rule you worked out, so later steps see it.\n" +
             "{\"action\":\"type\",\"text\":\"text\",\"clear\":true,\"enter\":false}  (tap the input box first)\n" +
             "{\"action\":\"enter\"}  {\"action\":\"back\"}  {\"action\":\"home\"}  {\"action\":\"wait\",\"wait\":seconds}  (0.5 to 6)\n" +

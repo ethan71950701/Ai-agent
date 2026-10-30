@@ -32,7 +32,7 @@ final class AgentLoop {
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 12;   // 傳訊息這種任務正常就要 8～10 步（開 App、進對話、輸入、確認、送出、檢查）
-    private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 6;
+    private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 10;
     private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單", "安裝", "訂閱",
             "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout", "install", "subscribe"};   // 中文與英文的敏感詞
     private static final String[] READ_BINS = {"dumpsys", "getprop", "date", "settings", "cmd", "pm", "am", "ls", "cat", "df", "uptime", "free", "ps", "top", "wm", "uname"};
