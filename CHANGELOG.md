@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 任務過程頁新增「匯出紀錄」：把最近 20 筆任務（每一步的思考、動作、結果、token）加診斷資訊存成文字檔，用分享選單傳出去；不含 API Key，也會遮蔽看起來像 Key 的字串｜The task history page has a new "Export log" button: it saves the last 20 tasks (each step's thinking, action, result, tokens) plus diagnostics as a text file you can share; it contains no API keys and masks anything that looks like one.
+
+## 1.0.1387
+
 - 選 AI 服務時，如果這個服務的 Key 已經有了，不再跳出「怎麼申請 Key」的教學｜When choosing an AI service whose key is already saved, the "how to get a key" walkthrough is skipped.
 
 ## 1.0.1386
