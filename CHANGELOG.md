@@ -1,6 +1,7 @@
 # 更新說明 · Changelog
 
 每一條寫成「中文｜English」，App 依介面語言只顯示對應的那一半；Release 說明會用整段 `## Unreleased
+- 新增「三星提醒」：AI 用三星提醒公開的分享入口直接開新增畫面並填好標題（不用 root），再自己設定時間並儲存｜Samsung Reminder: the AI opens its new-reminder screen with the title pre-filled via its public share entry (no root needed), then sets the time and saves.
 - 要你接手時改用懸浮窗：畫面上方出現說明和「我做完了，繼續」按鈕，卡片可以拖動，其他地方照常可以操作（沒開無障礙服務才退回通知）｜Take-over requests now use a floating card at the top with a "Done, continue" button the card can be dragged and the rest of the screen stays usable (falls back to a notification only if the accessibility service is off).
 - 要你接手時：Now Bar 只放短字（避免掉回一般通知），另外跳一則會響、會彈出的「請你接手」通知，上面有「繼續」按鈕｜Take-over requests: the Now Bar shows short text only (so it stays a Live Update) and a separate heads-up "Please take over" notification with a Continue button sounds and pops up.
 - 批次動作一次最多 10 個（原本 6 個），連點版本號碼 7 次這類操作可以一次做完｜Batch actions now allow up to 10 steps (was 6), so things like tapping the build number 7 times fit in one batch.

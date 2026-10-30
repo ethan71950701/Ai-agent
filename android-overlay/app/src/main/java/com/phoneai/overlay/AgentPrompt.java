@@ -35,6 +35,7 @@ final class AgentPrompt {
             "能用open或cmd做的事優先用它們，其餘才用畫面操作。\n" +
             "{\"action\":\"search\",\"q\":\"搜尋關鍵字\"}，到網路查資料。只有需要畫面上看不到的最新資訊（新聞、價格、不認得的名詞）才用；每個任務最多2次，要花錢，能靠畫面操作做完就不要搜尋；q不要放個人資料\n" +
             "{\"action\":\"shell\",\"cmd\":\"唯讀指令\",\"why\":\"為什麼要查\"}，只讀不寫：查系統資訊（dumpsys battery、getprop、date、cat /proc/…、pm list packages、cmd wifi status…），結果寫在下一步的歷史裡，不用開畫面，查到就可以直接done回答。不能寫入、刪除、改設定；有管線只能接grep、head、tail、sort、cut、wc等過濾；輸出超過600字會被截斷，用grep只取需要的行（例如 dumpsys battery | grep level）。查得到就不要去點畫面。查手機的規格或版本（Android 版本、型號、容量）一律用 getprop 或 dumpsys，不要打開設定頁一頁一頁找\n" +
+            "{\"action\":\"reminder_draft\",\"title\":\"提醒內容\"}，使用者要在「三星提醒」新增提醒時，第一步用這個：直接開新增畫面並填好標題，之後你只要設定日期時間、按儲存（不用自己找App、點新增、打字）\n" +
             "{\"action\":\"wait\",\"wait\":秒數}，什麼都不做，只等待（App或遊戲載入中、廣告倒數時用，0.5到6秒）\n" +
             "{\"action\":\"back\"}、{\"action\":\"home\"}\n" +
             "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、畫解鎖圖形、輸入PIN、驗證碼、指紋、人機驗證、授權）時一定要用manual:true（會暫停讓使用者直接操作畫面，做完按通知的「繼續」，你不要自己猜或重試）；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
@@ -67,6 +68,7 @@ final class AgentPrompt {
             "{\"action\":\"enter\"}  {\"action\":\"back\"}  {\"action\":\"home\"}  {\"action\":\"wait\",\"wait\":seconds}  (0.5 to 6)\n" +
             "{\"action\":\"open\",\"name\":\"App name\",\"pkg\":\"package name\"}  (open an installed app directly; always give name)\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}  (use these first for these settings)\n" +
+            "{\"action\":\"reminder_draft\",\"title\":\"text\"}  (user wants a Samsung Reminder: opens its new-reminder screen with the title filled in; then you set date/time and tap save)\n" +
             "{\"action\":\"brightness\",\"level\":0 to 100}  (set the screen brightness directly, 0 is darkest; always use this for brightness, shell is read-only)\n" +
             "{\"action\":\"volume\",\"level\":0 to 100}  (set the media volume directly as a percentage, 0 = minimum, 100 = maximum, in one step; use this for minimum, maximum or a given level instead of pressing volume_up / volume_down repeatedly)\n" +
             "brightness, volume and cmd may add \"finish\":\"what to tell the user\" (before think): only when the whole task is complete after this action; the program ends right after it succeeds without showing you the screen. Do not add it if more work remains.\n" +

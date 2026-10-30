@@ -3,6 +3,7 @@ package com.phoneai.overlay;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
@@ -948,6 +949,8 @@ final class AgentLoop {
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
                 }
+                case "reminder_draft":
+                    return reminderDraft(c, a.optString("title"));
                 case "volume":
                     return Phone.setVolume(c, clamp(a.optInt("level", 50), 0, 100));
                 case "brightness": {
@@ -1121,6 +1124,8 @@ final class AgentLoop {
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;
             }
+            case "reminder_draft":
+                return reminderDraft(c, a.optString("title"));
             case "volume":
                 return Phone.setVolume(c, clamp(a.optInt("level", 50), 0, 100));
             case "brightness":
@@ -1166,6 +1171,22 @@ final class AgentLoop {
             if (!RippleAccessibilityService.imeEnter()) return shown + "，但沒辦法按送出（不用 root 時沒辦法送假的 Enter 鍵），請自己按";
         }
         return shown;
+    }
+
+    /** 開三星提醒的新增畫面並帶入標題（它的分享入口是公開的，不用 root）；時間和儲存要接著在畫面上做。 */
+    private static String reminderDraft(Context c, String title) {
+        title = title == null ? "" : title.trim();
+        if (title.isEmpty()) return "沒有給提醒標題";
+        if (BgDisplay.active) return "背景模式沒辦法開這個畫面，請改在主螢幕做";
+        if (title.length() > 100) title = title.substring(0, 100);
+        try {
+            c.startActivity(new Intent(Intent.ACTION_SEND).setType("text/plain")
+                    .setClassName("com.samsung.android.app.reminder", "com.samsung.android.app.reminder.ui.share.ShareActivity")
+                    .putExtra(Intent.EXTRA_TEXT, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return "已開啟三星提醒的新增畫面，標題「" + title + "」已填好，接著請設定日期時間並按儲存";
+        } catch (Exception e) {
+            return "打不開三星提醒的新增畫面（可能沒有三星提醒），請改用畫面操作";
+        }
     }
 
     /** 這類動作要靠截圖算座標，Haiku 常點錯。 */
