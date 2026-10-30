@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1385
+
 - 電量、儲存空間、幾點這類短問題不再用關鍵字攔截，平常交給 Haiku 5.5 聊天助理回答；只有連不上 AI（沒網路）時才用關鍵字直接回答（定時任務裡的短查詢不變）｜Short questions (battery, storage, time) are no longer caught by keywords; the Haiku 5.5 chat assistant answers them. Keyword answers are only used when the AI is unreachable (offline); scheduled short queries are unchanged.
 
 ## 1.0.1384
