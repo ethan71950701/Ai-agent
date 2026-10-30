@@ -396,7 +396,18 @@ final class AgentLoop {
                         macroValid[0] = false;
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
-                        String cat = manual ? null : sensitiveCategory(why);
+                        if (manual) {   // 要使用者自己動手（密碼、圖形、指紋…）：不跳會蓋住畫面的對話框，改暫停，讓他直接操作，做完按 Now Bar 的「繼續」
+                            OverlayService.paused = true;
+                            OverlayService.showStep(c, L.t("請你接手：") + why, step, MAX_STEPS);
+                            OverlayService.refreshNotification();
+                            try { c.getSystemService(android.os.Vibrator.class).vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)); } catch (Exception ignored) { }
+                            waitWhilePaused(ui);
+                            if (cancelled) return L.t("已取消。");
+                            history.add(step + ". 使用者剛親自處理完（" + why + "），畫面已經變了，請看最新的畫面繼續");
+                            step--;   // 等人的這一步不算進步數
+                            break;
+                        }
+                        String cat = sensitiveCategory(why);
                         if (cat == null && !manual && isMessageTask(task) && !st.askedCats.contains("傳送訊息")) cat = "傳送訊息";   // 傳訊息的任務裡 AI 自己問的確認就是在問要不要送出：同意後程式不再多跳第二個
                         if (cat != null && st.askedCats.contains(cat)) {   // 同一件事使用者剛同意過：不要連問好幾次
                             history.add(step + ". 使用者已經同意過這一類操作（" + cat + "），不用再問，直接做");

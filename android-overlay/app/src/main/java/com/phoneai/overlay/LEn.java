@@ -877,6 +877,7 @@ final class LEn {
         m.put("▾ 收起", "▾ Collapse");
         m.put("等你回答問題", "Waiting for your answer");
         m.put("等你確認", "Waiting for your confirmation");
+        m.put("請你接手：", "Please take over: ");
         m.put("朗讀引擎啟動失敗（代碼 ", "Speech engine failed to start (code ");
         m.put("朗讀失敗：", "Speech failed: ");
         m.put("沒有可朗讀的文字", "Nothing to read aloud");

@@ -37,7 +37,7 @@ final class AgentPrompt {
             "{\"action\":\"shell\",\"cmd\":\"唯讀指令\",\"why\":\"為什麼要查\"}，只讀不寫：查系統資訊（dumpsys battery、getprop、date、cat /proc/…、pm list packages、cmd wifi status…），結果寫在下一步的歷史裡，不用開畫面，查到就可以直接done回答。不能寫入、刪除、改設定；有管線只能接grep、head、tail、sort、cut、wc等過濾；輸出超過600字會被截斷，用grep只取需要的行（例如 dumpsys battery | grep level）。查得到就不要去點畫面。查手機的規格或版本（Android 版本、型號、容量）一律用 getprop 或 dumpsys，不要打開設定頁一頁一頁找\n" +
             "{\"action\":\"wait\",\"wait\":秒數}，什麼都不做，只等待（App或遊戲載入中、廣告倒數時用，0.5到6秒）\n" +
             "{\"action\":\"back\"}、{\"action\":\"home\"}\n" +
-            "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、驗證碼、指紋、授權）時manual設true，使用者做完會按是，之後你再看畫面繼續；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
+            "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、畫解鎖圖形、輸入PIN、驗證碼、指紋、人機驗證、授權）時一定要用manual:true（會暫停讓使用者直接操作畫面，做完按通知的「繼續」，你不要自己猜或重試）；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
             "{\"action\":\"ask_user\",\"question\":\"要問使用者的問題\"}，需要使用者選擇做法、補充說明、回答你的問題，或任務太模糊時用；會跳出助理面板，使用者可以用語音或打字回答，答案會寫在下一步的歷史裡（使用者沒回答就視為取消任務）；問題要具體、一次只問一件事，可以附上你想到的選項（例如「要依類型分資料夾，還是依使用頻率排列？」）\n" +
             "{\"action\":\"done\",\"say\":\"要告訴使用者的話\"}，只有確定任務已完成才用；say如果是使用者要查的資訊（名稱、數字、結果…），多加\"show\":true（寫在think前面），會跳出卡片讓他看；只是「完成了」就不要加\n" +
             "{\"action\":\"fail\",\"say\":\"原因\"}，真的做不到時用（不是因為內容敏感）\n" +
@@ -73,7 +73,7 @@ final class AgentPrompt {
             "{\"action\":\"open_url\",\"url\":\"URL\"}  (open a web page or app page by URL; to search Google Play use market://search?q=KEYWORD with %20 for spaces; prefer this over typing non-ASCII text)\n" +
             "Prefer open and cmd over screen actions when they can do the job.\n" +
             "{\"action\":\"search\",\"q\":\"keywords\"}  (web search; only for information not on screen; at most 2 per task; it costs money)\n" +
-            "{\"action\":\"ask\",\"why\":\"reason\",\"manual\":false}  (for payment, transfer, deleting, installing, sending, login or other sensitive actions; manual true when the user must type a password, code or fingerprint)\n" +
+            "{\"action\":\"ask\",\"why\":\"reason\",\"manual\":false}  (for payment, transfer, deleting, installing, sending, login or other sensitive actions; ALWAYS manual true when the user must enter a password, PIN, draw an unlock pattern, give a code, fingerprint or solve a CAPTCHA: it pauses so the user can operate the screen directly and press Continue on the notification; do not guess or retry yourself)\n" +
             "{\"action\":\"ask_user\",\"question\":\"question\"}  (when you need the user to choose, explain or answer; one clear question)\n" +
             "{\"action\":\"done\",\"say\":\"what to tell the user\"}  (only when the task is really finished; add \"show\":true before think when say is information the user asked for, such as a name, number or result, so a card is shown; leave it out for a plain \"done\")\n" +
             "{\"action\":\"fail\",\"say\":\"reason\"}  (only when it truly cannot be done)\n" +
