@@ -46,8 +46,10 @@ final class LlmAdapter {
                     if ("text".equals(b.optString("type"))) text.append(b.optString("text"));
                     else if ("tool_use".equals(b.optString("type"))) {
                         JSONObject in = b.optJSONObject("input");
-                        calls.put(new JSONObject().put("id", b.optString("id")).put("type", "function")
-                                .put("function", new JSONObject().put("name", b.optString("name")).put("arguments", in == null ? "{}" : in.toString())));
+                        JSONObject call = new JSONObject().put("id", b.optString("id")).put("type", "function")
+                                .put("function", new JSONObject().put("name", b.optString("name")).put("arguments", in == null ? "{}" : in.toString()));
+                        if (b.optJSONObject("extra_content") != null) call.put("extra_content", b.getJSONObject("extra_content"));   // Gemini 3 的 thought_signature：回傳工具結果時要原樣帶回，不然會 400
+                        calls.put(call);
                     }
                 }
                 am.put("content", text.length() == 0 && calls.length() > 0 ? JSONObject.NULL : text.toString());
@@ -77,8 +79,11 @@ final class LlmAdapter {
         for (int i = 0; tools != null && i < tools.length(); i++) {
             JSONObject t = tools.getJSONObject(i);
             if (!t.has("input_schema")) continue;   // Claude 專屬的伺服器工具（網頁搜尋）別家沒有
-            fns.put(new JSONObject().put("type", "function").put("function", new JSONObject().put("name", t.optString("name"))
-                    .put("description", t.optString("description")).put("parameters", t.getJSONObject("input_schema"))));
+            JSONObject schema = t.getJSONObject("input_schema");
+            JSONObject fn = new JSONObject().put("name", t.optString("name")).put("description", t.optString("description"));
+            JSONObject props = schema.optJSONObject("properties");
+            if (props != null && props.length() > 0) fn.put("parameters", schema);   // 沒有參數的工具不送空的 properties（Gemini 會拒絕）
+            fns.put(new JSONObject().put("type", "function").put("function", fn));
         }
         if (fns.length() > 0) out.put("tools", fns);
         return out;
@@ -97,7 +102,9 @@ final class LlmAdapter {
             if (f == null) continue;
             JSONObject input;
             try { input = new JSONObject(f.optString("arguments", "{}")); } catch (Exception e) { input = new JSONObject(); }
-            content.put(new JSONObject().put("type", "tool_use").put("id", calls.getJSONObject(i).optString("id")).put("name", f.optString("name")).put("input", input));
+            JSONObject tu = new JSONObject().put("type", "tool_use").put("id", calls.getJSONObject(i).optString("id")).put("name", f.optString("name")).put("input", input);
+            if (calls.getJSONObject(i).optJSONObject("extra_content") != null) tu.put("extra_content", calls.getJSONObject(i).getJSONObject("extra_content"));
+            content.put(tu);
         }
         String fr = choice.optString("finish_reason");
         String stop = content.length() > 0 && calls != null && calls.length() > 0 ? "tool_use" : "length".equals(fr) ? "max_tokens" : "end_turn";

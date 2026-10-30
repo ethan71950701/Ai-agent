@@ -61,6 +61,14 @@ final class LlmConfig {
         return "key_" + (h == null ? "custom" : h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "_"));
     }
 
+    /** 這個服務自己的 Key 檔已經存過了（不算舊版的 openai_key 備援，那可能是別家的）。 */
+    static boolean hasOwnKey(Context c, Slot s) {
+        try {
+            java.io.File f = new java.io.File(c.getFilesDir(), keyFile(s));
+            return f.isFile() && new String(java.nio.file.Files.readAllBytes(f.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim().length() > 0;
+        } catch (Exception e) { return false; }
+    }
+
     /** 這個欄位用的 Key；沒有回 null。舊版的 openai_key 當備援。 */
     static String readKey(Context c, Slot s) {
         String[] files = s.openai() ? new String[]{keyFile(s), "openai_key"} : new String[]{"claude_key"};

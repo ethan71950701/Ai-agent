@@ -115,6 +115,11 @@ final class AiServiceUi {
         if (!LlmConfig.VISION.equals(scope)) LlmConfig.set(a, LlmConfig.CHEAP, LlmConfig.OPENAI, b, cheapModel);
         if (!LlmConfig.CHEAP.equals(scope)) LlmConfig.set(a, LlmConfig.VISION, LlmConfig.OPENAI, b, visionModel);
         LlmConfig.Slot s = LlmConfig.VISION.equals(scope) ? LlmConfig.vision(a) : LlmConfig.cheap(a);
+        if (LlmConfig.hasOwnKey(a, s)) {   // 這個服務的 Key 以前輸入過：直接沿用，不用每次重打
+            android.widget.Toast.makeText(a, L.t("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）"), android.widget.Toast.LENGTH_LONG).show();
+            offerModelList(a, scope, done);
+            return;
+        }
         Maintenance.askKeyFor(a, LlmConfig.keyFile(s), L.t("API Key：") + LlmConfig.host(b), () -> offerModelList(a, scope, done));
     }
 

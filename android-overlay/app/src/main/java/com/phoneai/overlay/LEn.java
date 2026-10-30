@@ -880,6 +880,7 @@ final class LEn {
         m.put("等你接手", "Waiting for you to take over");
         m.put("需要你接手", "Take-over needed");
         m.put("請你接手", "Please take over");
+        m.put("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）", "This service already has a key; reusing it (to change it, go to Functions → Maintenance).");
         m.put("我做完了，繼續", "Done, continue");
         m.put("\n做完按「繼續」，AI 會接著做。", "\nPress Continue when done and the AI carries on.");
         m.put("朗讀引擎啟動失敗（代碼 ", "Speech engine failed to start (code ");

@@ -217,4 +217,19 @@ public class LlmAdapterTest {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));
     }
+
+    @Test
+    public void keepsGeminiThoughtSignatureOnToolCalls() throws Exception {
+        JSONObject r = new JSONObject("{\"choices\":[{\"finish_reason\":\"tool_calls\",\"message\":{\"content\":null,\"tool_calls\":[{\"id\":\"c1\",\"type\":\"function\","
+                + "\"extra_content\":{\"google\":{\"thought_signature\":\"sig\"}},\"function\":{\"name\":\"get_time\",\"arguments\":\"{}\"}}]}}]}");
+        JSONObject c = LlmAdapter.fromOpenAi(r);
+        JSONObject tu = c.getJSONArray("content").getJSONObject(0);
+        assertEquals("sig", tu.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"));
+        JSONObject body = new JSONObject().put("model", "x").put("max_tokens", 10).put("messages", new org.json.JSONArray()
+                .put(new JSONObject().put("role", "user").put("content", "hi"))
+                .put(new JSONObject().put("role", "assistant").put("content", c.getJSONArray("content"))));
+        JSONObject out = LlmAdapter.toOpenAi(body, "mini", "big", false);
+        JSONObject call = out.getJSONArray("messages").getJSONObject(1).getJSONArray("tool_calls").getJSONObject(0);
+        assertEquals("sig", call.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"));
+    }
 }

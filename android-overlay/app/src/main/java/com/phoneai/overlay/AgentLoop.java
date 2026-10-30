@@ -1229,7 +1229,9 @@ final class AgentLoop {
         if (!readOnly(cmd)) return "拒絕：這不是唯讀指令";
         if (!Root.available()) return "沒有 root 或 Shizuku，不能執行系統指令";
         String out = Maintenance.suRun(cmd);
-        return out.length() > 1500 ? out.substring(0, 1500) + "…（太長已截斷）" : out;
+        if (out.length() <= 1500) return out;
+        int lines = out.split("\n").length;
+        return out.substring(0, 1500) + "…（太長已截斷；完整輸出共 " + lines + " 行，要數數量請直接用這個行數，或改用 | wc -l）";
     }
 
     private static String reminderDraft(Context c, String title) {
