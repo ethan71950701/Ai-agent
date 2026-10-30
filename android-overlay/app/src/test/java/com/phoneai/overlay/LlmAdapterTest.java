@@ -2,6 +2,7 @@ package com.phoneai.overlay;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -231,5 +232,14 @@ public class LlmAdapterTest {
         JSONObject out = LlmAdapter.toOpenAi(body, "mini", "big", false);
         JSONObject call = out.getJSONArray("messages").getJSONObject(1).getJSONArray("tool_calls").getJSONObject(0);
         assertEquals("sig", call.getJSONObject("extra_content").getJSONObject("google").getString("thought_signature"));
+    }
+
+    @Test
+    public void exportRedactsKeys() {
+        String r = LogExport.redact("key AIzaSyA1234567890abcdefghijklmnop and sk-abcdefghijklmnopqrstu and Bearer abcdef1234567890 ok");
+        assertFalse(r.contains("AIzaSy"));
+        assertFalse(r.contains("sk-abc"));
+        assertFalse(r.contains("abcdef1234567890"));
+        assertTrue(r.contains("ok"));
     }
 }

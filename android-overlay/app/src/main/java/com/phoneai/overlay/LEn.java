@@ -880,6 +880,11 @@ final class LEn {
         m.put("等你接手", "Waiting for you to take over");
         m.put("需要你接手", "Take-over needed");
         m.put("請你接手", "Please take over");
+        m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
+        m.put("匯出紀錄", "Export log");
+        m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing.");
+        m.put("匯出", "Export");
+        m.put("匯出失敗：", "Export failed: ");
         m.put("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）", "This service already has a key; reusing it (to change it, go to Functions → Maintenance).");
         m.put("我做完了，繼續", "Done, continue");
         m.put("\n做完按「繼續」，AI 會接著做。", "\nPress Continue when done and the AI carries on.");
