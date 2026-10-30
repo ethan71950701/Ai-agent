@@ -258,12 +258,13 @@ final class AgentLoop {
                 boolean useTree = tree != null && !tree.isEmpty();
                 // 傳訊息：只看元件清單就能確認有沒有送出（輸入框還留著剛輸入的字＝還沒送出；清空了＝已送出），不用截圖
                 if (useTree && st.lastTyped != null && isMessageTask(task)) {
-                    boolean still = stillInInput(tree, st.lastTyped);
+                    boolean still = stillInInput(tree, st.lastTyped), bubble = messageVisible(tree, st.lastTyped);
                     String short1 = st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped;
                     String hint = still ? "提示：輸入框裡還留著「" + short1 + "」，訊息還沒送出：請點「傳送／送出」按鈕（Enter 不一定會送出）；清單裡找不到按鈕就用 look 看截圖再用座標 tap"
-                            : "提示：輸入框已清空，訊息應該已經送出；確認對話裡有「" + short1 + "」就可以 done";
+                            : bubble ? "提示：對話裡已經看到「" + short1 + "」，訊息已送出，可以 done"
+                            : "提示：輸入框是空的，但對話裡也看不到「" + short1 + "」：文字可能根本沒輸入進去，或還沒送出。請重新點一下輸入框、再輸入一次（不確定畫面就用 look）";
                     if (!hint.equals(st.lastHint)) { history.add(hint); st.lastHint = hint; }
-                    if (!still && st.sendCand != null) {   // 用座標點完、輸入框清空：傳送鈕沒有名稱，把位置記進這個 App 的經驗，下次不用再截圖找
+                    if (!still && bubble && st.sendCand != null) {   // 用座標點完、輸入框清空：傳送鈕沒有名稱，把位置記進這個 App 的經驗，下次不用再截圖找
                         try {
                             String app = !st.opened.isEmpty() ? st.opened.get(0) : fgNow;
                             if (Memory.addLesson(c, sendButtonLesson(ProtectedApps.label(c, app == null ? "" : app), st.sendCand[0], st.sendCand[1]), app)) {
@@ -342,10 +343,10 @@ final class AgentLoop {
                     st.sendCand = new int[]{(int) Math.round(action.optDouble("x")), (int) Math.round(action.optDouble("y"))};   // 用座標點的按鈕：可能就是傳送鈕
                 switch (name) {
                     case "done":
-                        if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && stillInInput(tree, st.lastTyped)) {
+                        if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && (stillInInput(tree, st.lastTyped) || !messageVisible(tree, st.lastTyped))) {
                             st.doneRejects++;
-                            history.add(step + ". done 被擋下：輸入框裡還留著剛輸入的「" + (st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped)
-                                    + "」，代表還沒送出。請點「傳送／送出」按鈕（Enter 不一定會送出），看到訊息出現在對話裡、輸入框清空了再 done");
+                            history.add(step + ". done 被擋下：看不出訊息「" + (st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped)
+                                    + "」已經送出（輸入框裡還留著字，或對話裡看不到它）。請點「傳送／送出」按鈕（Enter 不一定會送出），看到訊息出現在對話裡、輸入框清空了再 done");
                             break;
                         }
                         doneOk = true;
@@ -714,6 +715,13 @@ final class AgentLoop {
         return null;
     }
 
+    /** 對話裡（不是輸入框）有沒有出現剛輸入的文字：有＝訊息已經送出並顯示在對話中。 */
+    static boolean messageVisible(List<JSONObject> tree, String typed) {
+        if (tree == null || typed == null || typed.trim().isEmpty()) return false;
+        for (JSONObject o : tree) if (!"輸入框".equals(o.optString("k")) && o.optString("t").contains(typed.trim())) return true;
+        return false;
+    }
+
     /** 傳送鈕位置的經驗（座標是 0 到 1000 的相對位置）。 */
     static String sendButtonLesson(String appLabel, int x, int y) {
         return "傳訊息：" + appLabel + " 的聊天室，傳送鈕只有圖示、元件清單裡找不到；輸入文字後直接用座標 tap（約 x=" + x + "、y=" + y + "）送出，不用截圖、也不要靠 Enter";
@@ -1051,9 +1059,9 @@ final class AgentLoop {
     /** 沒有 root 的輸入：用無障礙直接填進焦點欄位，不行再用「貼上」；送出用輸入法的動作鍵。 */
     private static String typeNoRoot(String text, boolean clear, boolean enter, Context c) {
         boolean done = text.isEmpty();
-        if (!done) done = RippleAccessibilityService.setFocusedText(text, !clear);
-        if (!done && paste(c, text)) done = RippleAccessibilityService.pasteFocused();
-        if (!done) return "沒辦法輸入：沒有選取中的輸入框，請先點一下輸入框再輸入";
+        if (!done) { done = RippleAccessibilityService.setFocusedText(text, !clear); sleep(250); if (done && landed(text) == 0) done = false; }   // 回報成功但文字沒進去：改用貼上
+        if (!done && paste(c, text)) { done = RippleAccessibilityService.pasteFocused(); sleep(250); if (done && landed(text) == 0) done = false; }
+        if (!done) return "沒辦法輸入：沒有選取中的輸入框，或輸入框沒收到文字。請先點一下輸入框（不確定位置就用 look 看截圖）再輸入";
         String shown = "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
         if (enter) {
             sleep(200);
@@ -1241,8 +1249,12 @@ final class AgentLoop {
         if (!Root.available()) return typeNoRoot(text, clear, enter, c);
         if (!BgDisplay.active && !text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
             // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
-            if (enter) { sleep(200); pressEnter(); }
-            return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+            sleep(250);
+            if (landed(text) != 0) {   // 進去了（或讀不到輸入框、無法判斷）才算成功；有些 App（例如 Instagram 的聊天輸入框）回報成功但文字根本沒進去
+                if (enter) { sleep(200); pressEnter(); }
+                return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+            }
+            // 沒進去：往下改用鍵盤輸入／貼上
         }
         if (clear) { sh("input keycombination 113 29"); sh("input keyevent 67"); }
         if (text.matches("[A-Za-z0-9 ]*")) {
@@ -1261,8 +1273,17 @@ final class AgentLoop {
             if (!paste(c, text)) return "沒辦法輸入「" + text + "」：剪貼簿寫不進去（Android 的限制），不要再試貼上，改用 open_url 開網址";
             sh("input keyevent 279");   // KEYCODE_PASTE
         }
+        sleep(250);
+        if (!text.isEmpty() && landed(text) == 0) return "輸入失敗：輸入框裡看不到「" + (text.length() > 20 ? text.substring(0, 20) + "…" : text) + "」。輸入框可能沒有聚焦，請先點一下輸入框（不確定位置就用 look 看截圖）再輸入";
         if (enter) pressEnter();
         return "已輸入" + (text.length() > 30 ? text.substring(0, 30) + "…" : text);
+    }
+
+    /** 剛輸入的文字有沒有真的進到焦點輸入框：1＝有、0＝輸入框讀得到但裡面沒有、-1＝讀不到輸入框（無法判斷，當作成功）。 */
+    private static int landed(String text) {
+        String now = RippleAccessibilityService.focusedInputText();
+        if (now == null) return -1;
+        return now.contains(text) ? 1 : 0;
     }
 
     /** 切到英文鍵盤（有的話）；回傳原本的鍵盤 id，之後要切回去。找不到英文鍵盤回傳 null（呼叫端就不輸入）。 */

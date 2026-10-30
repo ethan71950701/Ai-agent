@@ -272,6 +272,18 @@ public class RippleAccessibilityService extends AccessibilityService {
         return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, args);
     }
 
+    /** 目前焦點輸入框裡的文字（顯示提示字時回空字串）；沒有焦點輸入框或讀不到回 null。 */
+    static String focusedInputText() {
+        RippleAccessibilityService s = instance;
+        if (s == null) return null;
+        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        if (root == null) return null;
+        android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
+        if (node == null || !node.isEditable()) return null;
+        if (node.isShowingHintText() || node.getText() == null) return "";
+        return node.getText().toString();
+    }
+
     /** 對目前焦點的輸入框送出輸入法的動作鍵（搜尋／前往／送出）；有些 App（例如 Google 地圖的搜尋框）不吃假的 Enter 鍵。成功回 true。 */
     static boolean imeEnter() {
         RippleAccessibilityService s = instance;

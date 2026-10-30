@@ -168,6 +168,8 @@ public class LlmAdapterTest {
         java.util.List<org.json.JSONObject> tree = java.util.Arrays.asList(
                 new org.json.JSONObject().put("n", 1).put("k", "輸入框").put("t", "123"),
                 new org.json.JSONObject().put("n", 2).put("k", "文字").put("t", "謝小明"));
+        assertTrue(!AgentLoop.messageVisible(tree, "123"));   // 只在輸入框裡：還沒送出
+        assertTrue(AgentLoop.messageVisible(java.util.Arrays.asList(new org.json.JSONObject().put("n", 3).put("k", "文字").put("t", "123")), "123"));
         assertTrue(AgentLoop.stillInInput(tree, "123"));
         assertTrue(!AgentLoop.stillInInput(tree, "456"));
         assertTrue(!AgentLoop.stillInInput(java.util.Arrays.asList(new org.json.JSONObject().put("n", 2).put("k", "文字").put("t", "123")), "123"));   // 在對話泡泡裡＝已送出
