@@ -6,10 +6,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 傳訊息：輸入框不回報焦點（如 Instagram）時改找畫面最下面的輸入框輸入，並掃畫面確認文字真的進去，沒進去就回報失敗；傳訊息任務不再重播／記住巨集；沒輸入過任何字就說完成會被擋下（對話裡以前傳過的舊訊息不算）；AI 用了不存在的動作時，回報可用的動作清單｜Messaging: when the input box does not report focus (like Instagram) the lowest input box on screen is used and the screen is scanned to confirm the text really landed (otherwise it fails); messaging tasks no longer replay or record macros; finishing without ever typing is blocked (old messages in the chat do not count); an unknown AI action now gets the list of valid actions
+## 1.0.1357
 
 - 傳訊息：判斷「已送出」改成要在對話裡看到那段文字才算（輸入框空了但對話裡沒有，代表文字可能根本沒輸入進去）｜Messaging: "sent" now requires the text to show up in the conversation (an empty input box without the text in the chat means it may never have been typed)
 
 - 輸入文字後會檢查文字真的進了輸入框：有些 App（如 Instagram 聊天室）無障礙回報成功、文字卻沒進去，會改用鍵盤輸入／貼上，還是不行就回報「輸入失敗」並提示先點輸入框，不再假裝已輸入｜After typing it now checks that the text really landed in the input box: some apps (like Instagram chat) report success through accessibility without taking the text, so it falls back to keyboard input / paste and reports "input failed" with a hint if that fails too, instead of pretending it typed
+
 ## 1.0.1356
 
 - 傳訊息：用座標點到沒有名稱的傳送鈕、而且輸入框清空後，會自動把「這個 App 傳送鈕的位置」存進經驗，下次直接用座標點，不用再截圖找｜Messaging: when an unnamed Send button was tapped by coordinates and the input box then emptied, the button's position is saved as an experience for that app so next time it is tapped directly without a screenshot
