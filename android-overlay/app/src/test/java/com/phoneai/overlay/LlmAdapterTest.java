@@ -206,6 +206,9 @@ public class LlmAdapterTest {
         java.util.List<org.json.JSONObject> scrolly = java.util.Arrays.asList(
                 new org.json.JSONObject().put("a", "scroll"), new org.json.JSONObject().put("a", "scroll"), new org.json.JSONObject().put("a", "scroll"));
         assertTrue(!Macros.isClean(scrolly));
+        java.util.List<org.json.JSONObject> oneScroll = java.util.Arrays.asList(
+                new org.json.JSONObject().put("a", "tap"), new org.json.JSONObject().put("a", "scroll"), new org.json.JSONObject().put("a", "tap"));
+        assertTrue(!Macros.isClean(oneScroll));   // 連一次捲動都不記
         assertEquals(null, Macros.uncleanWhy(clean));
     }
 

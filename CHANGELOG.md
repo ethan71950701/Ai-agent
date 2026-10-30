@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 巨集不記任何有捲動或返回的做法（捲到的位置每次不一樣、返回代表走錯路），舊版已記下的這類巨集也不再重播；新增內建經驗：三星設定裡 Wi-Fi、藍牙、NFC 在「連接」頁，「已連接的裝置」不是開關頁，讓 AI 少走偏路｜Macros no longer record any run with a scroll or a Back press (scroll positions differ each time, Back means a wrong turn) and old macros of that kind are no longer replayed; a built-in experience says that on Samsung Settings Wi-Fi, Bluetooth and NFC are under Connections and "Connected devices" is not a switch page, so the AI takes fewer wrong turns
+
 - 巨集只記走得乾淨的那一次：中途有「返回」、捲動超過 2 次、或超過 8 步的做法不記（重播只會重走冤枉路）；任務過程會寫原因。先靠自動總結的經驗讓 AI 走對路，走乾淨的那次才升級成巨集｜Macros now record only clean runs: a run with a Back press, more than 2 scrolls or more than 8 steps is not recorded (replaying it would just redo the detour) and the task log says why; the auto-summarised experience first helps the AI find the right path, and the clean run then becomes a macro
 ## 1.0.1367
 

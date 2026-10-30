@@ -49,7 +49,13 @@ final class Macros {
 
     static synchronized JSONArray get(Context c, String task) {
         JSONObject m = load(c).optJSONObject(key(task));
-        return m == null ? null : m.optJSONArray("steps");
+        JSONArray steps = m == null ? null : m.optJSONArray("steps");
+        // 舊版記下的、含返回或捲動的巨集不再重播（重播只會重走冤枉路、或捲到不同位置）
+        for (int i = 0; steps != null && i < steps.length(); i++) {
+            String a = steps.optJSONObject(i) == null ? "" : steps.optJSONObject(i).optString("a");
+            if ("back".equals(a) || "scroll".equals(a)) return null;
+        }
+        return steps;
     }
 
     static synchronized void put(Context c, String task, JSONArray steps) {
@@ -162,7 +168,7 @@ final class Macros {
     }
 
     /**
-     * 這次的做法乾不乾淨：沒有「返回」（返回＝走錯了退回來）、捲動不超過 2 次、不超過 8 步。
+     * 這次的做法乾不乾淨：沒有「返回」（返回＝走錯了退回來）、完全沒有捲動（捲動的位置每次不一樣，重播不可靠）、不超過 8 步。
      * 繞了路的流程不記成巨集（重播只會重走冤枉路）；先靠經驗讓 AI 走對，走乾淨的那一次才升級成巨集。
      */
     static boolean isClean(List<JSONObject> steps) {
@@ -173,7 +179,7 @@ final class Macros {
             if ("back".equals(a)) return false;
             if ("scroll".equals(a)) scrolls++;
         }
-        return scrolls <= 2;
+        return scrolls == 0;
     }
 
     /** 不乾淨的原因（給任務過程看）；乾淨回 null。 */
@@ -185,7 +191,7 @@ final class Macros {
             if ("back".equals(s.optString("a"))) return "中途有返回（走錯路退回來）";
             if ("scroll".equals(s.optString("a"))) scrolls++;
         }
-        return scrolls > 2 ? "捲動太多次" : null;
+        return scrolls > 0 ? "有捲動（每次捲到的位置不一樣，重播不可靠）" : null;
     }
 
     /** 點擊要記得「點的是哪個有名稱的元件」；沒有名稱（純圖示、用座標點的）下次找不回來，回 null。 */

@@ -92,6 +92,11 @@ final class Memory {
                 addLesson(c, calc, pkg);
             sp.edit().putBoolean("seed_lessons_v1", true).apply();
         } catch (Exception ignored) { }
+        if (sp.getBoolean("seed_lessons_v2", false)) return;
+        try {   // 三星設定：藍牙、Wi-Fi 等開關都在「連接」頁；「已連接的裝置」是已配對裝置的管理頁，AI 常先點錯
+            addLesson(c, "三星設定：Wi-Fi、藍牙、NFC、行動網路都在「連接」頁裡（設定首頁最上面幾項之一）；「已連接的裝置」是已配對裝置的管理頁，找藍牙或 Wi-Fi 不要先點它。", "com.android.settings");
+            sp.edit().putBoolean("seed_lessons_v2", true).apply();
+        } catch (Exception ignored) { }
     }
 
     /** 開始任務前要帶進提示的經驗：通用的 6 則（依跟任務文字的相關程度挑，不夠相關的用最新的補）+ 這些 App 的最新 8 則。 */
