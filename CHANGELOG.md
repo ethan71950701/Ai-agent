@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 圈選提問：截圖或開啟畫面時的錯誤改成顯示提示，不再讓整個 App 當掉；接續對話時背景模式鈕不再被藏起來（以前看起來像被圈選鈕擠掉）｜Circle to ask: errors while taking the screenshot or opening the screen now show a message instead of crashing the whole app; in follow-up replies the background-mode button is no longer hidden (it used to look like the circle button pushed it out).
+
+## 1.0.1393
+
 - 新功能「圈選提問」：助理面板輸入列左邊多一顆 ◎，按下後面板收起、截下目前畫面，用手指圈出想問的地方，AI 看著圈起來的區域（加一張縮小的整個畫面當上下文）回答，還能接著追問；需要無障礙服務或 root／Shizuku 才能截圖｜New "Circle to ask": a ◎ button next to the assistant input row hides the panel and freezes the screen; circle something with your finger and the AI answers about that region (plus a small copy of the whole screen for context) and you can follow up; needs the accessibility service or root / Shizuku to take the screenshot.
 
 ## 1.0.1392
