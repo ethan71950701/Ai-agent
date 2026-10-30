@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1367
+
 - 走了冤枉路（6 步以上）才完成的任務，AI 沒自己記經驗時，會請便宜模型用一句話總結「下次可以直接走的路徑」（例如「三星設定：藍牙在「連接」頁裡」）存成該 App 的經驗，並通知你；多花一次便宜呼叫（約 $0.0003）｜After a task that needed 6+ steps succeeds and the AI saved no lesson itself, the cheap model summarises the reusable path in one sentence (e.g. "Samsung Settings: Bluetooth is inside the Connections page") and saves it as that app's experience, with a notification; costs one cheap call (about $0.0003)
 
 ## 1.0.1366
