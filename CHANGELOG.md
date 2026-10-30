@@ -6,9 +6,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1370
+
 - AI 更會自己記經驗：走錯路（點錯、按過返回）或 5 步以上才完成時，會自動請便宜模型總結一句規律存成該 App 的經驗；提示也要求 AI 一找到正確位置就當場記下。移除手寫的內建經驗，改由 AI 自己學｜The AI learns experiences by itself more reliably: after a wrong turn (wrong tap, Back press) or a 5+ step success the cheap model summarises a one-sentence rule and saves it for that app, and the prompt asks the AI to note the right place the moment it finds it. The hand-written built-in experience was removed so the AI learns it itself
 
 - 巨集不記任何有捲動或返回的做法（捲到的位置每次不一樣、返回代表走錯路），舊版已記下的這類巨集也不再重播｜Macros no longer record any run with a scroll or a Back press (scroll positions differ each time, Back means a wrong turn) and old macros of that kind are no longer replayed; a built-in experience says that on Samsung Settings Wi-Fi, Bluetooth and NFC are under Connections and "Connected devices" is not a switch page, so the AI takes fewer wrong turns
+
 ## 1.0.1368
 
 - 巨集只記走得乾淨的那一次：中途有「返回」、捲動超過 2 次、或超過 8 步的做法不記（重播只會重走冤枉路）；任務過程會寫原因。先靠自動總結的經驗讓 AI 走對路，走乾淨的那次才升級成巨集｜Macros now record only clean runs: a run with a Back press, more than 2 scrolls or more than 8 steps is not recorded (replaying it would just redo the detour) and the task log says why; the auto-summarised experience first helps the AI find the right path, and the clean run then becomes a macro
