@@ -889,6 +889,12 @@ final class LEn {
         m.put("重新圈選", "Circle again");
         m.put("圈選提問", "Circle to ask");
         m.put("圈選失敗：", "Circle failed: ");
+        m.put("錯誤紀錄", "Error log");
+        m.put("App 當機或出錯時的紀錄，可以分享給開發者", "Crashes and errors the app recorded; you can share it with the developer");
+        m.put("目前沒有錯誤紀錄。App 當機或出錯時，會自動記在這裡；分享給開發者就能查原因。不含 API Key。", "No errors recorded. When the app crashes or hits an error it is recorded here; share it with the developer to find the cause. It does not contain API keys.");
+        m.put("最新的在最下面。長按可以選取文字；分享或存檔前請自己看過。", "The newest entry is at the bottom. Long-press to select text; please review it before sharing or saving.");
+        m.put("清除", "Clear");
+        m.put("清除錯誤紀錄？", "Clear the error log?");
         m.put("AI 沒有回答", "The AI gave no answer");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");

@@ -160,6 +160,7 @@ final class ChatEngine {
                 lastError = L.t("AI 沒有回答");
             } catch (Exception e) {
                 lastError = String.valueOf(e.getMessage() == null ? e : e.getMessage());
+                CrashLog.w("圈選提問（" + model + "）", e);
             }
         }
         return null;
@@ -322,6 +323,7 @@ final class ChatEngine {
             return reply;
         } catch (Exception e) {
             android.util.Log.w("ChatEngine", L.t("聊天失敗: ") + e);
+            CrashLog.w("聊天失敗", e);
             lastError = String.valueOf(e.getMessage() == null ? e : e.getMessage());
             return null;
         }

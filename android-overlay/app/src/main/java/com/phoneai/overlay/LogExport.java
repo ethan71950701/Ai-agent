@@ -62,7 +62,66 @@ final class LogExport {
                 if (!s.optString("result").isEmpty()) sb.append("    結果：").append(s.optString("result")).append('\n');
             }
         }
+        String errs = CrashLog.read(c);
+        if (!errs.trim().isEmpty()) sb.append("\n====== 錯誤紀錄（當機與出錯） ======\n").append(errs.length() > 20000 ? "…（前面較舊的省略）\n" + errs.substring(errs.length() - 20000) : errs);
+        sb.append("\n====== 系統記錄（logcat，只含本 App，最近 200 行） ======\n").append(ownLogcat());
         return redact(sb.toString());
+    }
+
+    /** 本 App 自己的 logcat（不需要權限，只看得到自己的輸出）；5 秒內沒讀完就放棄。 */
+    private static String ownLogcat() {
+        try {
+            Process p = new ProcessBuilder("logcat", "-d", "-t", "200").redirectErrorStream(true).start();
+            final java.io.InputStream in = p.getInputStream();
+            final java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+            Thread t = new Thread(() -> { try { byte[] b = new byte[4096]; int n; while ((n = in.read(b)) > 0) buf.write(b, 0, n); } catch (Exception ignored) { } });
+            t.setDaemon(true);
+            t.start();
+            if (!p.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) p.destroyForcibly();
+            t.join(1000);
+            return new String(buf.toByteArray(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "（讀不到：" + e.getMessage() + "）";
+        }
+    }
+
+    /** 把一段文字存成檔案分享出去。 */
+    static void shareText(Activity a, String text, String prefix) {
+        new Thread(() -> {
+            try {
+                File dir = new File(a.getCacheDir(), "export");
+                File[] old = dir.listFiles();
+                if (old != null) for (File o : old) o.delete();
+                dir.mkdirs();
+                File out = new File(dir, prefix + new java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(new java.util.Date()) + ".txt");
+                try (FileOutputStream fo = new FileOutputStream(out)) { fo.write(text.getBytes(StandardCharsets.UTF_8)); }
+                Uri uri = androidx.core.content.FileProvider.getUriForFile(a, "com.phoneai.overlay.update", out);
+                Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
+                        .putExtra(Intent.EXTRA_SUBJECT, "PhoneAI").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                a.runOnUiThread(() -> a.startActivity(Intent.createChooser(send, L.t("匯出紀錄"))));
+            } catch (Exception e) {
+                a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("匯出失敗：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    /** 把一段文字存到「下載/PhoneAI」。 */
+    static void saveText(Activity a, String text, String prefix) {
+        new Thread(() -> {
+            try {
+                String name = prefix + new java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(new java.util.Date()) + ".txt";
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);
+                v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+                v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, "Download/PhoneAI");
+                Uri uri = a.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+                if (uri == null) throw new java.io.IOException("無法建立檔案");
+                try (java.io.OutputStream o = a.getContentResolver().openOutputStream(uri)) { o.write(text.getBytes(StandardCharsets.UTF_8)); }
+                a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("已存到 下載/PhoneAI/") + name, android.widget.Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("匯出失敗：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show());
+            }
+        }).start();
     }
 
     /** 存到「下載/PhoneAI」資料夾（用 MediaStore，不需要儲存權限）。 */

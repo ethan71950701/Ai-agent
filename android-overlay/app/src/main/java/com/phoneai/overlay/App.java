@@ -32,7 +32,7 @@ public class App extends Application {
 
     private static boolean themed(Activity a) {
         return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof DiagActivity || a instanceof MemoryActivity
-                || a instanceof LogActivity || a instanceof MicTestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity || a instanceof TransferActivity
+                || a instanceof LogActivity || a instanceof ErrorLogActivity || a instanceof MicTestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity || a instanceof TransferActivity
                 || a instanceof TaskDetailActivity || a instanceof BrowseActivity || a instanceof FileSearchActivity;
     }
 
@@ -43,6 +43,7 @@ public class App extends Application {
         super.onCreate();
         ctx = this;
         L.init(this);   // 介面語言要最先決定（靜態字串陣列也用得到）
+        CrashLog.install(this);   // 當機時把錯誤堆疊寫進「錯誤紀錄」
         GlassPrefs.load(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override

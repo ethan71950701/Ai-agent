@@ -322,6 +322,7 @@ final class AgentLoop {
                     }
                 } catch (Exception e) {
                     if (cancelled) return L.t("已停止。");
+                    CrashLog.w("操作畫面：連不上 AI", e);
                     return L.t("連不上 AI：") + e.getMessage();
                 }
                 if (action == null) {

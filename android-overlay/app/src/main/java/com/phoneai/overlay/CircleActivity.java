@@ -58,7 +58,10 @@ public class CircleActivity extends Activity {
         }, "circle-shot").start();
     }
 
-    private static void toast(Context c, Throwable t) { toast(c, L.t("圈選失敗：") + t); }
+    private static void toast(Context c, Throwable t) {
+        CrashLog.w("圈選提問", t);
+        toast(c, L.t("圈選失敗：") + t);
+    }
 
     private static void toast(Context c, String msg) {
         android.util.Log.w("CircleActivity", msg);
@@ -96,8 +99,6 @@ public class CircleActivity extends Activity {
         d = getResources().getDisplayMetrics().density;
         getWindow().setDecorFitsSystemWindows(false);
         getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.BLACK));
-        android.view.WindowInsetsController wc = getWindow().getInsetsController();
-        if (wc != null) wc.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
 
         FrameLayout root = new FrameLayout(this);
         ImageView img = new ImageView(this);
@@ -192,6 +193,8 @@ public class CircleActivity extends Activity {
         plp.bottomMargin = (int) (16 * d);
         root.addView(panel, plp);
         setContentView(root);
+        android.view.WindowInsetsController wc = root.getWindowInsetsController();   // 要在 setContentView 之後才拿得到（之前是 null，會當機）
+        if (wc != null) wc.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
         root.setOnApplyWindowInsetsListener((v, ins) -> {   // 鍵盤出現時，面板推到鍵盤上面
             int ime = ins.getInsets(WindowInsets.Type.ime()).bottom;
             plp.bottomMargin = (int) (16 * d) + ime;
