@@ -855,7 +855,7 @@ final class LEn {
         m.put("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限", "Limit how many Claude tokens can be used: see usage, set daily and monthly caps");
         m.put("搜尋待辦、筆記", "Search to-dos and notes");
         m.put("分享", "Share");
-        m.put("存到下載", "Save to Downloads");
+        m.put("存到 PhoneAI 資料夾", "Save to PhoneAI folder");
         m.put("已存到 下載/PhoneAI/", "Saved to Download/PhoneAI/");
         m.put("匯入", "Import");
         m.put("已匯出到下載資料夾的 phoneai_memory_backup.json", "Exported to the Downloads folder as phoneai_memory_backup.json");
@@ -884,7 +884,7 @@ final class LEn {
         m.put("請你接手", "Please take over");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");
-        m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing.");
+        m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to PhoneAI folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");
         m.put("匯出", "Export");
         m.put("匯出失敗：", "Export failed: ");
         m.put("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）", "This service already has a key; reusing it (to change it, go to Functions → Maintenance).");
