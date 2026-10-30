@@ -6,6 +6,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 新增「錯誤紀錄」（功能 → 維護）：App 當機或出錯時自動記下錯誤堆疊，可在 App 裡看、分享、存到 PhoneAI 資料夾、清除；匯出任務紀錄時也會附上錯誤紀錄與本 App 的系統記錄（不含 API Key）｜New "Error log" (Functions → Maintenance): crashes and errors are recorded automatically with their stack traces; view, share, save to the PhoneAI folder or clear them in the app; exporting the task log now also includes the error log and the app's own system log (no API keys).
 - 修正圈選提問一按就當機（在畫面建立之前取用系統列控制器，得到空值）｜Fixed Circle to ask crashing right away (the system-bar controller was requested before the window existed and was null).
+
+## 1.0.1395
+
 - 修正助理面板的背景模式（主螢幕／副螢幕）按鈕第二次叫出面板就消失：每個任務開始前重新檢查 root 時，會先把「有 root」的結果清成不知道，面板就當成沒有 root；現在舊結果先留著，檢查完再更新｜Fixed the background-mode (main/second screen) button vanishing the second time the assistant panel opens: the root recheck at the start of every task cleared the known result, so the panel thought there was no root; the old result is now kept until the recheck finishes.
 
 ## 1.0.1394
