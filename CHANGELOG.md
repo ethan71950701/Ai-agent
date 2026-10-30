@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1387
+
 - 選 AI 服務時，如果這個服務的 Key 已經有了，不再跳出「怎麼申請 Key」的教學｜When choosing an AI service whose key is already saved, the "how to get a key" walkthrough is skipped.
 
 ## 1.0.1386
