@@ -264,12 +264,35 @@ public class RippleAccessibilityService extends AccessibilityService {
         android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
         if (root == null) return false;
         android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
-        if (node == null || !node.isEditable()) return false;
+        if (node == null || !node.isEditable()) {
+            node = lowestEditable(root);   // 有些 App（例如 Instagram 聊天室）點了輸入框也不回報「輸入焦點」：改找畫面上最下面的輸入框
+            if (node == null) return false;
+            node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_FOCUS);
+        }
         String value = text;
         if (append && !node.isShowingHintText() && node.getText() != null) value = node.getText().toString() + text;
         android.os.Bundle args = new android.os.Bundle();
         args.putCharSequence(android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, value);
         return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT, args);
+    }
+
+    /** 視窗裡看得到的輸入框中，最靠下的那個（聊天輸入框在最下面；搜尋框在最上面）。沒有回 null。 */
+    private static android.view.accessibility.AccessibilityNodeInfo lowestEditable(android.view.accessibility.AccessibilityNodeInfo root) {
+        android.view.accessibility.AccessibilityNodeInfo best = null;
+        int bestTop = -1;
+        java.util.ArrayDeque<android.view.accessibility.AccessibilityNodeInfo> q = new java.util.ArrayDeque<>();
+        q.add(root);
+        android.graphics.Rect r = new android.graphics.Rect();
+        while (!q.isEmpty()) {
+            android.view.accessibility.AccessibilityNodeInfo n = q.poll();
+            if (n == null) continue;
+            if (n.isEditable() && n.isVisibleToUser()) {
+                n.getBoundsInScreen(r);
+                if (r.top > bestTop) { bestTop = r.top; best = n; }
+            }
+            for (int i = 0; i < n.getChildCount(); i++) q.add(n.getChild(i));
+        }
+        return best;
     }
 
     /** 目前焦點輸入框裡的文字（顯示提示字時回空字串）；沒有焦點輸入框或讀不到回 null。 */

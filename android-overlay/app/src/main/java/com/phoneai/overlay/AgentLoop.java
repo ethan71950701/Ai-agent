@@ -134,6 +134,7 @@ final class AgentLoop {
         final java.util.Set<String> askedCats = new java.util.HashSet<>();   // 這次任務使用者已經同意過的敏感類別（傳訊息、付款…）：同一類不用再問第二次
         int[] sendCand;   // 傳訊息時用座標點到的按鈕（沒有名稱、元件清單裡沒有的傳送鈕）：之後確認訊息真的送出了，就存進經驗
         String lastHint = "";
+        boolean typedAny;   // 這次任務有沒有輸入過文字
         String lastTyped;   // 最近一次輸入的文字：done 前要確認它已經送出（不再留在輸入框）
         int doneRejects;
         boolean dragDown;
@@ -206,7 +207,7 @@ final class AgentLoop {
             } catch (Exception ignored) { }
         }
         JSONArray macro = Macros.enabled(c) && !BgDisplay.active && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !isQuestion(task)
-                ? Macros.get(c, task) : null;
+                && !isMessageTask(task) ? Macros.get(c, task) : null;   // 傳訊息的任務不重播巨集：重播會跳過 AI 對「有沒有真的送出」的判斷
         if (macro != null) {
             macroTried = true;
             String fail = replayMacro(c, task, macro, ui, st, wh, panelHidden, history, details);
@@ -343,6 +344,11 @@ final class AgentLoop {
                     st.sendCand = new int[]{(int) Math.round(action.optDouble("x")), (int) Math.round(action.optDouble("y"))};   // 用座標點的按鈕：可能就是傳送鈕
                 switch (name) {
                     case "done":
+                        if (isMessageTask(task) && !st.typedAny && st.doneRejects < 2) {   // 傳訊息任務還沒輸入過任何字就說完成：多半是看到對話裡以前傳過的舊訊息
+                            st.doneRejects++;
+                            history.add(step + ". done 被擋下：你這次還沒輸入過任何訊息。對話裡原本就有的舊訊息不算，請在輸入框輸入要傳的內容並送出");
+                            break;
+                        }
                         if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && (stillInInput(tree, st.lastTyped) || !messageVisible(tree, st.lastTyped))) {
                             st.doneRejects++;
                             history.add(step + ". done 被擋下：看不出訊息「" + (st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped)
@@ -439,7 +445,7 @@ final class AgentLoop {
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
-        if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task)) {
+        if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task) && !isMessageTask(task)) {
             Macros.put(c, task, new JSONArray(recorded));   // 成功做完、每一步都能重播：記起來，下次同樣的任務直接重播
             macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
         }
@@ -743,7 +749,7 @@ final class AgentLoop {
     /** 執行一個動作，並記下最近輸入的文字（給 done 前的「是否已送出」檢查用）。 */
     static String execute(JSONObject a, int[] wh, Context c, State st) {
         String r = executeInner(a, wh, c, st);
-        if ("type".equals(a.optString("action")) && r != null && r.startsWith("已輸入")) st.lastTyped = a.optString("text");
+        if ("type".equals(a.optString("action")) && r != null && r.startsWith("已輸入")) { st.lastTyped = a.optString("text"); st.typedAny = true; }
         return r;
     }
 
@@ -867,7 +873,7 @@ final class AgentLoop {
                     return out.length() > 600 ? out.substring(0, 600) + "…（太長已截斷，用 grep 只取需要的行）" : out;   // 整段會塞進之後每一步的歷史，太長很花 token
                 }
                 default:
-                    return "「" + name + "」尚未支援（之後會搬進來）";
+                    return "沒有「" + name + "」這個動作。請只用提示裡列出的動作（tap、type、enter、scroll、swipe、back、home、wait、look、open、done、fail…）";
             }
         } catch (Exception e) {
             return "執行失敗：" + e.getMessage();
@@ -1282,8 +1288,17 @@ final class AgentLoop {
     /** 剛輸入的文字有沒有真的進到焦點輸入框：1＝有、0＝輸入框讀得到但裡面沒有、-1＝讀不到輸入框（無法判斷，當作成功）。 */
     private static int landed(String text) {
         String now = RippleAccessibilityService.focusedInputText();
-        if (now == null) return -1;
-        return now.contains(text) ? 1 : 0;
+        if (now != null && now.contains(text)) return 1;
+        // 沒有「焦點輸入框」（有些 App 不回報）：掃整個畫面的輸入框看有沒有這段字
+        int[] wh = screenSize();
+        List<JSONObject> els = ElementList.collect(wh[0], wh[1]);
+        boolean anyInput = false;
+        if (els != null) for (JSONObject o : els) {
+            if (!"輸入框".equals(o.optString("k"))) continue;
+            anyInput = true;
+            if (o.optString("t").contains(text)) return 1;
+        }
+        return now != null || anyInput ? 0 : -1;
     }
 
     /** 切到英文鍵盤（有的話）；回傳原本的鍵盤 id，之後要切回去。找不到英文鍵盤回傳 null（呼叫端就不輸入）。 */
