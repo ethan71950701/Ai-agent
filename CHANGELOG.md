@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1389
+
 - 匯出紀錄除了分享，也能直接存到「下載/PhoneAI」資料夾｜Export log can now also be saved straight to the Download/PhoneAI folder, not just shared.
 
 ## 1.0.1388
