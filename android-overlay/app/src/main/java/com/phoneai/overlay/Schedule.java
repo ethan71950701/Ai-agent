@@ -231,6 +231,9 @@ final class Schedule {
     static String quickAnswer(Context c, String text) {
         String t = (text == null ? "" : text).replaceAll("[\\s，。,.？?！!]", "");
         if (t.isEmpty() || t.length() > (t.matches("\\p{ASCII}+") ? 40 : 18) || t.toLowerCase().startsWith("ai")) return null;
+        int topics = 0;   // 一句話問了好幾件事、或問的是別的（裝了幾個 App…）：交給聊天助理，不要只答其中一件
+        for (Pattern p : new Pattern[]{BATT_RE, ANDROID_RE, YEAR_RE, TIME_RE, STORE_RE, MEM_RE, MODEL_RE, BRIGHT_RE, WIFI_RE, VOL_RE}) if (p.matcher(t).find()) topics++;
+        if (topics >= 2 || t.matches(".*(裝了|安裝了|已安裝|幾個|幾款|哪些|還有|以及|(?i:installed|howmany|which)).*")) return null;
         try {
             if (BATT_RE.matcher(t).find()) return battery(c);
             if (!t.matches("^((開|關|打開|關閉|开|关|打开|关闭|調|调|設|设)|(?i:turn|enable|disable|switch|open|close|set)).*")) {
