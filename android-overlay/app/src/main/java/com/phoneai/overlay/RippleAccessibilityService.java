@@ -218,6 +218,20 @@ public class RippleAccessibilityService extends AccessibilityService {
                     PixelFormat.TRANSLUCENT);
             lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
             lp.y = (int) (48 * d);
+            final int[] st = new int[4];   // 按下時的 x、y（視窗位置）與手指的 rawX、rawY
+            box.setOnTouchListener((v, e) -> {
+                switch (e.getActionMasked()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        st[0] = lp.x; st[1] = lp.y; st[2] = (int) e.getRawX(); st[3] = (int) e.getRawY();
+                        return true;
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        lp.x = st[0] + (int) e.getRawX() - st[2];
+                        lp.y = Math.max(0, st[1] + (int) e.getRawY() - st[3]);
+                        try { wm.updateViewLayout(box, lp); } catch (Exception ignored) { }
+                        return true;
+                    default: return true;
+                }
+            });
             wm.addView(box, lp);
             handoffView = box;
             return true;
