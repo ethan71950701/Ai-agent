@@ -576,6 +576,8 @@ final class AgentLoop {
                     new JSONObject().put("type", "base64").put("media_type", "image/jpeg").put("data", img)));
         }
         StringBuilder text = new StringBuilder("任務：").append(task);
+        if (task.matches("(?is).*(提醒|待辦|行事曆|日曆|明天|後天|后天|今晚|下週|下周|週[一二三四五六日]|周[一二三四五六日]|星期|reminder|tomorrow|tonight|next week).*"))   // 要算相對日期的任務才附上現在時間（省 token）
+            text.append("\n（現在：").append(new java.text.SimpleDateFormat("yyyy-MM-dd EEEE HH:mm", java.util.Locale.TAIWAN).format(new java.util.Date())).append("）");
         if (!lessons.isEmpty()) {
             text.append("\n已學到的經驗（之前記下來的規律，照用）：\n");
             for (String l : lessons) text.append("・").append(l).append('\n');
@@ -949,6 +951,8 @@ final class AgentLoop {
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
                 }
+                case "reminder_create":
+                    return reminderCreate(c, a);
                 case "reminder_draft":
                     return reminderDraft(c, a.optString("title"));
                 case "volume":
@@ -1124,6 +1128,8 @@ final class AgentLoop {
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;
             }
+            case "reminder_create":
+                return reminderCreate(c, a);
             case "reminder_draft":
                 return reminderDraft(c, a.optString("title"));
             case "volume":
@@ -1171,6 +1177,43 @@ final class AgentLoop {
             if (!RippleAccessibilityService.imeEnter()) return shown + "，但沒辦法按送出（不用 root 時沒辦法送假的 Enter 鍵），請自己按";
         }
         return shown;
+    }
+
+    /**
+     * 直接新增一筆三星提醒（不用操作畫面）：走 Android 16 的 AppFunctions，用 shell 的 cmd app_function 呼叫三星提醒的 createTask。
+     * 需要 root 或 Shizuku；呼叫的是系統公開的機制（跟 Gemini 同一條），參數格式是從 App 的程式與實測得來的。
+     */
+    private static String reminderCreate(Context c, JSONObject a) {
+        String title = a.optString("title", "").trim();
+        if (title.isEmpty()) return "沒有給提醒標題";
+        if (title.length() > 100) title = title.substring(0, 100);
+        String date = a.optString("date", "").trim(), time = a.optString("time", "").trim();
+        java.util.regex.Matcher dm = java.util.regex.Pattern.compile("^(\\d{4})-(\\d{1,2})-(\\d{1,2})$").matcher(date);
+        java.util.regex.Matcher tm = java.util.regex.Pattern.compile("^(\\d{1,2}):(\\d{2})$").matcher(time);
+        if (!date.isEmpty() && !dm.matches()) return "date 格式要是 yyyy-MM-dd";
+        if (!time.isEmpty() && !tm.matches()) return "time 格式要是 HH:mm（24 小時制）";
+        if (!time.isEmpty() && date.isEmpty()) return "有 time 一定要有 date";
+        if (!Root.available()) return "沒有 root 或 Shizuku，不能直接新增；請改用 reminder_draft 打開新增畫面";
+        try {
+            JSONObject p = new JSONObject().put("title", title);
+            if (dm.matches()) {
+                JSONObject dt = new JSONObject().put("timeZone", java.util.TimeZone.getDefault().getID())
+                        .put("date", new JSONObject().put("year", Integer.parseInt(dm.group(1))).put("month", Integer.parseInt(dm.group(2))).put("day", Integer.parseInt(dm.group(3))));
+                if (tm.matches())
+                    dt.put("timeOfDay", new JSONObject().put("hours", Integer.parseInt(tm.group(1))).put("minutes", Integer.parseInt(tm.group(2))).put("seconds", 0).put("nanos", 0));
+                else
+                    p.put("allDay", true);
+                p.put("dateTime", dt);
+            }
+            String json = new JSONObject().put("createTaskParams", p).toString().replace("'", "'\\''");
+            String out = Maintenance.suOnce("cmd app_function execute-app-function --package com.samsung.android.app.reminder"
+                    + " --function 'com.samsung.android.app.reminder.data.crossappactions#TaskFunctions_createTask' --parameters '" + json + "'");
+            if (out.contains("androidAppfunctionsReturnValue") && out.contains("\"title\""))
+                return "已新增三星提醒「" + title + "」" + (dm.matches() ? "，時間 " + date + (tm.matches() ? " " + time : "（全天）") : "（沒有設時間）");
+            return "新增失敗，改用 reminder_draft 打開新增畫面：" + (out.length() > 200 ? out.substring(0, 200) : out).trim();
+        } catch (Exception e) {
+            return "新增失敗：" + e.getMessage();
+        }
     }
 
     /** 開三星提醒的新增畫面並帶入標題（它的分享入口是公開的，不用 root）；時間和儲存要接著在畫面上做。 */
