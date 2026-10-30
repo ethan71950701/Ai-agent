@@ -72,6 +72,10 @@ final class Memory {
         for (JSONObject it : items(d))
             if ("lesson".equals(it.optString("kind")) && !it.optBoolean("deleted") && text.equals(it.optString("text"))
                     && (app == null ? !it.has("app") : app.equals(it.optString("app")))) return false;
+        for (JSONObject it : items(d))
+            if ("lesson".equals(it.optString("kind")) && !it.optBoolean("deleted")
+                    && (app == null ? !it.has("app") : app.equals(it.optString("app")))
+                    && similar(text, it.optString("text"))) return false;
         JSONObject it = new JSONObject().put("id", d.optInt("next_id", 1)).put("kind", "lesson").put("text", text)
                 .put("created", now()).put("done", false).put("done_at", JSONObject.NULL)
                 .put("deleted", false).put("pinned", false);
@@ -80,6 +84,16 @@ final class Memory {
         d.put("next_id", it.getInt("id") + 1);
         save(c, d);
         return true;
+    }
+
+    /** 兩句經驗的兩字片段重疊 80% 以上（以較短的那句為準）就算重複。 */
+    static boolean similar(String x, String y) {
+        java.util.Set<String> a = bigrams(x), b = bigrams(y);
+        int m = Math.min(a.size(), b.size());
+        if (m == 0) return false;
+        int k = 0;
+        for (String g : a) if (b.contains(g)) k++;
+        return k * 10 >= m * 8;
     }
 
     /** 內建經驗：只對指定的 App 才會帶進提示；只種一次（用 cfg 旗標記），使用者刪掉就不會再冒出來。 */
@@ -100,8 +114,9 @@ final class Memory {
         List<String> gen = new ArrayList<>(), mine = new ArrayList<>();
         for (JSONObject it : items(d)) {
             if (!"lesson".equals(it.optString("kind")) || it.optBoolean("deleted")) continue;
-            if (!it.has("app")) gen.add(it.optString("text"));
-            else if (apps.contains(it.optString("app"))) mine.add(it.optString("text"));
+            String t = it.optString("text");
+            if (!it.has("app")) { if (!gen.contains(t)) gen.add(t); }
+            else if (apps.contains(it.optString("app")) && !mine.contains(t)) mine.add(t);
         }
         List<String> out = pickRelevant(gen, task, 6);
         out.addAll(mine.subList(Math.max(0, mine.size() - 8), mine.size()));
