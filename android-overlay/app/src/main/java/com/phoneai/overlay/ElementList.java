@@ -86,6 +86,7 @@ final class ElementList {
             n.getBoundsInScreen(r);
             String label = label(n);
             boolean actionable = n.isClickable() || n.isLongClickable() || n.isCheckable() || n.isEditable();
+            if (label.isEmpty() && actionable && !n.isEditable()) label = descendantText(n, 0);   // 可以點的整列（容器）自己沒有文字：用裡面第一個文字當名稱，AI 看得懂、巨集也記得下來
             boolean onScreen = r.width() > 0 && r.height() > 0 && r.bottom > 0 && r.top < h && r.right > 0 && r.left < w;
             if (onScreen && (actionable || !label.isEmpty())) {
                 String kind = n.isEditable() ? "輸入框" : actionable ? "按鈕" : "文字";
@@ -94,6 +95,20 @@ final class ElementList {
             }
         }
         for (int i = 0; i < n.getChildCount() && out.size() < MAX; i++) walk(n.getChild(i), w, h, out);
+    }
+
+    /** 容器底下第一個有文字的子元件的文字（最多往下 3 層、每層看前 6 個）；沒有回空字串。 */
+    private static String descendantText(AccessibilityNodeInfo n, int depth) {
+        if (n == null || depth > 3) return "";
+        for (int i = 0; i < n.getChildCount() && i < 6; i++) {
+            AccessibilityNodeInfo c = n.getChild(i);
+            if (c == null) continue;
+            String own = label(c);
+            if (!own.isEmpty()) return own;
+            String deeper = descendantText(c, depth + 1);
+            if (!deeper.isEmpty()) return deeper;
+        }
+        return "";
     }
 
     private static String label(AccessibilityNodeInfo n) {

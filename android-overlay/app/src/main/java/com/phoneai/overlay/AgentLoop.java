@@ -51,6 +51,7 @@ final class AgentLoop {
     private static volatile boolean cancelled;
     /** 這一輪自動操作的結果是不是要用回答卡片顯示（搜尋結果或較長的回答）；「完成了」這類短的只通知。 */
     static volatile boolean showCard;
+    static volatile String macroWhy = "";   // 這次任務第一個「不能重播」的步驟原因（沒記成巨集時寫進任務過程）
     static volatile String macroNote = "";   // 這次有沒有用巨集重播（記進任務過程）
     static volatile String cardNote = "";   // 這次為什麼顯示／不顯示回答卡片（記進任務過程，方便除錯）
 
@@ -155,6 +156,7 @@ final class AgentLoop {
     /** preOpen：任務一開始由程式先開啟的 App 套件名稱（路由判斷出來的）；沒有就是 null。 */
     static String run(Context c, String task, Ui ui, String preOpen) {
         cancelled = false;
+        macroWhy = "";
         showCard = false;
         cardNote = "";
         macroNote = "";
@@ -458,6 +460,10 @@ final class AgentLoop {
         if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task) && !isMessageTask(task)) {
             Macros.put(c, task, new JSONArray(recorded));   // 成功做完、每一步都能重播：記起來，下次同樣的任務直接重播
             macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
+        } else if (doneOk && !macroTried && Macros.enabled(c)) {   // 做完了卻沒記住：把原因寫進任務過程，不用猜
+            macroNote = "這次沒有記住成巨集：" + (isQuestion(task) ? "任務像是在問問題" : hasBlockWord(task) ? "任務含敏感字（付款、刪除…）" : isMessageTask(task) ? "傳訊息任務不記"
+                    : !macroValid[0] ? (macroWhy.isEmpty() ? "有步驟不能重播（問使用者、搜尋或看截圖）" : macroWhy)
+                    : recorded.size() < 2 ? "只有 " + recorded.size() + " 步，至少要 2 步" : "步驟超過 " + Macros.MAX_STEPS + " 步");
         }
         if (finalSay != null) {
             String mode = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("reply_card", "auto");
@@ -1113,7 +1119,10 @@ final class AgentLoop {
     private static void recordStep(List<JSONObject> rec, boolean[] valid, JSONObject action, List<JSONObject> tree, boolean useTree, boolean ok) {
         if (!valid[0]) return;
         JSONObject s = useTree && ok ? Macros.stepFrom(action, tree) : null;
-        if (s == null) valid[0] = false; else rec.add(s);   // 有一步不能重播（用座標點、查資訊、問使用者…）整個任務就不記
+        if (s == null) {   // 有一步不能重播（用座標點、查資訊、問使用者…）整個任務就不記
+            if (valid[0]) macroWhy = !useTree ? "有一步是看截圖做的" : !ok ? "有一步沒成功" : "點了沒有名稱的按鈕（或這個動作不能重播）";
+            valid[0] = false;
+        } else rec.add(s);
     }
 
     private static boolean hasBlockWord(String task) {
