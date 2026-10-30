@@ -14,6 +14,7 @@ final class Root {
     private static String found;
     private static volatile Boolean rootOk;
     private static volatile long rootCheckedAt;
+    private static volatile boolean stale;   // 需要重新判斷：舊的結果先留著給畫面用（knownRoot），不要清成「不知道」，不然面板上的背景模式鈕會消失
     private static final long RECHECK_MS = 60_000;
 
     /**
@@ -41,14 +42,15 @@ final class Root {
 
     private static boolean rootAvailable() {
         Boolean r = rootOk;
-        if (r != null && (r || System.currentTimeMillis() - rootCheckedAt < RECHECK_MS)) return r;
+        if (r != null && !stale && (r || System.currentTimeMillis() - rootCheckedAt < RECHECK_MS)) return r;
         synchronized (Root.class) {
             // 判斷成「沒有 root」只記一分鐘：使用者可能之後才在 root 管理器裡允許，不要永遠當成沒有
-            if (rootOk == null || (!rootOk && System.currentTimeMillis() - rootCheckedAt >= RECHECK_MS)) {
+            if (rootOk == null || stale || (!rootOk && System.currentTimeMillis() - rootCheckedAt >= RECHECK_MS)) {
                 found = null;
                 su();
                 rootOk = found != null;
                 rootCheckedAt = System.currentTimeMillis();
+                stale = false;
             }
             return rootOk;
         }
@@ -63,7 +65,7 @@ final class Root {
     static void recheck() {
         synchronized (Root.class) {
             found = null;
-            rootOk = null;
+            stale = true;   // 不清掉 rootOk：下一次 available() 會重新跑 su，在那之前畫面用舊結果
         }
     }
 

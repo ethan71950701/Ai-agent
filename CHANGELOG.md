@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正助理面板的背景模式（主螢幕／副螢幕）按鈕第二次叫出面板就消失：每個任務開始前重新檢查 root 時，會先把「有 root」的結果清成不知道，面板就當成沒有 root；現在舊結果先留著，檢查完再更新｜Fixed the background-mode (main/second screen) button vanishing the second time the assistant panel opens: the root recheck at the start of every task cleared the known result, so the panel thought there was no root; the old result is now kept until the recheck finishes.
 - 圈選提問：截圖或開啟畫面時的錯誤改成顯示提示，不再讓整個 App 當掉；接續對話時背景模式鈕不再被藏起來（以前看起來像被圈選鈕擠掉）｜Circle to ask: errors while taking the screenshot or opening the screen now show a message instead of crashing the whole app; in follow-up replies the background-mode button is no longer hidden (it used to look like the circle button pushed it out).
 
 ## 1.0.1393
