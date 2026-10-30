@@ -59,8 +59,9 @@ final class Brain {
             case Router.AGENT:
                 return AgentLoop.run(act, t, ui, d == null || Router.isSystemInfoQuestion(t) ? null : d.openPkg, d == null ? null : d.macroTask);   // 查系統資訊不先開 App，讓模型用指令查
             default: {
-                String reply = localAnswer(act, t);
+                String reply = scheduleAnswer(act, t);   // 定時任務（建立、列出、取消）程式自己處理
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
+                if (reply == null) reply = Schedule.quickAnswer(act, t);   // 連不上 AI（沒網路）時，才用關鍵字直接回答電量、儲存空間、幾點這類短問題
                 // 聊天助理回答「我不能操作手機」，但使用者明明是要操作：補救，改走自動操作
                 if (Assist.refusesToOperate(reply) && Assist.looksLikeAction(t)) return AgentLoop.run(act, t, ui);
                 return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
@@ -77,14 +78,12 @@ final class Brain {
         return r.reply;
     }
 
-    /** 定時任務（建立、列出、取消）或能直接回答的短問題（電量、幾點…）；都不是回 null。 */
-    static String localAnswer(Activity act, String t) {
+    /** 定時任務（建立、列出、取消）；不是回 null。 */
+    static String scheduleAnswer(Activity act, String t) {
         try {
-            String s = Schedule.handle(act, t, msg -> confirm(act, msg));
-            if (s != null) return s;
+            return Schedule.handle(act, t, msg -> confirm(act, msg));
         } catch (Exception e) {
             return L.t("定時任務出錯：") + e.getMessage();
         }
-        return Schedule.quickAnswer(act, t);
     }
 }
