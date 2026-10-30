@@ -6,6 +6,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 防止畫面文字誘導 AI：唯讀 shell 指令不能讀 /data、/sdcard、金鑰檔，也不能看通知、帳號、剪貼簿內容；AI 自己記的經驗若含網址、叫人忽略規則或略過確認、涉及密碼金額，一律不存｜Hardening against prompt injection from on-screen text: read-only shell commands can no longer read /data, /sdcard or key files, or dump notifications, accounts or the clipboard; lessons the AI saves for itself are rejected if they contain URLs, tell it to ignore rules or skip confirmations, or involve passwords or money.
 - 發布的 APK 改成正式版（release，不再是 debug 版）並改名為 PhoneAI.apk；簽名金鑰不變，可直接覆蓋安裝｜Published APKs are now release builds (no longer debug builds) named PhoneAI.apk; the signing key is unchanged, so it installs over the previous version.
+
+## 1.0.1391
+
 - 傳訊息的「要送出嗎」確認，在沒有元件清單時（截圖模式、背景螢幕）也會跳出，不再被略過；修正檢查 root 時 `su` 卡住會讓 10 秒逾時失效｜The "send this message?" confirmation now also appears when there is no element list (screenshot mode, background screen) instead of being skipped; fixed the root check where a hung `su` made the 10-second timeout ineffective.
 
 ## 1.0.1390
