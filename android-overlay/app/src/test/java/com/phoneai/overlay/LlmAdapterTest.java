@@ -177,6 +177,13 @@ public class LlmAdapterTest {
         assertTrue(!AgentLoop.stillInInput(tree, "456"));
         assertTrue(!AgentLoop.stillInInput(java.util.Arrays.asList(new org.json.JSONObject().put("n", 2).put("k", "文字").put("t", "123")), "123"));   // 在對話泡泡裡＝已送出
         assertTrue(AgentLoop.isMessageTask("去ig傳訊息給謝小明「123」"));
+        assertTrue(AgentLoop.isMessageTask("去ig傳456給謝小明"));
+        assertTrue(AgentLoop.isMessageTask("跟小明說我晚點到"));
+        assertTrue(!AgentLoop.isMessageTask("打電話給小明"));
+        assertTrue(AgentLoop.isStatusLabel("謝小明, 17分鐘前傳送"));
+        assertTrue(AgentLoop.isStatusLabel("謝小明, 3分鐘前看過"));
+        assertTrue(!AgentLoop.isStatusLabel("傳送"));
+        assertEquals(null, AgentLoop.sensitiveLabel(new org.json.JSONObject().put("action", "tap").put("label", "謝小明, 17分鐘前傳送"), "打開設定"));
         assertTrue(!AgentLoop.isMessageTask("打開設定，在搜尋欄輸入「藍牙」"));
         assertEquals("傳送訊息", AgentLoop.sensitiveCategory("傳送訊息屬於敏感操作，需要使用者確認"));
         assertTrue(AgentLoop.sendButtonLesson("Instagram", 930, 960).contains("x=930"));

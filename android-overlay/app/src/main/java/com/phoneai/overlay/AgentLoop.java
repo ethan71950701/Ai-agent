@@ -386,6 +386,7 @@ final class AgentLoop {
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
                         String cat = manual ? null : sensitiveCategory(why);
+                        if (cat == null && !manual && isMessageTask(task) && !st.askedCats.contains("傳送訊息")) cat = "傳送訊息";   // 傳訊息的任務裡 AI 自己問的確認就是在問要不要送出：同意後程式不再多跳第二個
                         if (cat != null && st.askedCats.contains(cat)) {   // 同一件事使用者剛同意過：不要連問好幾次
                             history.add(step + ". 使用者已經同意過這一類操作（" + cat + "），不用再問，直接做");
                             break;
@@ -750,10 +751,18 @@ final class AgentLoop {
         return "傳訊息：" + appLabel + " 的聊天室，傳送鈕只有圖示、元件清單裡找不到；輸入文字後直接用座標 tap（約 x=" + x + "、y=" + y + "）送出，不用截圖、也不要靠 Enter";
     }
 
+    /** 時間或狀態文字（幾分鐘前傳送、已讀、Seen…）：不是可以按的敏感按鈕。 */
+    static boolean isStatusLabel(String label) {
+        String l = label.toLowerCase(java.util.Locale.ROOT);
+        return l.matches(".*(\\d+\\s*(分鐘|分钟|小時|小时|天|秒|週|周|分|min|mins|hr|hrs|h|d|w)\\s*(前|ago)|剛剛|刚刚|已讀|已读|看過|看过|已傳送|已送出|已发送|seen|delivered|sent \\d).*");
+    }
+
     /** 任務是不是在傳訊息／回覆（只有這種任務才要檢查「輸入的字有沒有送出」；搜尋框裡留著字是正常的）。 */
     static boolean isMessageTask(String task) {
         String t = task == null ? "" : task.toLowerCase(java.util.Locale.ROOT);
-        return t.matches(".*(傳訊息|传讯息|傳訊|傳送|传送|發送|发送|傳給|传给|回覆|回复|訊息給|消息给|send|message|reply|text ).*");
+        return t.matches(".*(傳訊息|传讯息|傳訊|傳送|传送|發送|发送|傳給|传给|回覆|回复|訊息給|消息给|send|message|reply|text ).*")
+                || t.matches(".*[傳传發发寄送回].{0,30}[給给].*")   // 「去ig傳456給謝小明」這種「傳…給…」的說法
+                || t.matches(".*(跟|和|對|对).{1,12}(說|说|講|讲).*");
     }
 
     /** 元件清單裡有沒有「輸入框」還含著剛輸入的文字（有就代表訊息還沒送出）。 */
@@ -1211,6 +1220,7 @@ final class AgentLoop {
         }
         for (String l : labels) {
             if (l == null || l.isEmpty()) continue;
+            if (isStatusLabel(l)) continue;   // 「謝小明, 17分鐘前傳送」這種是對話列表的時間／狀態文字，不是傳送按鈕
             for (String w : SENSITIVE_LABELS) {
                 boolean sendWord = w.equals("傳送") || w.equals("发送") || w.equals("發送") || w.equals("send");
                 if (sendWord && isMessageTask(task)) continue;   // 任務本來就是傳訊息：點「傳送」是任務要求的（要不要送出已經在 ask 問過使用者）
