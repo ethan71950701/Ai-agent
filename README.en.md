@@ -46,7 +46,7 @@ Pick a mode in the first-run guide; change it later under "Settings → While ru
 
 ## Install
 
-1. Download the latest `app-debug.apk` from this repo's **Releases** page and install it. The APK is signed with a fixed key, so later versions install over the old one; "Features → Maintenance → Check for updates" in the app can also update it and shows what changed.
+1. Download the latest `PhoneAI.apk` from this repo's **Releases** page and install it. The APK is signed with a fixed key, so later versions install over the old one; "Features → Maintenance → Check for updates" in the app can also update it and shows what changed.
 2. Open the app and follow the guide: choose an execution mode, then overlay, accessibility service and notification permissions (plus root access if you use root).
 3. Choose a service and enter your key under "Features → AI service and API key" (a service you already entered a key for is not asked again).
 4. Try typing "turn on Bluetooth" or "open the Wi-Fi page in Settings" in the home screen input box.

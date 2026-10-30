@@ -19,6 +19,24 @@ android {
                 keyPassword System.getenv("KEY_PASSWORD")
             }
         }
+        // 正式版（發布到 Release 的那個）：同一把金鑰，簽名才跟舊版相同、能直接覆蓋安裝
+        release {
+            def ks = System.getenv("KEYSTORE_FILE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false   // 不混淆：程式用到反射（Shizuku）、也要保持錯誤訊息看得懂
+            // 本機、雲端試編譯、別人 fork 沒有金鑰環境變數時，用預設除錯金鑰簽名（只能自己測試）
+            signingConfig System.getenv("KEYSTORE_FILE") ? signingConfigs.release : signingConfigs.debug
+        }
     }
 
     buildFeatures {

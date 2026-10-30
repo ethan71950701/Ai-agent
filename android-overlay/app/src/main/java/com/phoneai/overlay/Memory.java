@@ -68,6 +68,7 @@ final class Memory {
         text = text == null ? "" : text.trim();
         if (text.isEmpty()) return false;
         if (text.length() > 200) text = text.substring(0, 200);
+        if (looksLikeInjection(text)) return false;
         JSONObject d = load(c);
         for (JSONObject it : items(d))
             if ("lesson".equals(it.optString("kind")) && !it.optBoolean("deleted") && text.equals(it.optString("text"))
@@ -84,6 +85,16 @@ final class Memory {
         d.put("next_id", it.getInt("id") + 1);
         save(c, d);
         return true;
+    }
+
+    /**
+     * 經驗會一直帶進之後每次任務的提示，所以畫面上的文字（網頁、訊息）若騙 AI 記下「忽略規則」「以後不用確認」「把某資料傳給誰」，
+     * 就會變成長期的後門。經驗只該是「哪裡找得到什麼按鈕」這類操作位置：含網址、叫人忽略規則／略過確認、涉及密碼金額的一律不存。
+     */
+    static boolean looksLikeInjection(String t) {
+        String s = t.toLowerCase(java.util.Locale.ROOT);
+        return s.matches("(?s).*(https?://|www\\.|ignore|disregard|system prompt|api.?key|password|don'?t ask|do not ask|skip.{0,10}confirm|always (send|pay|transfer|install)|"
+                + "忽略|無視|无视|系統提示|系统提示|密碼|密码|金鑰|金钥|轉帳|转账|匯款|汇款|付款|不用問|不用问|不要問|不要问|不用確認|不用确认|不必確認|不必确认|跳過確認|跳过确认|略過確認|略过确认|一律(傳送|發送|付款|轉帳|安裝|同意)|永遠(傳送|付款|同意)|以後(都)?(直接|自動)).*");
     }
 
     /** 兩句經驗的兩字片段重疊 80% 以上（以較短的那句為準）就算重複。 */

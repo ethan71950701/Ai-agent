@@ -1,5 +1,5 @@
 # 編譯 PhoneAI Overlay 的 APK（使用者沒有電腦，靠這個在雲端編譯），並在 main 上自動發布成 GitHub Release。
-# 下載：GitHub 頁面右側「Releases」最新一筆的 app-debug.apk（App 內「檢查並更新」也是抓這個，不需要權杖）。
+# 下載：GitHub 頁面右側「Releases」最新一筆的 PhoneAI.apk（App 內「檢查並更新」也是抓這個，不需要權杖）。
 # 簽名：用 Secrets 裡的金鑰（KEYSTORE_BASE64、KEYSTORE_PASSWORD、KEY_ALIAS、KEY_PASSWORD），簽名固定才能覆蓋安裝。
 # 還沒設 Secrets 時只上傳 Artifact（臨時簽名，不發布 Release）；產生金鑰與設定步驟見 docs/PUBLISH_CHECKLIST.md。
 name: Android APK
@@ -75,13 +75,15 @@ jobs:
       - name: Unit tests
         working-directory: android-overlay
         run: gradle --no-daemon testDebugUnitTest
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: android-overlay
-        run: gradle --no-daemon assembleDebug -PgitSha=${GITHUB_SHA::7}
+        run: |
+          gradle --no-daemon assembleRelease -PgitSha=${GITHUB_SHA::7}
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/PhoneAI.apk
       - uses: actions/upload-artifact@v4
         with:
           name: phoneai-overlay-apk
-          path: android-overlay/app/build/outputs/apk/debug/app-debug.apk
+          path: android-overlay/app/build/outputs/apk/release/PhoneAI.apk
           if-no-files-found: error
       # 發布 Release：App 與 update_app.py 都從「最新的 Release」下載，不需要權杖。只在 main 上、且有簽名金鑰時發布。
       - name: Publish release
@@ -111,7 +113,7 @@ jobs:
             echo
             echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）｜Automatically built APK, signed with the project's fixed key; it installs over the previous version."
           } > "$RUNNER_TEMP/notes.md"
-          gh release create "$TAG" android-overlay/app/build/outputs/apk/debug/app-debug.apk \
+          gh release create "$TAG" android-overlay/app/build/outputs/apk/release/PhoneAI.apk \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
             --notes-file "$RUNNER_TEMP/notes.md"
           # 只留最近 10 個 Release，舊的連同 tag 刪掉

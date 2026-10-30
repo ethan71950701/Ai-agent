@@ -1525,8 +1525,14 @@ final class AgentLoop {
     }
 
     /** 唯讀 shell：白名單程式，後面只能接過濾程式，不能寫入、跳脫或子命令。 */
+    /** root／Shizuku 讀得到所有 App 的私有資料（含 API Key）：唯讀指令也不能碰這些路徑，或會洩漏通知、帳號、剪貼簿內容的 dumpsys。 */
+    private static final String[] SHELL_DENY = {"/data", "/sdcard", "/storage", "/mnt", "..", "claude_key", "openai_key", "key_", "token", "password", "keystore", "noredact",
+            "dumpsys notification", "dumpsys account", "dumpsys clipboard", "dumpsys contacts", "dumpsys telecom", "dumpsys sms"};
+
     static boolean readOnly(String cmd) {
         if (cmd == null || cmd.trim().isEmpty() || cmd.contains("\n")) return false;
+        String low = cmd.toLowerCase(java.util.Locale.ROOT);
+        for (String d : SHELL_DENY) if (low.contains(d)) return false;
         if (cmd.matches(".*[;&`$<>*?{}()\\\\].*") && !cmd.contains("|")) return false;
         String[] parts = cmd.split("\\|", -1);
         for (int i = 0; i < parts.length; i++) {
