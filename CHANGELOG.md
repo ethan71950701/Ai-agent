@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 新功能「圈選提問」：助理面板輸入列左邊多一顆 ◎，按下後面板收起、截下目前畫面，用手指圈出想問的地方，AI 看著圈起來的區域（加一張縮小的整個畫面當上下文）回答，還能接著追問；需要無障礙服務或 root／Shizuku 才能截圖｜New "Circle to ask": a ◎ button next to the assistant input row hides the panel and freezes the screen; circle something with your finger and the AI answers about that region (plus a small copy of the whole screen for context) and you can follow up; needs the accessibility service or root / Shizuku to take the screenshot.
 - 防止畫面文字誘導 AI：唯讀 shell 指令不能讀 /data、/sdcard、金鑰檔，也不能看通知、帳號、剪貼簿內容；AI 自己記的經驗若含網址、叫人忽略規則或略過確認、涉及密碼金額，一律不存｜Hardening against prompt injection from on-screen text: read-only shell commands can no longer read /data, /sdcard or key files, or dump notifications, accounts or the clipboard; lessons the AI saves for itself are rejected if they contain URLs, tell it to ignore rules or skip confirmations, or involve passwords or money.
 - 發布的 APK 改成正式版（release，不再是 debug 版）並改名為 PhoneAI.apk；簽名金鑰不變，可直接覆蓋安裝｜Published APKs are now release builds (no longer debug builds) named PhoneAI.apk; the signing key is unchanged, so it installs over the previous version.
 

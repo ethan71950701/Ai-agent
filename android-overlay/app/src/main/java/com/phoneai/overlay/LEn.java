@@ -882,6 +882,13 @@ final class LEn {
         m.put("等你接手", "Waiting for you to take over");
         m.put("需要你接手", "Take-over needed");
         m.put("請你接手", "Please take over");
+        m.put("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）", "Screenshot failed (turn on the accessibility service, or use root / Shizuku mode)");
+        m.put("用手指圈出想問的地方", "Circle what you want to ask about");
+        m.put("問這個…（可以空白）", "Ask about this… (can be empty)");
+        m.put("送出", "Send");
+        m.put("重新圈選", "Circle again");
+        m.put("圈選提問", "Circle to ask");
+        m.put("AI 沒有回答", "The AI gave no answer");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");
         m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to PhoneAI folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");

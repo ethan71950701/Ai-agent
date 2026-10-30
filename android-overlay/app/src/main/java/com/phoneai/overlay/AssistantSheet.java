@@ -203,6 +203,21 @@ public class AssistantSheet {
         blp.rightMargin = (int) (4 * d);
         row.addView(bgBtn, blp);
         bgBtnView = bgBtn;
+        final TextView circleBtn = new TextView(a);   // 圈選：收起面板、截圖，用手指圈出螢幕上的一個地方問 AI
+        circleBtn.setText("◎");
+        circleBtn.setTextColor(Color.WHITE);
+        circleBtn.setTextSize(24);
+        circleBtn.setGravity(Gravity.CENTER);
+        GradientDrawable cb = new GradientDrawable();
+        cb.setColor(0x99121218);
+        cb.setStroke((int) Math.max(1, d), 0x50FFFFFF);
+        cb.setShape(GradientDrawable.OVAL);
+        circleBtn.setBackground(cb);
+        circleBtn.setContentDescription(L.t("圈選提問"));
+        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, AssistantSheet.this::dismiss));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
+        clp.rightMargin = (int) (4 * d);
+        row.addView(circleBtn, clp);
         row.addView(input, new LinearLayout.LayoutParams(0, -2, 1f));
 
         send = new SendIconView(a);

@@ -551,6 +551,26 @@ final class AgentLoop {
         }
     }
 
+    /** 目前主螢幕的完整截圖（圈選用；不管背景模式開不開，都截主螢幕）。截不到回 null。 */
+    static Bitmap screenshotBitmap() {
+        if (!Root.available()) return Phone.screenshot();
+        try {
+            byte[] png;
+            if (ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) {
+                png = ShizukuBackend.runBytes("screencap -p");
+                if (png == null) return null;
+            } else {
+                Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
+                p.getOutputStream().close();
+                png = readAll(p.getInputStream());
+                p.waitFor();
+            }
+            return png.length < 100 ? null : BitmapFactory.decodeByteArray(png, 0, png.length);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static String encodeJpeg(Bitmap bmp) {
         int h = Math.round(bmp.getHeight() * (WIDTH / (float) bmp.getWidth()));
         Bitmap small = Bitmap.createScaledBitmap(bmp, WIDTH, h, true);

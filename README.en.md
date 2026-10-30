@@ -22,6 +22,7 @@ The whole project is one app: **no PC, no Termux, no Python scripts**.
 | Switch AI service to save money | Claude by default; you can also choose Gemini (free tier), DeepSeek, OpenAI or any OpenAI-compatible service, with separate cheap and vision slots, an A/B comparison page and per-service cost estimates |
 | Web search | When fresh information is needed (Claude only, limited per task) |
 | File transfer | Pair your own phones (and the Windows app in `windows-transfer/`) and send files; off by default |
+| Circle to ask | The ◎ in the assistant panel freezes the screen; circle something with your finger and the AI answers about it, with follow-ups |
 | Memory and schedules | To-dos and notes, and scheduled simple queries such as "tell me the battery every morning at 8" |
 | Voice recognition | Offline SenseVoice model (downloaded inside the app); the text is sent after a short countdown so you can edit it |
 | While it runs | A ripple at every tap, Stop and Pause buttons in the notification, and a Now Bar capsule on Samsung phones (optional) |
