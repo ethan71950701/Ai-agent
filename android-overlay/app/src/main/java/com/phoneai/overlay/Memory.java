@@ -102,8 +102,10 @@ final class Memory {
         if (sp.getBoolean("seed_lessons_v1", false)) return;
         String calc = "計算機：按鍵上方的小膠囊（例如 123、45）是剪貼簿的建議，不是已輸入的內容；要確認輸入或結果，看最上方的大顯示區。數字和運算鍵一個一個點，用 batch 一次連點，最後點 =。";
         try {
-            for (String pkg : new String[]{"com.sec.android.app.popupcalculator", "com.google.android.calculator", "com.android.calculator2"})
+            for (String pkg : new String[]{"com.sec.android.app.popupcalculator", "com.google.android.calculator", "com.android.calculator2"}) {
+                try { c.getPackageManager().getPackageInfo(pkg, 0); } catch (Exception notInstalled) { continue; }
                 addLesson(c, calc, pkg);
+            }
             sp.edit().putBoolean("seed_lessons_v1", true).apply();
         } catch (Exception ignored) { }
     }

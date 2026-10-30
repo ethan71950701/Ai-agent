@@ -1,6 +1,7 @@
 # 更新說明 · Changelog
 
 每一條寫成「中文｜English」，App 依介面語言只顯示對應的那一半；Release 說明會用整段 `## Unreleased
+- 內建的計算機經驗只種手機上實際裝的那個計算機｜The built-in calculator lesson is now seeded only for the calculator app actually installed.
 - 經驗去重：幾乎一樣的經驗不會重複存，帶進提示時也不會重複｜Lesson dedupe: near-identical lessons are no longer saved twice or repeated in the prompt.` 內容。
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 

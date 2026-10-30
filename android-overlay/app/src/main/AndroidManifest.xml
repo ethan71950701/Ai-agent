@@ -28,6 +28,9 @@
     <!-- 只需要看得到桌面上有圖示的 App（匯出 App 名稱清單用），不需要 QUERY_ALL_PACKAGES -->
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="com.sec.android.app.popupcalculator" />
+        <package android:name="com.google.android.calculator" />
+        <package android:name="com.android.calculator2" />
         <!-- 朗讀：要能找到系統的語音合成（TTS）引擎 -->
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
