@@ -166,6 +166,10 @@ final class Updater {
                 .setContentTitle(L.t("PhoneAI 更新"))
                 .setContentText(text)
                 .setCategory(Notification.CATEGORY_PROGRESS)
+                .setContentIntent(android.app.PendingIntent.getActivity(c, 0,   // 沒有 contentIntent 系統會把 Now Bar 膠囊藏起來（OverlayService 的註解有說明）
+                        new android.content.Intent(c, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP),
+                        android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT))
+                .setColor(OverlayService.CHIP_COLOR)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)

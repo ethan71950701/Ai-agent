@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正更新下載進度又沒有出現在 Now Bar（進度通知補上點擊動作與顏色，跟任務的 Now Bar 一致）｜Fixed the update download progress not showing on the Now Bar (the progress notification now has a tap action and colour, like the task Now Bar).
 - 明確說「三星提醒」時，改由 AI 操作三星提醒 App，不再被當成行事曆事件｜When you explicitly say Samsung Reminder, the AI now operates that app instead of creating a calendar event.
 - 新增「三星提醒」：AI 用三星提醒公開的分享入口直接開新增畫面並填好標題（不用 root），再自己設定時間並儲存｜Samsung Reminder: the AI opens its new-reminder screen with the title pre-filled via its public share entry (no root needed), then sets the time and saves.
 - 要你接手時改用懸浮窗：畫面上方出現說明和「我做完了，繼續」按鈕，卡片可以拖動，其他地方照常可以操作（沒開無障礙服務才退回通知）｜Take-over requests now use a floating card at the top with a "Done, continue" button the card can be dragged and the rest of the screen stays usable (falls back to a notification only if the accessibility service is off).
