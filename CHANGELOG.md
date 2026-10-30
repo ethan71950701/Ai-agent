@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1383
+
 - 問手機本身的資訊（電量、裝了幾個 App…）改走聊天，不再切到操作模式｜Questions about the phone itself (battery, how many apps…) now go to chat instead of the screen-operating mode.
 
 ## 1.0.1382
