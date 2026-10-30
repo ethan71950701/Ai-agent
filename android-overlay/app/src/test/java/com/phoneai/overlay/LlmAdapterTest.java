@@ -242,4 +242,14 @@ public class LlmAdapterTest {
         assertFalse(r.contains("abcdef1234567890"));
         assertTrue(r.contains("ok"));
     }
+
+    @Test
+    public void chatSearchOnlyWhenAsked() {
+        assertTrue(ChatEngine.wantsSearch("幫我查一下今天的油價"));
+        assertTrue(ChatEngine.wantsSearch("搜尋一下這家餐廳的營業時間"));
+        assertTrue(ChatEngine.wantsSearch("Please look up the weather in Taipei"));
+        assertFalse(ChatEngine.wantsSearch("今天天氣怎麼樣"));
+        assertFalse(ChatEngine.wantsSearch("我想看查理的電影"));
+        assertFalse(ChatEngine.wantsSearch("幫我設鬧鐘"));
+    }
 }

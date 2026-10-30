@@ -179,10 +179,21 @@ final class ChatEngine {
         return null;
     }
 
-    private static JSONObject call(JSONArray messages, String system, String key) throws Exception {
-        JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 1000).put("system", system)
-                .put("messages", messages).put("tools", new JSONArray(TOOLS));
+    private static JSONObject call(JSONArray messages, String system, String key, boolean search) throws Exception {
+        JSONArray tools = new JSONArray(TOOLS);
+        if (search) tools.put(new JSONObject().put("type", "web_search_20250305").put("name", "web_search").put("max_uses", 2)
+                .put("user_location", new JSONObject().put("type", "approximate").put("country", "TW").put("timezone", "Asia/Taipei")));
+        JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", search ? 1500 : 1000).put("system", system)
+                .put("messages", messages).put("tools", tools);
         return post(body, key);
+    }
+
+    /** 使用者明說要查資料（幫我查、搜尋一下、上網查…）才開網頁搜尋：聊天每句話都走這裡，搜尋又要另外計費，不能預設開。 */
+    private static final java.util.regex.Pattern WANTS_SEARCH = java.util.regex.Pattern.compile(
+            "(幫我|帮我|替我|請你|请你|你)?(查一下|查查|查看看|查詢|查询|搜尋|搜寻|搜索|搜一下|上網查|上网查|網路上查|网上查|google一下|查[詢询]?一[下查])|(?i:look\\s*up|search\\s+(for|the web|online)|google\\s+it|search\\s+it)");
+
+    static boolean wantsSearch(String text) {
+        return text != null && WANTS_SEARCH.matcher(text).find();
     }
 
     /** 送出一則 Messages API 的請求（聊天與自動操作共用）。 */
@@ -295,9 +306,13 @@ final class ChatEngine {
                     + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.promptRows(mem, "note");
             JSONArray msgs = loadHistory(c);
             msgs.put(new JSONObject().put("role", "user").put("content", text));
+            final boolean search = wantsSearch(text) && !LlmConfig.cheap(c).openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
+            if (search) system += L.en()
+                    ? "\nThe user asked you to look something up this time: you may use web_search (at most 2 searches), answer with the key points briefly, and say the information comes from a web search. This overrides rule 2 about having no internet."
+                    : "\n這次使用者要你查資料：可以用 web_search 搜尋（最多 2 次），把查到的重點簡短回答，並說明資訊來自網路搜尋。這一條優先於第 2 條「沒有網路」。";
             String reply = null;
             for (int turn = 0; turn < MAX_TURNS; turn++) {
-                JSONObject r = call(msgs, system, key);
+                JSONObject r = call(msgs, system, key, search);
                 JSONArray content = r.optJSONArray("content");
                 if (content == null) return null;
                 StringBuilder texts = new StringBuilder();
@@ -307,7 +322,14 @@ final class ChatEngine {
                     if ("text".equals(b.optString("type"))) texts.append(b.optString("text"));
                     if ("tool_use".equals(b.optString("type"))) uses.put(b);
                 }
-                if (uses.length() == 0) { reply = texts.toString().trim(); break; }
+                if (uses.length() == 0) {
+                    if ("pause_turn".equals(r.optString("stop_reason"))) {   // 搜尋太久被暫停：把目前的內容接回去，讓它繼續
+                        msgs.put(new JSONObject().put("role", "assistant").put("content", content));
+                        continue;
+                    }
+                    reply = texts.toString().trim();
+                    break;
+                }
                 msgs.put(new JSONObject().put("role", "assistant").put("content", content));
                 JSONArray results = new JSONArray();
                 for (int i = 0; i < uses.length(); i++) {
