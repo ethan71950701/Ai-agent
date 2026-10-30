@@ -13,14 +13,17 @@ import java.util.concurrent.CountDownLatch;
 public class ConfirmActivity extends Activity {
     static volatile CompletableFuture<Boolean> answer;
     static volatile CountDownLatch shown;
+    static volatile CountDownLatch gone;   // 確認框真的關掉（onDestroy）才放行：不然 AI 下一個點擊會打在還沒關完的對話框上，下面的 App 也還沒取回視窗焦點（鍵盤就跳不出來）
 
     /** 在背景執行緒呼叫，會等使用者按是／否（最多 120 秒）；逾時、對話框沒跳出來、使用者沒按都當「否」。任何主題的 Activity 都能用（不靠 Material 主題）。 */
     static boolean ask(Context c, String msg) {
         final Context app = c.getApplicationContext();
         CompletableFuture<Boolean> ans = new CompletableFuture<>();
         CountDownLatch shownLatch = new CountDownLatch(1);
+        CountDownLatch goneLatch = new CountDownLatch(1);
         answer = ans;
         shown = shownLatch;
+        gone = goneLatch;
         new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
             try {
                 app.startActivity(new Intent(app, ConfirmActivity.class)
@@ -33,7 +36,10 @@ public class ConfirmActivity extends Activity {
         });
         try {
             if (!shownLatch.await(4, java.util.concurrent.TimeUnit.SECONDS)) return false;
-            return ans.get(120, java.util.concurrent.TimeUnit.SECONDS);
+            boolean r = ans.get(120, java.util.concurrent.TimeUnit.SECONDS);
+            goneLatch.await(2, java.util.concurrent.TimeUnit.SECONDS);   // 等對話框關掉
+            Thread.sleep(600);                                           // 再等下面的 App 取回視窗焦點（輸入法要有焦點才會彈出）
+            return r;
         } catch (Exception e) {
             return false;
         }
@@ -65,6 +71,8 @@ public class ConfirmActivity extends Activity {
     protected void onDestroy() {
         CompletableFuture<Boolean> a = answer;
         if (a != null) a.complete(false);
+        CountDownLatch g = gone;
+        if (g != null) g.countDown();
         super.onDestroy();
     }
 }
