@@ -64,6 +64,35 @@ public class OverlayService extends Service {
         if (s != null) s.main.post(s::finish);
     }
 
+    static final String ACTION_RESUME = "com.phoneai.overlay.RESUME";
+    private static final String HANDOFF_CH = "handoff";
+    private static final int HANDOFF_ID = 7731;
+
+    /** 要使用者親自處理（解鎖圖形、密碼…）：跳一則會響、會彈出的通知，上面有「繼續」。Now Bar 那則只放短字，免得長文字讓它掉回一般通知。 */
+    static void handoffAlert(android.content.Context c, String why) {
+        try {
+            android.app.NotificationManager nm = c.getSystemService(android.app.NotificationManager.class);
+            nm.createNotificationChannel(new NotificationChannel(HANDOFF_CH, L.t("需要你接手"), android.app.NotificationManager.IMPORTANCE_HIGH));
+            PendingIntent resume = PendingIntent.getService(c, 5, new Intent(c, OverlayService.class).setAction(ACTION_RESUME),
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            Icon icon = Icon.createWithResource(c, R.drawable.ic_stat);
+            nm.notify(HANDOFF_ID, new Notification.Builder(c, HANDOFF_CH)
+                    .setSmallIcon(R.drawable.ic_stat)
+                    .setContentTitle(L.t("請你接手"))
+                    .setContentText(why)
+                    .setStyle(new Notification.BigTextStyle().bigText(why + L.t("\n做完按「繼續」，AI 會接著做。")))
+                    .setCategory(Notification.CATEGORY_ALARM)
+                    .setAutoCancel(false)
+                    .setOnlyAlertOnce(false)
+                    .addAction(new Notification.Action.Builder(icon, L.t("繼續"), resume).build())
+                    .build());
+        } catch (Exception ignored) { }
+    }
+
+    static void clearHandoffAlert(android.content.Context c) {
+        try { c.getSystemService(android.app.NotificationManager.class).cancel(HANDOFF_ID); } catch (Exception ignored) { }
+    }
+
     static void showStep(android.content.Context c, String text, int step, int max) {
         OverlayService s = instance;
         if (s == null) {
@@ -169,6 +198,7 @@ public class OverlayService extends Service {
             } catch (Exception ignored) { }
             postStatus(title, paused ? L.t("已暫停，按「繼續」") : L.t("繼續中…"), lastStep, lastMax);   // 文字立刻跟著變
         }
+        else if (ACTION_RESUME.equals(a)) { paused = false; clearHandoffAlert(this); postStatus(title, L.t("繼續中…"), lastStep, lastMax); }
         else if (ACTION_BEGIN.equals(a)) postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
         else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
