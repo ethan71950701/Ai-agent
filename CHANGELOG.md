@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1363
+
 - 「保護的 App」清單把讀過的 App 名稱存起來，下次打開只讀新裝的 App，幾乎立刻出現｜The protected-apps list caches the app names it has read, so next time only newly installed apps are read and it opens almost instantly
+
 ## 1.0.1362
 
 - 「保護的 App」清單改在背景讀取 App 名稱，打開時不再卡一下｜The protected-apps list now loads app names in the background so opening it no longer stutters
