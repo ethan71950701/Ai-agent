@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1401
+
 - 聊天模式也能上網搜尋：只有你明說「幫我查／搜尋一下／上網查」時才開（Claude 專屬，最多 2 次，搜尋另外計費），這類問題也不再被送進操作畫面模式｜Chat mode can search the web too: only when you explicitly say things like "look up" or "search" (Claude only, at most 2 searches, billed separately); such questions are also no longer sent to the screen-operating mode.
 - 圈選提問在用 Claude 時可以上網搜尋（需要即時資訊才搜，最多 2 次；搜尋要另外計費）｜Circle to ask can now search the web when using Claude (only when the question needs current information, at most 2 searches; searches are billed separately).
 
