@@ -1,5 +1,7 @@
 # 公開 repo 之前的清單（2026-10-18 清查結果與建議做法）
 
+> ⚠️ **2026-10-30 備註：** 這份是 2026-10-18～20 的清查紀錄。其中提到的 `scripts/audit_secrets.py` 已隨 Termux 腳本一起刪除；「簽名金鑰」一節（用 GitHub Secrets 設定 4 個值、`gen-keystore.yml` 產生金鑰）仍然有效，工作流程的錯誤訊息也指向它。清查結果表是當時的狀態，公開前請重新掃一次（`git log -p` 搜尋金鑰格式）。
+
 > 狀態（2026-10-20 更新）：簽名金鑰已移出 repo（改用 GitHub Secrets＋Release 發布，見下面「簽名金鑰」）、repo 位置不再寫死；其餘（授權、作者 Email、文件整理、建新 repo）還沒做。目前這個 repo 仍是私人的。
 > 清查工具：`python scripts/audit_secrets.py --words 你的名字,你的Wi-Fi名稱`（只讀，可重複執行；離線測試涵蓋它）。
 
@@ -12,7 +14,7 @@
 | `debug.keystore`（密碼 `android` 寫在 `app/build.gradle`） | 🟡 **已從工作樹移除、改用 Secrets**；舊歷史裡仍有舊金鑰（所以公開要用全新的 repo，並確認新 repo 沒有帶歷史） | 公開等於把簽名金鑰交給別人，別人可以做出簽名一樣的假 App；這個 App 有無障礙與 root 相關能力，風險不小 |
 | 提交作者含真實姓名與 Email（63 個提交） | ❌ **必須處理** | 公開後永久顯示在每個提交上 |
 | `LICENSE` | ⚠️ 沒有 | 沒有授權，別人預設不能合法使用 |
-| 文件內容 | ⚠️ 建議整理 | `HANDOFF.md`/`CLAUDE.md`/`PROMPT_FOR_NEXT_AI.md` 含大量個人使用過程；`docs/ROADMAP_OVERLAY.md` 描述了反編譯他人 App（LiveBridge、SystemUI）做研究，只有描述沒有程式碼，公開前請自己斟酌 |
+| 文件內容 | ⚠️ 建議整理 | `HANDOFF.md`/`CLAUDE.md`/`PROMPT_FOR_NEXT_AI.md` 含大量個人使用過程；`docs/archive/ROADMAP_OVERLAY.md` 描述了反編譯他人 App（LiveBridge、SystemUI）做研究，只有描述沒有程式碼，公開前請自己斟酌 |
 
 ## 建議做法：另建一個「乾淨的公開 repo」（不要動現在這個私人 repo 的歷史）
 1. **先決定授權**（MIT 或 Apache-2.0 都常見；scrcpy 是 Apache-2.0，我們只下載它的伺服器檔、沒有收進 repo）。

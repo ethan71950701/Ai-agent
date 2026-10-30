@@ -1,5 +1,7 @@
 # 問題與解法（都是這個專案實際遇過的）
 
+> 📦 **歷史紀錄（2026-10-30 歸檔）：** Termux／Python 時期的問題與解法。App 現在不需要 Termux，指令與路徑多半已不存在，只作參考。
+
 ## Termux / 編譯
 - **開啟 Termux 跳「Android 應用程式相容性 / 16 KB」彈窗**：無害，按「不要再顯示」。
 - **`cmake`: `CANNOT LINK EXECUTABLE ... cannot locate symbol`**：只做了 `pkg update`。執行 `pkg upgrade -y`，必要時

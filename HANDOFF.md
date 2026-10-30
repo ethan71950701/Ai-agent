@@ -1,107 +1,84 @@
 # HANDOFF — 給接手 AI 的交接文件
 
-> 最後更新：2026-10-17（Now Bar、漣漪、App 操作介面、搜尋、快取都已實測；README/SETUP 已同步）。**接手後每做完一件事，請更新第 6 節「狀態表」與第 11 節「下一步」。**
-
-> ⚠️ **現況（2026-10-22）：App 已經是全部，不再需要 Termux 與 Python 腳本。** `scripts/`、`install.sh`、`tests/` 都已刪除，助理面板、路由、操作畫面迴圈（`AgentLoop`）、記憶、排程、通知與朗讀、語音辨識都在 `android-overlay/` 裡。
-> 現行架構與規則請看 [`CLAUDE.md`](CLAUDE.md)。**本文件下面提到 Termux、`assistant.py`、`agent2.py`、`~/.claude_key`、`update_app.py` 的段落都是歷史紀錄**（當時的實測結果仍有參考價值，但指令與路徑已經不存在）。
-> 底欄／透鏡液態玻璃：著色器移植自使用者的 Samsung Glass 模組（設計參考 KernelSU 的 FloatingBottomBar／Lens），在 `GlassBar.java`；按住時透鏡與底欄放大、加速度驅動的彈簧形變、圖示只在透鏡下變色。使用者在手機上確認過效果。
+> 最後更新：2026-10-30。**接手後每做完一件事，請更新第 6 節「狀態表」與第 11 節「下一步」；✅ 只能是使用者在手機上實測過的。**
+> Termux／Python 時期（2026-10-17～22 以前）的目標、架構、檔案清單、實測數據、問題與解法，都搬到 [`docs/archive/`](docs/archive/)（`HANDOFF_termux_era.md` 是這份文件舊版的第 0～5、8～12 節）。狀態表（第 6 節）裡早期 Termux 時期的列保留作歷史。
 
 ## 0. TL;DR（English）
 
-A beginner user uses a **personal AI phone assistant app, PhoneAI Overlay** (`android-overlay/`, Java and Gradle) on a **rooted Android phone**. The app is the whole product: no Termux, no Python scripts.
-Text or voice input (SenseVoice offline speech recognition, or the system recognizer) goes through a router. Fixed root commands run directly; "open app" and chat are handled locally; screen tasks run an automation loop (screenshot, Claude Sonnet 5.5 picks the next action, root executes tap, swipe, drag, multi-touch, typing). Sensitive actions always show a confirmation dialog.
-Other parts: a glass bottom bar (`GlassBar`, a capsule shader ported from the user's Samsung Glass module), memory and to-dos, simple scheduled questions, notifications and text-to-speech, in-app updates from GitHub Releases, and a Chinese and English interface (`L.t` plus `LEn`).
+A beginner user has a **personal AI phone assistant app, PhoneAI Overlay** (`android-overlay/`, Java and Gradle, minSdk 33) on a Samsung Galaxy S25+ (Android 16). The app is the whole product: no Termux, no Python.
+Text or voice input (SenseVoice offline speech recognition, or the system recognizer) goes through a router (keywords, then Claude Haiku 5.5): fixed commands run directly, "open app" and chat are handled locally (the chat assistant has tools: memory, alarms, calendar, Samsung Reminder, map, dial, file transfer, read-only shell), and screen tasks run an automation loop (accessibility element list or screenshot, a model picks an action, it runs through root, Shizuku or accessibility).
+Three execution modes: **root**, **Shizuku**, **normal** (accessibility + system APIs). AI services: Claude (default) or any OpenAI-compatible API (Gemini, DeepSeek, OpenAI…), with separate "cheap" and "vision" slots, an A/B comparison page and per-service cost tracking.
+Other parts: macros and learned experience (the AI remembers routes and clean step sequences), a background virtual screen with preview/takeover, Now Bar (Live Update) status, a glass bottom bar, memory and to-dos, scheduled short queries, device-to-device file transfer (plus a Windows app in `windows-transfer/`), in-app updates from GitHub Releases, exportable task logs, and a Chinese/English interface.
 Releases are built by GitHub Actions on `main` (the user has no PC). `CHANGELOG.md` holds the bilingual release notes.
 The user is a non-expert who needs **one small step at a time**, and speaks Traditional Chinese (see section 3).
 
 ## 1. 專案目標
 
-使用者想做「類似 Gemini 的語音助手」：說（或先用打字）一句話，AI 直接操作自己已 root 的手機
-（點螢幕、開 App、開關設定），必要時能聯網搜尋回答。要求：**全部在手機上執行（Termux），不依賴電腦**。
+使用者想做「類似 Gemini 的手機助手」：說（或打字）一句話，AI 直接操作手機（點螢幕、開 App、開關設定、新增提醒…），必要時聯網搜尋。要求：**全部在手機上執行，不依賴電腦**。後來擴充成：不一定要 root（Shizuku／普通模式）、可換別家 AI 服務以省錢、AI 能自己學經驗、能在背景操作。
 
 ## 2. 使用者與環境
 
-- 手機：Samsung Galaxy S25+（12GB RAM），已 root（Magisk 一類；確切方式沒問過）。螢幕解析度 1440x3120。
-- Termux 從 GitHub 安裝（不是 Play 商店），另有 Termux:API；Termux:Widget 的步驟給過，使用者**沒回報是否完成**。
-- 鍵盤 Gboard。Termux 裡預設不能打中文（解法見 TROUBLESHOOTING）。
-- 使用者是新手，不熟 Linux。以繁體中文溝通；常用語音輸入，所以**訊息可能是簡體中文，回覆仍用繁體**。
-- 使用者已買 Anthropic API 額度（金額沒確認，建議 $5 起跳）。Key 存在手機的 `~/.claude_key`（**不在 repo**）。
-  使用者之前拿到 `sk-ant-usr-…` 開頭的個人 Key 會 401；改建「Linked account=未連結 + 預設工作區」的 Key 後
-  `ctest.py` 成功（沒確認新 Key 的前綴）。
-- 預算態度：很在意成本，希望簡單任務用便宜模型、卡住才升級。
+- 手機：Samsung Galaxy S25+（12GB RAM，One UI／Android 16），**有 root**（Magisk 一類），但測試時常把 root 授權關掉來驗證不用 root 的模式。螢幕 1440x3120。
+- 使用者是新手，沒有電腦，只能用手機：App 靠 GitHub Actions 編譯，從 Release 下載安裝；更新用 App 內「功能 → 維護 → 檢查並更新」。
+- 以繁體中文溝通；常用語音輸入，所以**訊息可能是簡體中文，回覆仍用繁體**。測試時貼 App 內「任務過程」頁的截圖（現在也能匯出成文字檔）。
+- AI 服務：Claude API（Key 存在 App 私有資料夾 `claude_key`）；也試過 Gemini（用到免費額度）、DeepSeek。很在意成本：簡單任務用便宜模型（Haiku 5.5／Gemini flash-lite）、複雜才用 Sonnet 5.5。
+- 價格資料來自官網價格頁與使用者提供的截圖；App 內顯示的估價「以 Console 為準」。
 
 ## 3. 與使用者互動的規則（很重要）
 
-1. **一次只給一小步**，每步說明「這在做什麼、為什麼、怎麼看成功/失敗」。使用者明講過「有些聽不懂」。
-2. 手機螢幕小：回覆要短、少表格；指令用單一 code block。**長指令貼上時常被重複貼兩次黏在一起**
-   （出現過 `…6python ~/agent.py…` 這種錯），要提醒「貼之前看一下只有一行」。
-3. 每步都要有「成功的樣子」和「失敗就貼這個給我」。使用者會貼終端機輸出或截圖。
-4. **不要要求使用者貼 API Key**；提醒不要截圖 Key、不要寫進腳本。用 `head -c 10`、`wc -c` 驗證，不要 `cat`。
-5. 修改既有檔案時，用「帶 assert 的 Python 修補腳本」（找不到要改的地方就中止，不亂改），並讓使用者貼回結果。
-6. 測試完提醒清理截圖（`rm ~/s.png ~/s_small.png`、`/sdcard/Download/` 裡的測試圖）。截圖可能含通知欄/私人畫面。
-7. **不確定的事要說不確定**。這個專案裡好幾次我（前一個 AI）推測錯誤（例如以為是「設定被殺掉」其實是回去的方式不對；
-   以為 Key 開頭是 `sk-ant-api`）。給推測時標明「這是推測，需實測」，並設計小實驗驗證。
-8. 價格：Claude 與 DeepSeek 已照官網價格頁（使用者 2026-10-29 提供截圖：Claude Haiku 5.5 $0.10/$0.50（提示詞 ≤10 萬 token）、Sonnet 5.5 $2/$10、Opus 5.5 $4/$20，快取寫入 1.25 倍、Haiku 快取讀取 $0.01、Sonnet／Opus 快取讀取 $0.10／$0.20；DeepSeek flash 尖峰 $0.30 入／$1.20 出／快取命中 $0.006，離峰半價）。OpenAI GPT-6 系列也照官網截圖（Astra $10/$50、Sol $2/$10、Terra $1/$5、Luna $0.10/$0.50，快取讀取各為 $1／$0.10／$0.05／$0.01）；Gemini Flash 系列照官網頁（2026-10-29：3.8／3.6 Flash $0.75/$3.75（2027-01-01 起翻倍）、3.5 Flash-Lite $0.30/$2.50、3.1 Flash-Lite $0.25/$1.50、2.5 Flash-Lite $0.10/$0.40；`-latest` 別名頁面沒寫對應哪版，假設最新）；只有舊的 GPT-4o 仍是第三方粗估，在 `Usage.guessPrice`，使用者可在用量頁改。其餘價格引用時仍要註明並建議看 Console 的 Usage。
-9. **請使用者測試 agent 時，叫他不要切換 App、不要碰手機**：agent 照眼前畫面做事。曾有一次使用者在執行途中切到 Claude App，
-   agent 第 4 步看到的是 Claude 聊天畫面而回 fail，我們花了好幾輪才查出來。先問「中途有沒有切 App」，再怪程式。
-10. 觀察不到的事不要編。例如曾推測「AI 去點了貼上按鈕」，後來看紀錄根本沒有那個動作。要用 `AGENT_DEBUG=1` 看實際畫面。
+1. **一次只給一小步**，每步說明「這在做什麼、為什麼、怎麼看成功／失敗」。回覆短，手機螢幕小，少表格。
+2. 需要使用者在手機上跑指令時（例如 Termux 裡的 `su -c …`、`cmd app_function …`），給**單一一行**的 code block，並說明「成功的樣子」「失敗就貼什麼」。長指令貼上時可能被重複貼；提醒貼之前確認只有一行。
+3. **絕不要求使用者貼 API Key**；Key 只在 App 私有資料夾（權限 600），不進 repo、不印出、不寫進腳本。
+4. **不確定的事要說不確定**，推測要標明並設計小實驗驗證。這個專案裡好幾次推測錯誤（例如以為 Gemini 不能用工具、其實是 thought_signature 沒帶回；以為時間欄位叫 `dateTime` 字串、其實是物件）。
+5. 不要編造觀察結果；看真正的輸出與任務過程頁。測試前先問「中途有沒有切 App」再怪程式。
+6. 價格、版本、站點限制這類會變的資料，查官網並註明來源；不要憑記憶。
+7. 使用者看得到的改動，要在 `CHANGELOG.md` 的 `## Unreleased` 加一條「中文｜English」（**要加在真正的 `## Unreleased` 標題底下，不是檔案開頭說明裡提到那個字的地方**）。
 
-## 4. 架構
+## 4. 架構（現在）
 
 ```
-輸入（桌面圖示 Termux:Widget 輸入框 / Termux 打字；語音尚未）
+輸入（助理面板：打字／語音；Now Bar、磁貼、電源鍵、浮動按鈕、桌面小工具、分享到助理）
    |
-assistant.py
-   |-- 「開 X」（APPS 表）           -> monkey 啟動 App                    （免費、瞬間）
-   |-- 指令表 COMMANDS 命中          -> su -c "svc ..."/"input keyevent"   （免費、瞬間）
-   |                                   或 path.py（本地模型路徑點擊）
-   |-- 「點/按/選 X」               -> path.py（本地模型視覺點擊）
-   '-- 其他 -> route()：Haiku 5.5（低思考）判斷是不是上面某項的另一種說法（藍芽=藍牙）
-                 |-- 是 -> 照表執行（只能選表裡有的）
-                 '-- 否 -> agent2.py "<任務>" <Haiku 估的最大步數>
-                           句首加「ai」跳過規則，直接 route(agent_only) 估步數後交給 agent2
+Brain.run
+   |-- Assist.route 關鍵字（固定指令）  -> root／Shizuku 指令，或沒權限時開設定頁   （瞬間、免費）
+   |-- Router.decide（Haiku 5.5 判斷）  -> cmd 固定指令 / app 開 App / chat 聊天 / agent 操作畫面（並估步數、挑巨集）
+   |-- chat  -> ChatEngine：工具有 get_time、set_alarm、add_calendar_event、samsung_reminder、show_on_map、dial、
+   |            memory_*（待辦與筆記）、file_*（互傳檔案）、run_shell（唯讀白名單）
+   |            連不上 AI（沒網路）時才用 Schedule.quickAnswer 關鍵字回答電量、儲存空間、幾點
+   '-- agent -> AgentLoop：每步取得畫面（元件清單，必要時截圖）-> 模型選動作 -> 執行 -> 驗證
+                動作：open／tap／type／scroll／swipe／drag／batch（最多 10 個）／back／home／ask／ask_user／look／remember／search／
+                shell（唯讀）／cmd／volume／brightness／reminder_create／reminder_draft／done／fail…
+                便宜模型（Haiku 5.5）先做，卡住升 Sonnet 5.5；巨集（Macros）可重播乾淨的步驟；經驗（Memory lessons）帶進提示
 
-agent2.py（Claude 迴圈：截圖 -> 一次呼叫決定動作+座標+建議等待秒數 -> 執行）
-   動作：open（root 開 App）/ cmd（白名單 wifi、藍牙、音量）/ tap / scroll / swipe / type / enter / back / home / ask / done / fail
-   模型：Sonnet 5.5；卡住升 Opus 5.5 做一步後降回（最多升 2 次）
-   保護：敏感一律跳確認框（不拒絕）、最大步數、畫面沒變/連點偵測、通知上有「停止」鈕、結束刪截圖
-   回報：常駐通知顯示第 N 步與正在做的動作
-
-path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~1000 相對座標）
+LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/completions；LlmConfig 管「便宜」「看圖」兩個欄位與每個服務的 Key 檔
+執行層：Root／ShizukuBackend／ExecMode；Phone（普通模式）；RippleAccessibilityService（無障礙：手勢、元件清單、截圖、懸浮窗）
+背景操作：BgDisplay（虛擬螢幕）+ DirectHost；預覽與接手在 RippleAccessibilityService
 ```
 
-核心做法：**把「決定要點什麼」和「找座標」拆開**。小模型一次做兩件事（規劃 + 定位）很不準；
-告訴它名字再找座標就很準。Claude 則兩件事一次做（`agent2.py`）。
+- 敏感操作（付款、轉帳、刪除、安裝、傳訊息、登入、密碼）一律跳確認框，沒回應 = 不同意。傳訊息另有程式層的「要送出嗎」確認與「訊息要真的出現在對話裡」的完成檢查。
+- 要使用者親自處理的事（解鎖圖形、PIN、密碼、驗證碼）：AI 用 `ask` 的 `manual:true`，程式暫停、畫面上方跳可拖動的懸浮卡片「請你接手」，做完按「我做完了，繼續」。
+- 三星提醒、時鐘走 Android 16 的 AppFunctions，見 [`docs/APP_FUNCTIONS.md`](docs/APP_FUNCTIONS.md)。
 
 ## 5. 檔案清單
 
-| 檔案 | 用途 |
+| 路徑 | 用途 |
 |---|---|
-| `scripts/assistant.py` | 打字版指令助手（規則式）。`--once "文字"` 給小工具用 |
-| `scripts/path.py` | 本地模型照路徑 `"設定,連線,Wi-Fi"` 逐步找座標並點擊，含回到原畫面檢查 |
-| `scripts/agent2.py` | Claude 版自動迴圈 + 模型升級 + 確認框（**部分驗證**，見狀態表） |
-| `scripts/vdisplay.py` | 用 scrcpy 伺服器建立「沒有視窗」的背景虛擬螢幕（`--serve` 給 agent2 用；不帶參數是實驗/診斷，`--app=<套件>` 可指定測哪個 App） |
-| `scripts/selftest.py` | 一鍵自我檢查（見狀態表） |
-| `scripts/update_app.py` | 一行更新：拉程式＋下載安裝最新 APK（見狀態表） |
-| `scripts/audit_secrets.py` | 公開 repo 前的清查（只讀；`--words` 可加個人字眼） |
-| `scripts/memory.py` | 記憶：待辦與筆記（本機 `~/memory.json`，chmod 600，不呼叫 AI）；assistant.py 先問它 |
-| `scripts/cfind.py` | 用 Claude 找座標（只畫圈，測準確度/token；支援 NOTHINK / EFFORT） |
-| `scripts/ctest.py` / `cvision.py` | 測 API 連線 / 測識圖速度與 token |
-| `scripts/look.sh` | 用本地模型找座標，只看不點，畫紅圈 |
-| `scripts/snap.sh` | 等 5 秒後截圖縮圖（給 cfind/cvision 用） |
-| `scripts/sizetest.sh` | 同一張圖測 360/540/720 的本地模型耗時與座標 |
-| `scripts/widget/assistant.sh` | Termux:Widget 桌面入口（輸入框 -> assistant.py）（**未驗證**） |
-| `CLAUDE.md` | 給 Claude Code 自動讀取的專案說明（指向本文件） |
-| `docs/ROADMAP_OVERLAY.md` | Now Bar 即時狀態 + 點擊漣漪的計畫與目前進度 |
-| `android-overlay/` | **PhoneAI Overlay** Android App（Java、無 AndroidX）：懸浮層畫漣漪/滑動軌跡 + Live Update 常駐通知（含停止鈕） |
-| `.github/workflows/android.yml` | GitHub Actions 編譯 debug APK（Artifacts: `phoneai-overlay-apk`） |
-| `scripts/overlay.py` | Termux 端跟 App 溝通（127.0.0.1:47195 + root 才讀得到的 token）；`python ~/overlay.py` 單獨測試 |
-| `scripts/applist.py` | 讀 `~/apps.tsv`（由 App 匯出的「顯示名稱\t套件名稱」）並用名稱找套件 |
-| `scripts/overlay_install.sh` | 用 root 安裝 APK 並直接開懸浮層/通知權限 |
-| `install.sh` | 把腳本複製到 `~`（腳本互相用 `~/xxx` 呼叫，所以要放在家目錄） |
+| `CLAUDE.md` | 給 Claude Code 自動讀取的專案說明 |
+| `HANDOFF.md`（本文件）、`CHANGELOG.md` | 交接與狀態表；雙語更新說明（CI 發布時把 Unreleased 移到版本標題底下） |
+| `android-overlay/` | App 原始碼（Java、Gradle）；`app/src/main/java/com/phoneai/overlay/` 是全部程式，`app/src/test/` 是單元測試，`tools/check_i18n.py` 檢查中英文翻譯 |
+| `windows-transfer/` | 互傳檔案的 Windows 版（Python），協定與手機版相同；GitHub Actions 打包成 .exe |
+| `.github/workflows/android.yml` | 編譯、簽名、發布 APK（只在 `android-overlay/**` 或工作流程變動時觸發；簽名金鑰在 GitHub Secrets） |
+| `.github/workflows/gen-keystore.yml` | 一次性：產生簽名金鑰（見 `docs/PUBLISH_CHECKLIST.md`） |
+| `.github/workflows/windows-transfer.yml` | 打包 Windows 版 |
+| `docs/` | `APP_FUNCTIONS.md`（AppFunctions 實測）、`NO_ROOT.md`（三種模式對照）、`FILE_TRANSFER.md`（互傳設計）、`PUBLISH_CHECKLIST.md`（簽名金鑰與公開前清查）、`VIDEO_PLAN.md`；`archive/` 是 Termux 時期與已完成的路線圖 |
 
-已放棄/刪除的舊腳本（不在 repo）：`agent.py`（本地模型自己規劃，常誤判完成或點錯，見第 7 節）、
-`tap.sh`/`tap2.sh`（路徑腳本的前身）、`diag.sh`（一次性診斷）。
+主要類別（都在 `android-overlay/app/src/main/java/com/phoneai/overlay/`）：
+- **路由與對話：** `Brain`、`Assist`、`Router`、`ChatEngine`、`Schedule`、`Memory`、`AlarmTool`、`SystemIntents`、`FileTools`
+- **操作畫面：** `AgentLoop`、`AgentPrompt`、`ElementList`、`Macros`/`MacrosUi`、`BgDisplay`/`DirectHost`、`ProtectedApps`
+- **AI 服務：** `LlmConfig`、`LlmAdapter`、`LlmPresets`、`AiServiceUi`、`LlmErrors`、`LlmBalance`、`Usage`、`AbTest`/`AbTestUi`
+- **執行層：** `Root`、`ExecMode`、`ShizukuBackend`、`Phone`、`RippleAccessibilityService`、`Maintenance`
+- **介面：** `MainActivity`、`AssistantSheet`、`GuideActivity`、`OnboardingActivity`、`GlassBar`、`OverlayService`（Now Bar 通知）、`LogActivity`/`LogExport`（任務過程與匯出）
+- **其他：** `Updater`、`InstallResultReceiver`、`Transfer*`（互傳檔案）、`SherpaEngine`/`SpeechCapture`（語音）、`L`/`LEn`（中英文）
 
 ## 6. 狀態表
 
@@ -179,7 +156,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | App 名稱清單 `~/apps.tsv` → `assistant.py`「開X」用名稱開任何 App；`agent2.py` 的 `open` 模型猜錯套件時用名稱查；`python ~/applist.py` 列出全部 App 包名 | ✅ | 第一版（App 用 root 寫 Termux 家目錄）實測**沒寫出檔案**，原因未查明（我還把「已匯出」寫死成成功訊息，是錯的），已移除。改成 Termux 端經 overlay 連線（cmd `apps`）向 App 要清單再自己存檔；使用者實測清單可列出、用名稱開 App 可用 |
 | 助理面板新介面（`AssistantSheet`）：透明（沒有面板方塊，只有由上到下漸深的暗幕）、中間漸層光球（`OrbView`，隨音量脈動）、底下半透明輸入框、右邊只有「送出」（`SendIconView`：無底色、白色線條紙飛機、尖端朝正右、沒內容時變暗、倒數時外圈細線縮短）；背景極光漸層 + 260 顆極細的閃爍粒子（`AuroraView`）；語音優先（一開就聽，邊說邊顯示在輸入框，辨識後倒數 5 秒才送出），碰輸入框/一打字語音就停；狀態文字顯示在輸入框提示；點光球可重新開始/停止聆聽；**開場動畫**（`AuroraView.playIntro`）：從螢幕最上方放出三圈光波往下擴散 + 140 顆光點往下灑，約 1.25 秒，波過去後光球與輸入列才浮上來。語音改 App 內 `SpeechRecognizer`（要 RECORD_AUDIO，`overlay_install.sh` 會授權；挑 Google 的辨識服務，不用我們自己的存根），沒權限/沒服務退回系統語音視窗 | ✅ | 使用者實測（2026-10-18）：語音可用（改用系統預設辨識服務，三星）、送出鈕、光暈、Now Bar；固定簽名後覆蓋安裝不用解除安裝；按送出後 Now Bar/光暈立刻出現，立刻完成的指令約 0.5 秒收掉。尚未逐項確認：開場動畫細節、粒子細膩度、面板上的停止鈕、震動。原先風險：App 內辨識能不能用、鍵盤與導覽列高度（自己處理 insets）、動畫效能、輸入框在亮色桌布上的可讀性 |
 | App 原生確認框（`ConfirmActivity`，agent2 敏感操作） | ✅ | 使用者實測（2026-10-18）：原生是/否框會跳、按「否」取消、按「是」任務繼續；關閉後原本會跳回 App 主畫面，`ConfirmActivity`/`AskActivity` 改成獨立 task（`taskAffinity=""`）後不再跳回 |
-| 背景操作：模擬第二螢幕（階段 0 手動實驗） | ✅ | 使用者實測（2026-10-18）：可在第二螢幕開 App、`input -d` 單獨操作、`screencap -d <SF編號>` 單獨截圖，主螢幕不受影響（細節見 docs/ROADMAP_BACKGROUND.md §6） |
+| 背景操作：模擬第二螢幕（階段 0 手動實驗） | ✅ | 使用者實測（2026-10-18）：可在第二螢幕開 App、`input -d` 單獨操作、`screencap -d <SF編號>` 單獨截圖，主螢幕不受影響（細節見 docs/archive/ROADMAP_BACKGROUND.md §6） |
 | 背景操作：`agent2.py` `AGENT_BG=1`（Claude 在第二螢幕操作） | ✅ | 使用者實測（2026-10-18，設定 App）：open、scroll、tap（進「連接」）、type（搜尋框輸入 wifi）都成功，主螢幕不受影響；第二螢幕漣漪（App 新版，`createDisplayContext` 加無障礙懸浮層）在小視窗內顯示。`--windowingMode 1` 沒讓視窗變全螢幕。Chrome 也成功（開在第二螢幕，點網址列、輸入中文「台北天氣」、Enter、看到天氣結果，5 步）。注意 Chrome 重開會還原上次分頁，測試要換沒搜過的詞。**未測：back/home、需要登入的 App、LINE 等** |
 | 背景模式自動放大視窗（`maximize_bg`：`am stack list` 找任務 → `am task resize`） | ✅ | 手動 `am task resize` 已由使用者實測成功（視窗變大、內容重新排版）；自動化版已實測：Termux 印出「把視窗拉大（task 1570 → 1080x2214）」，Chrome 以大視窗開啟（但那次 Chrome 還原了上次的「高雄天氣」分頁，AI 沒打字就完成，所以沒測到輸入）。底部留 126 px 給工具列是估算 |
 | 背景模式任務結束自動關掉第二螢幕上開的 App（`bg_cleanup`：先 `am stack remove`，沒移掉且主螢幕沒在用才 `force-stop`；`AGENT_BG_KEEP=1` 保留） | ✅ | 使用者實測（2026-10-18，Chrome 搜「台南美食」，5 步，約 $0.014）：視窗自動拉大、打字、Enter 都成功，結束後視窗關掉。**`am stack remove` 在這支手機沒效，實際是 force-stop 補上的** |
@@ -263,7 +240,7 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 | **第七輪**（2026-10-20）：①按住時放大圖示恢復：透鏡裡重畫底欄那排主色圖示，以按鈕中心放大（1＋0.22×強度），座標跟底欄對齊（取代會錯位的截圖做法）；②更新檢查：repo 仍是**私人**，App 不用權杖查 `releases/latest` 會回 404，原本被誤判成「沒有發布版本／已是最新」；現在改顯示「repo 是私人的，App 沒有權杖就查不到」 | 🟡 雲端編譯過，手機未測 | 要讓 App 不用權杖更新，repo 必須公開（或改用權杖）；需要使用者決定 |
 | **實驗：元件清單＋Haiku 點元件編號（`AGENT_TREE_MODEL=haiku`）** | 🟡 手機未測，需 `update_app.py`＋新 APK | 使用者想法：元件清單只要選編號，不用精準座標，Haiku 可能夠用，比 Sonnet＋截圖便宜很多（依假設價：Haiku 輸入約 1/20）。做法：`intents.tree_pick` 把「點第 n 號元件」換算成清單中心的 0~1000 座標，走既有點擊流程（`verify_tap` 在清單模式略過）；`agent2`：`AGENT_TREE_MODEL=haiku` 時 `MODELS` 為 Haiku→Sonnet→Opus（卡住自動升級）；清單提示改成「回 pick＋編號」，找不到編號回 hist 錯誤、可回 need_image。主畫面勾選項（`tree_on`）同時設 `AGENT_TREE=1` 與 `AGENT_TREE_MODEL=haiku`。**比較方式**：勾選項關（Sonnet＋截圖）與開（Haiku＋元件清單）各跑同一任務，比步數、成功率與「本次用量」。**未驗證**：Haiku 選編號的成功率、同名元件、沒文字的圖示（會升級或截圖）。離線測試 112 項 |
 | **成本實驗：元件清單代替截圖（`AGENT_TREE=1`）** | 🟡 手機未測，需新 APK＋`update_app.py` | 使用者：API $5 一下就用完。Console（30 天）：輸入 Token 約 360 萬、輸出約 17 萬、搜尋 2 次，Sonnet 5.5 為主、Opus 很少；花費主要在**輸入**（每步系統提示＋截圖）。程式只替 agent2 的呼叫計價，**`assistant.py` 路由（Haiku）與 `chat.py` 聊天（Haiku＋工具）沒計入估價**，且單價是假設的（未對官方價表）。想法：用無障礙元件樹取代截圖，AI 直接拿到按鈕座標、少猜少走冤枉路（主要省在**步數**，不一定省單步 Token：432 寬截圖約幾百 token，40 行清單也差不多）。做法：`intents.format_tree`（離線測試）把 `OV.tree` 的元件轉成「編號*文字 (x,y)」（x、y 是 0～1000，跟 tap 同一套）；`agent2.grab_screen`：`AGENT_TREE=1` 時優先附清單、不截圖，讀不到（元件少於 3 個、除錯訊息、App 沒連上）或背景模式就截圖；AI 可回 `need_image` 要求下一步改附截圖；清單模式跳過 `verify_tap`；結尾印「畫面來源：元件清單 N 步、截圖 M 步」。主畫面新勾選項（`tree_on`，預設關，`CommandSender.bgEnv` 傳 `AGENT_TREE`）。**要驗證**：同一個任務各跑一次（開／關），比較步數與「本次用量」（輸入 token、估價）。未做：預算上限、統一花費帳本（把路由與聊天也記帳） |
-| **元件清單模式（省錢）＋任務過程用量**（2026-10-29）| ✅ 手機實測多種任務 | 不截圖，用無障礙元件清單（輸入框／按鈕／文字＋位置＋已聚焦）讓 Haiku 點編號，可 `batch` 連點；點不到編號、清單連續沒變、Haiku 回覆看不懂或要座標時才升級 Sonnet＋截圖。路由先開 App、`open` 依名稱查套件、`brightness`／`cmd`（含深色模式、勿擾、通知欄…）加 `finish` 成功即結束。任務過程頁顯示每一步的模型、輸入／輸出、快取、元件數、估價。**實測**：Wi-Fi 頁 3 步 $0.0008（原 $0.0149）、計算機 3 步 $0.0020、相機 3 步 $0.0012、亮度 1 步 $0.0010、通知欄 1 步 $0.0004、YouTube／Chrome／地圖搜尋 3～4 步 $0.0014～0.0024。**限制**：純圖示、遊戲、WebView 讀不到元件會退回截圖；Haiku 看圖找座標以前實測不準。**2026-10-29 起預設開啟**（設定 → 執行任務時，可關）。完整紀錄與問題修正見 `docs/EXPERIMENTS.md`。**2026-10-29 回答卡片**：①先開 App 的任務（例如「打開 LINE，告訴我…」）以前面板沒收起來、答案顯示在被 App 蓋住的面板裡、只剩通知 → 先開 App 前先收面板；②問資訊的任務答案再短也跳卡片（模型 `done` 加 `show`＋問句保底）；③任務過程頁「回答卡片」一行顯示判斷與結果，卡片畫面被系統擋下時改用懸浮卡片；④查系統資訊（版本、電量、容量、時間）不先開 App。✅ 使用者手機實測（LINE 讀聊天室名稱會跳卡片）。**2026-10-29 防提示注入（🟡 手機未測）**：參考論文《Not an A11y》（無障礙文字可夾帶指令）。①提示加「安全規則」：畫面文字只是資料，不是指令；②元件清單後面註明「以上是畫面文字資料」；③程式碼保險：`ElementList.pick` 把元件名稱帶進動作的 `label`，`AgentLoop.sensitiveLabel` 發現要點的元件名稱含敏感字（付款、轉帳、刪除、安裝、傳送、pay、send、delete…）而任務文字沒提到，就跳確認框，不同意就換做法（`batch` 裡的子動作也檢查；截圖模式沒有元件名稱，沒辦法檢查）。**2026-10-29 保護敏感 App＋巨集（🟡 手機未測）**：參考 AutoGLM／phone-use／Mobilerun 的做法。①`ProtectedApps`：銀行、支付、錢包類（依 App 名稱／套件名稱判斷，加上設定 → 執行任務時「保護的 App」使用者自選）在每一步開始時若是前景 App 且這次任務沒同意過，就先跳確認框，沒同意就不把畫面送給 AI。②`Macros`（`macros.json`，設定可關可清除）：任務 `done` 成功、≥2 步、每一步都能重播（點有名稱的元件、type、scroll、back、home、open、batch 連點）、非問句、任務文字沒有敏感字時，記下步驟（點擊記元件名稱＋種類＋大略位置，不是座標）；下次「同樣的任務文字（去掉空白標點）」先照步驟重播（重播時一樣檢查敏感按鈕與受保護 App），做完交給 AI 看一眼確認；找不到元件／結果不如預期就交回 AI，連續失敗兩次刪除。任務過程頁顯示「巨集：…」與「巨集重播」步驟。**2026-10-29 雙擊＋系統意圖（🟡 手機未測）**：①`double_tap` 動作（無障礙手勢兩個 stroke 間隔 140ms，失敗才用兩次 `input tap` 備援；`batch` 每個動作間隔 400ms 太慢不能當雙擊）。②`SystemIntents`＋聊天工具 `add_calendar_event`／`show_on_map`／`dial`：用 root `am start` 打開行事曆新增畫面（標題與時間填好）、地圖（geo:）、撥號畫面，失敗才用一般 startActivity；都只是預先填好，儲存、撥出、導航由使用者自己按。路由提示把這類請求導向聊天。**鬧鐘／行事曆直接設定（🟡 手機未測）**：發現 Manifest 一直沒宣告 `com.android.alarm.permission.SET_ALARM`（一般權限，安裝自動給），這才是最初「Permission Denial」的真因（之前用 root `am start` 繞過）；現在宣告後鬧鐘備援路徑也用 `SKIP_UI=true`，不 root 也能直接設。行事曆改成先 `pm grant` READ／WRITE_CALENDAR（已 root）再用 `ContentResolver` 直接寫入並加 10 分鐘前提醒，做不到才退回開新增畫面。**2026-10-29 不用 root 的版本（🟡 手機未測）**：`Root.available()` 判斷有沒有 root（設定「不使用 root」可強制模擬）；沒有時 `AgentLoop.executeNoRoot`／`typeNoRoot`／`cmd` 與 `Brain.runFixedNoRoot` 改走 `Phone`：無障礙手勢、全域動作、無障礙截圖（a11y 設定檔加 `canTakeScreenshot`）、`startActivity`、`AudioManager`、`Settings.System`（需 `WRITE_SETTINGS`）、`NotificationManager` 勿擾，Wi-Fi／藍牙／深色模式／定位／NFC／行動數據／省電／飛航只能打開設定頁（回覆不以「已」開頭）；分段拖曳不支援。`AssistTest` 確認每個固定指令都有對應。詳見 `docs/NO_ROOT.md`。**待測重點**：無障礙截圖是否可用（更新後可能要重開無障礙服務）、點擊／滑動手勢在各 App 的穩定度、Tailscale／背景模式／電源鍵偵測仍需 root。**設定導覽**：第 1 頁「授權 root」改為（選用），沒有 root 可以直接跳過；更正無障礙頁的說明（現在也讀畫面按鈕與文字）；`Root.available()` 判斷成「沒有」只記 60 秒，引導頁檢查時會 `Root.recheck()`，之後才給 root 也會生效。 |
+| **元件清單模式（省錢）＋任務過程用量**（2026-10-29）| ✅ 手機實測多種任務 | 不截圖，用無障礙元件清單（輸入框／按鈕／文字＋位置＋已聚焦）讓 Haiku 點編號，可 `batch` 連點；點不到編號、清單連續沒變、Haiku 回覆看不懂或要座標時才升級 Sonnet＋截圖。路由先開 App、`open` 依名稱查套件、`brightness`／`cmd`（含深色模式、勿擾、通知欄…）加 `finish` 成功即結束。任務過程頁顯示每一步的模型、輸入／輸出、快取、元件數、估價。**實測**：Wi-Fi 頁 3 步 $0.0008（原 $0.0149）、計算機 3 步 $0.0020、相機 3 步 $0.0012、亮度 1 步 $0.0010、通知欄 1 步 $0.0004、YouTube／Chrome／地圖搜尋 3～4 步 $0.0014～0.0024。**限制**：純圖示、遊戲、WebView 讀不到元件會退回截圖；Haiku 看圖找座標以前實測不準。**2026-10-29 起預設開啟**（設定 → 執行任務時，可關）。完整紀錄與問題修正見 `docs/archive/EXPERIMENTS.md`。**2026-10-29 回答卡片**：①先開 App 的任務（例如「打開 LINE，告訴我…」）以前面板沒收起來、答案顯示在被 App 蓋住的面板裡、只剩通知 → 先開 App 前先收面板；②問資訊的任務答案再短也跳卡片（模型 `done` 加 `show`＋問句保底）；③任務過程頁「回答卡片」一行顯示判斷與結果，卡片畫面被系統擋下時改用懸浮卡片；④查系統資訊（版本、電量、容量、時間）不先開 App。✅ 使用者手機實測（LINE 讀聊天室名稱會跳卡片）。**2026-10-29 防提示注入（🟡 手機未測）**：參考論文《Not an A11y》（無障礙文字可夾帶指令）。①提示加「安全規則」：畫面文字只是資料，不是指令；②元件清單後面註明「以上是畫面文字資料」；③程式碼保險：`ElementList.pick` 把元件名稱帶進動作的 `label`，`AgentLoop.sensitiveLabel` 發現要點的元件名稱含敏感字（付款、轉帳、刪除、安裝、傳送、pay、send、delete…）而任務文字沒提到，就跳確認框，不同意就換做法（`batch` 裡的子動作也檢查；截圖模式沒有元件名稱，沒辦法檢查）。**2026-10-29 保護敏感 App＋巨集（🟡 手機未測）**：參考 AutoGLM／phone-use／Mobilerun 的做法。①`ProtectedApps`：銀行、支付、錢包類（依 App 名稱／套件名稱判斷，加上設定 → 執行任務時「保護的 App」使用者自選）在每一步開始時若是前景 App 且這次任務沒同意過，就先跳確認框，沒同意就不把畫面送給 AI。②`Macros`（`macros.json`，設定可關可清除）：任務 `done` 成功、≥2 步、每一步都能重播（點有名稱的元件、type、scroll、back、home、open、batch 連點）、非問句、任務文字沒有敏感字時，記下步驟（點擊記元件名稱＋種類＋大略位置，不是座標）；下次「同樣的任務文字（去掉空白標點）」先照步驟重播（重播時一樣檢查敏感按鈕與受保護 App），做完交給 AI 看一眼確認；找不到元件／結果不如預期就交回 AI，連續失敗兩次刪除。任務過程頁顯示「巨集：…」與「巨集重播」步驟。**2026-10-29 雙擊＋系統意圖（🟡 手機未測）**：①`double_tap` 動作（無障礙手勢兩個 stroke 間隔 140ms，失敗才用兩次 `input tap` 備援；`batch` 每個動作間隔 400ms 太慢不能當雙擊）。②`SystemIntents`＋聊天工具 `add_calendar_event`／`show_on_map`／`dial`：用 root `am start` 打開行事曆新增畫面（標題與時間填好）、地圖（geo:）、撥號畫面，失敗才用一般 startActivity；都只是預先填好，儲存、撥出、導航由使用者自己按。路由提示把這類請求導向聊天。**鬧鐘／行事曆直接設定（🟡 手機未測）**：發現 Manifest 一直沒宣告 `com.android.alarm.permission.SET_ALARM`（一般權限，安裝自動給），這才是最初「Permission Denial」的真因（之前用 root `am start` 繞過）；現在宣告後鬧鐘備援路徑也用 `SKIP_UI=true`，不 root 也能直接設。行事曆改成先 `pm grant` READ／WRITE_CALENDAR（已 root）再用 `ContentResolver` 直接寫入並加 10 分鐘前提醒，做不到才退回開新增畫面。**2026-10-29 不用 root 的版本（🟡 手機未測）**：`Root.available()` 判斷有沒有 root（設定「不使用 root」可強制模擬）；沒有時 `AgentLoop.executeNoRoot`／`typeNoRoot`／`cmd` 與 `Brain.runFixedNoRoot` 改走 `Phone`：無障礙手勢、全域動作、無障礙截圖（a11y 設定檔加 `canTakeScreenshot`）、`startActivity`、`AudioManager`、`Settings.System`（需 `WRITE_SETTINGS`）、`NotificationManager` 勿擾，Wi-Fi／藍牙／深色模式／定位／NFC／行動數據／省電／飛航只能打開設定頁（回覆不以「已」開頭）；分段拖曳不支援。`AssistTest` 確認每個固定指令都有對應。詳見 `docs/NO_ROOT.md`。**待測重點**：無障礙截圖是否可用（更新後可能要重開無障礙服務）、點擊／滑動手勢在各 App 的穩定度、Tailscale／背景模式／電源鍵偵測仍需 root。**設定導覽**：第 1 頁「授權 root」改為（選用），沒有 root 可以直接跳過；更正無障礙頁的說明（現在也讀畫面按鈕與文字）；`Root.available()` 判斷成「沒有」只記 60 秒，引導頁檢查時會 `Root.recheck()`，之後才給 root 也會生效。 |
 | **不用 root 模式＋root 被撤銷自動切換**（2026-10-29，`Phone.java`、`Root.recheckIfStale`，說明見 `docs/NO_ROOT.md`）| ✅ 手機實測（root 已關）：Wi-Fi 頁面任務 3 步完成約 $0.0019；「關閉 Wi-Fi」只打開 Wi-Fi 面板並明說要自己切換 | 其餘沒 root 的動作（音量、勿擾、亮度、截圖、輸入）🟡 手機未測；撤銷時 App 正在執行中的邊界情況未測 |
 | **沒 root 的 App 內更新**（`Updater.installWithoutRoot`：FileProvider＋`ACTION_INSTALL_PACKAGE`，走系統安裝程式標準畫面；`InstallResultReceiver` 更新後跳通知）| ✅ 手機實測（1322→1323，沒 root，安裝畫面完整留到完成） | 缺「安裝未知應用程式」權限時先開設定頁，APK 留在快取，授權後再按更新不用重下載。曾試過 PackageInstaller 工作階段：確認畫面按下後就消失、沒有完成提示，已棄用 |
 | **三種執行模式（root／Shizuku／普通）**（`ExecMode`、`ShizukuBackend`、`Root.available()`／`Root.isRoot()`；引導頁第一頁選，設定「執行模式」可改）| 🟡 雲端編譯過，手機未測 | Shizuku 模式：`Maintenance.suRun`／`suOnce` 與截圖改走 Shizuku（反射呼叫 `Shizuku.newProcess`，Shizuku 13 已設為 private，**沒在實機驗證**）；安裝 APK 仍走系統安裝程式（`Root.isRoot()` 才用 `pm install`）。直接呼叫 `Root.su()` 的功能（背景螢幕、即時觸控、Tailscale、解除安裝清除等）在 Shizuku 模式沒有支援。要測：裝 Shizuku 並啟動 → 引導頁選 Shizuku → 授權 → 說「關閉 Wi-Fi」應直接關掉 |
@@ -336,6 +313,20 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 > 提醒：repo 裡的 `path.py` / `assistant.py` / `look.sh` 是我把使用者手機上「原版 + 多次補丁」合併重寫的版本，
 > **合併後的版本沒有整份重新跑過**（語法檢查通過）。覆蓋手機上能用的檔案前，先備份，並重跑一次路徑測試。
 
+**2026-10-30 這批（接在上面的表之後）：**
+
+| 項目 | 狀態 | 備註 |
+|---|---|---|
+| **2026-10-30 這批**：批次動作上限 6→10（連點版本號碼 7 次一步做完）| ✅ 手機實測 | 開啟開發人員選項任務：一步連點 7 次，回報成功 |
+| 直接新增三星提醒（AppFunctions：`cmd app_function`，`AgentLoop.reminderCreate`）；沒 root 退回開新增畫面（`reminder_draft`）| ✅ 手機實測（root）| 使用者 Termux 實測出參數格式（`docs/APP_FUNCTIONS.md`）並確認 App 內可用；沒 root／Shizuku 的退路未測 |
+| 聊天模式工具：`samsung_reminder`、`run_shell`（唯讀白名單，數量用 `\| wc -l`）；問手機本身的資訊走聊天；關鍵字短答只在離線時用 | ✅ 手機實測 | 「電量多少、裝了幾個 App」回「24%、185 個第三方應用程式」|
+| 要你親自處理時暫停＋可拖動懸浮卡片「請你接手」（沒開無障礙退回高重要度通知）| 🟡 | 通知版使用者測過（覺得提示不明顯），懸浮卡片版待測：解鎖畫面上看不看得到、按「繼續」後會不會接著做 |
+| AI 自己記經驗（autoLesson：≥5 步或按過返回才完成時請便宜模型總結一句；走錯路當場 `remember`）＋經驗去重＋計算機經驗只種手機上有的 | 🟡 | 一次走對的任務不會學（設計如此）；還沒看過走錯路後存的經驗品質 |
+| Gemini：工具呼叫帶回 `thought_signature`、不送空參數；已有 Key 的服務不再問 Key 也不再跳申請教學 | Key 沿用 ✅／工具呼叫 🟡 | 使用者確認「已經有 key 就不用這個了」；Gemini 查電量／App 的連線修正待確認 |
+| 匯出紀錄（任務過程頁：分享、存到 `下載/PhoneAI/`）| 分享 ✅／存到資料夾 🟡 | 分享選單使用者測過；存到資料夾與說明文字待測 |
+| 更新下載進度顯示在 Now Bar（補 contentIntent 與顏色）| 🟡 | 使用者回報曾不顯示；後來「修復權限」重設 Now Bar 設定後正常，但 App 在前景時系統不顯示（系統行為）；這個通知本身的修法未驗證 |
+| 修正 CHANGELOG 條目被插進檔案開頭說明、導致更新說明空白（1.0.1371～1.0.1380 左右）| ✅ | 之後的版本會列出更新內容 |
+
 ## 7. 重要決策與理由
 
 1. **規劃與定位分離**：本地 2B 模型自己決定下一步時，會太早回 `done`、點到同一處、`click`/`tap` 亂用；
@@ -379,87 +370,45 @@ path.py   本地 Qwen3-VL 2B（llama.cpp，約 16~22 秒/步，360 寬圖，0~10
 22. **開始前等待預設 0**：AGENT_WAIT 預設 0 直接截圖；在 Termux 打指令時第一張圖是 Termux，提示詞要求它用 open/home 離開。assistant.py 不再提示「5 秒內切換」（path.py 本地模型路徑仍是 5 秒）。**未實測**。
 23. **執行中通知**：agent2 用 termux-notification 發常駐通知（id 7195，每步更新「第N步·點擊X」，輸入文字只顯示字數；有「停止」按鈕 -> pkill agent2.py，SIGTERM 已轉為正常結束以清理）。AGENT_NOTIFY=0 可關。結束發一則普通通知（id 7196）。**未實測**。三星 Now Bar 只吃 Live Updates 規格的通知，termux-notification 未必進得去（**未驗證**）；真要進 Now Bar 或畫點擊漣漪，需要自己的小 App（Android 16 promoted ongoing notification + SYSTEM_ALERT_WINDOW 懸浮層），尚未開發。AGENT_TOUCHES=1 會開系統「顯示點觸」，注入的 input tap 是否會畫圓點**未驗證**。
 
-## 8. 實測數據
+## 8. 實測數據與歷史問題
 
-見 [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md)。
+Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](docs/archive/EXPERIMENTS.md)、[`docs/archive/TROUBLESHOOTING.md`](docs/archive/TROUBLESHOOTING.md)（指令與路徑已不存在，只作參考）。現在的 App 實測結果都記在第 6 節狀態表與 `CHANGELOG.md`。
 
 ## 9. 已知問題 / 未解決
 
-見 [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)。未解決的重點：
-- （已繞過）`termux-speech-to-text` 沒彈視窗（懷疑 Termux:API 缺「顯示在其他應用程式上層」/麥克風權限/沒有 Google 語音服務）。
-  備案：whisper.cpp 本地辨識（沒試過，速度未知）。
-- Claude 找小圖示偶爾離群（360 寬約 2/11 錯）；`agent2.py` 還沒加「連問兩次位置差太大就重問」。
-- 不同 App 回到前景的行為可能不同，只在「桌面」和「設定」驗證過。
+- Gemini 的 flash-lite 做操作畫面任務的能力不如 Claude（A/B 測試的結果見狀態表）；用工具（查電量、App 數量）曾連不上，已修（thought_signature），待使用者確認。
+- 部分 App（Instagram 的輸入框等）無障礙輸入可能回報成功但沒輸入進去；已加驗證與退路，仍可能有例外。
+- Now Bar（Live Update）靠 `enable_notification_nowbar_test` 這個系統設定；重開機或系統更新後可能被清掉，到「功能 → 維護 → 修復權限」重設（需要 root 或 Shizuku）。App 在前景時系統不顯示 Now Bar 膠囊（系統行為）。
+- 三星提醒／時鐘的 AppFunctions 只在作者的機型實測；欄位名稱被混淆，詳見 `docs/APP_FUNCTIONS.md`；`findTasks` 的搜尋條件欄位還沒查。
 
 ## 10. 安全規則（不要放寬）
 
-- API Key 只放 `~/.claude_key`（`chmod 600`），**不進 repo、不貼聊天、不截圖**；`.gitignore` 已排除。
-- Claude 版每一步會把**整張截圖傳到 Anthropic**；本地版不外傳。告知使用者不要在銀行/私訊/含個資畫面使用 Claude 版。
-- **敏感一律「問使用者」，不是拒絕**（使用者明確要求）：任務含付款/轉帳/刪除/密碼等字、或下載/安裝，開始前跳確認框；
-  tap 的 what 含送出/登入/安裝等、type 輸入敏感內容、用 `open` 開 Google Play 前再跳；模型被要求遇到敏感事回 `ask`
-  （`manual:true` = 請使用者自己輸入密碼/驗證碼）。確認框沒回應 = 不同意。
-  限制：模型自己的安全判斷程式改不了，它若仍回 fail 會被當成卡住（升級 Opus）。`path.py` 的敏感字檢查仍是直接拒絕（沒改）。
-- 一律有最大步數、畫面沒變偵測、連點同位置偵測；結束會刪截圖。
-- 之後若加語音：誤聽風險更高，確認機制要保留。
-
-> 2026-10-18 實測回報（續）：按送出後要等好幾秒 Now Bar/光暈才出現 → 原因是它們要等 agent2 連上 App，而前面還有 App→Termux→assistant.py→Haiku 路由→agent2 啟動→root 查套件/啟動服務/讀 token。修法：`CommandSender` 送出成功就發 `ACTION_BEGIN` 讓 App 立刻顯示 Now Bar「準備中」與光暈（15 秒沒人接手就自己收）；`overlay.connect()` 先走快路徑（只讀 token 就連）；立刻做完的指令（開藍牙/開 App）由 `assistant.ui_done()` 通知 App 收掉。🟡 未實測。語音：系統日誌顯示預設辨識服務是離線版（AiAi）缺 zh-TW 語言包 → 12，連帶 11；改成優先用系統目前設定的語音服務（使用者切到三星後實測可用）。
-> 2026-10-18 實測回報：語音已正常；步數估太少（中間出錯一兩步就做不完）→ `assistant.py` 新增 `step_budget()`：Haiku 估的步數 ×2+2，至少 10、最多 25，估不到 12（`agent2.py` 直接執行預設也改 12）；光暈顏色太斷層 → 改相近色票與多層淡出，並做成波浪起伏。
-
-### 10b. 安全檢查結果（2026-10-17，讀程式碼，不是滲透測試）
-- 沒有找到「文字 → root 指令」的注入路徑：送進 `su` 的字串只有固定指令、白名單 `CMDS`、`input tap/swipe` 的整數座標，以及先過 `^[A-Za-z0-9_.]+$` 檢查的套件名稱；`input text` 用 `shlex.quote`；
-  App 端 `viaRoot` 的單引號跳脫用 sh 模擬測過（含 `$`、反引號、`;`）。
-- App 對外開放的元件只有：桌面入口、需要系統 `BIND_*` 權限才能綁的服務（磁貼、助理、無障礙）、一個只會回錯誤的語音辨識存根；`OverlayService`/`AskActivity`/`ConfirmActivity` 不對外。測試 `tests/test_offline.py::Manifest` 會守住這點。
-- Termux↔App 連線只綁 `127.0.0.1`，要 token（App 私有資料夾，只有 root/App 自己讀得到）。限制：同機任何 App 都能連上去猜 token，沒有限制連線數與次數（128-bit 隨機，實務上猜不到；沒做防暴力）。
-- 無障礙服務 `canRetrieveWindowContent=false`，`onAccessibilityEvent` 是空的：不讀畫面內容。
-- 已知殘留風險（沒處理）：(1) 任何持有 Termux `RUN_COMMAND` 權限的 App 都能在 Termux 跑指令（Termux 本身的機制，只授權給本 App）；
-  (2) 通知設成鎖定畫面公開，鎖屏看得到「第 N 步 · 點擊『…』」這類動作描述（輸入文字只顯示字數）；
-  (3) 敏感確認取決於模型回報的 `what`，模型自己不回報就不會問（見第 10 節）；(4) `debug.keystore` 在 repo 裡（私人 repo 才放，見 11b）；
-  (5) 三星測試開關 `enable_notification_nowbar_test=1` 的副作用（見 SETUP 第 10 節）。
-- 還沒做：**原生確認框在手機上的實測**（見第 11 節第 1 項）。
+- API Key 只放 App 私有資料夾（`claude_key`、`key_<網址>`，權限 600），**不進 repo、不貼聊天、不截圖、不印出**；匯出紀錄會遮蔽看起來像 Key 的字串。
+- 自動操作每一步可能把**截圖或畫面元件文字傳到 AI 服務**；告知使用者不要在銀行、私訊、含個資的畫面使用；背景模式拒絕操作受保護的 App（銀行、支付等，清單可在設定調整）。
+- **敏感一律「問使用者」，不是拒絕**：付款、轉帳、刪除、安裝、傳訊息、登入、密碼等跳確認框，確認框沒回應 = 不同意；傳訊息另有程式層確認。要使用者親自處理的（解鎖、驗證碼）改成暫停讓使用者接手。
+- 一律有最大步數（12 步）、畫面沒變偵測、連點同位置偵測；shell 動作只允許唯讀白名單（含簡單的 `|` 管線，不含重新導向與子命令）。
+- 互傳檔案只開放 `/sdcard`，配對才能連、加密、每次取走發通知（見 `docs/FILE_TRANSFER.md`）。
+- 不提交截圖、紀錄檔、金鑰、模型檔（`.gitignore` 已排除）。
 
 ## 11. 建議下一步（按優先順序）
 
-**目前（2026-10-22）：** 任務歷史、用量上限、分享到助理、記憶搜尋匯出匯入、Markdown 排版、桌面小工具都已合併，狀態表是 🟡，等使用者在手機上實測後再改成 ✅。下面這份清單是較早的 Termux 時期紀錄，參考用。
-
-0. **改完程式先跑離線測試**：`python -m unittest discover -s tests`（21 項，雲端與手機都能跑，不花 API）。
-1. **更便宜的設定**：`AGENT_FIRST=haiku` 已實測（單次）：Haiku 5.5 點擊座標連續點錯、沒完成任務，升級 Sonnet 又因換模型要重寫快取而多花（見 EXPERIMENTS），**不建議**，預設維持 Sonnet。
-   已試：預設改 `AGENT_WIDTH=432`（2026-10-18，省約 25% 輸入 token，小圖示實測可認）；要更準可設 540。還沒試的：或只把「不需要找座標」的步驟（open/cmd/search）交給便宜模型。
-2. **補測還沒測的動作**：`ask(manual)`（要使用者親自輸入密碼/驗證碼的那種）、點擊層級確認（`scroll`、`enter`、`ask` 已通過）。
-3. **背景操作（進行中）**：階段 0 已成功；`AGENT_BG=1` 實驗版待手機實測（見 [`docs/ROADMAP_BACKGROUND.md`](docs/ROADMAP_BACKGROUND.md) §6）。
-4. **擴充白名單指令**：`assistant.py` 的 `COMMANDS` 與 `agent2.py` 的 `CMDS`（問使用者要加什麼；不要加付款/轉帳/刪除/傳訊息類）。
-5. **需要手機實際紀錄才能校準（不要憑空改）**：①「done」那一步偶爾 8～9 秒（看 App 紀錄頁裡該步的 `Claude: … (秒, 入/出)`，有沒有重試或輸出特別長）；②地圖／導航的固定 6 秒等待（要在紀錄頁收集載入中與載入完的「畫面豐富度」樣本）；③拖曳座標不準（要有失敗那次的整段紀錄）。
-6. 已完成、不用再做：Now Bar、漣漪、語音（用 Google 的語音視窗，`termux-speech-to-text` 那條路不需要了）、聯網搜尋、提示詞快取、用名稱開任何 App、App 內任務用量紀錄。
+1. **等使用者實測並回報這批 🟡**：AI 自己學經驗（走錯路後的經驗是否合理）、乾淨巨集、程式層的傳訊息確認、「請你接手」懸浮卡片（解鎖畫面上是否看得到）、直接新增三星提醒、聊天模式的 `run_shell`、Gemini 工具呼叫、匯出紀錄的「存到 PhoneAI 資料夾」。
+2. 時鐘的鬧鐘／計時器也走 AppFunctions（`docs/APP_FUNCTIONS.md` 已列出函式，格式要照三星提醒的方法實測）；Google Tasks 是否有 AppFunctions 還沒查。
+3. 提醒的查詢、修改、刪除（`findTasks`／`updateTask`／`deleteTasks`）：先查搜尋條件的欄位名稱。
+4. 更多「難、不一定做得到」的 A/B 測試任務，持續比較便宜模型；Gemini 免費額度先用完再說。
+5. 考慮把狀態表（第 6 節）裡 Termux 時期的列移到 `docs/archive/`，讓這份文件再小一點。
 
 ## 11b. 開發環境備註（Claude Code 雲端）
 
-**合併到 `main` 的流程（避免 CHANGELOG 衝突）：** CI 每次發版都會往 `main` 推一個「Archive changelog … [skip ci]」提交，所以 `main` 常常比工作分支超前。順序要固定：
-1. 先從遠端抓最新的 `main`（`git fetch origin main`），再把 `FETCH_HEAD` 合併進工作分支（`git merge FETCH_HEAD`）。這個倉庫沒有 `origin/main` 追蹤分支，所以不能直接用 `origin/main`；也不能用本地舊的 `main`，否則會漏掉 CI 的歸檔提交。
-2. 在工作分支上改程式、CHANGELOG、HANDOFF，提交並推送。
-3. 切到 `main`，用 `git merge --ff-only claude/…` 快進（不要用一般合併，免得又衝突），再推送 `main`。
-4. 如果第 3 步快進失敗，表示 `main` 在這期間又被推進了：回到第 1 步重來。
-不要在 `main` 上直接改 CHANGELOG；Unreleased 的內容只在工作分支上加。
+**提交與合併：** 在工作分支（`claude/…`）上改，編譯測試通過後同時推到工作分支與 `main`（使用者已同意直接合併到 `main`）。CI 每次發版會往 `main` 推「Archive changelog … [skip ci]」提交把 `## Unreleased` 移到版本標題底下，所以 `main` 常比工作分支超前：
+1. `git fetch origin main`，再 `git merge FETCH_HEAD`（這個倉庫沒有 `origin/main` 追蹤分支）。
+2. `CHANGELOG.md` 幾乎每次都會衝突：刪掉衝突標記、兩邊都留（CI 搬走的版本標題與我們新加的 Unreleased 條目）；確認新條目在 `## Unreleased` 底下。
+3. 推到工作分支與 `main`。
 
-- **APK 簽名金鑰固定**（2026-10-17）：`android-overlay/debug.keystore`（密碼 android，別名 androiddebugkey），`app/build.gradle` 的 `signingConfigs.debug` 使用。
-  原本 GitHub Actions 每次都產生新金鑰，簽名不同，只能先解除安裝才能裝（root 授權、無障礙設定都會掉）。雲端兩次獨立編譯的簽名指紋相同（SHA-256 `1a2c4298…cf49`）。
-  **這個 repo 是私人的**才這樣放；若改成公開，這把金鑰就公開了，要先換掉並重裝一次。從舊版升級到固定金鑰那一次仍須先解除安裝，之後就能直接覆蓋安裝。
+**編譯與測試：** 雲端有 Android SDK 與 Gradle：`cd android-overlay && gradle testDebugUnitTest assembleDebug`；改了使用者看得到的字串後跑 `python3 android-overlay/tools/check_i18n.py`（要 0 缺漏）。只改 `HANDOFF.md`／`CHANGELOG.md` 不會觸發 CI 編譯。
 
-- 雲端容器可以從 `dl.google.com` 下載 Android command-line tools，在 scratchpad 裝 `platforms;android-36`、`build-tools;36.0.0`
-  後用 `/opt/gradle` 的 Gradle 8.14.3 直接 `gradle assembleDebug` / `lintDebug`（AGP 8.11.1）。所以改 App 後可以先在雲端編譯確認，再推給 GitHub Actions。
-- Android 16 SDK 裡沒有 `Notification.Builder.setRequestPromotedOngoing`，App 改用 extra `android.requestPromotedOngoing=true`
-  （AndroidX 的做法；是否生效看 `promoted=`）。`setShortCriticalText`、`ProgressStyle`、`canPostPromotedNotifications` 在 API 36 有。
+**簽名：** 正式 APK 由 GitHub Actions 用 Secrets 裡的固定金鑰簽名，之後可直接覆蓋安裝（金鑰設定見 `docs/PUBLISH_CHECKLIST.md`）。
 
-- **無障礙設定會被清掉**：使用者手機有 SCENE（com.omarea.vtools）也用無障礙服務，重裝 App 後我們的服務沒留在
-  `enabled_accessibility_services`（原因是推測，未證實）。要手動寫一次（保留 SCENE）：
-  `su -c "settings put secure enabled_accessibility_services com.omarea.vtools/com.omarea.vtools.AccessibilitySceneMode:com.phoneai.overlay/com.phoneai.overlay.RippleAccessibilityService"`。
-- **Now Bar 已通（2026-10-17）**：靠反編譯 SystemUI 找到條件，詳見 ROADMAP 8e。不需要 LSPosed、不冒用別人套件名。三星 `ongoingActivityNoti.*` 欄位反而不能加（會落到只認設定清單的舊路徑）。
-- 重裝 App 後要重設：無障礙服務（會被清掉）與測試開關（`overlay_install.sh` 設開關，無障礙要手動寫，見上）。
+**Now Bar：** 靠 `android.requestPromotedOngoing=true`、有 `contentIntent`、`setShortCriticalText`（API 36）與上述系統設定；不要加三星的 `ongoingActivityNoti.*` 欄位（會落到只認設定清單的舊路徑）。要發給使用者的提示（解鎖、確認）另外用一般的高重要度通知或懸浮窗，Now Bar 只放短字。
 
-## 12. 接手後先跑這份檢查（在使用者手機的 Termux）
-
-```bash
-ls ~/llama.cpp/build/bin/llama-mtmd-cli ~/model/*.gguf     # 引擎與模型在不在
-wc -c ~/.claude_key && head -c 10 ~/.claude_key; echo       # Key 有沒有（不要 cat）
-python ~/ctest.py                                           # API 通不通
-su -c "wm size"; su -c "dumpsys window | grep mCurrentFocus"   # root 與前景偵測
-termux-tts-speak -s MUSIC "測試"                              # 朗讀
-```
+**無障礙服務被清掉：** 使用者手機有 SCENE（`com.omarea.vtools`）也用無障礙服務；重裝後我們的服務可能沒留在 `enabled_accessibility_services`，App 有自動修復，也可到「功能 → 維護 → 修復權限」。
