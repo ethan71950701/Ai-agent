@@ -475,6 +475,8 @@ final class LEn {
         m.put("三種模式比較 ›", "Compare the three modes ›");
         m.put("三種模式比較", "Compare the three modes");
         m.put("知道了", "Got it");
+        m.put("要送出這則訊息嗎？\n\n「%s」", "Send this message?\n\n\"%s\"");
+        m.put("已取消，訊息沒有送出。", "Cancelled, the message was not sent.");
         m.put("已選 %d 個", "%d selected");
         m.put("　%s 步，已重播 %s 次", "　%s steps, replayed %s times");
         m.put("全部清除", "Clear all");
