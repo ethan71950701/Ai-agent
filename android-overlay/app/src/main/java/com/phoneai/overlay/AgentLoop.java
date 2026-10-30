@@ -465,10 +465,15 @@ final class AgentLoop {
         } finally {
             if (st.dragDown) releaseDrag(st);   // 任務結束一定放開手指
         }
+        boolean macroSaved = false;
         if (doneOk && !macroTried && macroValid[0] && recorded.size() >= 2 && Macros.enabled(c) && !isQuestion(task) && !hasBlockWord(task) && !isMessageTask(task)) {
             Macros.put(c, task, new JSONArray(recorded));   // 成功做完、每一步都能重播：記起來，下次同樣的任務直接重播
             macroNote = "已記住這次的 " + recorded.size() + " 個步驟，下次同樣的任務會直接重播";
-        } else if (doneOk && !macroTried && Macros.enabled(c)) {   // 做完了卻沒記住：把原因寫進任務過程，不用猜
+            macroSaved = true;
+        }
+        // 繞了路才完成（6 步以上）、而且 AI 自己沒有記經驗：請便宜模型用一句話總結「下次可以直接走的路徑」存進這個 App 的經驗
+        if (doneOk && finalSay != null && details.size() >= 6 && st.remembers == 0 && !isMessageTask(task) && !hasBlockWord(task)) autoLesson(c, task, history, st, key);
+        if (!macroSaved && doneOk && !macroTried && Macros.enabled(c)) {   // 做完了卻沒記住：把原因寫進任務過程，不用猜
             macroNote = "這次沒有記住成巨集：" + (isQuestion(task) ? "任務像是在問問題" : hasBlockWord(task) ? "任務含敏感字（付款、刪除…）" : isMessageTask(task) ? "傳訊息任務不記"
                     : !macroValid[0] ? (macroWhy.isEmpty() ? "有步驟不能重播（問使用者、搜尋或看截圖）" : macroWhy)
                     : recorded.size() < 2 ? "只有 " + recorded.size() + " 步，至少要 2 步" : "步驟超過 " + Macros.MAX_STEPS + " 步");
@@ -758,6 +763,36 @@ final class AgentLoop {
         if (tree == null || typed == null || typed.trim().isEmpty()) return false;
         for (JSONObject o : tree) if (!"輸入框".equals(o.optString("k")) && o.optString("t").contains(typed.trim())) return true;
         return false;
+    }
+
+    /** 做完一個走了冤枉路的任務：用便宜模型總結一句可重複使用的規律（例如「藍牙在連接頁裡」）存成這個 App 的經驗；沒有明確規律就不存。多花一次便宜呼叫。 */
+    private static void autoLesson(Context c, String task, List<String> history, State st, String key) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            for (int i = Math.max(0, history.size() - 14); i < history.size(); i++) {
+                String h = history.get(i);
+                sb.append(h.length() > 220 ? h.substring(0, 220) : h).append('\n');
+            }
+            String prompt = "任務：" + task + "\n過程（最近的在後面）：\n" + sb
+                    + "\n這次花了不少步才完成。如果過程裡找到了「下次可以直接走的路徑或規律」（例如某個功能在哪個頁面裡、要先點哪裡），用一句話（40 字內、具體、不要寫這次任務的細節）寫出，例如「三星設定：藍牙在「連接」頁裡」。"
+                    + "沒有明確、可以重複使用的規律就只回「無」。只輸出那一句話。";
+            JSONObject body = new JSONObject().put("model", TREE_MODEL).put("max_tokens", 120)
+                    .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
+            JSONObject r = ChatEngine.post(body, key);
+            StringBuilder out = new StringBuilder();
+            JSONArray content = r.optJSONArray("content");
+            for (int i = 0; content != null && i < content.length(); i++) {
+                JSONObject b = content.getJSONObject(i);
+                if ("text".equals(b.optString("type"))) out.append(b.optString("text"));
+            }
+            String text = out.toString().trim().replace("\n", " ");
+            if (text.isEmpty() || text.startsWith("無") || text.startsWith("无") || text.length() > 80) return;
+            String app = !st.opened.isEmpty() ? st.opened.get(0) : ElementList.foregroundPackage();
+            if (Memory.addLesson(c, text, app)) {
+                st.remembered.add(text);
+                Notify.notifyText(c, L.t("AI 學到的經驗（可在 App 記憶頁刪除）"), text, 7195);
+            }
+        } catch (Exception ignored) { }
     }
 
     /** 傳送鈕位置的經驗（座標是 0 到 1000 的相對位置）。 */
