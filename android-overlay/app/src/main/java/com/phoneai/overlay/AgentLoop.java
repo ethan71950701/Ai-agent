@@ -131,6 +131,9 @@ final class AgentLoop {
         final List<String> remembered = new ArrayList<>();
         int measures, remembers, searches;
         final java.util.Set<String> approved = new java.util.HashSet<>();   // 這次任務使用者已經同意讓 AI 操作的受保護 App
+        final java.util.Set<String> askedCats = new java.util.HashSet<>();   // 這次任務使用者已經同意過的敏感類別（傳訊息、付款…）：同一類不用再問第二次
+        String lastTyped;   // 最近一次輸入的文字：done 前要確認它已經送出（不再留在輸入框）
+        int doneRejects;
         boolean dragDown;
         int dx, dy;
     }
@@ -318,6 +321,12 @@ final class AgentLoop {
                 rememberLesson(c, action, st, history);
                 switch (name) {
                     case "done":
+                        if (useTree && st.lastTyped != null && st.doneRejects < 2 && isMessageTask(task) && stillInInput(tree, st.lastTyped)) {
+                            st.doneRejects++;
+                            history.add(step + ". done 被擋下：輸入框裡還留著剛輸入的「" + (st.lastTyped.length() > 20 ? st.lastTyped.substring(0, 20) + "…" : st.lastTyped)
+                                    + "」，代表還沒送出。請點「傳送／送出」按鈕（Enter 不一定會送出），看到訊息出現在對話裡、輸入框清空了再 done");
+                            break;
+                        }
                         doneOk = true;
                         finalSay = action.optString("say", L.t("完成了。"));
                         wantShow = action.optBoolean("show");
@@ -339,8 +348,14 @@ final class AgentLoop {
                         macroValid[0] = false;
                         boolean manual = action.optBoolean("manual");
                         String why = action.optString("why", L.t("這一步需要你確認"));
+                        String cat = manual ? null : sensitiveCategory(why);
+                        if (cat != null && st.askedCats.contains(cat)) {   // 同一件事使用者剛同意過：不要連問好幾次
+                            history.add(step + ". 使用者已經同意過這一類操作（" + cat + "），不用再問，直接做");
+                            break;
+                        }
                         OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
                         if (!ui.confirm(manual ? why + L.t("\n請自己動手，完成後按確定。") : why + L.t("\n要繼續嗎？"))) return L.t("已取消。");
+                        if (cat != null) st.askedCats.add(cat);
                         history.add(step + ". ask 使用者同意（" + why + "）");
                         break;
                     }
@@ -662,8 +677,38 @@ final class AgentLoop {
         return true;
     }
 
-    /** 執行一個動作，回傳給下一步看的結果文字。 */
+    /** 問使用者的原因屬於哪一類敏感操作（同一類在同一個任務裡只問一次）；不是敏感類別回 null。 */
+    static String sensitiveCategory(String why) {
+        String w = why == null ? "" : why.toLowerCase(java.util.Locale.ROOT);
+        if (w.matches(".*(傳送|发送|發送|傳訊|传讯|訊息|消息|send|message).*")) return "傳送訊息";
+        if (w.matches(".*(付款|支付|轉帳|转账|購買|购买|pay|purchase|transfer).*")) return "付款轉帳";
+        if (w.matches(".*(刪除|删除|解除安裝|卸載|delete|uninstall).*")) return "刪除";
+        if (w.matches(".*(安裝|安装|下載|下载|install|download).*")) return "安裝";
+        if (w.matches(".*(登入|登录|密碼|密码|驗證碼|验证码|login|password).*")) return "登入";
+        return null;
+    }
+
+    /** 任務是不是在傳訊息／回覆（只有這種任務才要檢查「輸入的字有沒有送出」；搜尋框裡留著字是正常的）。 */
+    static boolean isMessageTask(String task) {
+        String t = task == null ? "" : task.toLowerCase(java.util.Locale.ROOT);
+        return t.matches(".*(傳訊息|传讯息|傳訊|傳送|传送|發送|发送|傳給|传给|回覆|回复|訊息給|消息给|send|message|reply|text ).*");
+    }
+
+    /** 元件清單裡有沒有「輸入框」還含著剛輸入的文字（有就代表訊息還沒送出）。 */
+    static boolean stillInInput(List<JSONObject> tree, String typed) {
+        if (tree == null || typed == null || typed.trim().isEmpty()) return false;
+        for (JSONObject o : tree) if ("輸入框".equals(o.optString("k")) && o.optString("t").contains(typed.trim())) return true;
+        return false;
+    }
+
+    /** 執行一個動作，並記下最近輸入的文字（給 done 前的「是否已送出」檢查用）。 */
     static String execute(JSONObject a, int[] wh, Context c, State st) {
+        String r = executeInner(a, wh, c, st);
+        if ("type".equals(a.optString("action")) && r != null && r.startsWith("已輸入")) st.lastTyped = a.optString("text");
+        return r;
+    }
+
+    private static String executeInner(JSONObject a, int[] wh, Context c, State st) {
         int w = wh[0], h = wh[1];
         String name = a.optString("action");
         try {

@@ -164,6 +164,21 @@ public class LlmAdapterTest {
     }
 
     @Test
+    public void detectsUnsentMessagesAndSensitiveCategories() throws Exception {
+        java.util.List<org.json.JSONObject> tree = java.util.Arrays.asList(
+                new org.json.JSONObject().put("n", 1).put("k", "輸入框").put("t", "123"),
+                new org.json.JSONObject().put("n", 2).put("k", "文字").put("t", "謝小明"));
+        assertTrue(AgentLoop.stillInInput(tree, "123"));
+        assertTrue(!AgentLoop.stillInInput(tree, "456"));
+        assertTrue(!AgentLoop.stillInInput(java.util.Arrays.asList(new org.json.JSONObject().put("n", 2).put("k", "文字").put("t", "123")), "123"));   // 在對話泡泡裡＝已送出
+        assertTrue(AgentLoop.isMessageTask("去ig傳訊息給謝小明「123」"));
+        assertTrue(!AgentLoop.isMessageTask("打開設定，在搜尋欄輸入「藍牙」"));
+        assertEquals("傳送訊息", AgentLoop.sensitiveCategory("傳送訊息屬於敏感操作，需要使用者確認"));
+        assertEquals("付款轉帳", AgentLoop.sensitiveCategory("這一步要付款"));
+        assertEquals(null, AgentLoop.sensitiveCategory("需要你確認"));
+    }
+
+    @Test
     public void buildsTheEndpoint() {
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/"));
         assertEquals("https://x.com/v1/chat/completions", LlmAdapter.endpoint("https://x.com/v1/chat/completions"));
