@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1381
+
 - 三星提醒可以直接新增（含日期時間或全天）：用 Android 16 的 AppFunctions（跟 Gemini 同一條路），不用開畫面也不用按儲存；需要 root 或 Shizuku，沒有時退回開新增畫面｜Samsung Reminder can now be created directly (with date/time or all-day) through Android 16 AppFunctions, the same path Gemini uses, with no screen and no Save tap; needs root or Shizuku, otherwise it falls back to opening the new-reminder screen.
 
 ## 1.0.1380
