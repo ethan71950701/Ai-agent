@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 「錯誤紀錄」搬到「進階與診斷」頁最下面，直接顯示在畫面上（可長按選取），有「分享」「存到 PhoneAI 資料夾」「清除」鈕；功能頁的獨立入口移除｜The "Error log" moved to the bottom of the Advanced & diagnostics page and is shown right on the page (long-press to select), with Share, Save to PhoneAI folder and Clear buttons; the separate entry on the Functions page is gone.
 - 新增「錯誤紀錄」（進階與診斷）：App 當機或出錯時自動記下錯誤堆疊，可在 App 裡看、分享、存到 PhoneAI 資料夾、清除；匯出任務紀錄時也會附上錯誤紀錄與本 App 的系統記錄（不含 API Key）｜New "Error log" (Functions → Maintenance): crashes and errors are recorded automatically with their stack traces; view, share, save to the PhoneAI folder or clear them in the app; exporting the task log now also includes the error log and the app's own system log (no API keys).
+
+## 1.0.1396
+
+- 新增「錯誤紀錄」（功能 → 維護）：App 當機或出錯時自動記下錯誤堆疊，可在 App 裡看、分享、存到 PhoneAI 資料夾、清除；匯出任務紀錄時也會附上錯誤紀錄與本 App 的系統記錄（不含 API Key）｜New "Error log" (Functions → Maintenance): crashes and errors are recorded automatically with their stack traces; view, share, save to the PhoneAI folder or clear them in the app; exporting the task log now also includes the error log and the app's own system log (no API keys).
 - 修正圈選提問一按就當機（在畫面建立之前取用系統列控制器，得到空值）｜Fixed Circle to ask crashing right away (the system-bar controller was requested before the window existed and was null).
 
 ## 1.0.1395
