@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 「記住的步驟」從設定移到「功能 → 資料」｜"Remembered steps" moved from Settings to Functions → Data
+
 - 「保護的 App」清單改成看得見的勾選框並顯示已選幾個；「清除記住的步驟」改成「記住的步驟」，點進去可以看有哪些任務、重播過幾次，並單獨刪除或全部清除｜The protected-apps list now has visible checkboxes and a count; "Clear remembered steps" became "Remembered steps": tap to see which tasks are remembered and how often they were replayed, and delete one or clear all
 ## 1.0.1352
 
