@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1368
+
 - 巨集只記走得乾淨的那一次：中途有「返回」、捲動超過 2 次、或超過 8 步的做法不記（重播只會重走冤枉路）；任務過程會寫原因。先靠自動總結的經驗讓 AI 走對路，走乾淨的那次才升級成巨集｜Macros now record only clean runs: a run with a Back press, more than 2 scrolls or more than 8 steps is not recorded (replaying it would just redo the detour) and the task log says why; the auto-summarised experience first helps the AI find the right path, and the clean run then becomes a macro
+
 ## 1.0.1367
 
 - 走了冤枉路（6 步以上）才完成的任務，AI 沒自己記經驗時，會請便宜模型用一句話總結「下次可以直接走的路徑」（例如「三星設定：藍牙在「連接」頁裡」）存成該 App 的經驗，並通知你；多花一次便宜呼叫（約 $0.0003）｜After a task that needed 6+ steps succeeds and the AI saved no lesson itself, the cheap model summarises the reusable path in one sentence (e.g. "Samsung Settings: Bluetooth is inside the Connections page") and saves it as that app's experience, with a notification; costs one cheap call (about $0.0003)
