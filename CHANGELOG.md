@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1408
+
 - 修正「幫我查關於獅子的相關知識」這類句子不會觸發網頁搜尋：「幫我／請你」後面接「查」就算（「檢查一下」「查理」不算）｜Fixed sentences like "look up information about lions" not triggering web search: "help me / please" followed by "查" now counts (but "check/inspect" and names such as "Charlie" do not).
 
 ## 1.0.1407
