@@ -45,13 +45,51 @@ final class TavilySearch {
 
     static boolean hasKey(Context c) { return key(c) != null; }
 
+    /** 最近一次搜尋實際用到的網頁（標題、網址），顯示在回答下面讓你自己點進去確認。 */
+    static volatile java.util.List<String[]> lastSources = new java.util.ArrayList<>();
+    /** 最近一次實際送出的關鍵字與限定網站（給任務紀錄看）。 */
+    static volatile String lastQuery = "", lastDomains = "";
+
+    /** 去掉「幫我查一下」這類對搜尋沒用的客套話；去完太短就用原句。 */
+    static String cleanQuery(String text) {
+        String q = text == null ? "" : text.trim();
+        String c = q.replaceAll("(?i)(請你|请你|請|请|麻煩你|麻烦你|幫我|帮我|替我|你)?\\s*(查一下|查查看|查看看|查查|查詢|查询|搜尋一下|搜寻一下|搜索一下|搜尋|搜寻|搜索|搜一下|上網查|上网查|網路上查|网上查|google一下)", " ")
+                .replaceAll("(?i)\\b(please\\s+)?(look\\s*up|search\\s+(for|the web|online)|google)\\b", " ")
+                .replaceAll("[，,。！!？?\\s]+", " ").trim();
+        return c.length() >= 2 ? c : q;
+    }
+
+    private static final java.util.regex.Pattern WEATHER = java.util.regex.Pattern.compile("天氣|天气|氣象|气象|颱風|台风|降雨|下雨|氣溫|气温|(?i:weather|forecast)");
+    private static final java.util.regex.Pattern NEWS = java.util.regex.Pattern.compile("新聞|新闻|頭條|头条|最新消息|快訊|快讯|(?i:news|headline|breaking)");
+
+    /** 搜尋的主題：新聞用 Tavily 的新聞模式（找最近的），其他一般搜尋。 */
+    static String topicFor(String q) { return NEWS.matcher(q).find() ? "news" : "general"; }
+
+    /** 天氣優先只查中央氣象署；其他沒有偏好的網站（不替你決定哪些網站可信）。 */
+    static String[] domainsFor(String q) { return WEATHER.matcher(q).find() ? new String[]{"cwa.gov.tw"} : null; }
+
     /** 搜尋並整理成給 AI 看的文字；失敗回 null（原因在 lastError）。在背景執行緒呼叫。 */
-    static String search(Context c, String query) {
+    static String search(Context c, String text) {
         lastError = "";
+        lastSources = new java.util.ArrayList<>();
+        String q = cleanQuery(text);
+        lastQuery = q;
+        lastDomains = "";
+        String topic = topicFor(q);
+        String[] domains = domainsFor(q);
+        String out = null;
+        if (domains != null) { out = request(c, q, topic, domains); if (out != null) lastDomains = String.join("、", domains); }   // 先只查偏好的網站；沒結果再放寬
+        if (out == null) { lastError = ""; out = request(c, q, topic, null); }
+        return out;
+    }
+
+    private static String request(Context c, String query, String topic, String[] domains) {
         String key = key(c);   // 沒有 Key 也能搜：Tavily 的免 Key 模式（Search 可用，有次數限制）；有 Key 額度比較穩
         try {
             JSONObject body = new JSONObject().put("query", query.length() > 380 ? query.substring(0, 380) : query)
-                    .put("search_depth", "basic").put("max_results", MAX_RESULTS).put("topic", "general");
+                    .put("search_depth", "basic").put("max_results", MAX_RESULTS).put("topic", topic);
+            if ("news".equals(topic)) body.put("time_range", "week");
+            if (domains != null) { JSONArray da = new JSONArray(); for (String d : domains) da.put(d); body.put("include_domains", da); }
             HttpURLConnection con = (HttpURLConnection) new URL("https://api.tavily.com/search").openConnection();
             con.setRequestMethod("POST");
             con.setConnectTimeout(15000);
@@ -71,12 +109,37 @@ final class TavilySearch {
             }
             String digest = digest(text);
             if (digest == null) lastError = L.t("Tavily 沒有找到結果");
+            else lastSources = sources(text);
             return digest;
         } catch (Exception e) {
             lastError = "Tavily：" + e.getMessage();
             CrashLog.w("Tavily", e);
             return null;
         }
+    }
+
+    /** 回應裡的網頁清單（標題、網址）。 */
+    static java.util.List<String[]> sources(String json) {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        try {
+            JSONArray rs = new JSONObject(json).optJSONArray("results");
+            for (int i = 0; rs != null && i < rs.length(); i++) {
+                JSONObject r = rs.getJSONObject(i);
+                String url = r.optString("url");
+                if (url.startsWith("http")) out.add(new String[]{r.optString("title").replaceAll("\\s+", " ").trim(), url});
+            }
+        } catch (Exception ignored) { }
+        return out;
+    }
+
+    /** 接在回答後面的來源清單（網址可以點）。 */
+    static final String SOURCES_MARK = "\n\n🔗 ";
+
+    static String sourcesBlock() {
+        if (lastSources.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(SOURCES_MARK).append(L.t("搜尋到的網頁（自己點進去確認）：")).append('\n');
+        for (String[] s : lastSources) sb.append("• ").append(s[0].length() > 60 ? s[0].substring(0, 60) + "…" : s[0]).append('\n').append(s[1]).append('\n');
+        return sb.toString().trim();
     }
 
     /** 把 Tavily 的回應整理成「編號、標題、網址、內容摘要」；沒有結果回 null。 */

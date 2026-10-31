@@ -61,6 +61,11 @@ final class ReplyCard {
         body.setTextSize(20);
         body.setLineSpacing(0, 1.38f);
         body.setTextIsSelectable(true);
+        if (text != null && text.contains(TavilySearch.SOURCES_MARK.trim())) {   // 有來源清單：網址要能點（這種回答改用可點連結的方式，不能同時用選取模式）
+            android.text.util.Linkify.addLinks(body, android.text.util.Linkify.WEB_URLS);
+            body.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+            body.setLinkTextColor(0xFF8AB4F8);
+        }
         body.setPadding(0, 0, (int) (4 * d), 0);
         sv.addView(body, new FrameLayout.LayoutParams(-1, -2));
         card.addView(sv, new FrameLayout.LayoutParams(-1, -2));

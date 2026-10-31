@@ -899,6 +899,7 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("搜尋到的網頁（自己點進去確認）：", "Pages found (tap to check for yourself):");
         m.put("網頁搜尋", "Web search");
         m.put("已設定 Tavily Key（說「幫我查…」才搜尋）", "Tavily key is set (searches only when you say \"look up…\")");
         m.put("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩", "Say \"look up…\" to search, with any AI; set a key for steadier quota");

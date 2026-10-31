@@ -264,4 +264,17 @@ public class LlmAdapterTest {
         assertEquals(null, TavilySearch.digest("not json"));
         assertFalse(LogExport.redact("key tvly-dev-abcdefghijklmnop1234").contains("tvly-dev"));
     }
+
+    @Test
+    public void tavilyQueryTopicAndDomains() {
+        assertEquals("今天台北的天氣", TavilySearch.cleanQuery("幫我查一下今天台北的天氣"));
+        assertEquals("台積電股價", TavilySearch.cleanQuery("請你搜尋一下台積電股價"));
+        assertEquals("weather in Taipei", TavilySearch.cleanQuery("please look up weather in Taipei"));
+        assertEquals("查", TavilySearch.cleanQuery("查"));
+        assertEquals("news", TavilySearch.topicFor("今天有什麼新聞"));
+        assertEquals("general", TavilySearch.topicFor("台北天氣"));
+        assertEquals("cwa.gov.tw", TavilySearch.domainsFor("今天台北天氣")[0]);
+        assertEquals(null, TavilySearch.domainsFor("台積電股價"));
+        assertEquals(2, TavilySearch.sources("{\"results\":[{\"title\":\"a\",\"url\":\"https://a.com\"},{\"title\":\"b\",\"url\":\"https://b.com\"},{\"title\":\"c\",\"url\":\"ftp://x\"}]}").size());
+    }
 }

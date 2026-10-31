@@ -304,6 +304,7 @@ public class CircleActivity extends Activity {
                     } catch (Exception ignored) { }
                 }
             }
+            final boolean usedTavily = tavily;
             String r = ChatEngine.visionChat(app, msgs, !tavily);
             runOnUiThread(() -> {
                 busy = false;
@@ -315,7 +316,7 @@ public class CircleActivity extends Activity {
                     return;
                 }
                 try { msgs.put(new JSONObject().put("role", "assistant").put("content", r)); } catch (Exception ignored) { }
-                showReply(r);
+                showReply(usedTavily ? r + TavilySearch.sourcesBlock() : r);
             });
         }, "circle-ask").start();
     }

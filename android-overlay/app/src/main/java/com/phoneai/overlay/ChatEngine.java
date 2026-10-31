@@ -330,7 +330,8 @@ final class ChatEngine {
                         : "\n這次使用者要你查資料，搜尋結果已經附在問題後面：根據它簡短回答，並說明資料來自網路搜尋。這一條優先於第 2 條「沒有網路」。";
             }
             final boolean search = asked && !viaTavily && !cheapSlot.openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
-            searchNote = !asked ? "" : viaTavily ? (L.en() ? "Web search: Tavily" + (TavilySearch.hasKey(c) ? "" : " keyless mode") + " (results attached; no tools for this turn)" : "網頁搜尋：Tavily" + (TavilySearch.hasKey(c) ? "" : "（免 Key 模式）") + "（結果已附上；這一輪不給 AI 工具）")
+            searchNote = !asked ? "" : viaTavily ? (L.en() ? "Web search: Tavily" + (TavilySearch.hasKey(c) ? "" : " keyless mode") + " (results attached; no tools for this turn)" : "網頁搜尋：Tavily" + (TavilySearch.hasKey(c) ? "" : "（免 Key 模式）") + "（結果已附上；這一輪不給 AI 工具）") + (L.en() ? "; keywords \"" : "；關鍵字「") + TavilySearch.lastQuery + (L.en() ? "\"" : "」")
+                            + (TavilySearch.lastDomains.isEmpty() ? "" : (L.en() ? "; only " : "；只查 ") + TavilySearch.lastDomains) + (L.en() ? "; " + TavilySearch.lastSources.size() + " pages" : "；" + TavilySearch.lastSources.size() + " 個網頁")
                     : search ? (L.en() ? "Web search: Claude's built-in search on" + (tavilyFail.isEmpty() ? "" : " (Tavily failed: " + tavilyFail + ")") : "網頁搜尋：Claude 內建搜尋已開啟" + (tavilyFail.isEmpty() ? "" : "（Tavily 失敗：" + tavilyFail + "）"))
                     : (L.en() ? "Web search: off. " + (tavilyFail.isEmpty() ? "Tavily failed and the cheap model is not Claude, so there is no search fallback." : "Tavily failed: " + tavilyFail)
                               : "網頁搜尋：沒開。" + (tavilyFail.isEmpty() ? "Tavily 失敗，而且便宜模型不是 Claude，沒有備用的搜尋。" : "Tavily 失敗：" + tavilyFail));
@@ -384,7 +385,7 @@ final class ChatEngine {
             keep.put(new JSONObject().put("role", "user").put("content", text));
             keep.put(new JSONObject().put("role", "assistant").put("content", reply));
             saveHistory(c, keep, System.currentTimeMillis());
-            return reply;
+            return viaTavily ? reply + TavilySearch.sourcesBlock() : reply;   // 來源清單只顯示給你，不存進對話紀錄（不會佔之後的 token）
         } catch (Exception e) {
             android.util.Log.w("ChatEngine", L.t("聊天失敗: ") + e);
             CrashLog.w("聊天失敗", e);

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 網頁搜尋改進：搜尋關鍵字會先去掉「幫我查一下」這類客套話；天氣優先只查中央氣象署（沒結果再放寬）；問新聞用新聞模式找最近一週的；回答下面會列出搜尋到的網頁，網址可以點；任務紀錄寫出實際用的關鍵字、限定的網站與網頁數｜Web search improvements: filler such as "look up" is stripped from the keywords; weather questions prefer only the Central Weather Administration (widened if nothing is found); news questions use news mode for the last week; the answer lists the pages found with tappable links; the task log records the keywords actually used, any site restriction and the number of pages.
 - 新增「網頁搜尋（Tavily）」：你說「幫我查…／搜尋一下」時，聊天與圈選提問會先用 Tavily 搜尋，把結果交給任何 AI（Gemini、DeepSeek 都行）整理回答；不用設 Key 也能搜（Tavily 的免 Key 模式，有次數限制），想要更穩定的額度可以在功能頁貼 Tavily Key；搜尋結果被當成資料不是指令，這一輪不給 AI 任何工具；Tavily 失敗而且用 Claude 時，改用 Claude 內建搜尋｜New "Web search (Tavily)": when you say "look up…" or "search…", chat and Circle to ask search with Tavily first and hand the results to any AI (Gemini, DeepSeek…) to answer; it works without a key (Tavily keyless mode, with limits), and you can paste a Tavily key on the Functions page for steadier quota; the results are treated as data, not instructions, and the AI gets no tools for that turn; if Tavily fails and you use Claude, Claude's built-in search is used instead.
 
 ## 1.0.1402
