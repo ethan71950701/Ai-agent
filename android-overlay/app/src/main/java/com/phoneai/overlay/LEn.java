@@ -900,6 +900,7 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("（查詢次數用完，稍後再試）", " (query limit reached; try again later)");
         m.put("可信任的網站", "Trusted sites");
         m.put("搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。點一個網站可以修改或刪除。", "When searching, the AI picks the sites relevant to the question and checks them first; if nothing is found it searches everywhere. Tap a site to edit or delete it.");
         m.put("（還沒有網站）", "(no sites yet)");

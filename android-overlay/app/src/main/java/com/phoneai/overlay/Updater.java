@@ -201,10 +201,49 @@ final class Updater {
         c.setRequestProperty("User-Agent", "PhoneAI-Update");
         if (c.getResponseCode() == 404)   // repo 是私人的時候，沒有權杖就看不到 Release，會回 404
             throw new java.io.IOException(L.t("找不到發布版本（404）：repo 是私人的，App 沒有權杖就查不到"));
+        if (c.getResponseCode() == 403 || c.getResponseCode() == 429) {   // GitHub API 沒登入的查詢次數有限（每小時 60 次，同一個網路的人共用）：改走網頁，不吃這個額度
+            JSONObject web = latestViaWeb();
+            if (web != null) return web;
+            throw new java.io.IOException(L.t("GitHub 回應 ") + c.getResponseCode() + L.t("（查詢次數用完，稍後再試）"));
+        }
         if (c.getResponseCode() != 200) throw new java.io.IOException(L.t("GitHub 回應 ") + c.getResponseCode());
         try (InputStream in = c.getInputStream()) {
             return new JSONObject(new String(in.readAllBytes(), "UTF-8"));
         }
+    }
+
+    /**
+     * API 被限流時的備用：github.com/<repo>/releases/latest 會轉址到 /releases/tag/<標籤>，從轉址拿到標籤，
+     * 再組出 APK 的下載網址（檔名固定 PhoneAI.apk）。這條路不需要 API、不吃查詢額度；代價是沒有更新說明。查不到回 null。
+     */
+    private static JSONObject latestViaWeb() {
+        try {
+            String url = "https://github.com/" + BuildConfig.REPO + "/releases/latest";
+            for (int hop = 0; hop < 4; hop++) {
+                HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                c.setInstanceFollowRedirects(false);
+                c.setConnectTimeout(15000);
+                c.setReadTimeout(15000);
+                c.setRequestProperty("User-Agent", "PhoneAI-Update");
+                int code = c.getResponseCode();
+                String loc = c.getHeaderField("Location");
+                c.disconnect();
+                if (code < 300 || code >= 400 || loc == null) return null;
+                if (loc.startsWith("/")) loc = "https://github.com" + loc;
+                Matcher m = Pattern.compile("/releases/tag/([^/?#]+)").matcher(loc);
+                if (m.find()) {
+                    String tag = java.net.URLDecoder.decode(m.group(1), "UTF-8");
+                    String repo = loc.replaceFirst("^https://github.com/", "").replaceFirst("/releases/tag/.*$", "");
+                    return new JSONObject().put("tag_name", tag).put("body", "")
+                            .put("assets", new org.json.JSONArray().put(new JSONObject().put("name", "PhoneAI.apk").put("size", 0)
+                                    .put("browser_download_url", "https://github.com/" + repo + "/releases/download/" + tag + "/PhoneAI.apk")));
+                }
+                url = loc;   // 先轉到新的 repo 位置（repo 改過名）再繼續
+            }
+        } catch (Exception e) {
+            CrashLog.w("更新（網頁備用）", e);
+        }
+        return null;
     }
 
     /** 發布說明（去掉 commit 那一行），太長就截斷。 */

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 檢查更新被 GitHub 回 403（沒登入的查詢次數用完，同一個網路的人共用）時，改走網頁取得最新版本與下載網址，不再直接失敗（這種情況沒有更新說明）｜When GitHub answers 403 on the update check (the anonymous query limit is used up and shared by everyone on the same network), the app now falls back to the web page to find the latest version and its download link instead of failing (no release notes in that case).
 - 修正鬧鐘明明已經直接設好、AI 還是叫你去時鐘按儲存（提示詞還是舊的說法）；現在已設好就照實說，只有時鐘畫面真的跳出來才提醒按儲存｜Fixed the AI telling you to press save in the clock even though the alarm was already set directly (the prompt still had the old wording); it now says the alarm is set, and only reminds you to press save if the clock screen actually appears.
 
 ## 1.0.1408
