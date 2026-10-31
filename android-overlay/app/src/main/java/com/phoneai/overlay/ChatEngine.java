@@ -194,7 +194,9 @@ final class ChatEngine {
 
     /** 使用者明說要查資料（幫我查、搜尋一下、上網查…）才開網頁搜尋：聊天每句話都走這裡，搜尋又要另外計費，不能預設開。 */
     private static final java.util.regex.Pattern WANTS_SEARCH = java.util.regex.Pattern.compile(
-            "(幫我|帮我|替我|請你|请你|你)?(查一下|查查|查看看|查詢|查询|搜尋|搜寻|搜索|搜一下|上網查|上网查|網路上查|网上查|google一下|查[詢询]?一[下查])|(?i:look\\s*up|search\\s+(for|the web|online)|google\\s+it|search\\s+it)");
+            "(幫我|帮我|替我|請你|请你|麻煩你|麻烦你)查"                                    // 「幫我查關於獅子的知識」：有請求的詞在前面，後面接什麼都算
+                    + "|(?<![檢检審审核複复巡盤盘])查(一下|查|看看|詢|询)|搜尋|搜寻|搜索|搜一下|上網查|上网查|網路上查|网上查|上網找|上网找|google一下"
+                    + "|(?i:look\\s*up|search\\s+(for|the web|online)|google\\s+it|search\\s+it)");
 
     /** 最近一次聊天的搜尋狀況（寫進任務紀錄，看得出有沒有開搜尋、為什麼沒開）；沒有要查資料就是空字串。 */
     static volatile String searchNote = "";

@@ -248,6 +248,9 @@ public class LlmAdapterTest {
         assertTrue(ChatEngine.wantsSearch("幫我查一下今天的油價"));
         assertTrue(ChatEngine.wantsSearch("搜尋一下這家餐廳的營業時間"));
         assertTrue(ChatEngine.wantsSearch("Please look up the weather in Taipei"));
+        assertTrue(ChatEngine.wantsSearch("幫我查關於獅子的相關知識"));
+        assertTrue(ChatEngine.wantsSearch("請你查台積電今天的股價"));
+        assertFalse(ChatEngine.wantsSearch("幫我檢查一下我的待辦"));
         assertFalse(ChatEngine.wantsSearch("今天天氣怎麼樣"));
         assertFalse(ChatEngine.wantsSearch("我想看查理的電影"));
         assertFalse(ChatEngine.wantsSearch("幫我設鬧鐘"));
