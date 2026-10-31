@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1406
+
 - 網頁搜尋的關鍵字改由便宜模型自己想（會參考上一輪對話，所以「那明天呢」也搜得對；多花一次很便宜的呼叫，失敗就退回程式自己清理）；新增「可信任的網站」（功能頁，自己編輯清單，預設有中央氣象署）：搜尋時模型會挑跟問題有關的網站先查，沒結果再查所有網站｜Web search keywords are now written by the cheap model (it sees the previous turn, so a follow-up like "and tomorrow?" searches correctly; one extra very cheap call, with a fallback to the program's own cleanup); new "Trusted sites" (Functions page, an editable list with the Central Weather Administration by default): the model picks the sites relevant to the question and searches them first, then everything if nothing is found.
 
 ## 1.0.1405
