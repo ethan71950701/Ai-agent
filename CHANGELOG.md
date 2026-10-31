@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1402
+
 - 說「幫我查…」的聊天，任務紀錄會註明網頁搜尋有沒有開、有沒有真的搜尋；沒開時說明原因（例如便宜模型不是 Claude）｜For chat requests like "look up…", the task log now says whether web search was on and whether it actually searched; when it is off it says why (for example the cheap model is not Claude).
 
 ## 1.0.1401
