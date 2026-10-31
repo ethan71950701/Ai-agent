@@ -315,11 +315,11 @@ final class ChatEngine {
             msgs.put(new JSONObject().put("role", "user").put("content", text));
             final boolean asked = wantsSearch(text);
             final LlmConfig.Slot cheapSlot = LlmConfig.cheap(c);
-            // 有設 Tavily Key：用 Tavily 搜尋（任何 AI 都能用），把結果接在問題後面，這一輪不給 AI 任何工具（搜尋結果是網頁內容，可能藏指令）。
-            // 沒設 Tavily、但是用 Claude：用 Claude 內建的網頁搜尋。兩個都沒有：照實說不能搜尋。
+            // 先用 Tavily 搜尋（有 Key 用 Key，沒有就用免 Key 模式；任何 AI 都能用），把結果接在問題後面，這一輪不給 AI 任何工具（搜尋結果是網頁內容，可能藏指令）。
+            // Tavily 失敗、而且用 Claude：改用 Claude 內建的網頁搜尋。都不行：照實說不能搜尋。
             String webBlock = null;
             String tavilyFail = "";
-            if (asked && TavilySearch.hasKey(c)) {
+            if (asked) {
                 webBlock = TavilySearch.search(c, text);
                 if (webBlock == null) tavilyFail = TavilySearch.lastError;
             }
@@ -330,10 +330,10 @@ final class ChatEngine {
                         : "\n這次使用者要你查資料，搜尋結果已經附在問題後面：根據它簡短回答，並說明資料來自網路搜尋。這一條優先於第 2 條「沒有網路」。";
             }
             final boolean search = asked && !viaTavily && !cheapSlot.openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
-            searchNote = !asked ? "" : viaTavily ? (L.en() ? "Web search: Tavily (results attached; no tools for this turn)" : "網頁搜尋：Tavily（結果已附上；這一輪不給 AI 工具）")
+            searchNote = !asked ? "" : viaTavily ? (L.en() ? "Web search: Tavily" + (TavilySearch.hasKey(c) ? "" : " keyless mode") + " (results attached; no tools for this turn)" : "網頁搜尋：Tavily" + (TavilySearch.hasKey(c) ? "" : "（免 Key 模式）") + "（結果已附上；這一輪不給 AI 工具）")
                     : search ? (L.en() ? "Web search: Claude's built-in search on" + (tavilyFail.isEmpty() ? "" : " (Tavily failed: " + tavilyFail + ")") : "網頁搜尋：Claude 內建搜尋已開啟" + (tavilyFail.isEmpty() ? "" : "（Tavily 失敗：" + tavilyFail + "）"))
-                    : (L.en() ? "Web search: off. " + (tavilyFail.isEmpty() ? "Set a Tavily key under Functions → Web search (works with any AI), or use Claude." : "Tavily failed: " + tavilyFail)
-                              : "網頁搜尋：沒開。" + (tavilyFail.isEmpty() ? "到「功能 → 網頁搜尋」設定 Tavily Key（任何 AI 都能用），或改用 Claude。" : "Tavily 失敗：" + tavilyFail));
+                    : (L.en() ? "Web search: off. " + (tavilyFail.isEmpty() ? "Tavily failed and the cheap model is not Claude, so there is no search fallback." : "Tavily failed: " + tavilyFail)
+                              : "網頁搜尋：沒開。" + (tavilyFail.isEmpty() ? "Tavily 失敗，而且便宜模型不是 Claude，沒有備用的搜尋。" : "Tavily 失敗：" + tavilyFail));
             if (search) system += L.en()
                     ? "\nThe user asked you to look something up this time: you may use web_search (at most 2 searches), answer with the key points briefly, and say the information comes from a web search. This overrides rule 2 about having no internet."
                     : "\n這次使用者要你查資料：可以用 web_search 搜尋（最多 2 次），把查到的重點簡短回答，並說明資訊來自網路搜尋。這一條優先於第 2 條「沒有網路」。";

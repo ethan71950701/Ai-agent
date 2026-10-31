@@ -4,7 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
-- 新增「網頁搜尋（Tavily）」（功能頁）：貼上 Tavily Key 後，你說「幫我查…／搜尋一下」時，聊天與圈選提問會先用 Tavily 搜尋，把結果交給任何 AI（Gemini、DeepSeek 都行）整理回答；搜尋結果被當成資料不是指令，這一輪不給 AI 任何工具；沒設 Tavily 時維持原本的 Claude 內建搜尋｜New "Web search (Tavily)" (Functions page): once you paste a Tavily key, when you say "look up…" or "search…" chat and Circle to ask search with Tavily first and hand the results to any AI (Gemini, DeepSeek…) to answer; the results are treated as data, not instructions, and the AI gets no tools for that turn; without a Tavily key the Claude built-in search is used as before.
+- 新增「網頁搜尋（Tavily）」：你說「幫我查…／搜尋一下」時，聊天與圈選提問會先用 Tavily 搜尋，把結果交給任何 AI（Gemini、DeepSeek 都行）整理回答；不用設 Key 也能搜（Tavily 的免 Key 模式，有次數限制），想要更穩定的額度可以在功能頁貼 Tavily Key；搜尋結果被當成資料不是指令，這一輪不給 AI 任何工具；Tavily 失敗而且用 Claude 時，改用 Claude 內建搜尋｜New "Web search (Tavily)": when you say "look up…" or "search…", chat and Circle to ask search with Tavily first and hand the results to any AI (Gemini, DeepSeek…) to answer; it works without a key (Tavily keyless mode, with limits), and you can paste a Tavily key on the Functions page for steadier quota; the results are treated as data, not instructions, and the AI gets no tools for that turn; if Tavily fails and you use Claude, Claude's built-in search is used instead.
 
 ## 1.0.1402
 

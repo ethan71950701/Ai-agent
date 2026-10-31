@@ -48,8 +48,7 @@ final class TavilySearch {
     /** 搜尋並整理成給 AI 看的文字；失敗回 null（原因在 lastError）。在背景執行緒呼叫。 */
     static String search(Context c, String query) {
         lastError = "";
-        String key = key(c);
-        if (key == null) { lastError = L.t("還沒有設定 Tavily Key"); return null; }
+        String key = key(c);   // 沒有 Key 也能搜：Tavily 的免 Key 模式（Search 可用，有次數限制）；有 Key 額度比較穩
         try {
             JSONObject body = new JSONObject().put("query", query.length() > 380 ? query.substring(0, 380) : query)
                     .put("search_depth", "basic").put("max_results", MAX_RESULTS).put("topic", "general");
@@ -58,14 +57,15 @@ final class TavilySearch {
             con.setConnectTimeout(15000);
             con.setReadTimeout(20000);
             con.setDoOutput(true);
-            con.setRequestProperty("Authorization", "Bearer " + key);
+            if (key != null) con.setRequestProperty("Authorization", "Bearer " + key);
+            else con.setRequestProperty("X-Tavily-Access-Mode", "keyless");
             con.setRequestProperty("Content-Type", "application/json");
             try (OutputStream out = con.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
             int code = con.getResponseCode();
             InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
             String text = in == null ? "" : new String(in.readAllBytes(), StandardCharsets.UTF_8);
             if (code >= 400) {
-                lastError = "Tavily " + code + (code == 401 ? L.t("（Key 不對）") : code == 429 ? L.t("（額度用完或太頻繁）") : "");
+                lastError = "Tavily " + code + (code == 401 ? L.t("（Key 不對）") : code == 429 ? L.t("（額度用完或太頻繁；沒設 Key 的免 Key 模式有次數限制）") : "");
                 CrashLog.w("Tavily", lastError);
                 return null;
             }
@@ -116,7 +116,7 @@ final class TavilySearch {
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, L.t("只有你說「幫我查…／搜尋一下」時才會搜尋，用哪個 AI 都可以。到 Tavily 網站註冊後建立一組 API Key（免費方案每月有一些額度，實際額度請看他們的網站），貼在這裡。Key 只存在這支手機的 App 私有資料夾，不要貼給任何人。")));
+        form.addView(Ui.body(a, L.t("只有你說「幫我查…／搜尋一下」時才會搜尋，用哪個 AI 都可以。不設 Key 也能搜（Tavily 的免 Key 模式，有次數限制）；想要更穩定的額度，到 Tavily 網站註冊後建立一組 API Key 貼在這裡（免費方案的實際額度請看他們的網站）。Key 只存在這支手機的 App 私有資料夾，不要貼給任何人。")));
         form.addView(til);
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(L.t("網頁搜尋（Tavily）")).setView(form)
                 .setPositiveButton(L.t("儲存"), (d, w) -> {

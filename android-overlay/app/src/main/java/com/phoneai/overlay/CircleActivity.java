@@ -289,11 +289,11 @@ public class CircleActivity extends Activity {
             return;
         }
         final Context app = getApplicationContext();
-        final boolean wantSearch = ChatEngine.wantsSearch(q) && TavilySearch.hasKey(app);
+        final boolean wantSearch = ChatEngine.wantsSearch(q);
         final String qf = q;
         new Thread(() -> {
             boolean tavily = false;
-            if (wantSearch) {   // 你明說「幫我查」而且設了 Tavily：先搜尋，把結果接在問題後面（標成資料，不是指令）
+            if (wantSearch) {   // 你明說「幫我查」：先用 Tavily 搜尋（沒設 Key 就用免 Key 模式），把結果接在問題後面（標成資料，不是指令）
                 String digest = TavilySearch.search(app, qf);
                 if (digest != null) {
                     try {
