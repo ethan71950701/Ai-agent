@@ -899,8 +899,17 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
-        m.put("一行一個網站：網域，空一格，再寫它適合查什麼（可以省略）。例如：\ncwa.gov.tw 天氣、颱風、地震\nwikipedia.org 一般知識\n搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。", "One site per line: the domain, a space, then what it is good for (optional). For example:\ncwa.gov.tw weather, typhoons, earthquakes\nwikipedia.org general knowledge\nWhen searching, the AI picks the sites that are relevant to the question and checks them first; if nothing is found it searches everywhere.");
         m.put("可信任的網站", "Trusted sites");
+        m.put("搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。點一個網站可以修改或刪除。", "When searching, the AI picks the sites relevant to the question and checks them first; if nothing is found it searches everywhere. Tap a site to edit or delete it.");
+        m.put("（還沒有網站）", "(no sites yet)");
+        m.put("＋ 新增網站", "+ Add a site");
+        m.put("完成", "Done");
+        m.put("網站（例如 cwa.gov.tw，貼整個網址也可以）", "Site (for example cwa.gov.tw; pasting a whole URL works too)");
+        m.put("適合查什麼（可以空白，例如：天氣、颱風）", "Good for (optional, for example: weather, typhoons)");
+        m.put("修改網站", "Edit site");
+        m.put("新增網站", "Add a site");
+        m.put("網址格式不對", "That does not look like a web address");
+        m.put("刪除", "Delete");
         m.put("目前 %d 個；搜尋時 AI 會挑相關的先查", "%d now; the AI picks relevant ones to search first");
         m.put("搜尋到的網頁（自己點進去確認）：", "Pages found (tap to check for yourself):");
         m.put("網頁搜尋", "Web search");

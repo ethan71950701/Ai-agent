@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -183,22 +184,82 @@ final class TavilySearch {
         return out;
     }
 
-    /** 可信任網站的編輯對話框。 */
+    private static void saveList(Context c, java.util.List<String[]> list) {
+        StringBuilder sb = new StringBuilder();
+        for (String[] t : list) sb.append(t[0]).append(t[1].isEmpty() ? "" : " " + t[1]).append('\n');
+        saveTrusted(c, sb.toString());
+    }
+
+    /** 可信任網站：列出目前的網站，點一個可以修改或刪除，最下面「＋ 新增網站」。 */
     static void editTrusted(final Activity a, final Runnable after) {
-        final android.widget.EditText et = new android.widget.EditText(a);
-        et.setText(trustedText(a));
-        et.setMinLines(5);
-        et.setGravity(android.view.Gravity.TOP);
-        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        final java.util.List<String[]> list = new java.util.ArrayList<>(trusted(a));
+        final LinearLayout box = new LinearLayout(a);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int fp = Ui.dp(a, 20);
+        box.setPadding(fp, fp / 2, fp, 0);
+        final Runnable[] render = new Runnable[1];
+        render[0] = () -> {
+            box.removeAllViews();
+            box.addView(Ui.body(a, L.t("搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。點一個網站可以修改或刪除。")));
+            if (list.isEmpty()) box.addView(Ui.body(a, L.t("（還沒有網站）")));
+            for (int k = 0; k < list.size(); k++) {
+                final int idx = k;
+                String[] t = list.get(k);
+                LinearLayout row = new LinearLayout(a);
+                row.setOrientation(LinearLayout.VERTICAL);
+                row.setPadding(0, Ui.dp(a, 10), 0, Ui.dp(a, 10));
+                TextView dom = new TextView(a);
+                dom.setText(t[0]);
+                dom.setTextSize(16);
+                dom.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorOnSurface));
+                row.addView(dom);
+                if (!t[1].isEmpty()) row.addView(Ui.body(a, t[1]));
+                row.setOnClickListener(v -> editOne(a, list, idx, () -> { saveList(a, list); render[0].run(); }));
+                box.addView(row);
+            }
+            box.addView(Ui.button(a, L.t("＋ 新增網站"), v -> editOne(a, list, -1, () -> { saveList(a, list); render[0].run(); })));
+        };
+        render[0].run();
+        android.widget.ScrollView sv = new android.widget.ScrollView(a);
+        sv.addView(box);
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("可信任的網站")).setView(sv)
+                .setPositiveButton(L.t("完成"), (d, w) -> { if (after != null) after.run(); })
+                .setOnCancelListener(d -> { if (after != null) after.run(); }).show();
+    }
+
+    /** 新增（idx = -1）或修改一個網站：網址、適合查什麼（可以空白）；修改時多一個「刪除」。 */
+    private static void editOne(final Activity a, final java.util.List<String[]> list, final int idx, final Runnable changed) {
+        final String[] cur = idx >= 0 ? list.get(idx) : new String[]{"", ""};
         LinearLayout form = new LinearLayout(a);
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, L.t("一行一個網站：網域，空一格，再寫它適合查什麼（可以省略）。例如：\ncwa.gov.tw 天氣、颱風、地震\nwikipedia.org 一般知識\n搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。")));
-        form.addView(et);
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("可信任的網站")).setView(form)
-                .setPositiveButton(L.t("儲存"), (d, w) -> { saveTrusted(a, et.getText().toString()); if (after != null) after.run(); })
-                .setNegativeButton(L.t("取消"), null).show();
+        final TextInputEditText site = new TextInputEditText(a);
+        final TextInputEditText note = new TextInputEditText(a);
+        TextInputLayout t1 = new TextInputLayout(a), t2 = new TextInputLayout(a);
+        for (TextInputLayout t : new TextInputLayout[]{t1, t2}) t.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+        t1.setHint(L.t("網站（例如 cwa.gov.tw，貼整個網址也可以）"));
+        t2.setHint(L.t("適合查什麼（可以空白，例如：天氣、颱風）"));
+        site.setSingleLine(true);
+        site.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        note.setSingleLine(true);
+        site.setText(cur[0]);
+        note.setText(cur[1]);
+        t1.addView(site);
+        t2.addView(note);
+        form.addView(t1);
+        form.addView(t2);
+        MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(a).setTitle(idx >= 0 ? L.t("修改網站") : L.t("新增網站")).setView(form)
+                .setPositiveButton(L.t("儲存"), (d, w) -> {
+                    java.util.List<String[]> parsed = parseTrusted(site.getText().toString().trim() + " " + note.getText().toString().replace('\n', ' ').trim());
+                    if (parsed.isEmpty()) { android.widget.Toast.makeText(a, L.t("網址格式不對"), android.widget.Toast.LENGTH_LONG).show(); return; }
+                    if (idx >= 0) list.set(idx, parsed.get(0));
+                    else if (list.size() < 30) list.add(parsed.get(0));
+                    changed.run();
+                })
+                .setNegativeButton(L.t("取消"), null);
+        if (idx >= 0) b.setNeutralButton(L.t("刪除"), (d, w) -> { list.remove(idx); changed.run(); });
+        b.show();
     }
 
     private static String request(Context c, String query, String topic, String[] domains) {
