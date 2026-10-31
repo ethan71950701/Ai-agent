@@ -92,7 +92,7 @@ startActivity(new Intent(Intent.ACTION_SEND).setType("text/plain")
 - 計時器：`TimerCrossAppFunctions_createTimer`、`createTimers`、`updateTimer`、`deleteTimers`、`findTimers`、`getTimers`、`showTimer`
 - 碼表：`StopwatchCrossAppFunctions_startStopwatch`、`stopStopwatch`、`resetStopwatch`、`showStopwatch`
 
-這些函式在 `dumpsys` 裡出現在**三星提醒的套件**底下（`com.samsung.android.app.reminder`）的清單中？—— **我們只看到函式 ID，沒有確認每個函式屬於哪個套件**。請先用 `cmd app_function list-app-functions > af.json`，搜 `AlarmCrossAppActions` 看它掛在哪個 `packageName` 底下，再用那個套件名稱呼叫。
+**我們只從 `af.json` 全文掃出函式 ID，沒有確認每個函式掛在哪個套件底下**（時鐘的函式很可能在時鐘 App 的套件，不一定是三星提醒）。請先用 `cmd app_function list-app-functions > af.json`，搜 `AlarmCrossAppActions` 看它掛在哪個 `packageName` 底下，再用那個套件名稱呼叫。
 
 ### 怎麼找參數格式（我們用過、有效的方法）
 1. **用空參數呼叫**，看錯誤：`Parameter [createTaskParams] cannot be null` 會直接告訴你參數名叫什麼、是物件。
