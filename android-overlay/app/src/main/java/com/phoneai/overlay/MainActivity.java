@@ -621,6 +621,7 @@ public class MainActivity extends Activity {
         Ui.tileGrid(this, box,
                 new Ui.Tile("pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), true, v -> AiServiceUi.open(this, this::recreate)),
                 new Ui.Tile("search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), false, v -> TavilySearch.openSettings(this, this::recreate)),
+                new Ui.Tile("pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), false, v -> TavilySearch.editTrusted(this, this::recreate)),
                 new Ui.Tile("list", L.t("記住的步驟"), String.format(L.t("目前記住 %d 個任務（點進去看、刪除）"), Macros.count(this)), false, v -> MacrosUi.open(this, this::recreate)),
                 new Ui.Tile("flask", L.t("AI 比較測試"), L.t("同一批任務用不同 AI 各跑一遍，比成功率與花費"), false, v -> AbTestUi.open(this)),
                 new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),

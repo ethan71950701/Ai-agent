@@ -273,8 +273,23 @@ public class LlmAdapterTest {
         assertEquals("查", TavilySearch.cleanQuery("查"));
         assertEquals("news", TavilySearch.topicFor("今天有什麼新聞"));
         assertEquals("general", TavilySearch.topicFor("台北天氣"));
-        assertEquals("cwa.gov.tw", TavilySearch.domainsFor("今天台北天氣")[0]);
-        assertEquals(null, TavilySearch.domainsFor("台積電股價"));
         assertEquals(2, TavilySearch.sources("{\"results\":[{\"title\":\"a\",\"url\":\"https://a.com\"},{\"title\":\"b\",\"url\":\"https://b.com\"},{\"title\":\"c\",\"url\":\"ftp://x\"}]}").size());
+    }
+
+    @Test
+    public void tavilyPlanAndTrustedSites() {
+        java.util.List<String[]> tr = TavilySearch.parseTrusted("https://www.cwa.gov.tw/V8/C 天氣、颱風\nWikipedia.org 一般知識\nnot a domain\n\nexample.com");
+        assertEquals(3, tr.size());
+        assertEquals("cwa.gov.tw", tr.get(0)[0]);
+        assertEquals("天氣、颱風", tr.get(0)[1]);
+        assertEquals("wikipedia.org", tr.get(1)[0]);
+        assertEquals("", tr.get(2)[1]);
+        TavilySearch.Plan p = TavilySearch.parsePlan("好的：{\"query\":\"台北 2026-10-31 天氣\",\"topic\":\"general\",\"domains\":[\"www.cwa.gov.tw\",\"evil.com\"]}", tr);
+        assertEquals("台北 2026-10-31 天氣", p.query);
+        assertEquals(1, p.domains.size());
+        assertEquals("cwa.gov.tw", p.domains.get(0));
+        assertEquals("news", TavilySearch.parsePlan("{\"query\":\"最新 AI 新聞\",\"topic\":\"news\",\"domains\":[]}", tr).topic);
+        assertEquals(null, TavilySearch.parsePlan("沒有 JSON", tr));
+        assertEquals(null, TavilySearch.parsePlan("{\"query\":\"\"}", tr));
     }
 }

@@ -65,22 +65,140 @@ final class TavilySearch {
     /** 搜尋的主題：新聞用 Tavily 的新聞模式（找最近的），其他一般搜尋。 */
     static String topicFor(String q) { return NEWS.matcher(q).find() ? "news" : "general"; }
 
-    /** 天氣優先只查中央氣象署；其他沒有偏好的網站（不替你決定哪些網站可信）。 */
-    static String[] domainsFor(String q) { return WEATHER.matcher(q).find() ? new String[]{"cwa.gov.tw"} : null; }
+    // ---------- 可信任的網站（自訂） ----------
+
+    private static final String PREF = "tavily_trusted";
+
+    /** 使用者自訂的可信任網站：每行「網域 用途（可省略）」，例如「cwa.gov.tw 天氣、颱風」。第一次先放中央氣象署。 */
+    static java.util.List<String[]> trusted(Context c) {
+        android.content.SharedPreferences sp = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+        if (!sp.getBoolean("tavily_trusted_seeded", false)) {
+            sp.edit().putString(PREF, "cwa.gov.tw 天氣、颱風、地震（中央氣象署）").putBoolean("tavily_trusted_seeded", true).apply();
+        }
+        return parseTrusted(sp.getString(PREF, ""));
+    }
+
+    static String trustedText(Context c) {
+        trusted(c);
+        return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString(PREF, "");
+    }
+
+    static void saveTrusted(Context c, String text) {
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString(PREF, text == null ? "" : text.trim()).putBoolean("tavily_trusted_seeded", true).apply();
+    }
+
+    /** 一行一個：開頭是網址或網域（http://、www.、後面的路徑都會去掉），空白後面是用途。格式不對的行略過；最多 30 個。 */
+    static java.util.List<String[]> parseTrusted(String text) {
+        java.util.List<String[]> out = new java.util.ArrayList<>();
+        for (String line : (text == null ? "" : text).split("\\n")) {
+            String l = line.trim();
+            if (l.isEmpty()) continue;
+            String[] parts = l.split("\\s+", 2);
+            String d = parts[0].toLowerCase(java.util.Locale.ROOT).replaceFirst("^https?://", "").replaceFirst("^www\\.", "").replaceFirst("[/?#].*$", "");
+            if (!d.matches("[a-z0-9]([a-z0-9\\-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9\\-]*[a-z0-9])?)+")) continue;
+            out.add(new String[]{d, parts.length > 1 ? parts[1].trim() : ""});
+            if (out.size() >= 30) break;
+        }
+        return out;
+    }
+
+    // ---------- 讓便宜模型想關鍵字 ----------
+
+    /** 搜尋參數：關鍵字、主題、要限定的網站（可以是空的）。 */
+    static final class Plan {
+        String query = "", topic = "general";
+        java.util.List<String> domains = new java.util.ArrayList<>();
+    }
+
+    /** 從模型的回答（一行 JSON，前後可能有多餘文字）解析出搜尋參數；domains 只收可信任清單裡有的。解析失敗回 null。 */
+    static Plan parsePlan(String raw, java.util.List<String[]> trusted) {
+        try {
+            int a = raw.indexOf('{'), b = raw.lastIndexOf('}');
+            if (a < 0 || b <= a) return null;
+            JSONObject o = new JSONObject(raw.substring(a, b + 1));
+            Plan p = new Plan();
+            p.query = o.optString("query").replaceAll("\\s+", " ").trim();
+            if (p.query.length() < 2) return null;
+            if (p.query.length() > 200) p.query = p.query.substring(0, 200);
+            p.topic = "news".equals(o.optString("topic")) ? "news" : "general";
+            JSONArray da = o.optJSONArray("domains");
+            for (int i = 0; da != null && i < da.length(); i++) {
+                String d = da.optString(i).toLowerCase(java.util.Locale.ROOT).replaceFirst("^www\\.", "");
+                for (String[] t : trusted) if (t[0].equals(d) && !p.domains.contains(d)) p.domains.add(d);   // 模型只能從你的清單裡挑
+            }
+            return p;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 請便宜模型把你的話變成搜尋參數（多花一次很便宜的呼叫）；失敗就退回程式自己的清理。context = 最近的對話（追問「那明天呢」要靠它）。 */
+    static Plan plan(Context c, String text, String context) {
+        java.util.List<String[]> tr = trusted(c);
+        try {
+            String key = ChatEngine.key(c);
+            if (key != null) {
+                StringBuilder list = new StringBuilder();
+                for (String[] t : tr) list.append("- ").append(t[0]).append(t[1].isEmpty() ? "" : "：" + t[1]).append('\n');
+                String today = new java.text.SimpleDateFormat("yyyy-MM-dd (EEEE)", java.util.Locale.TAIWAN).format(new java.util.Date());
+                String prompt = "今天是 " + today + "。把使用者的要求變成網頁搜尋參數，只輸出一行 JSON：{\"query\":\"關鍵字\",\"topic\":\"general\",\"domains\":[]}\n"
+                        + "query：去掉客套話，補上對話裡省略的主詞（例如「那明天呢」要補成完整的問題）；天氣、新聞這類要把「今天、明天」換成實際日期；"
+                        + "用最容易搜到結果的語言（台灣的事用繁體中文，技術或國外的事用英文），簡短。\n"
+                        + "topic：問最近的新聞、剛發生的事用 news，其他用 general。\n"
+                        + "domains：從下面「可信任網站」挑出跟這個問題真的有關的網域（只能用清單裡的網域），沒有關的就給 []。\n"
+                        + "可信任網站：\n" + (list.length() == 0 ? "（無）\n" : list)
+                        + (context == null || context.isEmpty() ? "" : "最近的對話：\n" + context + "\n")
+                        + "使用者說：" + text;
+                JSONObject body = new JSONObject().put("model", ChatEngine.MODEL).put("max_tokens", 200)
+                        .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
+                JSONObject r = ChatEngine.post(body, key);
+                JSONArray content = r.optJSONArray("content");
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; content != null && i < content.length(); i++) if ("text".equals(content.getJSONObject(i).optString("type"))) sb.append(content.getJSONObject(i).optString("text"));
+                Plan p = parsePlan(sb.toString(), tr);
+                if (p != null) return p;
+            }
+        } catch (Exception e) {
+            CrashLog.w("Tavily 關鍵字", e);
+        }
+        Plan p = new Plan();   // 退路：程式自己清理關鍵字
+        p.query = cleanQuery(text);
+        p.topic = topicFor(p.query);
+        return p;
+    }
 
     /** 搜尋並整理成給 AI 看的文字；失敗回 null（原因在 lastError）。在背景執行緒呼叫。 */
-    static String search(Context c, String text) {
+    static String search(Context c, String text, String context) {
         lastError = "";
         lastSources = new java.util.ArrayList<>();
-        String q = cleanQuery(text);
-        lastQuery = q;
+        Plan p = plan(c, text, context);
+        lastQuery = p.query;
         lastDomains = "";
-        String topic = topicFor(q);
-        String[] domains = domainsFor(q);
         String out = null;
-        if (domains != null) { out = request(c, q, topic, domains); if (out != null) lastDomains = String.join("、", domains); }   // 先只查偏好的網站；沒結果再放寬
-        if (out == null) { lastError = ""; out = request(c, q, topic, null); }
+        if (!p.domains.isEmpty()) {   // 先只查你信任的網站；沒結果再放寬
+            out = request(c, p.query, p.topic, p.domains.toArray(new String[0]));
+            if (out != null) lastDomains = String.join("、", p.domains);
+        }
+        if (out == null) { lastError = ""; out = request(c, p.query, p.topic, null); }
         return out;
+    }
+
+    /** 可信任網站的編輯對話框。 */
+    static void editTrusted(final Activity a, final Runnable after) {
+        final android.widget.EditText et = new android.widget.EditText(a);
+        et.setText(trustedText(a));
+        et.setMinLines(5);
+        et.setGravity(android.view.Gravity.TOP);
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        LinearLayout form = new LinearLayout(a);
+        form.setOrientation(LinearLayout.VERTICAL);
+        int fp = Ui.dp(a, 20);
+        form.setPadding(fp, fp / 2, fp, 0);
+        form.addView(Ui.body(a, L.t("一行一個網站：網域，空一格，再寫它適合查什麼（可以省略）。例如：\ncwa.gov.tw 天氣、颱風、地震\nwikipedia.org 一般知識\n搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。")));
+        form.addView(et);
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("可信任的網站")).setView(form)
+                .setPositiveButton(L.t("儲存"), (d, w) -> { saveTrusted(a, et.getText().toString()); if (after != null) after.run(); })
+                .setNegativeButton(L.t("取消"), null).show();
     }
 
     private static String request(Context c, String query, String topic, String[] domains) {

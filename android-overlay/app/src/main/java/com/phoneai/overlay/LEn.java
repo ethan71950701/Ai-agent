@@ -899,6 +899,9 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("一行一個網站：網域，空一格，再寫它適合查什麼（可以省略）。例如：\ncwa.gov.tw 天氣、颱風、地震\nwikipedia.org 一般知識\n搜尋時 AI 會挑出跟問題有關的網站先查；沒有結果再查所有網站。", "One site per line: the domain, a space, then what it is good for (optional). For example:\ncwa.gov.tw weather, typhoons, earthquakes\nwikipedia.org general knowledge\nWhen searching, the AI picks the sites that are relevant to the question and checks them first; if nothing is found it searches everywhere.");
+        m.put("可信任的網站", "Trusted sites");
+        m.put("目前 %d 個；搜尋時 AI 會挑相關的先查", "%d now; the AI picks relevant ones to search first");
         m.put("搜尋到的網頁（自己點進去確認）：", "Pages found (tap to check for yourself):");
         m.put("網頁搜尋", "Web search");
         m.put("已設定 Tavily Key（說「幫我查…」才搜尋）", "Tavily key is set (searches only when you say \"look up…\")");

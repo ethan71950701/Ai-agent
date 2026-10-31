@@ -320,7 +320,15 @@ final class ChatEngine {
             String webBlock = null;
             String tavilyFail = "";
             if (asked) {
-                webBlock = TavilySearch.search(c, text);
+                StringBuilder ctx = new StringBuilder();   // 最近一輪對話，讓追問（「那明天呢」）也搜得對
+                try {
+                    JSONArray h = loadHistory(c);
+                    for (int hi = Math.max(0, h.length() - 2); hi < h.length(); hi++) {
+                        String hc = h.getJSONObject(hi).optString("content");
+                        ctx.append("user".equals(h.getJSONObject(hi).optString("role")) ? "使用者：" : "助理：").append(hc.length() > 200 ? hc.substring(0, 200) : hc).append('\n');
+                    }
+                } catch (Exception ignored) { }
+                webBlock = TavilySearch.search(c, text, ctx.toString());
                 if (webBlock == null) tavilyFail = TavilySearch.lastError;
             }
             final boolean viaTavily = webBlock != null;
