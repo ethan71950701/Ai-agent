@@ -192,6 +192,9 @@ final class ChatEngine {
     private static final java.util.regex.Pattern WANTS_SEARCH = java.util.regex.Pattern.compile(
             "(幫我|帮我|替我|請你|请你|你)?(查一下|查查|查看看|查詢|查询|搜尋|搜寻|搜索|搜一下|上網查|上网查|網路上查|网上查|google一下|查[詢询]?一[下查])|(?i:look\\s*up|search\\s+(for|the web|online)|google\\s+it|search\\s+it)");
 
+    /** 最近一次聊天的搜尋狀況（寫進任務紀錄，看得出有沒有開搜尋、為什麼沒開）；沒有要查資料就是空字串。 */
+    static volatile String searchNote = "";
+
     static boolean wantsSearch(String text) {
         return text != null && WANTS_SEARCH.matcher(text).find();
     }
@@ -306,7 +309,12 @@ final class ChatEngine {
                     + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.promptRows(mem, "note");
             JSONArray msgs = loadHistory(c);
             msgs.put(new JSONObject().put("role", "user").put("content", text));
-            final boolean search = wantsSearch(text) && !LlmConfig.cheap(c).openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
+            final boolean asked = wantsSearch(text);
+            final LlmConfig.Slot cheapSlot = LlmConfig.cheap(c);
+            final boolean search = asked && !cheapSlot.openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
+            searchNote = !asked ? "" : search ? (L.en() ? "Web search: on (Claude, at most 2 searches)" : "網頁搜尋：已開啟（Claude，最多 2 次）")
+                    : (L.en() ? "Web search: off, because the cheap model is now " + cheapSlot.label() + " (web search is Claude only; set the cheap model to Claude under Functions → AI service)"
+                              : "網頁搜尋：沒開，因為便宜模型現在是 " + cheapSlot.label() + "（網頁搜尋只有 Claude 有；到「功能 → AI 服務」把便宜模型改成 Claude 才能搜尋）");
             if (search) system += L.en()
                     ? "\nThe user asked you to look something up this time: you may use web_search (at most 2 searches), answer with the key points briefly, and say the information comes from a web search. This overrides rule 2 about having no internet."
                     : "\n這次使用者要你查資料：可以用 web_search 搜尋（最多 2 次），把查到的重點簡短回答，並說明資訊來自網路搜尋。這一條優先於第 2 條「沒有網路」。";
@@ -322,6 +330,8 @@ final class ChatEngine {
                     if ("text".equals(b.optString("type"))) texts.append(b.optString("text"));
                     if ("tool_use".equals(b.optString("type"))) uses.put(b);
                 }
+                for (int i = 0; search && i < content.length(); i++)
+                    if ("server_tool_use".equals(content.getJSONObject(i).optString("type"))) { searchNote = L.en() ? "Web search: on, and it actually searched this time" : "網頁搜尋：已開啟，這次有實際搜尋"; break; }
                 if (uses.length() == 0) {
                     if ("pause_turn".equals(r.optString("stop_reason"))) {   // 搜尋太久被暫停：把目前的內容接回去，讓它繼續
                         msgs.put(new JSONObject().put("role", "assistant").put("content", content));

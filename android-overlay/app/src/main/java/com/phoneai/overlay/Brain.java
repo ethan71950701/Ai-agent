@@ -23,6 +23,7 @@ final class Brain {
         AgentLoop.showCard = false;
         AgentLoop.cardNote = "";
         AgentLoop.macroNote = "";   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
+        ChatEngine.searchNote = "";
         Usage.beginTally();
         String reply = null;
         try {
@@ -32,7 +33,8 @@ final class Brain {
             long tokens = Usage.endTally();
             TaskLog.add(act, t, reply, AgentLoop.takeDetails(), tokens, cost);
             if (!AgentLoop.cardNote.isEmpty()) TaskLog.noteLatest(act, AgentLoop.cardNote);
-            if (!AgentLoop.macroNote.isEmpty()) TaskLog.noteLatest(act, "macro", AgentLoop.macroNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
+            if (!AgentLoop.macroNote.isEmpty()) TaskLog.noteLatest(act, "macro", AgentLoop.macroNote);
+            if (!ChatEngine.searchNote.isEmpty()) TaskLog.noteLatest(act, "search", ChatEngine.searchNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         }
         return reply;
     }

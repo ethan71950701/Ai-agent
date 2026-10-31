@@ -51,7 +51,7 @@ final class LogExport {
             sb.append("\n【").append(f.format(new java.util.Date(o.optLong("id")))).append("】").append(o.optString("text")).append('\n');
             sb.append("回答：").append(o.optString("reply")).append('\n');
             sb.append("token：").append(o.optLong("tokens")).append("，估價：$").append(String.format(java.util.Locale.US, "%.4f", o.optDouble("cost"))).append('\n');
-            for (String k : new String[]{"card", "macro"}) if (!o.optString(k).isEmpty()) sb.append(k).append("：").append(o.optString(k)).append('\n');
+            for (String k : new String[]{"card", "macro", "search"}) if (!o.optString(k).isEmpty()) sb.append(k).append("：").append(o.optString(k)).append('\n');
             JSONArray d = o.optJSONArray("detail");
             for (int j = 0; d != null && j < d.length(); j++) {
                 JSONObject s = d.optJSONObject(j);
