@@ -252,4 +252,16 @@ public class LlmAdapterTest {
         assertFalse(ChatEngine.wantsSearch("我想看查理的電影"));
         assertFalse(ChatEngine.wantsSearch("幫我設鬧鐘"));
     }
+
+    @Test
+    public void tavilyDigestAndRedaction() {
+        String json = "{\"results\":[{\"title\":\"天氣\",\"url\":\"https://example.com/a\",\"content\":\"今天台北多雲\",\"score\":0.9},"
+                + "{\"title\":\"B\",\"url\":\"https://example.com/b\",\"content\":\"x\"}]}";
+        String d = TavilySearch.digest(json);
+        assertTrue(d.startsWith("1. 天氣\nhttps://example.com/a\n今天台北多雲"));
+        assertTrue(d.contains("2. B"));
+        assertEquals(null, TavilySearch.digest("{\"results\":[]}"));
+        assertEquals(null, TavilySearch.digest("not json"));
+        assertFalse(LogExport.redact("key tvly-dev-abcdefghijklmnop1234").contains("tvly-dev"));
+    }
 }

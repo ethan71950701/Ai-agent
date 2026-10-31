@@ -25,6 +25,7 @@ final class LogExport {
         return s.replaceAll("AIza[0-9A-Za-z_\\-]{20,}", "[已遮蔽]")
                 .replaceAll("AQ\\.[0-9A-Za-z_\\-]{20,}", "[已遮蔽]")
                 .replaceAll("sk-[0-9A-Za-z_\\-]{16,}", "[已遮蔽]")
+                .replaceAll("tvly-[0-9A-Za-z_\\-]{12,}", "[已遮蔽]")
                 .replaceAll("(?i)(bearer|x-api-key|api[_-]?key)(\\s*[:=]\\s*|\\s+)[^\\s\"',]{12,}", "$1 [已遮蔽]");
     }
 

@@ -289,8 +289,22 @@ public class CircleActivity extends Activity {
             return;
         }
         final Context app = getApplicationContext();
+        final boolean wantSearch = ChatEngine.wantsSearch(q) && TavilySearch.hasKey(app);
+        final String qf = q;
         new Thread(() -> {
-            String r = ChatEngine.visionChat(app, msgs);
+            boolean tavily = false;
+            if (wantSearch) {   // 你明說「幫我查」而且設了 Tavily：先搜尋，把結果接在問題後面（標成資料，不是指令）
+                String digest = TavilySearch.search(app, qf);
+                if (digest != null) {
+                    try {
+                        JSONArray last = msgs.getJSONObject(msgs.length() - 1).getJSONArray("content");
+                        JSONObject tb = last.getJSONObject(last.length() - 1);
+                        tb.put("text", tb.optString("text") + TavilySearch.block(digest));
+                        tavily = true;
+                    } catch (Exception ignored) { }
+                }
+            }
+            String r = ChatEngine.visionChat(app, msgs, !tavily);
             runOnUiThread(() -> {
                 busy = false;
                 send.setAlpha(1f);
