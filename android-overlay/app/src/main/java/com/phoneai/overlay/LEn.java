@@ -701,7 +701,8 @@ final class LEn {
         m.put("元件清單：沒有讀到元件，這一步改用截圖", "Element list: no elements read, using a screenshot for this step");
         m.put("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet", "Element list: the last number was not found, using screenshot + Sonnet for this step");
         m.put("快取：寫入 %,d、讀取 %,d", "Cache: written %,d, read %,d");
-        m.put("已設定 %02d:%02d 的鬧鐘", "Alarm set for %02d:%02d.");
+        m.put("已設定 %02d:%02d 的鬧鐘（已直接設好，不用再按儲存）", "Alarm set for %02d:%02d (set directly; no need to press save).");
+        m.put("已送出 %02d:%02d 的鬧鐘設定（有 SET_ALARM 權限時會直接設好；時鐘畫面如果跳出來，要按儲存）", "Alarm request sent for %02d:%02d (it is set directly with the SET_ALARM permission; if the clock screen appears, press save).");
         m.put("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", "Opened the clock. Tap Save in the clock to set the %02d:%02d alarm.");
         m.put("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Features → Maintenance\".)");
         m.put("還沒有 Claude API Key（功能 → 維護 → Claude API Key）", "No Claude API key yet (Features → Maintenance → Claude API key)");

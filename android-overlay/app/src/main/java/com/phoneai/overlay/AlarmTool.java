@@ -30,7 +30,7 @@ final class AlarmTool {
                 + " --es android.intent.extra.alarm.MESSAGE '" + msg + "'"
                 + " --ez android.intent.extra.alarm.SKIP_UI true");
         if (!out.startsWith("ERR:") && !out.contains("Error")) {
-            return String.format(java.util.Locale.US, L.t("已設定 %02d:%02d 的鬧鐘"), hour, minute);
+            return String.format(java.util.Locale.US, L.t("已設定 %02d:%02d 的鬧鐘（已直接設好，不用再按儲存）"), hour, minute);
         }
         Intent it = new Intent(AlarmClock.ACTION_SET_ALARM)
                 .putExtra(AlarmClock.EXTRA_HOUR, hour)
@@ -40,7 +40,7 @@ final class AlarmTool {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             c.startActivity(it);
-            return String.format(java.util.Locale.US, L.t("已設定 %02d:%02d 的鬧鐘"), hour, minute);   // 有 SET_ALARM 權限，SKIP_UI 會直接設好
+            return String.format(java.util.Locale.US, L.t("已送出 %02d:%02d 的鬧鐘設定（有 SET_ALARM 權限時會直接設好；時鐘畫面如果跳出來，要按儲存）"), hour, minute);   // 有 SET_ALARM 權限，SKIP_UI 會直接設好；沒有的話時鐘會跳出畫面
         } catch (ActivityNotFoundException e) {
             return "錯誤：找不到可以設鬧鐘的時鐘 App";
         }
