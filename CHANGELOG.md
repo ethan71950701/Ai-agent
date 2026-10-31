@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1409
+
 - 修正鬧鐘明明已經直接設好、AI 還是叫你去時鐘按儲存（提示詞還是舊的說法）；現在已設好就照實說，只有時鐘畫面真的跳出來才提醒按儲存｜Fixed the AI telling you to press save in the clock even though the alarm was already set directly (the prompt still had the old wording); it now says the alarm is set, and only reminds you to press save if the clock screen actually appears.
 
 ## 1.0.1408
