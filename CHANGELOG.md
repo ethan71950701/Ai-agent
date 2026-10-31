@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1410
+
 - 檢查更新被 GitHub 回 403（沒登入的查詢次數用完，同一個網路的人共用）時，改走網頁取得最新版本與下載網址，不再直接失敗（這種情況沒有更新說明）｜When GitHub answers 403 on the update check (the anonymous query limit is used up and shared by everyone on the same network), the app now falls back to the web page to find the latest version and its download link instead of failing (no release notes in that case).
 
 ## 1.0.1409
