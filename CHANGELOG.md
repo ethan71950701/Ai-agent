@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1405
+
 - 網頁搜尋改進：搜尋關鍵字會先去掉「幫我查一下」這類客套話；天氣優先只查中央氣象署（沒結果再放寬）；問新聞用新聞模式找最近一週的；回答下面會列出搜尋到的網頁，網址可以點；任務紀錄寫出實際用的關鍵字、限定的網站與網頁數｜Web search improvements: filler such as "look up" is stripped from the keywords; weather questions prefer only the Central Weather Administration (widened if nothing is found); news questions use news mode for the last week; the answer lists the pages found with tappable links; the task log records the keywords actually used, any site restriction and the number of pages.
 
 ## 1.0.1404
