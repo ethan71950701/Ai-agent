@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1407
+
 - 「可信任的網站」改成清單：列出每個網站，點一個可以修改或刪除，最下面「＋ 新增網站」，不用再照格式打字｜"Trusted sites" is now a list: each site is shown, tap one to edit or delete it, and "+ Add a site" sits at the bottom; no more typing in a special format.
 
 ## 1.0.1406
