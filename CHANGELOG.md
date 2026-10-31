@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 網頁搜尋的關鍵字改由便宜模型自己想（會參考上一輪對話，所以「那明天呢」也搜得對；多花一次很便宜的呼叫，失敗就退回程式自己清理）；新增「可信任的網站」（功能頁，自己編輯清單，預設有中央氣象署）：搜尋時模型會挑跟問題有關的網站先查，沒結果再查所有網站｜Web search keywords are now written by the cheap model (it sees the previous turn, so a follow-up like "and tomorrow?" searches correctly; one extra very cheap call, with a fallback to the program's own cleanup); new "Trusted sites" (Functions page, an editable list with the Central Weather Administration by default): the model picks the sites relevant to the question and searches them first, then everything if nothing is found.
+
+## 1.0.1405
+
 - 網頁搜尋改進：搜尋關鍵字會先去掉「幫我查一下」這類客套話；天氣優先只查中央氣象署（沒結果再放寬）；問新聞用新聞模式找最近一週的；回答下面會列出搜尋到的網頁，網址可以點；任務紀錄寫出實際用的關鍵字、限定的網站與網頁數｜Web search improvements: filler such as "look up" is stripped from the keywords; weather questions prefer only the Central Weather Administration (widened if nothing is found); news questions use news mode for the last week; the answer lists the pages found with tappable links; the task log records the keywords actually used, any site restriction and the number of pages.
 
 ## 1.0.1404
