@@ -213,21 +213,7 @@ public class AssistantSheet {
         blp.rightMargin = (int) (4 * d);
         row.addView(bgBtn, blp);
         bgBtnView = bgBtn;
-        final TextView circleBtn = new TextView(a);   // 圈選：收起面板、截圖，用手指圈出螢幕上的一個地方問 AI
-        circleBtn.setText("◎");
-        circleBtn.setTextColor(Color.WHITE);
-        circleBtn.setTextSize(24);
-        circleBtn.setGravity(Gravity.CENTER);
-        GradientDrawable cb = new GradientDrawable();
-        cb.setColor(0x99121218);
-        cb.setStroke((int) Math.max(1, d), 0x50FFFFFF);
-        cb.setShape(GradientDrawable.OVAL);
-        circleBtn.setBackground(cb);
-        circleBtn.setContentDescription(L.t("圈選提問"));
-        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, () -> root.animate().alpha(0f).setDuration(150).start(), () -> { root.animate().cancel(); root.setAlpha(1f); }, AssistantSheet.this::dismiss));
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
-        clp.rightMargin = (int) (4 * d);
-        row.addView(circleBtn, clp);
+
         // 麥克風：光球隱藏後（點光球以外的地方），用這顆開始語音辨識
         final TextView micBtn = new TextView(a);
         micBtn.setText("🎙");
@@ -352,10 +338,7 @@ public class AssistantSheet {
 
     public void enter() {
         current = this;
-        if (!shotRequested) {
-            shotRequested = true;
-            CircleActivity.prefetch(act.getApplicationContext(), this::attachShot);   // 截圖好了才顯示畫布；截不到就維持原本的畫面
-        }
+
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下
         aurora.playIntro();
         scrim.animate().alpha(1f).setDuration(450).start();
