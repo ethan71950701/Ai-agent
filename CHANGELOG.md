@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1417
+
 - 暫時拿掉圈選功能（助理面板的 ◎ 與開啟時的預先截圖）；程式碼保留，之後再決定要不要加回來｜The circle-to-ask feature is removed from the panel for now (the ◎ button and the screenshot taken on open); the code is kept for later.
 
 ## 1.0.1416
