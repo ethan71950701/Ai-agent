@@ -900,6 +900,7 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("已圈選，輸入問題後送出（可以空白）", "Circled. Type a question and send (can be empty).");
         m.put("開始語音辨識", "Start voice recognition");
         m.put("（查詢次數用完，稍後再試）", " (query limit reached; try again later)");
         m.put("可信任的網站", "Trusted sites");
