@@ -900,6 +900,10 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("已開始 %s 的計時", "Timer started for %s.");
+        m.put("已送出 %s 的計時（若時鐘畫面跳出來，要按開始）", "Timer request sent for %s (if the clock screen appears, press start).");
+        m.put("錯誤：計時要在 1 秒到 24 小時之間", "Error: the timer must be between 1 second and 24 hours.");
+        m.put("找不到可以計時的時鐘 App", "No clock app found that can set a timer.");
         m.put("已圈選，輸入問題後送出（可以空白）", "Circled. Type a question and send (can be empty).");
         m.put("開始語音辨識", "Start voice recognition");
         m.put("（查詢次數用完，稍後再試）", " (query limit reached; try again later)");

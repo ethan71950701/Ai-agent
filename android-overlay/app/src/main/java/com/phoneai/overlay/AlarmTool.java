@@ -45,4 +45,34 @@ final class AlarmTool {
             return "錯誤：找不到可以設鬧鐘的時鐘 App";
         }
     }
+
+    /** 設計時器（系統標準 SET_TIMER，不用猜欄位）：有 root 用 shell 直接啟動並跳過畫面；否則用一般 Intent。 */
+    static String setTimer(Context c, int seconds, String label) {
+        if (seconds <= 0 || seconds > 24 * 3600) return "錯誤：計時要在 1 秒到 24 小時之間";
+        String msg = (label == null ? "" : label).replace("'", "'\\''");
+        String out = Maintenance.suRun("am start -a android.intent.action.SET_TIMER"
+                + " --ei android.intent.extra.alarm.LENGTH " + seconds
+                + " --es android.intent.extra.alarm.MESSAGE '" + msg + "'"
+                + " --ez android.intent.extra.alarm.SKIP_UI true");
+        if (!out.startsWith("ERR:") && !out.contains("Error")) {
+            return String.format(java.util.Locale.US, L.t("已開始 %s 的計時"), fmtSeconds(seconds));
+        }
+        Intent it = new Intent(AlarmClock.ACTION_SET_TIMER)
+                .putExtra(AlarmClock.EXTRA_LENGTH, seconds)
+                .putExtra(AlarmClock.EXTRA_MESSAGE, label == null ? "" : label)
+                .putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            c.startActivity(it);
+            return String.format(java.util.Locale.US, L.t("已送出 %s 的計時（若時鐘畫面跳出來，要按開始）"), fmtSeconds(seconds));
+        } catch (ActivityNotFoundException e) {
+            return "錯誤：找不到可以計時的時鐘 App";
+        }
+    }
+
+    private static String fmtSeconds(int s) {
+        if (s >= 3600) return String.format(java.util.Locale.US, "%d 小時 %d 分", s / 3600, (s % 3600) / 60);
+        if (s >= 60) return String.format(java.util.Locale.US, "%d 分 %d 秒", s / 60, s % 60);
+        return s + " 秒";
+    }
 }
