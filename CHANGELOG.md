@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 圈選提問：面板改成先淡出（約 0.15 秒）再截圖與開啟圈選畫面，不再瞬間消失｜Circle to ask: the panel now fades out (about 0.15 s) before the screenshot and the circle screen, instead of vanishing instantly.
 - 移除圈選提問開啟時我們自己加的白色閃光，圈選畫面直接出現｜Removed the white flash the Circle to ask screen added on open; the screen now appears directly.
 
 ## 1.0.1410

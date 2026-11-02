@@ -51,7 +51,7 @@ public class CircleActivity extends Activity {
         try { hideInstant.run(); } catch (Throwable t) { toast(app, t); return; }
         new Thread(() -> {
             try {
-                try { Thread.sleep(80); } catch (InterruptedException ignored) { }   // 讓「藏起來」那一幀真的畫出去再截
+                try { Thread.sleep(220); } catch (InterruptedException ignored) { }   // 等面板淡出完成（約 150 毫秒）再截，截圖不會拍到面板
                 Bitmap b = AgentLoop.screenshotBitmap();
                 if (b == null) {
                     ui.post(showAgain);
