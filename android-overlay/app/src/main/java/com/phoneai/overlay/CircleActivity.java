@@ -122,12 +122,6 @@ public class CircleActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         cv = new CircleView(this);
         root.addView(cv, new FrameLayout.LayoutParams(-1, -1));
-        final View flash = new View(this);   // 截圖的閃光：一瞬間亮一下再淡掉，告訴使用者「畫面凍結了」
-        flash.setBackgroundColor(Color.WHITE);
-        flash.setAlpha(0.35f);
-        flash.setClickable(false);
-        root.addView(flash, new FrameLayout.LayoutParams(-1, -1));
-        flash.animate().alpha(0f).setDuration(320).withEndAction(() -> flash.setVisibility(View.GONE)).start();
 
         scrim = new View(this);   // 提問時底部的暗幕，讓白字讀得到
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x00000000, 0xCC000000}));
