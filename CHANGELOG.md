@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1414
+
 - 助理面板輸入框旁邊加一顆麥克風，光球隱藏後也能直接開始語音辨識｜The assistant panel input row has a microphone button, so voice recognition can start even when the orb is hidden.
 
 ## 1.0.1413
