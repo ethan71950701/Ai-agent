@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 叫出助理面板時就先截圖，直接在畫面上圈選（不用按 ◎）；點光球和輸入框以外的地方隱藏光球；圈完後輸入問題送出，會連同圈起來的區域一起問 AI｜Opening the assistant panel now takes a screenshot right away, so you can circle things directly (no ◎ needed); tapping outside the orb and input hides the orb; after circling, send a question and it is asked together with the circled region.
 - 助理面板輸入框旁邊加一顆麥克風，光球隱藏後也能直接開始語音辨識｜The assistant panel input row has a microphone button, so voice recognition can start even when the orb is hidden.
 
 ## 1.0.1413

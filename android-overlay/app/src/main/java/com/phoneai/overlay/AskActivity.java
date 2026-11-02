@@ -15,7 +15,6 @@ public class AskActivity extends Activity {
         super.onCreate(b);
         lastCreated = System.currentTimeMillis();
         setShowWhenLocked(true);
-        CircleActivity.prefetch(getApplicationContext());   // 面板一打開就在背景截一張，按圈選時直接用，不用先收起面板
         sheet = new AssistantSheet(this);
         setContentView(sheet.view());
         sheet.enter();
