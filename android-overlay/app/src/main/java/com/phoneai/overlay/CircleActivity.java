@@ -45,9 +45,33 @@ public class CircleActivity extends Activity {
      * 馬上截下底下的 App，再打開圈選畫面（沒有轉場動畫：畫面跟底下一模一樣，看起來就是畫面凍結），
      * 圈選畫面蓋好之後才把面板真的關掉。這樣中間不會有「面板收起、什麼都沒有」的空窗。截不到就把面板還原。
      */
+    /** 面板打開時先截好的圖（背景執行緒）；超過 2 分鐘就不用，免得拿到很舊的畫面。 */
+    private static volatile Bitmap prefetched;
+    private static volatile long prefetchedAt;
+
+    static void prefetch(final Context app) {
+        new Thread(() -> {
+            try {
+                Bitmap b = AgentLoop.screenshotBitmap();
+                if (b != null) { prefetched = b; prefetchedAt = System.currentTimeMillis(); }
+            } catch (Throwable t) {
+                CrashLog.w("圈選預先截圖", t);
+            }
+        }, "circle-prefetch").start();
+    }
+
     static void begin(final Activity act, final Runnable hideInstant, final Runnable showAgain, final Runnable closeSheet) {
         final Context app = act.getApplicationContext();
         final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
+        Bitmap pre = prefetched;
+        if (pre != null && System.currentTimeMillis() - prefetchedAt < 120_000L) {   // 有預先截好的圖：直接開圈選畫面，面板淡出
+            prefetched = null;
+            shot = pre;
+            hideInstant.run();
+            app.startActivity(new Intent(app, CircleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS));
+            ui.postDelayed(closeSheet, 300);
+            return;
+        }
         try { hideInstant.run(); } catch (Throwable t) { toast(app, t); return; }
         new Thread(() -> {
             try {
@@ -330,7 +354,7 @@ public class CircleActivity extends Activity {
      * 放開後圈外變暗，只留圈選範圍亮著。
      */
     private final class CircleView extends View {
-        private static final float MAX_ZOOM = 6f;
+        private static final float MAX_ZOOM = 6f, MIN_ZOOM = 0.3f;   // 可以縮到很小，讓整張圖縮在面板上面不被擋住
         private final Path path = new Path();                  // 圖片座標
         private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG), glow = new Paint(Paint.ANTI_ALIAS_FLAG), core = new Paint(Paint.ANTI_ALIAS_FLAG),
                 dim = new Paint(), pic = new Paint(Paint.FILTER_BITMAP_FLAG), dot = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -405,7 +429,7 @@ public class CircleActivity extends Activity {
                         if (e.getPointerCount() >= 2) {
                             float nd = dist(e), mx = midX(e), my = midY(e);
                             if (lastDist > 0) {
-                                float nz = Math.max(1f, Math.min(MAX_ZOOM, zoom * nd / lastDist));
+                                float nz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * nd / lastDist));
                                 float r = nz / zoom;
                                 tx = mx - (lastMx - tx) * r;
                                 ty = my - (lastMy - ty) * r;
