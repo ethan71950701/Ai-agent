@@ -218,6 +218,21 @@ public class AssistantSheet {
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
         clp.rightMargin = (int) (4 * d);
         row.addView(circleBtn, clp);
+        // 麥克風：光球隱藏後（點光球以外的地方），用這顆開始語音辨識
+        final TextView micBtn = new TextView(a);
+        micBtn.setText("🎙");
+        micBtn.setTextSize(20);
+        micBtn.setGravity(Gravity.CENTER);
+        GradientDrawable mb = new GradientDrawable();
+        mb.setColor(0x99121218);
+        mb.setStroke((int) Math.max(1, d), 0x50FFFFFF);
+        mb.setShape(GradientDrawable.OVAL);
+        micBtn.setBackground(mb);
+        micBtn.setContentDescription(L.t("開始語音辨識"));
+        micBtn.setOnClickListener(v -> { orb.setVisibility(View.VISIBLE); startVoice(); });
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
+        mlp.rightMargin = (int) (4 * d);
+        row.addView(micBtn, mlp);
         row.addView(input, new LinearLayout.LayoutParams(0, -2, 1f));
 
         send = new SendIconView(a);
