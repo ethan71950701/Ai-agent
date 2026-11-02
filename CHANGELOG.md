@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 圈選提問：面板一打開就在背景截一張圖，按 ◎ 時直接用，面板不用先收起來；圈選畫面的雙指縮放可以縮到很小（0.3 倍），讓整張圖縮在面板上面不被擋住｜Circle to ask: a screenshot is taken in the background as soon as the panel opens and used when you tap ◎, so the panel does not need to hide first; pinch-zoom on the circle screen can now shrink the picture to 0.3× so it sits above the panel.
+
+## 1.0.1412
+
 - 圈選提問：面板改成先淡出（約 0.15 秒）再截圖與開啟圈選畫面，不再瞬間消失｜Circle to ask: the panel now fades out (about 0.15 s) before the screenshot and the circle screen, instead of vanishing instantly.
 
 ## 1.0.1411
