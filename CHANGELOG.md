@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1418
+
 - 新增計時：說「計時 10 分鐘」就用系統的計時器開始倒數（不用猜欄位），名稱可以帶上｜New timer: say "time 10 minutes" and the system timer starts counting down (uses the standard timer intent); a name can be included.
 - 驗證完成：網頁搜尋（Tavily）、可信任的網站、鬧鐘直接設好、檢查更新的備用路線、錯誤紀錄、匯出與麥克風按鈕都已在手機上確認正常｜Verified on the phone: Tavily web search, trusted sites, alarms set directly, the update-check fallback, the error log, export, and the microphone button all work.
 
