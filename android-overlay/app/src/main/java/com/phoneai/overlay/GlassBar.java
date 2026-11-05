@@ -135,7 +135,7 @@ final class GlassBar extends FrameLayout {
     /** 透鏡的立體漸層強度（上緣微亮、下緣微暗；背景再平也有凸透鏡的厚度感）。 */
     private static final float SHEEN = 0f;   // 關閉：自己的底色加亮面會讓玻璃像塑膠
     /** 透鏡靜止時整塊提亮多少（0..1，白色混合比例）；只是磨砂的微亮，不是邊緣線。按住時會慢慢消失。 */
-    private static final float BODY_LIFT = 0f;   // 關閉：靜止時整塊提亮也是一種底色
+    private static final float BODY_LIFT = 0.08f;   // 靜止時透鏡比底欄微亮，看得出圓底的形狀；按住時逐漸消失，換成清澈的玻璃
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
