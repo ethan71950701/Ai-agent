@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1455
+
 - 沒按住時透鏡比底欄微亮，圓底的形狀看得清楚（按住時逐漸消失）｜When not pressed the lens is slightly lighter than the bar so the pill shape reads clearly (fades out while pressed)
 
 ## 1.0.1454
