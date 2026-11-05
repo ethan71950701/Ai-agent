@@ -5,6 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1433
+
+- 底欄 GPU 錄製（實驗）：背景直接錄進折射節點，不再嵌套｜Glass bar GPU backdrop (experimental): record the backdrop straight into the refraction node instead of nesting a RenderNode
+
 - 底欄 GPU 錄製（實驗）：背景先畫成圖層再給折射著色器讀取｜Glass bar GPU backdrop (experimental): render the backdrop into a layer before the refraction shader reads it
 
 ## 1.0.1431
