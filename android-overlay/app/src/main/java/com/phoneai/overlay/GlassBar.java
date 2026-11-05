@@ -44,6 +44,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
+            + "uniform float keepAlpha;\n"       // 圖示層：只折射，透明的地方維持透明（不然會變成不透明的黑底）
             + "uniform float bodyLift;\n"       // 透鏡靜止時整塊微微提亮（磨砂感），按住後消失
             + "uniform float2 stretch;\n"       // 拖動的形變量（x、y）：只在透鏡邊緣的折射帶生效，中間的內容不動
             + "uniform float edgeLine;\n"       // 透鏡邊緣彩虹環的強度（0 = 不畫）
@@ -90,6 +91,7 @@ final class GlassBar extends FrameLayout {
             + "        }\n"
             + "        base = half4(half3(acc / max(wsum, float3(0.001))), half(alphaSum / 7.0));\n"
             + "    }\n"
+            + "    if (keepAlpha > 0.5) return base;\n"
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
             + "    if (indicator < 0.5) color = mix(color, half3(0.35), shade);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
@@ -379,6 +381,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("stretch", lens ? stretchX : 0f, lens ? stretchY : 0f);
         sh.setFloatUniform("edgeWidth", 1.0f * dp);   // 彩虹環細一點（1dp），跟酷安一樣是細線
         sh.setFloatUniform("skew", skewValue);
+        sh.setFloatUniform("keepAlpha", 0f);
     }
 
     @Override
@@ -613,6 +616,7 @@ final class GlassBar extends FrameLayout {
         iconNode.endRecording();
         configure(iconShader, 0f);   // 圖示不歪斜：歪斜只給透鏡本身，圖示才不會跟著微小移動抖
         iconShader.setFloatUniform("dispersion", 0f);   // 圖示不要彩虹色散，才看得清楚（透鏡邊緣的色散只給透鏡本身）
+        iconShader.setFloatUniform("keepAlpha", 1f);   // 透明的地方保持透明，才不會蓋住透鏡底下的背景
         iconShader.setFloatUniform("shade", 0f);       // 圖示層只折射：暗度已經在透鏡底下那層加過了，再加一次就變暗
         iconShader.setFloatUniform("surface", 0f);
         iconShader.setFloatUniform("bodyLift", 0f);     // 圖示不跟著透鏡整塊提亮，顏色才準
