@@ -228,6 +228,7 @@ final class LEn {
         m.put("拖動時畫面被拖歪的程度", "How much the picture is dragged sideways while dragging");
         m.put("按住時放大圖示", "Magnify icons while pressed");
         m.put("拖動歪斜", "Drag skew");
+        m.put("圖示折射與色散（實驗）", "Icon refraction and dispersion (experimental)");
         m.put("GPU 錄製背景（實驗）", "GPU-recorded backdrop (experimental)");
         m.put("恢復預設", "Reset to defaults");
         m.put("呼叫方式", "Invocation");
