@@ -101,8 +101,8 @@ final class GlassBar extends FrameLayout {
             + "    float secondaryLight = 0.4 * pow(max(dot(n, -light), 0.0), 3.0);\n"
             + "    float outer = 1.0 - smoothstep(0.25 * density, density, depth);\n"
             + "    float inner = 1.0 - smoothstep(0.15 * density, 0.7 * density, abs(depth - 1.7 * density));\n"
-            + "    float rim = (0.04 + 1.0 * mainLight + 0.55 * secondaryLight)\n"
-            + "        * (outer + 0.4 * inner) * highlightAlpha;\n"
+            + "    float lit = 0.30 + 0.70 * pow(abs(dot(n, light)), 2.0);\n"   // 整圈邊都有亮線，朝向光源（與它對面）的地方再亮一點；不再只有一個光點
+            + "    float rim = lit * outer * highlightAlpha;\n"
             + "    float shadowRadius = max(0.001, 8.0 * density * progress);\n"
             + "    float shadow = indicator * 0.15 * progress\n"
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
@@ -125,7 +125,7 @@ final class GlassBar extends FrameLayout {
     /** 透鏡邊緣彩虹環的強度（0 = 不畫）；顏色依邊界方向變化（紅到紫）。想要更明顯就調大，想淡一點就調小。 */
     private static final float EDGE_LINE = 0f;
     /** 透鏡邊緣高光的強度（0 = 不畫）。想更亮就調大，想更淡就調小。 */
-    private static final float HIGHLIGHT = 0.35f;
+    private static final float HIGHLIGHT = 0.5f;
     /** 透鏡靜止時整塊提亮多少（0..1，白色混合比例）；只是磨砂的微亮，不是邊緣線。按住時會慢慢消失。 */
     private static final float BODY_LIFT = 0.08f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
