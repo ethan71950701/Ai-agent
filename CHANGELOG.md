@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 圖示折射與色散改成預設開啟（設定 → 底欄玻璃可關）｜Icon refraction and dispersion are now on by default (can be turned off in Settings → Glass bar)
+
 - 透鏡更像玻璃、不像塑膠：拿掉自己的底色（靜止提亮、上亮下暗漸層），邊緣高光改成更細更淡的一圈｜The lens looks more like glass and less like plastic: removed its own base tint (rest brightening and top/bottom gradient) and made the edge highlight a thinner, subtler rim
 
 ## 1.0.1450

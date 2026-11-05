@@ -808,7 +808,7 @@ public class MainActivity extends Activity {
         glassSwitch(g, 0, 4, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
         glassSwitch(g, 1, 4, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
         glassSwitch(g, 2, 4, "bolt", L.t("GPU 錄製背景"), GlassPrefs.gpu, GlassPrefs.K_GPU);
-        glassSwitch(g, 3, 4, "image", L.t("圖示折射與色散（實驗）"), GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
+        glassSwitch(g, 3, 4, "image", L.t("圖示折射與色散"), GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);
         g.addView(Ui.pill(this, L.t("恢復預設"), false, v -> {
