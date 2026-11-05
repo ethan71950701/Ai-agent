@@ -9,6 +9,13 @@
         <item name="android:datePickerDialogTheme">@style/PickerDialog</item>
     </style>
 
+    <!-- 子頁面：視窗透明（底下的首頁看得到），頁面自己畫不透明背景；這樣打開時才能像桌面開 App 一樣從點的那張卡片展開、返回時縮回去 -->
+    <style name="AppTheme.Sub" parent="AppTheme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+
     <style name="PickerDialog" parent="ThemeOverlay.Material3.Dialog">
         <item name="android:colorAccent">?attr/colorPrimary</item>
         <item name="android:colorControlActivated">?attr/colorPrimary</item>

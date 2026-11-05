@@ -142,7 +142,7 @@ final class Ui {
         com.google.android.material.appbar.MaterialToolbar tb = new com.google.android.material.appbar.MaterialToolbar(a);
         if (back) {
             tb.setNavigationIcon(R.drawable.ic_back);
-            tb.setNavigationOnClickListener(v -> a.finish());
+            tb.setNavigationOnClickListener(v -> closeToTap(a));
         }
         com.google.android.material.appbar.CollapsingToolbarLayout.LayoutParams tlp =
                 new com.google.android.material.appbar.CollapsingToolbarLayout.LayoutParams(-1, dp(a, 56));
@@ -513,17 +513,105 @@ final class Ui {
         Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.45f);
     }
 
+    /** 點的那張卡片在螢幕上的位置與大小（打開頁面時從這裡長出來、關閉時縮回這裡）；開完會清掉，免得下次從別的地方開時用到舊的。 */
+    private static float[] tapRect;
+    private static final java.util.WeakHashMap<android.app.Activity, float[]> EXIT_RECT = new java.util.WeakHashMap<>();
+
     static void rememberTap(View v) {
         int[] loc = new int[2];
         v.getLocationOnScreen(loc);
         tapX = loc[0] + v.getWidth() / 2f;
         tapY = loc[1] + v.getHeight() / 2f;
+        tapRect = new float[]{loc[0], loc[1], v.getWidth(), v.getHeight()};
+    }
+
+    private static final android.view.animation.PathInterpolator EMPHASIZED = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
+    private static final android.view.animation.PathInterpolator EMPH_ACCEL = new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f);
+
+    /**
+     * 像桌面打開 App：整頁從點的那張卡片的位置和大小展開到全螢幕（圓角跟著變小），內容稍微慢一點淡入；
+     * progress 0 = 縮在卡片上、1 = 全螢幕。關閉時反過來縮回去。需要視窗是透明的（AppTheme.Sub），底下的頁面才看得到。
+     */
+    private static void applyExpand(final View root, final float[] r, float p, final float corner) {
+        float W = Math.max(1, root.getWidth()), H = Math.max(1, root.getHeight());
+        float sx = r[2] / W, sy = r[3] / H;
+        float k = 1f - p;   // 0 = 全螢幕
+        root.setScaleX(sx + (1f - sx) * p);
+        root.setScaleY(sy + (1f - sy) * p);
+        root.setTranslationX(r[0] * k);
+        root.setTranslationY(r[1] * k);
+        root.setAlpha(Math.min(1f, 0.35f + p * 1.2f));
+        cornerRadius = corner * k / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
+        root.invalidateOutline();
+    }
+
+    private static float cornerRadius;
+
+    private static void setupClip(View root) {
+        root.setOutlineProvider(new android.view.ViewOutlineProvider() {
+            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), cornerRadius); }
+        });
+        root.setClipToOutline(true);
+    }
+
+    /** 關閉：縮回打開時那張卡片再結束；沒有記錄（不是從卡片打開的）就淡出結束。 */
+    static void closeToTap(final android.app.Activity a) {
+        final View root = a.getWindow().getDecorView();
+        final float[] r = EXIT_RECT.get(a);
+        if (r == null || root.getWidth() == 0) {
+            root.animate().alpha(0f).setDuration(160).withEndAction(() -> { a.finish(); a.overridePendingTransition(0, 0); }).start();
+            return;
+        }
+        final float corner = dp(a, 22);
+        root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        setupClip(root);
+        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
+        va.setDuration(300);
+        va.setInterpolator(EMPH_ACCEL);
+        va.addUpdateListener(an -> applyExpand(root, r, (float) an.getAnimatedValue(), corner));
+        va.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator an) { a.finish(); a.overridePendingTransition(0, 0); }
+        });
+        va.start();
     }
 
     /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
-    static void enterSpring(android.app.Activity a) {
+    static void enterSpring(final android.app.Activity a) {
         a.overridePendingTransition(0, 0);
         final View root = a.getWindow().getDecorView();
+        final float[] rect = tapRect;
+        tapRect = null;
+        if (rect != null) {   // 從卡片展開（像桌面打開 App）
+            EXIT_RECT.put(a, rect);
+            root.setAlpha(0f);
+            root.setPivotX(0f);
+            root.setPivotY(0f);
+            root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    root.getViewTreeObserver().removeOnPreDrawListener(this);
+                    final float corner = dp(a, 22);
+                    setupClip(root);
+                    root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                    applyExpand(root, rect, 0f, corner);
+                    android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
+                    va.setDuration(420);
+                    va.setInterpolator(EMPHASIZED);
+                    va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), corner));
+                    va.addListener(new android.animation.AnimatorListenerAdapter() {
+                        @Override public void onAnimationEnd(android.animation.Animator an) {
+                            applyExpand(root, rect, 1f, corner);
+                            root.setClipToOutline(false);
+                            root.setLayerType(View.LAYER_TYPE_NONE, null);
+                        }
+                    });
+                    va.start();
+                    return true;
+                }
+            });
+            registerBack(a, root);
+            return;
+        }
         // 先在第一次繪製前就設成縮小、透明，避免先看到整頁閃一下再縮小
         root.setAlpha(0f);
         root.setScaleX(0.86f);   // 以前從 0.55 倍彈出，縮放幅度大又晃很久；改成小幅度放大＋快速停下，看起來比較穩也比較順
@@ -581,8 +669,8 @@ final class Ui {
 
                 @Override
                 public void onBackInvoked() {
-                    a.finish();
-                    a.overridePendingTransition(0, 0);
+                    root.setAlpha(1f);
+                    closeToTap(a);
                 }
             });
         } else {

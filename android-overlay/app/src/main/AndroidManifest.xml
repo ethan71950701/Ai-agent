@@ -158,38 +158,47 @@
 
         <activity
             android:name=".MemoryActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".BrowseActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".FileSearchActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".CommandsActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".TaskDetailActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".LogActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".DigestActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".TransferActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".DiagActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <service
