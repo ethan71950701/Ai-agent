@@ -613,6 +613,8 @@ final class GlassBar extends FrameLayout {
         iconNode.endRecording();
         configure(iconShader, 0f);   // 圖示不歪斜：歪斜只給透鏡本身，圖示才不會跟著微小移動抖
         iconShader.setFloatUniform("dispersion", 0f);   // 圖示不要彩虹色散，才看得清楚（透鏡邊緣的色散只給透鏡本身）
+        iconShader.setFloatUniform("shade", 0f);       // 圖示層只折射：暗度已經在透鏡底下那層加過了，再加一次就變暗
+        iconShader.setFloatUniform("surface", 0f);
         iconShader.setFloatUniform("bodyLift", 0f);     // 圖示不跟著透鏡整塊提亮，顏色才準
         iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
         canvas.save();

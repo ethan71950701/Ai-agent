@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正開啟「圖示折射與色散」後，沒按住時上層玻璃偏暗（圖示層重複加了一次暗度）｜Fix the top glass looking darker when icon refraction is on and the bar is not pressed (the icon layer applied the darkening a second time)
+
 - 底欄背景改用 GPU 錄製（預設開，動畫與捲動更順；可在設定 → 底欄玻璃關掉），移除測試用的黃字與診斷量測｜The bar backdrop is now GPU-recorded by default (smoother animation and scrolling; can be turned off in Settings → Glass bar); removed the test text and probe
 
 ## 1.0.1440
