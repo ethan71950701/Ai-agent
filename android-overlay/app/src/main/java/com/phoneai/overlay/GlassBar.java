@@ -496,6 +496,7 @@ final class GlassBar extends FrameLayout {
                     if (ch.getScaleX() != 1f || ch.getScaleY() != 1f) rc.scale(ch.getScaleX(), ch.getScaleY(), ch.getPivotX(), ch.getPivotY());
                     if (ch.getAlpha() < 1f) rc.saveLayerAlpha(0, 0, ch.getWidth(), ch.getHeight(), Math.round(ch.getAlpha() * 255));
                     rc.clipRect(0, 0, ch.getWidth(), ch.getHeight());
+                    rc.translate(-ch.getScrollX(), -ch.getScrollY());   // 系統錄子 View 時會先減掉捲動量；直接呼叫 draw 要自己減（漏掉這行，捲動容器就停在最上面那一幀）
                     ch.draw(rc);
                     rc.restoreToCount(save);
                 }

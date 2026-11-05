@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- GPU 背景（實驗）：修正頁面捲動後底欄背景卡在最上面那一幀（漏了捲動量）｜GPU backdrop (experimental): fix the bar backdrop freezing on the top frame once the page scrolls (scroll offset was missing)
+
 - GPU 背景（實驗）：背景裡加一行診斷文字｜GPU backdrop (experimental): draw a diagnostic text line into the backdrop
 
 ## 1.0.1436
