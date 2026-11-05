@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1452
+
 - 圖示折射與色散改成預設開啟（設定 → 底欄玻璃可關）｜Icon refraction and dispersion are now on by default (can be turned off in Settings → Glass bar)
 
 ## 1.0.1451
