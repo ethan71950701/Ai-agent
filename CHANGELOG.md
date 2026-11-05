@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1435
+
 - 底欄 GPU 錄製（實驗）：頁面每更新一幀底欄就跟著重畫，修正捲動後卡在舊畫面｜Glass bar GPU backdrop (experimental): redraw the bar on every page frame, fixing the stale frame after scrolling
 
 ## 1.0.1433
