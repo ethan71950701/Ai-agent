@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1444
+
 - 按住底欄時，透鏡邊緣不再有彩色環；邊界靠邊緣折射、微暗與陰影呈現｜The lens no longer shows a coloured ring while pressed; its edge is shown by edge refraction, slight darkening and shadow
 
 ## 1.0.1443
