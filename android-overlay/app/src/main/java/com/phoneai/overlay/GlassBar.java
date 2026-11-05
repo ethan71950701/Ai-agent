@@ -447,7 +447,10 @@ final class GlassBar extends FrameLayout {
             canvas.restore();
             return;
         }
-        int scale = lens ? 2 : 4;   // 透鏡要清楚；底欄模糊反正很糊，抓 1/4 大小省很多繪製（掉幀的主因）
+        // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
+        // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
+        float blurPx = GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor;
+        int scale = lens ? 2 : blurPx < 3f ? 1 : blurPx < 10f ? 2 : 4;
         int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
         if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
             bmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888);
