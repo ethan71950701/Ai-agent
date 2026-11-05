@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 按住底欄時，透鏡邊緣不再有彩色環；邊界靠邊緣折射、微暗與陰影呈現｜The lens no longer shows a coloured ring while pressed; its edge is shown by edge refraction, slight darkening and shadow
 
+## 1.0.1443
+
 - 修正開啟「圖示折射與色散」後透鏡變成不透明黑色：圖示層的透明處不再被畫成黑底｜Fix the lens turning opaque black with icon refraction on: transparent parts of the icon layer are no longer drawn as a black fill
 
 ## 1.0.1442
