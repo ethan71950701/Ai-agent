@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1449
+
 - 移除底欄中間的橫向光帶；透鏡加上淡淡的立體漸層（上亮下暗），背景是平的也有玻璃厚度感｜Removed the horizontal light band in the bar; the lens gets a faint top-light/bottom-dark gradient so it still has depth over a flat background
 
 ## 1.0.1448
