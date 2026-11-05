@@ -4,8 +4,10 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+<<<<<<< HEAD
 
-- 底欄 GPU 錄製（實驗）：背景先畫成圖層再給折射著色器讀取｜Glass bar GPU backdrop (experimental): render the backdrop into a layer before the refraction shader reads it
+=======
+>>>>>>> cc9b73aaaca094a2eba6a35b8015c9be045df225
 
 - 設定 → 底欄玻璃：新增「GPU 錄製背景（實驗）」開關（預設關），並在診斷頁顯示錄到的背景顏色數，用來查折射消失的原因｜Settings → Glass bar: new experimental "GPU-recorded backdrop" switch (off by default) with a diagnostic colour count in the Diagnostics page, to find why refraction vanished
 
