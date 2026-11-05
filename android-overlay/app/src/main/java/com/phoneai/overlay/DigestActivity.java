@@ -12,6 +12,10 @@ import org.json.JSONObject;
 
 /** 通知整理的結果：摘要，以及可以加入行事曆或提醒的事（每一項按「加入」才會加入）。 */
 public class DigestActivity extends Activity {
+    /** 帶這個 extra 開啟 = 一進來就開始整理（顯示轉圈圈，整理完才換成結果）。 */
+    static final String EXTRA_RUN = "run";
+    private static volatile boolean running;
+    private static java.lang.ref.WeakReference<DigestActivity> current = new java.lang.ref.WeakReference<>(null);
     private LinearLayout box;
 
     @Override
@@ -21,7 +25,59 @@ public class DigestActivity extends Activity {
         setContentView(Ui.screen(this, L.t("通知整理"), true, c));
         Ui.enterSpring(this);
         box = c[0];
-        render();
+        current = new java.lang.ref.WeakReference<>(this);
+        if (running) showLoading();
+        else if (getIntent().getBooleanExtra(EXTRA_RUN, false)) startRun();
+        else render();
+    }
+
+    /** 中間一個轉圈圈與說明：讀通知、等 AI 整理要一段時間，讓人知道它正在做事。 */
+    private void showLoading() {
+        box.removeAllViews();
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setGravity(android.view.Gravity.CENTER);
+        wrap.setPadding(0, Ui.dp(this, 120), 0, 0);
+        com.google.android.material.progressindicator.CircularProgressIndicator spin = new com.google.android.material.progressindicator.CircularProgressIndicator(this);
+        spin.setIndeterminate(true);
+        wrap.addView(spin);
+        TextView t = new TextView(this);
+        t.setText(L.t("整理通知中，請稍候…"));
+        t.setTextSize(15);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setPadding(0, Ui.dp(this, 16), 0, 0);
+        wrap.addView(t);
+        TextView hint = new TextView(this);
+        hint.setText(L.t("正在讀取通知，再交給 AI 整理，大約要幾秒到幾十秒"));
+        hint.setTextSize(12);
+        hint.setAlpha(0.6f);
+        hint.setGravity(android.view.Gravity.CENTER);
+        hint.setPadding(Ui.dp(this, 24), Ui.dp(this, 6), Ui.dp(this, 24), 0);
+        wrap.addView(hint);
+        box.addView(wrap, new LinearLayout.LayoutParams(-1, -2));
+    }
+
+    private void startRun() {
+        running = true;
+        showLoading();
+        final android.content.Context app = getApplicationContext();
+        new Thread(() -> {
+            String err;
+            try { err = NotifDigest.run(app, false); } catch (Throwable e) { err = String.valueOf(e); }
+            running = false;
+            final String fe = err;
+            DigestActivity a = current.get();
+            if (a != null && !a.isFinishing() && !a.isDestroyed()) a.runOnUiThread(() -> a.finishRun(fe));
+        }).start();
+    }
+
+    private void finishRun(String err) {
+        if (err == null) { render(); return; }
+        box.removeAllViews();
+        Ui.infoCard(this, box, 14, false, true).setText(err);
+        MaterialButton retry = Ui.button(this, L.t("再試一次"), null);
+        retry.setOnClickListener(v -> startRun());
+        box.addView(retry);
     }
 
     private void render() {

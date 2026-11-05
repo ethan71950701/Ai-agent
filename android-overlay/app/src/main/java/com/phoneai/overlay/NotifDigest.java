@@ -174,16 +174,7 @@ final class NotifDigest {
                     android.widget.Toast.makeText(a, String.format(java.util.Locale.US, L.t("每天 %02d:%02d 整理通知"), h, m), android.widget.Toast.LENGTH_LONG).show();
                     if (after != null) after.run();
                 }, hour(a), minute(a), true).show())
-                .setNeutralButton(L.t("立即整理"), (d, w) -> {
-                    android.widget.Toast.makeText(a, L.t("整理中…"), android.widget.Toast.LENGTH_SHORT).show();
-                    new Thread(() -> {
-                        String err = run(a, false);
-                        a.runOnUiThread(() -> {
-                            if (err != null) android.widget.Toast.makeText(a, err, android.widget.Toast.LENGTH_LONG).show();
-                            else a.startActivity(new Intent(a, DigestActivity.class));
-                        });
-                    }).start();
-                })
+                .setNeutralButton(L.t("立即整理"), (d, w) -> a.startActivity(new Intent(a, DigestActivity.class).putExtra(DigestActivity.EXTRA_RUN, true)))   // 馬上開頁、中間轉圈圈，整理完才換成結果
                 .setNegativeButton(on(a) ? L.t("關閉") : L.t("取消"), (d, w) -> {
                     if (on(a)) { setTime(a, false, hour(a), minute(a)); if (after != null) after.run(); }
                 }).show();

@@ -936,6 +936,8 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("正在讀取通知，再交給 AI 整理，大約要幾秒到幾十秒", "Reading notifications, then asking the AI to digest them — a few seconds to a minute");
+        m.put("整理通知中，請稍候…", "Digesting notifications, please wait…");
         m.put("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → PhoneAI", "Turn on notification access first: Settings → Notifications → Advanced settings → Notification access → PhoneAI");
         m.put("設定時間", "Set time");
         m.put("通知整理好了", "Notification digest ready");
