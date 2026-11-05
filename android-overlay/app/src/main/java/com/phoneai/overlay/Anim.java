@@ -79,23 +79,53 @@ final class Anim {
     }
 
     /**
-     * 展開／收合（比較順的版本）：用系統的版面轉場，下面的卡片平順地往下推或往上收，內容淡入淡出。
-     * 舊的 expand 每一幀都改高度、整頁重新排版，頁面一長就會卡；轉場只移動已經排好的位置，不用每幀排版。
+     * 展開／收合：高度用「時間＋曲線」連續長出來（不是整塊淡入），下面的卡片跟著一格一格被推開；裡面的內容隨高度長出來而淡入。
+     * 展開是先快後慢、收合是先慢後快。同時間只跑一個，連點會從目前的高度接著動，不會跳。
      */
     static void expandSmooth(final View body, final boolean show) {
-        View scene = body;   // 往上找到捲動區裡的那一層（整頁的卡片都在它下面），下面的卡片才會一起平順移動
-        while (scene.getParent() instanceof View && !(scene.getParent() instanceof android.widget.ScrollView)
-                && !(scene.getParent() instanceof androidx.core.widget.NestedScrollView)) scene = (View) scene.getParent();
-        if (!(scene instanceof ViewGroup)) scene = (View) body.getParent();
-        android.transition.TransitionSet ts = new android.transition.TransitionSet()
-                .addTransition(new android.transition.ChangeBounds())
-                .addTransition(new android.transition.Fade())
-                .setOrdering(android.transition.TransitionSet.ORDERING_TOGETHER)
-                .setDuration(show ? 340 : 240)
-                .setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
-        android.transition.TransitionManager.beginDelayedTransition((ViewGroup) scene, ts);
-        body.setVisibility(show ? View.VISIBLE : View.GONE);
+        final ViewGroup.LayoutParams lp = body.getLayoutParams();
+        Object old = body.getTag(R_EXPAND);
+        if (old instanceof android.animation.ValueAnimator) ((android.animation.ValueAnimator) old).cancel();
+        final float from, to;
+        if (show) {
+            View parent = (View) body.getParent();
+            int w = parent.getWidth() > 0 ? parent.getWidth() : body.getResources().getDisplayMetrics().widthPixels;
+            body.setVisibility(View.VISIBLE);
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            body.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            to = body.getMeasuredHeight();
+            from = body.getVisibility() == View.VISIBLE && body.getHeight() > 0 && lp.height != ViewGroup.LayoutParams.WRAP_CONTENT ? body.getHeight() : 0f;
+        } else {
+            from = body.getHeight();
+            to = 0f;
+        }
+        final float start = show ? (body.getHeight() > 0 && body.getHeight() < to ? body.getHeight() : 0f) : from;
+        final float end = show ? to : 0f;
+        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(start, end);
+        va.setDuration(show ? 380 : 260);
+        va.setInterpolator(show ? new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f) : new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f));
+        va.addUpdateListener(an -> {
+            float h = (float) an.getAnimatedValue();
+            lp.height = Math.max(0, Math.round(h));
+            body.setLayoutParams(lp);
+            body.setAlpha(end > 0f ? Math.min(1f, h / (end * 0.7f)) : Math.min(1f, h / Math.max(1f, start * 0.7f)));
+        });
+        va.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean cancelled;
+            @Override public void onAnimationCancel(android.animation.Animator an) { cancelled = true; }
+            @Override public void onAnimationEnd(android.animation.Animator an) {
+                if (cancelled) return;
+                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                body.setAlpha(1f);
+                if (!show) body.setVisibility(View.GONE);
+                body.setLayoutParams(lp);
+            }
+        });
+        body.setTag(R_EXPAND, va);
+        va.start();
     }
+
+    private static final int R_EXPAND = 0x7f0a0e57;   // View.setTag 用的鍵（只要不跟系統的衝突）
 
     /** 展開／收合：高度用彈簧長出來（展開有一點回彈、收合不回彈），裡面的列依序彈入。 */
     static void expand(final ViewGroup body, final boolean show, final float dp) {
