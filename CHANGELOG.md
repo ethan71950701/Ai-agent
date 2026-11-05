@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 載入動畫改成沒有外圈、更大，在圓、橢圓、圓角五邊形、圓角方、軟三角之間依序變形旋轉（沒有尖角）｜The loading animation has no outer plate, is larger, and morphs between a circle, ellipses, a rounded pentagon, a rounded square and a soft triangle while rotating (no sharp corners)
 
+## 1.0.1457
+
 - 通知整理的載入動畫改成主題色、會旋轉變形的圓角形狀（仿 Material 3 Expressive）；AI 服務暫時太忙（502、503、504）時自動多試兩次｜The digest loading animation is now a theme-coloured, rotating, morphing rounded shape (in the style of Material 3 Expressive); the digest retries twice automatically when the AI service is temporarily overloaded (502, 503, 504)
 
 ## 1.0.1456
