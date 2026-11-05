@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 透鏡更像液態玻璃：底下只顯示頁面（不帶底欄暗色與光帶，不再整塊黑、沒有白線），邊緣高光改成柔和光暈｜The lens looks more like liquid glass: it shows only the page behind (no bar darkening or light band, so no black fill or white line), and the edge highlight is a soft glow
 
+## 1.0.1447
+
 - 修正按住底欄時透鏡裡面是整塊黑色、看不到底下的畫面與圖示（透鏡底下改成直接重畫背景）｜Fix the lens being a solid black fill while pressed, hiding the backdrop and icons (the lens now redraws the backdrop directly)
 
 ## 1.0.1446
