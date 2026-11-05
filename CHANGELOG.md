@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 沒按住時透鏡比底欄微亮，圓底的形狀看得清楚（按住時逐漸消失）｜When not pressed the lens is slightly lighter than the bar so the pill shape reads clearly (fades out while pressed)
 
+## 1.0.1454
+
 - 修正透鏡沒按住時比底欄更黑（透鏡也套用底欄的灰色提亮，按住時逐漸取消）｜Fix the lens looking blacker than the bar when not pressed (it now gets the same grey lift as the bar, fading out while pressed)
 
 ## 1.0.1453
