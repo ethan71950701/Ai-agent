@@ -154,6 +154,8 @@ final class GlassBar extends FrameLayout {
     private final RenderNode node = new RenderNode("glass");
     private final Paint bandPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     static volatile String touchInfo = "";   // 診斷用：最近一次觸控的壓力與接觸面積
+    private final RenderNode shadowNode = new RenderNode("lensShadow");   // 透鏡外面的柔和陰影（按住時才出現）
+    private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
     private final RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
@@ -486,7 +488,7 @@ final class GlassBar extends FrameLayout {
         capNode.setUseCompositingLayer(true, null);   // 先畫成真正的圖層，著色器才讀得到內容
         android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
         try {
-            paintBackdrop(rc, src, w, h, erase, false);
+            paintBackdrop(rc, src, w, h, erase, -1);
         } finally {
             capNode.endRecording();
         }
@@ -494,7 +496,7 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 把底欄後面的畫面直接畫進 rc（底欄座標、原始解析度）。透鏡底下也用這個直接重畫：嵌套另一個 RenderNode 在帶特效的節點裡不會被畫出來。 */
-    private void paintBackdrop(android.graphics.RecordingCanvas rc, View src, int w, int h, int erase, boolean clean) {
+    private void paintBackdrop(android.graphics.RecordingCanvas rc, View src, int w, int h, int erase, int lensDark) {
         int[] a = new int[2], b = new int[2];
         getLocationInWindow(a);
         src.getLocationInWindow(b);
@@ -526,9 +528,11 @@ final class GlassBar extends FrameLayout {
                 src.draw(rc);
             }
             rc.translate(x0, y0);
-            if (!clean) {   // 透鏡底下要清澈：不帶底欄的暗色與光帶
+            if (lensDark < 0) {   // 底欄本身：光帶與暗色層
                 paintBandInto(rc, w, h);
                 paintTintInto(rc, w, h);
+            } else if (lensDark > 0) {   // 透鏡底下：沒按住時跟底欄一樣暗（不穿透底欄），按住才變清澈
+                rc.drawColor(lensDark << 24);
             }
         } finally {
             capturing = false;
@@ -540,6 +544,7 @@ final class GlassBar extends FrameLayout {
         refreshTint();
         if (lens && parentBar != null) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
+            drawOuterShadow(canvas);
             drawUnderLens(canvas);
             if (iconSource != null) drawMagnifiedIcons(canvas);   // 圖示另外一層：只折射、不模糊，所以模糊再大圖示也清楚
             return;
@@ -582,6 +587,26 @@ final class GlassBar extends FrameLayout {
 
     /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
     /** 透鏡底下的底欄背景：從底欄的截圖裁出透鏡那一塊，用同樣的模糊半徑處理，再畫在透鏡裡。 */
+    /** 透鏡外面一圈柔和的陰影，把玻璃從背景分開（按住時才出現，越用力越明顯）。畫在透鏡自己的範圍外，所以上層容器不能裁切。 */
+    private void drawOuterShadow(Canvas canvas) {
+        float progress = Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST)));
+        if (progress < 0.03f) return;
+        float dp = getResources().getDisplayMetrics().density;
+        int m = Math.round(18f * dp);   // 陰影往外延伸的空間
+        int w = getWidth(), h = getHeight();
+        shadowNode.setPosition(0, 0, w + 2 * m, h + 2 * m);
+        shadowNode.setRenderEffect(RenderEffect.createBlurEffect(7f * dp, 7f * dp, Shader.TileMode.CLAMP));
+        Canvas rc = shadowNode.beginRecording(w + 2 * m, h + 2 * m);
+        shadowPaint.setColor(((int) (0x66 * progress) << 24));
+        rc.translate(m, m + 3f * dp);   // 陰影稍微往下偏，像光從上面來
+        rc.drawPath(clip, shadowPaint);
+        shadowNode.endRecording();
+        canvas.save();
+        canvas.translate(-m, -m);
+        canvas.drawRenderNode(shadowNode);
+        canvas.restore();
+    }
+
     private void drawUnderLens(Canvas canvas) {
         if (GlassPrefs.gpu && parentBar.capReady && parentBar.getWidth() > 0) {
             int gw = getWidth(), gh = getHeight();
@@ -590,7 +615,7 @@ final class GlassBar extends FrameLayout {
             underNode.setRenderEffect(currentEffect());
             android.graphics.RecordingCanvas grc = underNode.beginRecording(gw, gh);
             grc.translate(-getX(), -getY());
-            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor, true);
+            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor, Math.round(GlassPrefs.barDark * 255 * (1f - Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))))));
             underNode.endRecording();
             canvas.save();
             canvas.clipPath(clip);

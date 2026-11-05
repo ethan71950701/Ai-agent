@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 玻璃透鏡：沒按住時不再穿透底欄、直接折射底下的畫面（跟底欄一樣暗，按住才變清澈）；按住時外面加一圈柔和陰影｜Glass lens: when not pressed it no longer shows the page straight through the bar (it is as dark as the bar and only turns clear when pressed); a soft outer shadow appears while pressed
+
 - 圖示折射與色散改成預設開啟（設定 → 底欄玻璃可關）｜Icon refraction and dispersion are now on by default (can be turned off in Settings → Glass bar)
 
 ## 1.0.1451
