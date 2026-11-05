@@ -96,7 +96,8 @@ final class GlassBar extends FrameLayout {
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
             + "    if (indicator < 0.5) color = mix(color, half3(0.35), shade);\n"   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
-            + "    float2 n = normalize(gradient(p, radius) / viewScale);\n"   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
+            + "    float2 gn = gradient(p, radius) / viewScale;\n"
+            + "    float2 n = length(gn) > 0.0001 ? normalize(gn) : float2(0.0, -1.0);\n"   // 膠囊正中央那一條線上梯度是零向量，直接正規化會變成 NaN，高光就畫出一條白線   // 放大（拉伸）後表面法線要用逆轉置修正，反光才會跟著形變
             + "    float2 light = float2(cos(lightAngle), sin(lightAngle));\n"
             + "    float mainLight = pow(max(dot(n, light), 0.0), 3.0);\n"
             + "    float secondaryLight = 0.4 * pow(max(dot(n, -light), 0.0), 3.0);\n"
