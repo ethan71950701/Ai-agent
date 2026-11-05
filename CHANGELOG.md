@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1442
+
 - 修正開啟「圖示折射與色散」後，沒按住時上層玻璃偏暗（圖示層重複加了一次暗度）｜Fix the top glass looking darker when icon refraction is on and the bar is not pressed (the icon layer applied the darkening a second time)
 
 ## 1.0.1441
