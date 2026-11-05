@@ -442,9 +442,7 @@ final class GlassBar extends FrameLayout {
         if (lens && parentBar != null) {
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             drawUnderLens(canvas);
-            canvas.save();
-            canvas.clipPath(clip);
-            canvas.restore();
+            if (iconSource != null) drawMagnifiedIcons(canvas);   // 圖示另外一層：只折射、不模糊，所以模糊再大圖示也清楚
             return;
         }
         // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
@@ -489,14 +487,7 @@ final class GlassBar extends FrameLayout {
         Canvas rc = underNode.beginRecording(w, h);
         rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
                 rect, bmpPaint);
-        // 放大的圖示也畫進這層內容：跟背景一起被同一個折射著色器處理，就會有折射效果
-        if (iconSource != null && amount > 0.02f) {
-            float sc = GlassPrefs.magnify ? 1f + GlassPrefs.zoom * amount : 1f;
-            float cx = l + w / 2f, cy = t + h / 2f;
-            rc.translate(-l, -t);
-            rc.scale(sc, sc, cx, cy);
-            iconSource.draw(rc);
-        }
+        // 圖示不畫在這層：這層會被模糊，圖示畫進來就跟著糊掉（模糊大於 0 時，選中那格的圖示看不清楚）。圖示改由 drawMagnifiedIcons 另外畫，只折射不模糊
         underNode.endRecording();
         canvas.save();
         canvas.clipPath(clip);
