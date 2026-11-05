@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 透鏡邊緣高光改成整圈連續的細亮線（朝向光源處較亮），不再是一個白點｜The lens edge highlight is now a continuous thin lit rim (brighter toward the light) instead of a single white spot
 
+## 1.0.1445
+
 - 按住底欄時，透鏡邊緣加上被光源照到的高光，背景是平的（沒東西可折射）時也有玻璃感｜While pressed, the lens now has a lit specular edge so it still looks like glass over a flat background
 
 ## 1.0.1444
