@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1422
+
 - 通知整理的每一件事都可以先修改再加入：標題可以改，日期和時間點一下用選擇器挑（時間長按清除），可以切換加到行事曆或提醒｜Every item in the notification digest can be edited before adding: change the title, pick the date and time with pickers (long-press to clear the time), and switch between calendar and reminder.
 
 ## 1.0.1421
