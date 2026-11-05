@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 透鏡更像玻璃、不像塑膠：拿掉自己的底色（靜止提亮、上亮下暗漸層），邊緣高光改成更細更淡的一圈｜The lens looks more like glass and less like plastic: removed its own base tint (rest brightening and top/bottom gradient) and made the edge highlight a thinner, subtler rim
 
+## 1.0.1450
+
 - 修正透鏡正中央出現一條白色細線（高光算式在中央遇到零向量變成無效值）｜Fix a thin white line across the middle of the lens (the highlight maths hit a zero vector there and produced an invalid value)
 
 ## 1.0.1449
