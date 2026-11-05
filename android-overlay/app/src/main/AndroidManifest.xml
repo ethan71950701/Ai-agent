@@ -181,6 +181,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".DigestActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".TransferActivity"
             android:exported="false" />
 

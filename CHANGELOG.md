@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 新增「通知整理」（功能頁）：設定每天的時間，時間到了 AI 會整理通知欄並跳一則通知；點進去看摘要，有提到日期或時間的事（約會、截止日、繳費、取件）會列出來，按「加入行事曆」或「加入提醒」就會加入。也可以按「立即整理」。AI 整理時沒有任何可以動手的工具，加入一律要你按｜New "Notification digest" (Functions page): pick a daily time; the AI digests your notifications and posts a notification. Tap it to see the summary and the dated items (appointments, deadlines, bills, pickups), each with an "Add to calendar" or "Add reminder" button. "Digest now" runs it immediately. The AI has no tools while digesting; adding always needs your tap.
 - 新增「整理通知」：說「我有什麼通知」「整理一下通知」，AI 會讀通知欄，依 App 整理誰傳了什麼、哪些可能要處理。第一次要開「通知存取」（有 root 會自動開）；音樂、導航這類常駐通知不讀，銀行等受保護的 App 不讀內容，驗證碼會遮掉；讀過通知後那一輪 AI 不能做刪檔、傳檔、記事這類動作（防止通知裡藏的指令）｜New "summarize notifications": say "what notifications do I have" and the AI reads the notification shade and groups who sent what and what may need action. The first time it needs notification access (granted automatically with root); ongoing notifications such as music and navigation are skipped, protected apps such as banking are listed without content, verification codes are masked, and after reading notifications the AI cannot delete or send files or save notes in that turn (guarding against instructions hidden in notifications).
 
 ## 1.0.1419

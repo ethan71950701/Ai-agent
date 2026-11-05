@@ -9,6 +9,7 @@ public class ScheduleJob extends JobService {
     public boolean onStartJob(JobParameters params) {
         new Thread(() -> {
             try { Schedule.runDue(this); } catch (Exception ignored) { }
+            try { NotifDigest.runIfDue(this); } catch (Exception ignored) { }   // 每天定時整理通知
             jobFinished(params, false);
         }, "schedule-run").start();
         return true;
