@@ -392,10 +392,16 @@ public class MainActivity extends Activity {
             box.removeAllViews();
             if (tabNow == 0) buildHome(); else if (tabNow == 1) buildFunctions(); else buildSettings();
             refresh();
-            box.setAlpha(1f);
-            if (tabNow != 0) Anim.cascade(box, 14, dir * Ui.dp(this, 36), Ui.dp(this, prev < 0 ? 24 : 12), 35);
+            // 進場：整頁一起從切換的方向滑進來＋淡入（每頁都一樣，首頁也有），用「快進、慢慢停下」的非線性曲線。
+            // 以前是每張卡片各自跑彈簧、一張張錯開，同時啟動很多動畫，比較容易掉幀。
+            box.setAlpha(0f);
+            box.setTranslationX(dir * Ui.dp(this, 40));
+            box.setTranslationY(prev < 0 ? Ui.dp(this, 16) : 0f);
+            box.animate().alpha(1f).translationX(0f).translationY(0f).setDuration(prev < 0 ? 420 : 340)
+                    .setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).withEndAction(null).start();
             // 保險：進場動畫結束後，把每一項強制恢復為完全顯示（避免動畫停在透明，內容看不見、點不到）
             box.postDelayed(() -> {
+                if (tabNow == tab) { box.setAlpha(1f); box.setTranslationX(0f); box.setTranslationY(0f); }
                 for (int k = 0; k < box.getChildCount(); k++) {
                     View ch = box.getChildAt(k);
                     ch.setAlpha(1f);
@@ -406,7 +412,8 @@ public class MainActivity extends Activity {
             kickGlass();
         };
         if (prev < 0) swap.run();
-        else box.animate().alpha(0f).setDuration(90).withEndAction(swap).start();   // 舊內容先淡出再換，不會「啪」一下消失
+        else box.animate().alpha(0f).translationX(-dir * Ui.dp(this, 24)).translationY(0f).setDuration(120)   // 舊內容往反方向滑出並淡出（先慢後快），再換新的
+                .setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f)).withEndAction(swap).start();
         moveNav(0f, 400f, 0.7f);
     }
 

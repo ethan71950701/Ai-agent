@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 切換分頁的動畫改成整頁一起滑入、淡入，用「快進、慢慢停下」的非線性曲線，首頁也有動畫；舊頁面往反方向滑出。以前每張卡片各自跑動畫，比較容易卡｜Switching tabs now slides and fades the whole page in with an ease-out curve, including the Home tab, while the old page slides out the other way. Previously every card animated on its own, which stuttered more easily.
 - 修正模糊程度大於 0 時，底欄選中那一格的圖示和文字也被模糊：圖示改成另外一層，只折射不模糊｜Fixed the selected bottom-bar icon and label being blurred when blur is above 0: the icon is now drawn on its own layer with refraction only, no blur.
 - 通知整理更完整：交給 AI 的通知從 40 則增加到 120 則，而且每個 App 最多 8 則（一直發通知的 App 不會把一天的額度用光），沒列出的會寫是哪些 App 幾則；摘要第一行寫涵蓋的時間範圍，重要的事放前面，最多 15 行。時間、日期選擇器改用 App 的主題色｜Fuller notification digest: up to 120 notifications are sent instead of 40, at most 8 per app (so a chatty app cannot use up the whole day), with a note of which older ones were left out; the summary starts with the time range covered, puts important things first and can run to 15 lines. The time and date pickers now use the app's theme colour.
 
