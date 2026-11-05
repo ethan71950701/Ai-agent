@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 底欄背景改用 GPU 錄製（預設開，動畫與捲動更順；可在設定 → 底欄玻璃關掉），移除測試用的黃字與診斷量測｜The bar backdrop is now GPU-recorded by default (smoother animation and scrolling; can be turned off in Settings → Glass bar); removed the test text and probe
+
 - 設定 → 底欄玻璃：加回「圖示折射與色散（實驗）」開關（預設關，打開可能出現彩色斑塊）｜Settings → Glass bar: bring back the "Icon refraction and dispersion (experimental)" switch (off by default; may show coloured patches)
 
 ## 1.0.1439

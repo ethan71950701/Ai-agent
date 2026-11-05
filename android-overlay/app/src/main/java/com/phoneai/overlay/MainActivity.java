@@ -807,7 +807,7 @@ public class MainActivity extends Activity {
         glassSlider(g, L.t("底欄暗度"), L.t("0 = 幾乎透明，1 = 很暗"), 0f, 1f, GlassPrefs.barDark, GlassPrefs.K_BAR_DARK);
         glassSwitch(g, 0, 4, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
         glassSwitch(g, 1, 4, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
-        glassSwitch(g, 2, 4, "bolt", L.t("GPU 錄製背景（實驗）"), GlassPrefs.gpu, GlassPrefs.K_GPU);
+        glassSwitch(g, 2, 4, "bolt", L.t("GPU 錄製背景"), GlassPrefs.gpu, GlassPrefs.K_GPU);
         glassSwitch(g, 3, 4, "image", L.t("圖示折射與色散（實驗）"), GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
         rl.topMargin = Ui.dp(this, 12);

@@ -107,7 +107,6 @@ public class DiagActivity extends Activity {
         // 小米的小愛同學長按電源鍵可能綁在別的設定上：用 root 列出所有跟電源／長按／助理有關的設定名稱（只讀，不改）
         sb.append(L.t("\n【電源鍵相關設定（只讀）】\n")).append(Maintenance.suRun(
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
-        sb.append("GPU ").append(GlassBar.gpuInfo).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
         sb.append(L.t("\n最近的任務（含用量估價）：\n"));

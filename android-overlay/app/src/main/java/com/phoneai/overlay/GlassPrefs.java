@@ -12,7 +12,7 @@ final class GlassPrefs {
 
     static float pressX = 1.2f, pressY = 1.4f, barPress = 1.06f;   // 按住時透鏡的橫向／直向放大倍數、整條底欄的放大倍數
     static float refr = 0.56f, chroma = 0.30f, zoom = 0.08f, skew = 0f, blur = 0f;   // 預設：折射較輕；色散只給上層透鏡（底欄不會有彩色光邊）
-    static boolean magnify = true, iconRefr = false, lensBg = true, skewOn = true, gpu = false;   // 圖示折射預設開啟
+    static boolean magnify = true, iconRefr = false, lensBg = true, skewOn = true, gpu = true;   // 圖示折射預設開啟
     static float barDark = 0.66f;   // 底欄的暗度（0 = 幾乎透明，1 = 很暗）；預設跟之前的亮度一樣
 
     static final String K_PRESS_X = "g_pressX", K_PRESS_Y = "g_pressY", K_BAR_PRESS = "g_barPress";
@@ -39,7 +39,7 @@ final class GlassPrefs {
         iconRefr = p.getBoolean(K_ICON_REFR, false);
         lensBg = p.getBoolean(K_LENS_BG, true);
         skewOn = p.getBoolean(K_SKEW_ON, true);
-        gpu = p.getBoolean(K_GPU, false);
+        gpu = p.getBoolean(K_GPU, true);
         barDark = p.getFloat(K_BAR_DARK, 0.66f);
     }
 

@@ -137,9 +137,6 @@ final class GlassBar extends FrameLayout {
     private GlassBar parentBar;   // 透鏡所在的底欄：透鏡下面直接用底欄已經模糊好的背景，不會變透明
     private final RenderNode capNode = new RenderNode("glassBackdrop");
     private boolean capReady;
-    static volatile String gpuInfo = "";
-    private int gpuDraws;
-    private final java.util.ArrayDeque<String> gpuHist = new java.util.ArrayDeque<>();
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
@@ -504,12 +501,6 @@ final class GlassBar extends FrameLayout {
                 src.draw(rc);
             }
             rc.translate(x0, y0);
-            {   // 診斷：在背景裡畫一行字（頁面捲動量與錄製次數），看它會不會跟著動
-                Paint dp = new Paint(Paint.ANTI_ALIAS_FLAG);
-                dp.setColor(0xFFFFFF00);
-                dp.setTextSize(getResources().getDisplayMetrics().density * 11f);
-                rc.drawText("rec#" + gpuDraws + " " + deepScroll(source, 1), 8, h / 2f, dp);
-            }
             paintBandInto(rc, w, h);
             paintTintInto(rc, w, h);
         } finally {
@@ -518,58 +509,6 @@ final class GlassBar extends FrameLayout {
             anyCapture = false;
         }
         capReady = true;
-        gpuDraws++;
-        if (gpuDraws % 30 == 0) {   // 每 30 次錄製量一次，留最近 4 筆：看背景有沒有跟著頁面變、錄製次數有沒有在增加
-            String r = "#" + gpuDraws + " sy=" + deepScroll(source, 0) + " " + probeNode(capNode, w, h);
-            gpuHist.addLast(r);
-            while (gpuHist.size() > 4) gpuHist.removeFirst();
-            gpuInfo = android.text.TextUtils.join(" | ", gpuHist);
-        }
-    }
-
-    /** 診斷：往下找，把所有 View 的捲動量（scrollY）與頂端位移加總，看頁面實際捲了多少。 */
-    private static String deepScroll(View v, int depth) {
-        if (depth > 8) return "";
-        StringBuilder sb = new StringBuilder();
-        if (v.getScrollY() != 0) sb.append(v.getClass().getSimpleName()).append(':').append(v.getScrollY()).append(' ');
-        if (v instanceof android.view.ViewGroup) {
-            android.view.ViewGroup g = (android.view.ViewGroup) v;
-            for (int i = 0; i < g.getChildCount(); i++) {
-                View c = g.getChildAt(i);
-                if (depth == 0) sb.append('[').append(c.getClass().getSimpleName()).append(" top=").append(c.getTop() + Math.round(c.getTranslationY())).append(']');
-                sb.append(deepScroll(c, depth + 1));
-            }
-        }
-        return sb.toString();
-    }
-
-    /** 診斷：用 HardwareRenderer 把 capNode 實際畫出來，數裡面有幾種顏色（只有 1～2 種 = 背景是空的，不會有折射）。 */
-    private static String probeNode(RenderNode n, int w, int h) {
-        android.media.ImageReader ir = null;
-        android.graphics.HardwareRenderer hr = null;
-        try {
-            ir = android.media.ImageReader.newInstance(w, h, android.graphics.PixelFormat.RGBA_8888, 2,
-                    android.hardware.HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | android.hardware.HardwareBuffer.USAGE_CPU_READ_OFTEN);
-            hr = new android.graphics.HardwareRenderer();
-            hr.setContentRoot(n);
-            hr.setSurface(ir.getSurface());
-            hr.createRenderRequest().setWaitForPresent(true).syncAndDraw();
-            android.media.Image img = ir.acquireLatestImage();
-            if (img == null) return "probe: no image";
-            java.nio.ByteBuffer bb = img.getPlanes()[0].getBuffer();
-            int stride = img.getPlanes()[0].getRowStride();
-            java.util.HashSet<Integer> set = new java.util.HashSet<>();
-            int hash = 0;
-            for (int y = 0; y < h; y += Math.max(1, h / 12))
-                for (int x = 0; x < w; x += Math.max(1, w / 60)) { int px = bb.getInt(y * stride + x * 4) & 0xF0F0F0F0; set.add(px); hash = hash * 31 + px; }
-            img.close();
-            return "c=" + set.size() + " h=" + Integer.toHexString(hash);
-        } catch (Throwable t) {
-            return "probe failed: " + t;
-        } finally {
-            try { if (hr != null) hr.destroy(); } catch (Throwable ignored) { }
-            try { if (ir != null) ir.close(); } catch (Throwable ignored) { }
-        }
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
