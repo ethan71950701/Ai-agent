@@ -295,4 +295,12 @@ public class LlmAdapterTest {
         assertEquals(null, TavilySearch.parsePlan("沒有 JSON", tr));
         assertEquals(null, TavilySearch.parsePlan("{\"query\":\"\"}", tr));
     }
+
+    @Test
+    public void notificationCodesAreMasked() {
+        assertEquals("您的驗證碼是 [已遮蔽]，5 分鐘內有效", NotifListener.redact("您的驗證碼是 482913，5 分鐘內有效"));
+        assertEquals("Your verification code is [已遮蔽]", NotifListener.redact("Your verification code is 1234"));
+        assertEquals("明天 1530 開會", NotifListener.redact("明天 1530 開會"));   // 沒提到驗證碼：數字不動
+        assertEquals("", NotifListener.redact(null));
+    }
 }

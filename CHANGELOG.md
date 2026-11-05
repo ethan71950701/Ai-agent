@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 新增「整理通知」：說「我有什麼通知」「整理一下通知」，AI 會讀通知欄，依 App 整理誰傳了什麼、哪些可能要處理。第一次要開「通知存取」（有 root 會自動開）；音樂、導航這類常駐通知不讀，銀行等受保護的 App 不讀內容，驗證碼會遮掉；讀過通知後那一輪 AI 不能做刪檔、傳檔、記事這類動作（防止通知裡藏的指令）｜New "summarize notifications": say "what notifications do I have" and the AI reads the notification shade and groups who sent what and what may need action. The first time it needs notification access (granted automatically with root); ongoing notifications such as music and navigation are skipped, protected apps such as banking are listed without content, verification codes are masked, and after reading notifications the AI cannot delete or send files or save notes in that turn (guarding against instructions hidden in notifications).
 - 修正文字經過底欄時變糊、有鋸齒：底欄以前一律只抓 1/4 解析度的背景，模糊設定低（預設 0）時就看得出來；現在模糊越少抓得越清楚，模糊夠大才縮小抓｜Fixed text looking blurry and jagged behind the bottom bar: the bar always captured the background at 1/4 resolution, which shows when blur is low (the default is 0); it now captures at higher resolution the less blur there is, and only downsamples when the blur hides it.
 - 拿掉助理面板的麥克風按鈕（圈選拿掉後用不到了）｜Removed the microphone button from the assistant panel (no longer needed now that circling is gone).
 

@@ -79,6 +79,17 @@
                 android:value="Serves files to the user's own paired devices on the local network at the user's request." />
         </service>
 
+        <!-- 讀通知欄（「整理通知」用）：使用者要在系統設定開「通知存取」，有 root 會自動開 -->
+        <service
+            android:name=".NotifListener"
+            android:exported="true"
+            android:label="PhoneAI"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <service
             android:name=".OverlayService"
             android:exported="false"
