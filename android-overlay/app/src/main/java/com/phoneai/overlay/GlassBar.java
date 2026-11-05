@@ -194,7 +194,8 @@ final class GlassBar extends FrameLayout {
     private long lastOwnDraw;
     private final android.view.ViewTreeObserver.OnPreDrawListener contentWatcher = () -> {
         long now = SystemClock.uptimeMillis();
-        if (now - lastOwnDraw > 20 && now >= until) kick(220);
+        if (GlassPrefs.gpu) { if (!capturing && now - lastOwnDraw > 8) kick(120); }   // GPU 版：頁面每更新一幀，底欄也跟著重錄，才不會停在舊的一幀
+        else if (now - lastOwnDraw > 20 && now >= until) kick(220);
         return true;
     };
     private boolean watching;
