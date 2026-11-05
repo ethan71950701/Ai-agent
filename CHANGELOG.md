@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1450
+
 - 修正透鏡正中央出現一條白色細線（高光算式在中央遇到零向量變成無效值）｜Fix a thin white line across the middle of the lens (the highlight maths hit a zero vector there and produced an invalid value)
 
 ## 1.0.1449
