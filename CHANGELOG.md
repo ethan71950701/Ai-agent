@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1436
+
 - 診斷頁：GPU 背景錄製的最近 4 次量測｜Diagnostics: last 4 GPU backdrop probes
 
 ## 1.0.1435
