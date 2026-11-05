@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 診斷頁：GPU 背景錄製的最近 4 次量測｜Diagnostics: last 4 GPU backdrop probes
+
 - 底欄 GPU 錄製（實驗）：頁面每更新一幀底欄就跟著重畫，修正捲動後卡在舊畫面｜Glass bar GPU backdrop (experimental): redraw the bar on every page frame, fixing the stale frame after scrolling
 
 ## 1.0.1433

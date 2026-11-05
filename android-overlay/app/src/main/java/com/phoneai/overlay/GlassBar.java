@@ -139,6 +139,7 @@ final class GlassBar extends FrameLayout {
     private boolean capReady;
     static volatile String gpuInfo = "";
     private int gpuDraws;
+    private final java.util.ArrayDeque<String> gpuHist = new java.util.ArrayDeque<>();
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
@@ -510,7 +511,13 @@ final class GlassBar extends FrameLayout {
             anyCapture = false;
         }
         capReady = true;
-        if (++gpuDraws == 40) gpuInfo = probeNode(capNode, w, h);
+        gpuDraws++;
+        if (gpuDraws % 30 == 0) {   // 每 30 次錄製量一次，留最近 4 筆：看背景有沒有跟著頁面變、錄製次數有沒有在增加
+            String r = "#" + gpuDraws + " " + probeNode(capNode, w, h);
+            gpuHist.addLast(r);
+            while (gpuHist.size() > 4) gpuHist.removeFirst();
+            gpuInfo = android.text.TextUtils.join(" | ", gpuHist);
+        }
     }
 
     /** 診斷：用 HardwareRenderer 把 capNode 實際畫出來，數裡面有幾種顏色（只有 1～2 種 = 背景是空的，不會有折射）。 */
@@ -529,10 +536,11 @@ final class GlassBar extends FrameLayout {
             java.nio.ByteBuffer bb = img.getPlanes()[0].getBuffer();
             int stride = img.getPlanes()[0].getRowStride();
             java.util.HashSet<Integer> set = new java.util.HashSet<>();
+            int hash = 0;
             for (int y = 0; y < h; y += Math.max(1, h / 12))
-                for (int x = 0; x < w; x += Math.max(1, w / 60)) set.add(bb.getInt(y * stride + x * 4) & 0xF0F0F0F0);
+                for (int x = 0; x < w; x += Math.max(1, w / 60)) { int px = bb.getInt(y * stride + x * 4) & 0xF0F0F0F0; set.add(px); hash = hash * 31 + px; }
             img.close();
-            return "probe " + w + "x" + h + " colours=" + set.size();
+            return "c=" + set.size() + " h=" + Integer.toHexString(hash);
         } catch (Throwable t) {
             return "probe failed: " + t;
         } finally {
