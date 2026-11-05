@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1431
+
 - 設定 → 底欄玻璃：新增「GPU 錄製背景（實驗）」開關（預設關），並在診斷頁顯示錄到的背景顏色數，用來查折射消失的原因｜Settings → Glass bar: new experimental "GPU-recorded backdrop" switch (off by default) with a diagnostic colour count in the Diagnostics page, to find why refraction vanished
 
 ## 1.0.1430
