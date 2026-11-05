@@ -3,7 +3,21 @@
     <!-- 助理面板用的透明主題：背景由 App 自己畫（變暗 + 極光 + 底部面板） -->
     <!-- App 整體：Material 3，跟著系統的深色／淺色模式 -->
     <!-- 固定深色背景：不跟系統的深色／淺色模式走；強調色由 accents.xml 的 Accent0～14 決定 -->
-    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar" />
+    <style name="AppTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- 系統的時間、日期選擇器預設不吃 App 的主題色：指定對話框主題，顏色取用目前的主題色（莫奈取色或選的顏色） -->
+        <item name="android:timePickerDialogTheme">@style/PickerDialog</item>
+        <item name="android:datePickerDialogTheme">@style/PickerDialog</item>
+    </style>
+
+    <style name="PickerDialog" parent="ThemeOverlay.Material3.Dialog">
+        <item name="android:colorAccent">?attr/colorPrimary</item>
+        <item name="android:colorControlActivated">?attr/colorPrimary</item>
+        <item name="android:textColorPrimaryInverse">?attr/colorOnPrimary</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/PickerButton</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/PickerButton</item>
+    </style>
+
+    <style name="PickerButton" parent="Widget.Material3.Button.TextButton.Dialog" />
 
     <!-- 確認框：透明視窗，只留一個 Material 對話框 -->
     <style name="ConfirmTheme" parent="Theme.Material3.Dark.NoActionBar">

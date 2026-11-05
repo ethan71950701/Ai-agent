@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 通知整理更完整：交給 AI 的通知從 40 則增加到 120 則，而且每個 App 最多 8 則（一直發通知的 App 不會把一天的額度用光），沒列出的會寫是哪些 App 幾則；摘要第一行寫涵蓋的時間範圍，重要的事放前面，最多 15 行。時間、日期選擇器改用 App 的主題色｜Fuller notification digest: up to 120 notifications are sent instead of 40, at most 8 per app (so a chatty app cannot use up the whole day), with a note of which older ones were left out; the summary starts with the time range covered, puts important things first and can run to 15 lines. The time and date pickers now use the app's theme colour.
 - 通知整理改讀系統的「通知紀錄」（有 root 時），包含白天已經滑掉的通知：定時整理從上次整理之後開始、手動整理看最近 24 小時；同一則一直更新的只留最新一次。沒有 root 或沒開通知紀錄時，照舊只讀通知欄目前的內容｜The notification digest now reads the system notification history (with root), including notifications you already dismissed: scheduled digests cover everything since the last one, manual ones the last 24 hours, and repeatedly updated notifications are kept once. Without root or with notification history off, it still reads only what is in the shade.
 
 ## 1.0.1422
