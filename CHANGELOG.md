@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1427
+
 - 動畫更順：底欄玻璃改用 GPU 錄製後面的畫面（以前動畫、捲動時每幀都用 CPU 把整頁重畫一次，首頁更是一直在畫，這是很多動畫卡頓的主因），解析度也直接是原始的；打開子頁面的彈出動畫改成小幅度放大、快速停下，動畫期間整頁用獨立的 GPU 層；設定的展開／收合改用版面轉場，不再每幀重新排版｜Smoother animations: the glass bar now records what is behind it on the GPU (it used to redraw the whole page on the CPU every frame during animations and scrolling, and constantly on Home, which was the main cause of stutter), at full resolution; opening a sub-page now pops in with a small, quickly settling scale on its own GPU layer; expanding and collapsing settings groups uses layout transitions instead of re-laying out the page every frame.
 
 ## 1.0.1426
