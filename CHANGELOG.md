@@ -6,6 +6,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 設定 → 底欄玻璃：新增「GPU 錄製背景（實驗）」開關（預設關），並在診斷頁顯示錄到的背景顏色數，用來查折射消失的原因｜Settings → Glass bar: new experimental "GPU-recorded backdrop" switch (off by default) with a diagnostic colour count in the Diagnostics page, to find why refraction vanished
+
+## 1.0.1430
+
 - 修正底欄折射與色散不見：改回用圖片抓取底下的畫面（GPU 錄製那版讓折射和色散消失），保留「底下有變化就更新」；設定群組的展開／收合改成用時間與曲線連續長高、內容隨高度淡入，不再是整塊淡入｜Fixed the bottom bar losing its refraction and dispersion: it captures what is behind it as an image again (the GPU-recording version lost both), keeping the refresh-on-change fix; expanding and collapsing settings groups now grows the height continuously with a time curve and fades the content in as it grows, instead of fading in one block.
 
 ## 1.0.1429
