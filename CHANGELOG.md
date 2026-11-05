@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 打開子頁面像桌面開 App：整頁從你點的那張卡片的位置和大小展開到全螢幕（圓角跟著變小，底下的首頁看得到），按返回時縮回那張卡片；左上方的大標題換頁時，舊字滑出淡出、新字滑進淡入，不再突然跳掉；切分頁時卡片依序浮上來｜Opening a sub-page now works like opening an app from the home screen: the page grows from the card you tapped to full screen (corners rounding off, with the home page visible behind) and shrinks back into it on back; the big title at the top left now slides and fades between Home, Functions and Settings instead of snapping; cards float in one after another when switching tabs.
+
+## 1.0.1427
+
 - 動畫更順：底欄玻璃改用 GPU 錄製後面的畫面（以前動畫、捲動時每幀都用 CPU 把整頁重畫一次，首頁更是一直在畫，這是很多動畫卡頓的主因），解析度也直接是原始的；打開子頁面的彈出動畫改成小幅度放大、快速停下，動畫期間整頁用獨立的 GPU 層；設定的展開／收合改用版面轉場，不再每幀重新排版｜Smoother animations: the glass bar now records what is behind it on the GPU (it used to redraw the whole page on the CPU every frame during animations and scrolling, and constantly on Home, which was the main cause of stutter), at full resolution; opening a sub-page now pops in with a small, quickly settling scale on its own GPU layer; expanding and collapsing settings groups uses layout transitions instead of re-laying out the page every frame.
 
 ## 1.0.1426
