@@ -513,11 +513,27 @@ final class GlassBar extends FrameLayout {
         capReady = true;
         gpuDraws++;
         if (gpuDraws % 30 == 0) {   // 每 30 次錄製量一次，留最近 4 筆：看背景有沒有跟著頁面變、錄製次數有沒有在增加
-            String r = "#" + gpuDraws + " " + probeNode(capNode, w, h);
+            String r = "#" + gpuDraws + " sy=" + deepScroll(source, 0) + " " + probeNode(capNode, w, h);
             gpuHist.addLast(r);
             while (gpuHist.size() > 4) gpuHist.removeFirst();
             gpuInfo = android.text.TextUtils.join(" | ", gpuHist);
         }
+    }
+
+    /** 診斷：往下找，把所有 View 的捲動量（scrollY）與頂端位移加總，看頁面實際捲了多少。 */
+    private static String deepScroll(View v, int depth) {
+        if (depth > 8) return "";
+        StringBuilder sb = new StringBuilder();
+        if (v.getScrollY() != 0) sb.append(v.getClass().getSimpleName()).append(':').append(v.getScrollY()).append(' ');
+        if (v instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                View c = g.getChildAt(i);
+                if (depth == 0) sb.append('[').append(c.getClass().getSimpleName()).append(" top=").append(c.getTop() + Math.round(c.getTranslationY())).append(']');
+                sb.append(deepScroll(c, depth + 1));
+            }
+        }
+        return sb.toString();
     }
 
     /** 診斷：用 HardwareRenderer 把 capNode 實際畫出來，數裡面有幾種顏色（只有 1～2 種 = 背景是空的，不會有折射）。 */
