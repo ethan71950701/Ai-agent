@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1443
+
 - 修正開啟「圖示折射與色散」後透鏡變成不透明黑色：圖示層的透明處不再被畫成黑底｜Fix the lens turning opaque black with icon refraction on: transparent parts of the icon layer are no longer drawn as a black fill
 
 ## 1.0.1442
