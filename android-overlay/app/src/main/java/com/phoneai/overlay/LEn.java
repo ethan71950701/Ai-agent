@@ -900,6 +900,17 @@ final class LEn {
         m.put("開啟申請頁面", "Open the sign-up page");
         m.put("移除 Key", "Remove key");
         m.put("已移除", "Removed");
+        m.put("標題", "Title");
+        m.put("日期：沒有（點一下選）", "Date: none (tap to pick)");
+        m.put("日期：", "Date: ");
+        m.put("時間：沒有（點一下選）", "Time: none (tap to pick)");
+        m.put("時間：", "Time: ");
+        m.put("（長按清除）", " (long-press to clear)");
+        m.put("加到：行事曆（點一下改成提醒）", "Add to: calendar (tap to switch to reminder)");
+        m.put("加到：提醒（點一下改成行事曆）", "Add to: reminder (tap to switch to calendar)");
+        m.put("加入", "Add");
+        m.put("標題不能空白", "The title cannot be empty");
+        m.put("加到行事曆要選日期", "Pick a date to add it to the calendar");
         m.put("來自 ", "from ");
         m.put("再試一次", "Try again");
         m.put("加入提醒", "Add reminder");
