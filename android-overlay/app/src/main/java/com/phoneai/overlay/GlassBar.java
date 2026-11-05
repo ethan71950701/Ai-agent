@@ -476,6 +476,7 @@ final class GlassBar extends FrameLayout {
         View skip = this;
         while (skip.getParent() instanceof View && skip.getParent() != src) skip = (View) skip.getParent();
         capNode.setPosition(0, 0, w, h);
+        capNode.setUseCompositingLayer(true, null);   // 先畫成真正的圖層，著色器才讀得到內容
         android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
         capturing = true;
         anyCapture = true;
