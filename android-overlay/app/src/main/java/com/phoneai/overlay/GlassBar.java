@@ -467,7 +467,7 @@ final class GlassBar extends FrameLayout {
 
 
     /** 實驗：用 GPU 把底欄後面的畫面錄進 capNode（原始解析度），底欄所在的子 View 跳過。 */
-    private void recordBackdrop(View src, int w, int h, int erase) {
+    private void paintBackdrop(android.graphics.RecordingCanvas rc, View src, int w, int h, int erase) {
         int[] a = new int[2], b = new int[2];
         getLocationInWindow(a);
         src.getLocationInWindow(b);
@@ -475,9 +475,6 @@ final class GlassBar extends FrameLayout {
         float y0 = a[1] - b[1] + getPivotY() * (getScaleY() - 1f);
         View skip = this;
         while (skip.getParent() instanceof View && skip.getParent() != src) skip = (View) skip.getParent();
-        capNode.setPosition(0, 0, w, h);
-        capNode.setUseCompositingLayer(true, null);   // 先畫成真正的圖層，著色器才讀得到內容
-        android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
         capturing = true;
         anyCapture = true;
         try {
@@ -504,12 +501,10 @@ final class GlassBar extends FrameLayout {
             paintBandInto(rc, w, h);
             paintTintInto(rc, w, h);
         } finally {
-            capNode.endRecording();
             capturing = false;
             anyCapture = false;
         }
         capReady = true;
-        if (++gpuDraws == 40) gpuInfo = probeNode(capNode, w, h);
     }
 
     /** 診斷：用 HardwareRenderer 把 capNode 實際畫出來，數裡面有幾種顏色（只有 1～2 種 = 背景是空的，不會有折射）。 */
@@ -550,11 +545,10 @@ final class GlassBar extends FrameLayout {
         }
         boolean useGpu = GlassPrefs.gpu && !lens;
         if (useGpu) {
-            recordBackdrop(source, w, h, bgColor);
             configure(shader, 0f);
             node.setRenderEffect(currentEffect());
-            Canvas rc = node.beginRecording();
-            rc.drawRenderNode(capNode);
+            android.graphics.RecordingCanvas rc = node.beginRecording(w, h);
+            paintBackdrop(rc, source, w, h, bgColor);   // 直接錄進有特效的節點（不嵌套 RenderNode）
         } else {
             // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
             // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
@@ -592,9 +586,9 @@ final class GlassBar extends FrameLayout {
             underNode.setPosition(0, 0, gw, gh);
             configure(shader, skewNow);
             underNode.setRenderEffect(currentEffect());
-            Canvas grc = underNode.beginRecording(gw, gh);
+            android.graphics.RecordingCanvas grc = underNode.beginRecording(gw, gh);
             grc.translate(-getX(), -getY());
-            grc.drawRenderNode(parentBar.capNode);
+            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor);
             underNode.endRecording();
             canvas.save();
             canvas.clipPath(clip);
