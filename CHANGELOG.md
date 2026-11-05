@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正透鏡沒按住時比底欄更黑（透鏡也套用底欄的灰色提亮，按住時逐漸取消）｜Fix the lens looking blacker than the bar when not pressed (it now gets the same grey lift as the bar, fading out while pressed)
+
 - 玻璃透鏡：沒按住時不再穿透底欄、直接折射底下的畫面（跟底欄一樣暗，按住才變清澈）；按住時外面加一圈柔和陰影｜Glass lens: when not pressed it no longer shows the page straight through the bar (it is as dark as the bar and only turns clear when pressed); a soft outer shadow appears while pressed
 
 ## 1.0.1452
