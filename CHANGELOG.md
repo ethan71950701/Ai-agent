@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1426
+
 - 切換分頁的動畫改成整頁一起滑入、淡入，用「快進、慢慢停下」的非線性曲線，首頁也有動畫；舊頁面往反方向滑出。以前每張卡片各自跑動畫，比較容易卡｜Switching tabs now slides and fades the whole page in with an ease-out curve, including the Home tab, while the old page slides out the other way. Previously every card animated on its own, which stuttered more easily.
 
 ## 1.0.1425
