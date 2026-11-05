@@ -503,6 +503,12 @@ final class GlassBar extends FrameLayout {
                 src.draw(rc);
             }
             rc.translate(x0, y0);
+            {   // 診斷：在背景裡畫一行字（頁面捲動量與錄製次數），看它會不會跟著動
+                Paint dp = new Paint(Paint.ANTI_ALIAS_FLAG);
+                dp.setColor(0xFFFFFF00);
+                dp.setTextSize(getResources().getDisplayMetrics().density * 11f);
+                rc.drawText("rec#" + gpuDraws + " " + deepScroll(source, 1), 8, h / 2f, dp);
+            }
             paintBandInto(rc, w, h);
             paintTintInto(rc, w, h);
         } finally {
