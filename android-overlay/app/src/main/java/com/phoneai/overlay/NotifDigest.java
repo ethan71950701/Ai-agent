@@ -62,7 +62,7 @@ final class NotifDigest {
 
     /** 整理一次。notify = 完成後跳通知（排程用）；手動按「立即整理」時由畫面直接打開。回傳錯誤說明，成功回 null。 */
     static String run(Context c, boolean notify) {
-        if (!NotifListener.enabled(c)) {
+        if (!Root.isRoot() && !NotifListener.enabled(c)) {   // 有 root 可以直接讀通知紀錄，不一定要通知存取
             if (Root.available()) NotifListener.ensure(c);
             if (!NotifListener.enabled(c)) {
                 String msg = L.t("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → PhoneAI");
@@ -70,7 +70,13 @@ final class NotifDigest {
                 return msg;
             }
         }
-        String snap = NotifListener.snapshot(c);
+        // 先讀系統的通知紀錄（含已經滑掉的，從上次整理或 24 小時前開始）；沒有 root 或讀不到才只讀通知欄目前的內容
+        // 定時整理：從上次定時整理（最多 24 小時前）開始；手動「立即整理」一律看最近 24 小時
+        long day = System.currentTimeMillis() - 24 * 3600_000L;
+        long since = notify ? Math.max(day, prefs(c).getLong("digest_last_ms", 0)) : day;
+        String snap = NotifHistory.since(c, since);
+        if (snap == null) snap = NotifListener.snapshot(c);
+        else if (notify) prefs(c).edit().putLong("digest_last_ms", System.currentTimeMillis()).apply();
         if (!snap.startsWith("【")) {   // 沒有通知、或讀不到：不用花錢叫模型
             JSONObject o = new JSONObject();
             try { o.put("time", System.currentTimeMillis()).put("summary", snap).put("items", new JSONArray()); } catch (Exception ignored) { }

@@ -303,4 +303,34 @@ public class LlmAdapterTest {
         assertEquals("明天 1530 開會", NotifListener.redact("明天 1530 開會"));   // 沒提到驗證碼：數字不動
         assertEquals("", NotifListener.redact(null));
     }
+
+    private static void pbVarint(java.io.ByteArrayOutputStream o, long v) {
+        while (true) { if ((v & ~0x7fL) == 0) { o.write((int) v); return; } o.write((int) ((v & 0x7f) | 0x80)); v >>>= 7; }
+    }
+
+    private static void pbField(java.io.ByteArrayOutputStream o, int f, byte[] v) {
+        pbVarint(o, (f << 3) | 2); pbVarint(o, v.length); o.write(v, 0, v.length);
+    }
+
+    @Test
+    public void parsesSamsungNotificationHistory() throws Exception {
+        java.io.ByteArrayOutputStream n = new java.io.ByteArrayOutputStream();
+        pbField(n, 1, "com.example.chat".getBytes("UTF-8"));
+        pbField(n, 3, "訊息".getBytes("UTF-8"));
+        pbVarint(n, (7 << 3)); pbVarint(n, 10412);
+        pbVarint(n, (9 << 3)); pbVarint(n, 1793845508374L);
+        pbField(n, 10, "小明".getBytes("UTF-8"));
+        pbField(n, 11, "明天三點開會".getBytes("UTF-8"));
+        java.io.ByteArrayOutputStream top = new java.io.ByteArrayOutputStream();
+        pbVarint(top, (2 << 3)); pbVarint(top, 1);
+        pbField(top, 3, n.toByteArray());
+        pbField(top, 3, new byte[]{8, 1});   // 沒有套件與時間的那一則要略過
+        java.util.List<NotifHistory.Entry> es = NotifHistory.parse(top.toByteArray());
+        assertEquals(1, es.size());
+        assertEquals("com.example.chat", es.get(0).pkg);
+        assertEquals("小明", es.get(0).title);
+        assertEquals("明天三點開會", es.get(0).text);
+        assertEquals(1793845508374L, es.get(0).time);
+        assertEquals(0, NotifHistory.parse(new byte[]{(byte) 0xff, (byte) 0xff}).size());   // 壞掉的檔案不會丟例外
+    }
 }
