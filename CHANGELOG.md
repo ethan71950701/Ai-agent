@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1421
+
 - 新增「通知整理」（功能頁）：設定每天的時間，時間到了 AI 會整理通知欄並跳一則通知；點進去看摘要，有提到日期或時間的事（約會、截止日、繳費、取件）會列出來，按「加入行事曆」或「加入提醒」就會加入。也可以按「立即整理」。AI 整理時沒有任何可以動手的工具，加入一律要你按｜New "Notification digest" (Functions page): pick a daily time; the AI digests your notifications and posts a notification. Tap it to see the summary and the dated items (appointments, deadlines, bills, pickups), each with an "Add to calendar" or "Add reminder" button. "Digest now" runs it immediately. The AI has no tools while digesting; adding always needs your tap.
 
 ## 1.0.1420
