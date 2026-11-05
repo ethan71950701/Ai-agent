@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 通知整理的載入動畫改成主題色、會旋轉變形的圓角形狀（仿 Material 3 Expressive）；AI 服務暫時太忙（502、503、504）時自動多試兩次｜The digest loading animation is now a theme-coloured, rotating, morphing rounded shape (in the style of Material 3 Expressive); the digest retries twice automatically when the AI service is temporarily overloaded (502, 503, 504)
 
+## 1.0.1456
+
 - 通知整理：按「立即整理」馬上開啟頁面，中間顯示轉圈圈與說明，整理完才換成結果；失敗會顯示原因與「再試一次」｜Notification digest: "Digest now" opens the page immediately with a centred spinner and a hint, then swaps in the result; failures show the reason and a "Try again" button
 
 ## 1.0.1455
