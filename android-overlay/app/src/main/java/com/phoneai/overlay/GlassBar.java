@@ -135,6 +135,10 @@ final class GlassBar extends FrameLayout {
     private final RenderNode iconNode = new RenderNode("lensIcons");
     private RuntimeShader iconShader;
     private GlassBar parentBar;   // 透鏡所在的底欄：透鏡下面直接用底欄已經模糊好的背景，不會變透明
+    private final RenderNode capNode = new RenderNode("glassBackdrop");
+    private boolean capReady;
+    static volatile String gpuInfo = "";
+    private int gpuDraws;
     private Bitmap bmp;
     private Canvas bc;
     private final RenderNode node = new RenderNode("glass");
@@ -461,6 +465,80 @@ final class GlassBar extends FrameLayout {
         }
     }
 
+
+    /** 實驗：用 GPU 把底欄後面的畫面錄進 capNode（原始解析度），底欄所在的子 View 跳過。 */
+    private void recordBackdrop(View src, int w, int h, int erase) {
+        int[] a = new int[2], b = new int[2];
+        getLocationInWindow(a);
+        src.getLocationInWindow(b);
+        float x0 = a[0] - b[0] + getPivotX() * (getScaleX() - 1f);
+        float y0 = a[1] - b[1] + getPivotY() * (getScaleY() - 1f);
+        View skip = this;
+        while (skip.getParent() instanceof View && skip.getParent() != src) skip = (View) skip.getParent();
+        capNode.setPosition(0, 0, w, h);
+        android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
+        capturing = true;
+        anyCapture = true;
+        try {
+            rc.drawColor(erase);
+            rc.translate(-x0, -y0);
+            if (src.getBackground() != null) src.getBackground().draw(rc);
+            if (src instanceof android.view.ViewGroup) {
+                android.view.ViewGroup g = (android.view.ViewGroup) src;
+                for (int k = 0; k < g.getChildCount(); k++) {
+                    View ch = g.getChildAt(k);
+                    if (ch == skip || ch.getVisibility() != View.VISIBLE || ch.getAlpha() <= 0f) continue;
+                    int save = rc.save();
+                    rc.translate(ch.getLeft() + ch.getTranslationX(), ch.getTop() + ch.getTranslationY());
+                    if (ch.getScaleX() != 1f || ch.getScaleY() != 1f) rc.scale(ch.getScaleX(), ch.getScaleY(), ch.getPivotX(), ch.getPivotY());
+                    if (ch.getAlpha() < 1f) rc.saveLayerAlpha(0, 0, ch.getWidth(), ch.getHeight(), Math.round(ch.getAlpha() * 255));
+                    rc.clipRect(0, 0, ch.getWidth(), ch.getHeight());
+                    ch.draw(rc);
+                    rc.restoreToCount(save);
+                }
+            } else {
+                src.draw(rc);
+            }
+            rc.translate(x0, y0);
+            paintBandInto(rc, w, h);
+            paintTintInto(rc, w, h);
+        } finally {
+            capNode.endRecording();
+            capturing = false;
+            anyCapture = false;
+        }
+        capReady = true;
+        if (++gpuDraws == 40) gpuInfo = probeNode(capNode, w, h);
+    }
+
+    /** 診斷：用 HardwareRenderer 把 capNode 實際畫出來，數裡面有幾種顏色（只有 1～2 種 = 背景是空的，不會有折射）。 */
+    private static String probeNode(RenderNode n, int w, int h) {
+        android.media.ImageReader ir = null;
+        android.graphics.HardwareRenderer hr = null;
+        try {
+            ir = android.media.ImageReader.newInstance(w, h, android.graphics.PixelFormat.RGBA_8888, 2,
+                    android.hardware.HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | android.hardware.HardwareBuffer.USAGE_CPU_READ_OFTEN);
+            hr = new android.graphics.HardwareRenderer();
+            hr.setContentRoot(n);
+            hr.setSurface(ir.getSurface());
+            hr.createRenderRequest().setWaitForPresent(true).syncAndDraw();
+            android.media.Image img = ir.acquireLatestImage();
+            if (img == null) return "probe: no image";
+            java.nio.ByteBuffer bb = img.getPlanes()[0].getBuffer();
+            int stride = img.getPlanes()[0].getRowStride();
+            java.util.HashSet<Integer> set = new java.util.HashSet<>();
+            for (int y = 0; y < h; y += Math.max(1, h / 12))
+                for (int x = 0; x < w; x += Math.max(1, w / 60)) set.add(bb.getInt(y * stride + x * 4) & 0xF0F0F0F0);
+            img.close();
+            return "probe " + w + "x" + h + " colours=" + set.size();
+        } catch (Throwable t) {
+            return "probe failed: " + t;
+        } finally {
+            try { if (hr != null) hr.destroy(); } catch (Throwable ignored) { }
+            try { if (ir != null) ir.close(); } catch (Throwable ignored) { }
+        }
+    }
+
     private void drawGlass(Canvas canvas, int w, int h) {
         refreshTint();
         if (lens && parentBar != null) {
@@ -469,23 +547,32 @@ final class GlassBar extends FrameLayout {
             if (iconSource != null) drawMagnifiedIcons(canvas);   // 圖示另外一層：只折射、不模糊，所以模糊再大圖示也清楚
             return;
         }
-        // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
-        // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
-        float blurPx = GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor;
-        int scale = lens ? 2 : blurPx < 3f ? 1 : blurPx < 10f ? 2 : 4;
-        int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
-        if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
-            bmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888);
-            bc = new Canvas(bmp);
+        boolean useGpu = GlassPrefs.gpu && !lens;
+        if (useGpu) {
+            recordBackdrop(source, w, h, bgColor);
+            configure(shader, 0f);
+            node.setRenderEffect(currentEffect());
+            Canvas rc = node.beginRecording();
+            rc.drawRenderNode(capNode);
+        } else {
+            // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
+            // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
+            float blurPx = GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor;
+            int scale = lens ? 2 : blurPx < 3f ? 1 : blurPx < 10f ? 2 : 4;
+            int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
+            if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
+                bmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888);
+                bc = new Canvas(bmp);
+            }
+            // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
+            captureInto(bmp, bc, source, scale, bgColor);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
+            if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
+            if (!lens) paintTintInto(bc, sw, sh);      // 暗色層也畫進背景圖：透鏡折射到的底欄就是暗的，跟底欄一致
+            configure(shader, lens ? skewNow : 0f);
+            node.setRenderEffect(currentEffect());
+            Canvas rc = node.beginRecording();
+            rc.drawBitmap(bmp, null, rect, bmpPaint);
         }
-        // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
-        captureInto(bmp, bc, source, scale, bgColor);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
-        if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
-        if (!lens) paintTintInto(bc, sw, sh);      // 暗色層也畫進背景圖：透鏡折射到的底欄就是暗的，跟底欄一致
-        configure(shader, lens ? skewNow : 0f);
-        node.setRenderEffect(currentEffect());
-        Canvas rc = node.beginRecording();
-        rc.drawBitmap(bmp, null, rect, bmpPaint);
         node.endRecording();
         node.setAlpha(1f);
         canvas.save();
@@ -499,6 +586,21 @@ final class GlassBar extends FrameLayout {
     /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
     /** 透鏡底下的底欄背景：從底欄的截圖裁出透鏡那一塊，用同樣的模糊半徑處理，再畫在透鏡裡。 */
     private void drawUnderLens(Canvas canvas) {
+        if (GlassPrefs.gpu && parentBar.capReady && parentBar.getWidth() > 0) {
+            int gw = getWidth(), gh = getHeight();
+            underNode.setPosition(0, 0, gw, gh);
+            configure(shader, skewNow);
+            underNode.setRenderEffect(currentEffect());
+            Canvas grc = underNode.beginRecording(gw, gh);
+            grc.translate(-getX(), -getY());
+            grc.drawRenderNode(parentBar.capNode);
+            underNode.endRecording();
+            canvas.save();
+            canvas.clipPath(clip);
+            canvas.drawRenderNode(underNode);
+            canvas.restore();
+            return;
+        }
         Bitmap src = parentBar.bmp;
         if (src == null || parentBar.getWidth() <= 0 || parentBar.getHeight() <= 0) return;
         float sx = src.getWidth() / (float) parentBar.getWidth();
