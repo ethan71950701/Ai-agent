@@ -185,6 +185,29 @@ final class GlassBar extends FrameLayout {
 
     void setSource(View v) { source = v; }
 
+    // 底欄只在「被通知要更新」的短時間內重畫，所以底下的畫面在這段時間之外變了（背景更新資料、動畫、轉場結束後才換內容…），
+    // 折射就會停在舊的畫面上殘留。這裡監聽整個視窗的繪製：不是我們自己造成的繪製（上一次自己畫完已經超過約 20 毫秒），
+    // 就代表底下有東西變了，叫底欄再更新一小段時間。
+    private long lastOwnDraw;
+    private final android.view.ViewTreeObserver.OnPreDrawListener contentWatcher = () -> {
+        long now = SystemClock.uptimeMillis();
+        if (now - lastOwnDraw > 20 && now >= until) kick(220);
+        return true;
+    };
+    private boolean watching;
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        if (!watching) { getViewTreeObserver().addOnPreDrawListener(contentWatcher); watching = true; }
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        if (watching) { getViewTreeObserver().removeOnPreDrawListener(contentWatcher); watching = false; }
+        super.onDetachedFromWindow();
+    }
+
     void setParentBar(GlassBar b) { parentBar = b; }
 
     /** 發光的顏色（主色）。 */
@@ -359,6 +382,7 @@ final class GlassBar extends FrameLayout {
     @Override
     protected void dispatchDraw(Canvas canvas) {
         if (capturing) return;                        // 我正在抓背景：不要把自己畫進去
+        lastOwnDraw = SystemClock.uptimeMillis();
         if (anyCapture) return;                       // 玻璃按鈕在抓背景（只要底欄後面的頁面）：底欄與按鈕都不畫
         if (plain) {                                  // 完全透明的底欄：什麼都不畫，只畫子內容
             super.dispatchDraw(canvas);
