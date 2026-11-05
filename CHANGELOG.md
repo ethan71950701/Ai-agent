@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1419
+
 - 修正文字經過底欄時變糊、有鋸齒：底欄以前一律只抓 1/4 解析度的背景，模糊設定低（預設 0）時就看得出來；現在模糊越少抓得越清楚，模糊夠大才縮小抓｜Fixed text looking blurry and jagged behind the bottom bar: the bar always captured the background at 1/4 resolution, which shows when blur is low (the default is 0); it now captures at higher resolution the less blur there is, and only downsamples when the blur hides it.
 - 拿掉助理面板的麥克風按鈕（圈選拿掉後用不到了）｜Removed the microphone button from the assistant panel (no longer needed now that circling is gone).
 
