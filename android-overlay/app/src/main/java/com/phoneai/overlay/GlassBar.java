@@ -472,6 +472,19 @@ final class GlassBar extends FrameLayout {
 
     /** 實驗：用 GPU 把底欄後面的畫面錄進 capNode（原始解析度），底欄所在的子 View 跳過。 */
     private void recordBackdrop(View src, int w, int h, int erase) {
+        capNode.setPosition(0, 0, w, h);
+        capNode.setUseCompositingLayer(true, null);   // 先畫成真正的圖層，著色器才讀得到內容
+        android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
+        try {
+            paintBackdrop(rc, src, w, h, erase);
+        } finally {
+            capNode.endRecording();
+        }
+        capReady = true;
+    }
+
+    /** 把底欄後面的畫面直接畫進 rc（底欄座標、原始解析度）。透鏡底下也用這個直接重畫：嵌套另一個 RenderNode 在帶特效的節點裡不會被畫出來。 */
+    private void paintBackdrop(android.graphics.RecordingCanvas rc, View src, int w, int h, int erase) {
         int[] a = new int[2], b = new int[2];
         getLocationInWindow(a);
         src.getLocationInWindow(b);
@@ -479,9 +492,6 @@ final class GlassBar extends FrameLayout {
         float y0 = a[1] - b[1] + getPivotY() * (getScaleY() - 1f);
         View skip = this;
         while (skip.getParent() instanceof View && skip.getParent() != src) skip = (View) skip.getParent();
-        capNode.setPosition(0, 0, w, h);
-        capNode.setUseCompositingLayer(true, null);   // 先畫成真正的圖層，著色器才讀得到內容
-        android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
         capturing = true;
         anyCapture = true;
         try {
@@ -509,11 +519,9 @@ final class GlassBar extends FrameLayout {
             paintBandInto(rc, w, h);
             paintTintInto(rc, w, h);
         } finally {
-            capNode.endRecording();
             capturing = false;
             anyCapture = false;
         }
-        capReady = true;
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
@@ -568,9 +576,9 @@ final class GlassBar extends FrameLayout {
             underNode.setPosition(0, 0, gw, gh);
             configure(shader, skewNow);
             underNode.setRenderEffect(currentEffect());
-            Canvas grc = underNode.beginRecording(gw, gh);
+            android.graphics.RecordingCanvas grc = underNode.beginRecording(gw, gh);
             grc.translate(-getX(), -getY());
-            grc.drawRenderNode(parentBar.capNode);
+            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor);
             underNode.endRecording();
             canvas.save();
             canvas.clipPath(clip);

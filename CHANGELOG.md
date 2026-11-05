@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正按住底欄時透鏡裡面是整塊黑色、看不到底下的畫面與圖示（透鏡底下改成直接重畫背景）｜Fix the lens being a solid black fill while pressed, hiding the backdrop and icons (the lens now redraws the backdrop directly)
+
 - 透鏡邊緣高光改成整圈連續的細亮線（朝向光源處較亮），不再是一個白點｜The lens edge highlight is now a continuous thin lit rim (brighter toward the light) instead of a single white spot
 
 ## 1.0.1445
