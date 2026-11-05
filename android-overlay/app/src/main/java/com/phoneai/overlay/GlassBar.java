@@ -44,7 +44,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
-            + "uniform float keepAlpha;\n"       // 圖示層：只折射，透明的地方維持透明（不然會變成不透明的黑底）
+            + "uniform float keepAlpha;\n"
+            + "uniform float sheen;\n"       // 圖示層：只折射，透明的地方維持透明（不然會變成不透明的黑底）
             + "uniform float bodyLift;\n"       // 透鏡靜止時整塊微微提亮（磨砂感），按住後消失
             + "uniform float2 stretch;\n"       // 拖動的形變量（x、y）：只在透鏡邊緣的折射帶生效，中間的內容不動
             + "uniform float edgeLine;\n"       // 透鏡邊緣彩虹環的強度（0 = 不畫）
@@ -108,6 +109,8 @@ final class GlassBar extends FrameLayout {
             + "        * exp(-depth * depth / (2.0 * shadowRadius * shadowRadius));\n"
             + "    color *= 1.0 - 0.12 * indicator * edge * edge;\n"   // 透鏡邊緣稍微變暗（玻璃的厚度感），背景平的時候也看得出邊界；不加亮線
             + "    color = mix(color, half3(1.0), bodyLift);\n"
+            + "    float sy = clamp(0.5 - p.y / (2.0 * max(halfSize.y, 1.0)), 0.0, 1.0);\n"   // 0 = 下緣、1 = 上緣
+            + "    color = mix(color, half3(sy > 0.5 ? 1.0 : 0.0), sheen * abs(sy - 0.5) * 2.0 * indicator);\n"
             + "    float ring = edgeLine * (1.0 - smoothstep(0.0, edgeWidth, depth));\n"   // 邊緣彩虹環：貼著邊界一圈，不依賴背景（仿酷安的多色邊緣），黑底上也看得見
             + "    float hue = atan(n.y, n.x) / 6.2831853 + 0.5;\n"
             + "    float3 spectrum = clamp(abs(fract(hue + float3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);\n"
@@ -126,6 +129,10 @@ final class GlassBar extends FrameLayout {
     private static final float EDGE_LINE = 0f;
     /** 透鏡邊緣高光的強度（0 = 不畫）。想更亮就調大，想更淡就調小。 */
     private static final float HIGHLIGHT = 0.4f;
+    /** 底欄中間的橫向光帶：已停用（有時會從透鏡裡透出來，看起來像一條怪線）。 */
+    private static final boolean BAND_ON = false;
+    /** 透鏡的立體漸層強度（上緣微亮、下緣微暗；背景再平也有凸透鏡的厚度感）。 */
+    private static final float SHEEN = 0.10f;
     /** 透鏡靜止時整塊提亮多少（0..1，白色混合比例）；只是磨砂的微亮，不是邊緣線。按住時會慢慢消失。 */
     private static final float BODY_LIFT = 0.08f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
@@ -263,6 +270,7 @@ final class GlassBar extends FrameLayout {
 
     /** 底欄橫向中間的光帶：白色核心、外圍是主題色。畫進背景圖（bc），所以會跟著底欄一起模糊。 */
     private void paintBandInto(Canvas bc, int sw, int sh) {
+        if (!BAND_ON) return;
         float a = Math.max(glowAmount, pressGlow);
         if (a < 0.02f) return;
         bandPaint.setAlpha(Math.round(255 * Math.min(1f, a)));
@@ -384,6 +392,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("edgeWidth", 1.0f * dp);   // 彩虹環細一點（1dp），跟酷安一樣是細線
         sh.setFloatUniform("skew", skewValue);
         sh.setFloatUniform("keepAlpha", 0f);
+        sh.setFloatUniform("sheen", lens ? SHEEN * (0.4f + 0.6f * progress) : 0f);
     }
 
     @Override
