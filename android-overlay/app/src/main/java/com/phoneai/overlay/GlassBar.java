@@ -124,6 +124,8 @@ final class GlassBar extends FrameLayout {
     static final float REST = 0.4f;
     /** 透鏡邊緣彩虹環的強度（0 = 不畫）；顏色依邊界方向變化（紅到紫）。想要更明顯就調大，想淡一點就調小。 */
     private static final float EDGE_LINE = 0f;
+    /** 透鏡邊緣高光的強度（0 = 不畫）。想更亮就調大，想更淡就調小。 */
+    private static final float HIGHLIGHT = 0.35f;
     /** 透鏡靜止時整塊提亮多少（0..1，白色混合比例）；只是磨砂的微亮，不是邊緣線。按住時會慢慢消失。 */
     private static final float BODY_LIFT = 0.08f;
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
@@ -367,7 +369,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
-        sh.setFloatUniform("highlightAlpha", 0f);   // 邊緣光強度
+        sh.setFloatUniform("highlightAlpha", lens ? HIGHLIGHT * progress : 0f);   // 邊緣高光：被左上光源照到的亮邊，背景再平也有玻璃感；按住才慢慢出現
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）

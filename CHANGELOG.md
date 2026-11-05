@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 按住底欄時，透鏡邊緣加上被光源照到的高光，背景是平的（沒東西可折射）時也有玻璃感｜While pressed, the lens now has a lit specular edge so it still looks like glass over a flat background
+
 - 按住底欄時，透鏡邊緣不再有彩色環；邊界靠邊緣折射、微暗與陰影呈現｜The lens no longer shows a coloured ring while pressed; its edge is shown by edge refraction, slight darkening and shadow
 
 ## 1.0.1443
