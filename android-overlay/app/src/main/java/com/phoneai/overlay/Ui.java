@@ -352,7 +352,7 @@ final class Ui {
         row(c, wrap, 0, 1, icon, title, summary, arrow, v -> {
             boolean show = body.getVisibility() != View.VISIBLE;
             Anim.spring(arrow, androidx.dynamicanimation.animation.DynamicAnimation.ROTATION, show ? 180f : 0f, 400f, 0.7f);
-            Anim.expand(body, show, dens);
+            Anim.expandSmooth(body, show);
         });
         wrap.addView(body);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
@@ -526,8 +526,8 @@ final class Ui {
         final View root = a.getWindow().getDecorView();
         // 先在第一次繪製前就設成縮小、透明，避免先看到整頁閃一下再縮小
         root.setAlpha(0f);
-        root.setScaleX(0.55f);
-        root.setScaleY(0.55f);
+        root.setScaleX(0.86f);   // 以前從 0.55 倍彈出，縮放幅度大又晃很久；改成小幅度放大＋快速停下，看起來比較穩也比較順
+        root.setScaleY(0.86f);
         root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -538,9 +538,16 @@ final class Ui {
                 float py = tapY < 0 ? root.getHeight() / 2f : tapY - loc[1];
                 root.setPivotX(px);
                 root.setPivotY(py);
-                root.animate().alpha(1f).setDuration(160).start();
-                Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
-                Anim.spring(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.55f);
+                // 動畫期間整頁畫在獨立的 GPU 層：縮放、淡入只動這一層，不用每幀重畫裡面的內容；結束後拿掉
+                root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                root.animate().alpha(1f).setDuration(220).setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).start();
+                androidx.dynamicanimation.animation.SpringAnimation sx = new androidx.dynamicanimation.animation.SpringAnimation(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f);
+                androidx.dynamicanimation.animation.SpringAnimation sy = new androidx.dynamicanimation.animation.SpringAnimation(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f);
+                for (androidx.dynamicanimation.animation.SpringAnimation sp : new androidx.dynamicanimation.animation.SpringAnimation[]{sx, sy})
+                    sp.getSpring().setStiffness(500f).setDampingRatio(0.82f);   // 一點點回彈就停，不會晃
+                sx.addEndListener((an, canceled, v, vel) -> root.setLayerType(View.LAYER_TYPE_NONE, null));
+                sx.start();
+                sy.start();
                 return true;
             }
         });

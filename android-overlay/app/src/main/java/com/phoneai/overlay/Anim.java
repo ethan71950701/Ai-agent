@@ -78,6 +78,25 @@ final class Anim {
         }
     }
 
+    /**
+     * 展開／收合（比較順的版本）：用系統的版面轉場，下面的卡片平順地往下推或往上收，內容淡入淡出。
+     * 舊的 expand 每一幀都改高度、整頁重新排版，頁面一長就會卡；轉場只移動已經排好的位置，不用每幀排版。
+     */
+    static void expandSmooth(final View body, final boolean show) {
+        View scene = body;   // 往上找到捲動區裡的那一層（整頁的卡片都在它下面），下面的卡片才會一起平順移動
+        while (scene.getParent() instanceof View && !(scene.getParent() instanceof android.widget.ScrollView)
+                && !(scene.getParent() instanceof androidx.core.widget.NestedScrollView)) scene = (View) scene.getParent();
+        if (!(scene instanceof ViewGroup)) scene = (View) body.getParent();
+        android.transition.TransitionSet ts = new android.transition.TransitionSet()
+                .addTransition(new android.transition.ChangeBounds())
+                .addTransition(new android.transition.Fade())
+                .setOrdering(android.transition.TransitionSet.ORDERING_TOGETHER)
+                .setDuration(show ? 340 : 240)
+                .setInterpolator(new android.view.animation.PathInterpolator(0.2f, 0f, 0f, 1f));
+        android.transition.TransitionManager.beginDelayedTransition((ViewGroup) scene, ts);
+        body.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
     /** 展開／收合：高度用彈簧長出來（展開有一點回彈、收合不回彈），裡面的列依序彈入。 */
     static void expand(final ViewGroup body, final boolean show, final float dp) {
         final ViewGroup.LayoutParams lp = body.getLayoutParams();

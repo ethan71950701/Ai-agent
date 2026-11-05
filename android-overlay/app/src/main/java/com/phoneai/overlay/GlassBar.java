@@ -135,8 +135,9 @@ final class GlassBar extends FrameLayout {
     private final RenderNode iconNode = new RenderNode("lensIcons");
     private RuntimeShader iconShader;
     private GlassBar parentBar;   // 透鏡所在的底欄：透鏡下面直接用底欄已經模糊好的背景，不會變透明
-    private Bitmap bmp;
-    private Canvas bc;
+    // 底欄後面的畫面：用 GPU 錄進這個 RenderNode（以前是用 CPU 把整頁畫進 Bitmap，動畫時每幀都畫，是卡頓的主因）
+    private final RenderNode capNode = new RenderNode("glassBackdrop");
+    private boolean capReady;
     private final RenderNode node = new RenderNode("glass");
     private final Paint bandPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     static volatile String touchInfo = "";   // 診斷用：最近一次觸控的壓力與接觸面積
@@ -415,26 +416,52 @@ final class GlassBar extends FrameLayout {
         canvas.drawPath(clip, tint);
     }
 
-    /** 把 src 畫進 target（縮小 scale 倍），座標對齊到本 View 的左上角（補回 pivot 縮放造成的位移）。 */
-    private void captureInto(Bitmap target, Canvas c, View src, int scale, int erase) {
-        target.eraseColor(erase);
+    /**
+     * 把底欄後面的畫面錄進 capNode（底欄座標，原始解析度）。用 GPU 錄製：子 View 直接沿用它們已經錄好的 RenderNode，
+     * 不用重畫文字與圖片，所以動畫、捲動時每幀更新也不會拖慢畫面。底欄本身所在的那個子 View 跳過，免得把自己畫進背景裡。
+     */
+    private void recordBackdrop(View src, int w, int h, int erase) {
         int[] a = new int[2], b = new int[2];
         getLocationInWindow(a);
         src.getLocationInWindow(b);
         float x0 = a[0] - b[0] + getPivotX() * (getScaleX() - 1f);
         float y0 = a[1] - b[1] + getPivotY() * (getScaleY() - 1f);
+        View skip = this;   // 往上找到 src 底下、包含這個底欄的那一層
+        while (skip.getParent() instanceof View && skip.getParent() != src) skip = (View) skip.getParent();
+        capNode.setPosition(0, 0, w, h);
+        android.graphics.RecordingCanvas rc = capNode.beginRecording(w, h);
         capturing = true;
         anyCapture = true;
         try {
-            c.save();
-            c.scale(1f / scale, 1f / scale);
-            c.translate(-x0, -y0);
-            src.draw(c);
-            c.restore();
+            rc.drawColor(erase);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
+            rc.translate(-x0, -y0);
+            if (src.getBackground() != null) src.getBackground().draw(rc);
+            if (src instanceof android.view.ViewGroup) {
+                android.view.ViewGroup g = (android.view.ViewGroup) src;
+                for (int k = 0; k < g.getChildCount(); k++) {
+                    View ch = g.getChildAt(k);
+                    if (ch == skip || ch.getVisibility() != View.VISIBLE || ch.getAlpha() <= 0f) continue;
+                    int save = rc.save();
+                    rc.translate(ch.getLeft() + ch.getTranslationX(), ch.getTop() + ch.getTranslationY());
+                    if (ch.getScaleX() != 1f || ch.getScaleY() != 1f) rc.scale(ch.getScaleX(), ch.getScaleY(), ch.getPivotX(), ch.getPivotY());
+                    if (ch.getAlpha() < 1f) rc.saveLayerAlpha(0, 0, ch.getWidth(), ch.getHeight(), Math.round(ch.getAlpha() * 255));
+                    rc.clipRect(0, 0, ch.getWidth(), ch.getHeight());
+                    rc.translate(-ch.getScrollX(), -ch.getScrollY());   // 系統錄子 View 時會先減掉捲動量；我們直接呼叫 draw，要自己減
+                    ch.draw(rc);
+                    rc.restoreToCount(save);
+                }
+            } else {
+                src.draw(rc);
+            }
+            rc.translate(x0, y0);
+            if (!lens) paintBandInto(rc, w, h);   // 光帶與暗色層也錄進背景：之後跟背景一起被模糊，透鏡底下也看得到
+            if (!lens) paintTintInto(rc, w, h);
         } finally {
+            capNode.endRecording();
             capturing = false;
             anyCapture = false;
         }
+        capReady = true;
     }
 
     private void drawGlass(Canvas canvas, int w, int h) {
@@ -445,23 +472,12 @@ final class GlassBar extends FrameLayout {
             if (iconSource != null) drawMagnifiedIcons(canvas);   // 圖示另外一層：只折射、不模糊，所以模糊再大圖示也清楚
             return;
         }
-        // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
-        // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
-        float blurPx = GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor;
-        int scale = lens ? 2 : blurPx < 3f ? 1 : blurPx < 10f ? 2 : 4;
-        int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
-        if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
-            bmp = Bitmap.createBitmap(sw, sh, Bitmap.Config.ARGB_8888);
-            bc = new Canvas(bmp);
-        }
-        // 第一層：頁面（不含底欄）。底欄與按鈕都用同一套 GPU 模糊，所以按鈕折射的是「模糊過的」畫面，跟底欄一致
-        captureInto(bmp, bc, source, scale, bgColor);   // 不透明的底色：透明像素會在著色器裡發出綠紫色斑
-        if (!lens) paintBandInto(bc, sw, sh);      // 光帶畫在背景圖裡：之後跟背景一起被模糊，透鏡底下也看得到
-        if (!lens) paintTintInto(bc, sw, sh);      // 暗色層也畫進背景圖：透鏡折射到的底欄就是暗的，跟底欄一致
+        // 第一層：頁面（不含底欄），用 GPU 錄成 RenderNode，原始解析度。底欄與按鈕都用同一套 GPU 模糊
+        recordBackdrop(source, w, h, bgColor);
         configure(shader, lens ? skewNow : 0f);
         node.setRenderEffect(currentEffect());
         Canvas rc = node.beginRecording();
-        rc.drawBitmap(bmp, null, rect, bmpPaint);
+        rc.drawRenderNode(capNode);
         node.endRecording();
         node.setAlpha(1f);
         canvas.save();
@@ -475,18 +491,15 @@ final class GlassBar extends FrameLayout {
     /** 把底欄那排圖示畫在透鏡裡：先放大錄進一個 RenderNode，再用同一支折射著色器處理，所以圖示也會形變、有彩色光暈。 */
     /** 透鏡底下的底欄背景：從底欄的截圖裁出透鏡那一塊，用同樣的模糊半徑處理，再畫在透鏡裡。 */
     private void drawUnderLens(Canvas canvas) {
-        Bitmap src = parentBar.bmp;
-        if (src == null || parentBar.getWidth() <= 0 || parentBar.getHeight() <= 0) return;
-        float sx = src.getWidth() / (float) parentBar.getWidth();
-        float sy = src.getHeight() / (float) parentBar.getHeight();
+        if (!parentBar.capReady || parentBar.getWidth() <= 0 || parentBar.getHeight() <= 0) return;
         int w = getWidth(), h = getHeight();
         float l = getX(), t = getY();
         underNode.setPosition(0, 0, w, h);
         configure(shader, skewNow);
         underNode.setRenderEffect(currentEffect());   // 透鏡底下的背景也經過折射（之前只有圖示折射）
         Canvas rc = underNode.beginRecording(w, h);
-        rc.drawBitmap(src, new android.graphics.Rect(Math.round(l * sx), Math.round(t * sy), Math.round((l + w) * sx), Math.round((t + h) * sy)),
-                rect, bmpPaint);
+        rc.translate(-l, -t);   // 底欄座標 → 透鏡座標：直接畫底欄錄好的背景（同一個 RenderNode，不用再抓一次）
+        rc.drawRenderNode(parentBar.capNode);
         // 圖示不畫在這層：這層會被模糊，圖示畫進來就跟著糊掉（模糊大於 0 時，選中那格的圖示看不清楚）。圖示改由 drawMagnifiedIcons 另外畫，只折射不模糊
         underNode.endRecording();
         canvas.save();

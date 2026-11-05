@@ -163,6 +163,13 @@ public class MainActivity extends Activity {
         lensAnim.start();
     }
 
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent e) {
+        int act = e.getActionMasked();
+        if (act == android.view.MotionEvent.ACTION_DOWN || act == android.view.MotionEvent.ACTION_UP) kickGlass();   // 點一下可能會展開、收合、換內容：底欄後面的畫面要跟著更新（現在用 GPU 錄，很便宜）
+        return super.dispatchTouchEvent(e);
+    }
+
     private void kickGlass() { if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
     private View bar;
     private int barItemW, barPad;
