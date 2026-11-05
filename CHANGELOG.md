@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1446
+
 - 透鏡邊緣高光改成整圈連續的細亮線（朝向光源處較亮），不再是一個白點｜The lens edge highlight is now a continuous thin lit rim (brighter toward the light) instead of a single white spot
 
 ## 1.0.1445
