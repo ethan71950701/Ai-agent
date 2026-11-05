@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1429
+
 - 修正底欄折射偶爾停在舊畫面（殘留）：底欄原本只在被通知時短暫更新，底下的畫面在這段時間外變了（背景載入資料、轉場結束後換內容）就不會跟著更新；現在會監聽視窗的繪製，偵測到底下有變化就再更新一小段時間｜Fixed the bottom bar's refraction sometimes staying on a stale picture: the bar only refreshed briefly when told to, so changes behind it outside that window (background data loading, content swapped after a transition) were missed; it now watches the window's drawing and refreshes again for a short while whenever something behind it changes.
 - 打開子頁面像桌面開 App：整頁從你點的那張卡片的位置和大小展開到全螢幕（圓角跟著變小，底下的首頁看得到），按返回時縮回那張卡片；左上方的大標題換頁時，舊字滑出淡出、新字滑進淡入，不再突然跳掉；切分頁時卡片依序浮上來｜Opening a sub-page now works like opening an app from the home screen: the page grows from the card you tapped to full screen (corners rounding off, with the home page visible behind) and shrinks back into it on back; the big title at the top left now slides and fades between Home, Functions and Settings instead of snapping; cards float in one after another when switching tabs.
 
