@@ -38,9 +38,7 @@ public class DigestActivity extends Activity {
         wrap.setOrientation(LinearLayout.VERTICAL);
         wrap.setGravity(android.view.Gravity.CENTER);
         wrap.setPadding(0, Ui.dp(this, 120), 0, 0);
-        com.google.android.material.progressindicator.CircularProgressIndicator spin = new com.google.android.material.progressindicator.CircularProgressIndicator(this);
-        spin.setIndeterminate(true);
-        wrap.addView(spin);
+        wrap.addView(new ExpressiveLoader(this));   // 主題色、會旋轉變形的載入動畫
         TextView t = new TextView(this);
         t.setText(L.t("整理通知中，請稍候…"));
         t.setTextSize(15);
