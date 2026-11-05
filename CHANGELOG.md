@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1438
+
 - GPU 背景（實驗）：背景裡加一行診斷文字｜GPU backdrop (experimental): draw a diagnostic text line into the backdrop
 
 ## 1.0.1436
