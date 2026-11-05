@@ -14,9 +14,10 @@ import android.view.animation.LinearInterpolator;
  */
 final class ExpressiveLoader extends View {
     private static final int SAMPLES = 140;
-    private static final int STEP_MS = 1100, SPIN_MS = 5200;
-    // 形狀順序：每 STEP_MS 變成下一個
-    private static final int[] SEQ = {0, 3, 1, 4, 5, 2, 3, 0};   // 圓、圓角五邊形、橫橢圓、圓角方、軟三角、直橢圓、五邊形，最後接回圓（頭尾相接才不會跳）
+    private static final int STEP_MS = 1400;   // 一個形狀換到下一個的週期：蓄力 → 突然加速旋轉並換形 → 輕輕回彈
+    private static final double STEP_TURN = Math.PI * 2 / 5 * 2;   // 每次換形旋轉 144 度（跟五邊形的對稱一致，轉完看起來很自然）
+    // 形狀順序（循環）：圓、圓角五邊形、橫橢圓、圓角五邊形、直橢圓
+    private static final int[] SEQ = {0, 3, 1, 3, 2};
     private final Paint shape = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
     private final float sizePx;
@@ -30,14 +31,12 @@ final class ExpressiveLoader extends View {
         sizePx = Ui.dp(c, 96);
     }
 
-    /** 形狀的相對半徑（角度 th，已扣掉旋轉）。0 圓、1 橫橢圓、2 直橢圓、3 圓角五邊形、4 圓角方、5 軟三角。 */
+    /** 形狀的相對半徑（角度 th，已扣掉旋轉）。0 圓、1 橫橢圓、2 直橢圓、3 圓角五邊形。 */
     private static double radius(int shape, double th) {
         switch (shape) {
             case 1: return ellipse(th, 1.22, 0.82);
             case 2: return ellipse(th + Math.PI / 2, 1.22, 0.82);
             case 3: return roundedPoly(th, 5, 14, 0.985);
-            case 4: return roundedPoly(th, 4, 10, 0.97);
-            case 5: return roundedPoly(th, 3, 7, 0.93);
             default: return 1.0;
         }
     }
@@ -82,16 +81,18 @@ final class ExpressiveLoader extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         float cx = getWidth() / 2f, cy = getHeight() / 2f, base = Math.min(getWidth(), getHeight()) * 0.36f;
-        float ph = (time / STEP_MS) % (SEQ.length - 1);
-        int i = (int) ph;
-        float f = ph - i;
-        f = f * f * (3 - 2 * f);   // 平滑進出
-        int a = SEQ[i], b = SEQ[i + 1];
-        double rot = time / (double) SPIN_MS * Math.PI * 2;
+        long steps = (long) (time / STEP_MS);
+        float p = (time % STEP_MS) / STEP_MS;
+        float u = Math.max(0f, Math.min(1f, (p - 0.28f) / 0.58f));   // 前 28% 蓄力不動，接著快速完成，最後一小段留給回彈
+        double c1 = 1.2, c3 = c1 + 1;
+        double back = 1 + c3 * Math.pow(u - 1, 3) + c1 * Math.pow(u - 1, 2);   // easeOutBack：衝過頭一點再回來
+        float f = u * u * (3 - 2 * u);   // 形狀變化：在旋轉衝出去的過程中換好，轉過去時已經是新形狀
+        int a = SEQ[(int) (steps % SEQ.length)], b = SEQ[(int) ((steps + 1) % SEQ.length)];
+        double rot = (steps + back) * STEP_TURN;
         path.reset();
         for (int k = 0; k <= SAMPLES; k++) {
-            double th = k * Math.PI * 2 / SAMPLES, u = th - rot;
-            double ra = radius(a, u), rb = radius(b, u);
+            double th = k * Math.PI * 2 / SAMPLES, ang = th - rot;
+            double ra = radius(a, ang), rb = radius(b, ang);
             double r = base * (ra + (rb - ra) * f);
             float x = cx + (float) (r * Math.cos(th)), y = cy + (float) (r * Math.sin(th));
             if (k == 0) path.moveTo(x, y); else path.lineTo(x, y);
