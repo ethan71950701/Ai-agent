@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1423
+
 - 通知整理改讀系統的「通知紀錄」（有 root 時），包含白天已經滑掉的通知：定時整理從上次整理之後開始、手動整理看最近 24 小時；同一則一直更新的只留最新一次。沒有 root 或沒開通知紀錄時，照舊只讀通知欄目前的內容｜The notification digest now reads the system notification history (with root), including notifications you already dismissed: scheduled digests cover everything since the last one, manual ones the last 24 hours, and repeatedly updated notifications are kept once. Without root or with notification history off, it still reads only what is in the shade.
 
 ## 1.0.1422
