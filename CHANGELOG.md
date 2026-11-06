@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1468
+
 - 修正診斷頁「按鈕透鏡」那一行一直是空的｜Fix the "button lens" line on the diagnostics page that was always empty
 
 ## 1.0.1467
