@@ -83,7 +83,16 @@ public class LogActivity extends Activity {
         return getResources().getDrawable(tv.resourceId, getTheme());
     }
 
+    private int shownSig;
+    private boolean built;
+
     private void showTasks(JSONArray list) {
+        // 從詳細頁返回時 onResume 會重新讀一次：內容沒變就不要清掉重建。以前每次返回都把整串卡片清掉、再一張張重建，
+        // 剛好在詳細頁縮回那張卡片的時候，那張卡片不見了，動畫就壞掉
+        final int sig = list.toString().hashCode();
+        if (built && sig == shownSig && taskBox.getChildCount() > 0) return;
+        shownSig = sig;
+        built = true;
         taskBox.removeAllViews();
         if (list.length() == 0) {
             status.setText(L.t("還沒有任務紀錄。在首頁或問問看送出一句話後，會出現在這裡。"));
