@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1533
+
 - 路由：提示加上「要去別的 App 找東西、看東西，就算還要記，也是自動操作」的說明與例子；任務過程頁顯示便宜模型這次的判斷（chat／agent…）｜Routing: the prompt now says that looking things up in another app is automation even if you also want it remembered, with examples; the task log shows what the cheap model decided (chat/agent/…)
 
 ## 1.0.1532
