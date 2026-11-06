@@ -771,7 +771,7 @@ public class MainActivity extends Activity {
             }
         } else {
             // 逗號後換行，分成上下兩行（有逗號的才會分）
-            greet.setText(L.t(idx < slot.length ? slot[idx] : GREET_ANY[idx - slot.length]).replaceFirst("([，,])\\s*", "$1\n"));
+            greet.setText(L.t(idx < slot.length ? slot[idx] : GREET_ANY[idx - slot.length]).replaceFirst("[，,]\\s*", "\n"));
         }
         greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, smallText ? 30 : 40);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
