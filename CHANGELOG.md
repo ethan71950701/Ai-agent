@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1538
+
 - 首頁：底欄後面鋪一層跟背景同色的底，液態玻璃不再染上光暈的彩色漸層｜Home: a background-colored layer sits behind the bottom bar so the liquid glass no longer picks up the glow's color gradient
 
 ## 1.0.1537
