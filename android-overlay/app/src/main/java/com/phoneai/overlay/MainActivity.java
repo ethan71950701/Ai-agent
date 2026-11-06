@@ -411,75 +411,110 @@ public class MainActivity extends Activity {
             }
         }
         animateTitle(L.t(TAB_TITLE[i]), prev < 0 ? 0 : (i > prev ? 1 : -1));
-        final float dir = prev < 0 ? 0f : (i > prev ? 1f : -1f);   // 新內容從切換的方向彈進來
-        final int tabNow = i;
-        final Runnable swap = () -> {
-            if (tabNow != tab) return;
-            removeHomeBar();
-            removeHomeBar();
-            box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間
-            setHomeScroll(tabNow != 0);
-            box.removeAllViews();
-            final int gen = ++tabGen;
-            // 進場：整頁一起從切換的方向滑進來＋淡入，用「快進、慢慢停下」的非線性曲線（內容是一段一段加進來的，所以先動這個容器）
-            box.setAlpha(0f);
-            box.setTranslationX(dir * Ui.dp(this, 40));
-            box.setTranslationY(prev < 0 ? Ui.dp(this, 16) : 0f);
-            box.animate().alpha(1f).translationX(0f).translationY(0f).setDuration(prev < 0 ? 420 : 340)
-                    .setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).withEndAction(null).start();
-            if (tabNow == 0) {   // 首頁很輕，一次建完
-                buildHome();
-                finishTab(tabNow, gen);
-            } else {
-                // 功能頁、設定頁很重（幾十個方塊與開關）：分成幾段，每一幀只建一段，建好的那一段再從下方浮上來
-                runTabSteps(tabNow == 1 ? functionSteps() : settingsSteps(), tabNow, gen);
-            }
-            kickGlass();
-        };
-        if (prev < 0) swap.run();
-        else box.animate().alpha(0f).translationX(-dir * Ui.dp(this, 24)).translationY(0f).setDuration(120)   // 舊內容往反方向滑出並淡出（先慢後快），再換新的
-                .setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f)).withEndAction(swap).start();
+        final float dir = prev < 0 ? 0f : (i > prev ? 1f : -1f);   // 往右邊的分頁（編號變大）：新頁從右邊滑進來、舊頁往左滑出去
+        if (prev < 0) showTabNow(i);
+        else slideTo(i, dir);
         moveNav(0f, 400f, 0.7f);
     }
 
     private int tabGen;
 
-    /** 第一段在換頁的同一幀就建好（不然換頁那一瞬間畫面是空的，看起來像閃一下），其餘每一幀跑一段；換分頁很快連按時（gen 變了）就放棄舊的。 */
-    private void runTabSteps(final java.util.List<Runnable> steps, final int tabNow, final int gen) {
-        final android.view.Choreographer ch = android.view.Choreographer.getInstance();
-        final int[] next = {0, 0};   // 下一段、已經做過進場動畫的項目數
-        final Runnable once = () -> {
-            int before = box.getChildCount();
-            steps.get(next[0]++).run();
-            for (int k = before; k < box.getChildCount() && next[1] < 10; k++, next[1]++) Ui.riseIn(box.getChildAt(k), 0);
+    /** 第一次進來：直接建好，沒有動畫。 */
+    private void showTabNow(final int tabNow) {
+        prepareBox(tabNow);
+        final int gen = ++tabGen;
+        if (tabNow == 0) { buildHome(); finishTab(tabNow, gen, null); }
+        else runTabSteps(tabNow == 1 ? functionSteps() : settingsSteps(), tabNow, gen, null);
+    }
+
+    private void prepareBox(int tabNow) {
+        removeHomeBar();
+        removeHomeBar();
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間
+        setHomeScroll(tabNow != 0);
+        box.removeAllViews();
+    }
+
+    private android.widget.ImageView ghost;   // 切換時蓋在原位的舊頁面截圖
+    private androidx.core.widget.NestedScrollView ghostSv;
+
+    private void finishGhost() {
+        if (ghost != null) {
+            ghost.animate().cancel();
+            if (ghost.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) ghost.getParent()).removeView(ghost);
+            ghost = null;
+        }
+        if (ghostSv != null) {
+            ghostSv.animate().cancel();
+            ghostSv.setTranslationX(0f);
+            ghostSv = null;
+        }
+    }
+
+    /**
+     * 換分頁：像翻頁一樣橫向滑過去。舊頁面拍成一張圖蓋在原位，新頁面在畫面外（切換方向那一邊）先建好，
+     * 建好之後兩個一起滑：舊的滑出去、新的滑進來。內容都是現成的，不會有「先消失再出現」的閃爍。
+     */
+    private void slideTo(final int tabNow, final float dir) {
+        finishGhost();
+        if (!(box.getParent() instanceof androidx.core.widget.NestedScrollView) || !(root instanceof android.view.ViewGroup)) { showTabNow(tabNow); return; }
+        final androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
+        final android.view.ViewGroup rootVg = (android.view.ViewGroup) root;
+        final int w = sv.getWidth(), h = sv.getHeight();
+        if (w <= 0 || h <= 0) { showTabNow(tabNow); return; }
+        android.graphics.Bitmap bmp;
+        try {
+            bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas cv = new android.graphics.Canvas(bmp);
+            cv.drawColor(Ui.attr(this, com.google.android.material.R.attr.colorSurface));
+            sv.draw(cv);
+        } catch (Throwable e) { showTabNow(tabNow); return; }
+        final android.widget.ImageView g = new android.widget.ImageView(this);
+        g.setImageBitmap(bmp);
+        g.setScaleType(android.widget.ImageView.ScaleType.FIT_XY);
+        rootVg.addView(g, rootVg.indexOfChild(sv) + 1, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(w, h));   // 在內容上面、底欄下面
+        g.setTranslationX(sv.getLeft());
+        g.setTranslationY(sv.getTop());
+        ghost = g;
+        ghostSv = sv;
+        // 新頁面放到畫面外再建
+        prepareBox(tabNow);
+        sv.scrollTo(0, 0);   // 新頁面從最上面開始，不要繼承舊頁面捲到哪
+        sv.setTranslationX(dir * w);
+        final int gen = ++tabGen;
+        final Runnable go = () -> {
+            if (gen != tabGen || ghost != g) return;
+            final android.view.animation.PathInterpolator io = new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f);
+            g.animate().translationX(sv.getLeft() - dir * w).setDuration(360).setInterpolator(io).start();
+            sv.animate().translationX(0f).setDuration(360).setInterpolator(io)
+                    .withEndAction(() -> { if (ghost == g) finishGhost(); }).start();
+            Anim.boostFrames(root, 700, "換分頁滑動");
         };
-        once.run();
-        if (next[0] >= steps.size()) { finishTab(tabNow, gen); return; }
+        if (tabNow == 0) { buildHome(); finishTab(tabNow, gen, go); }
+        else runTabSteps(tabNow == 1 ? functionSteps() : settingsSteps(), tabNow, gen, go);
+    }
+
+    /** 第一段在同一幀就建好，其餘每一幀跑一段（在畫面外建，看不到）；換分頁很快連按時（gen 變了）就放棄舊的。建完才呼叫 done。 */
+    private void runTabSteps(final java.util.List<Runnable> steps, final int tabNow, final int gen, final Runnable done) {
+        final android.view.Choreographer ch = android.view.Choreographer.getInstance();
+        final int[] next = {0};
+        steps.get(next[0]++).run();
+        if (next[0] >= steps.size()) { finishTab(tabNow, gen, done); return; }
         ch.postFrameCallback(new android.view.Choreographer.FrameCallback() {
             @Override
             public void doFrame(long frameTimeNanos) {
                 if (gen != tabGen || tabNow != tab || isFinishing() || isDestroyed()) return;
-                once.run();
+                steps.get(next[0]++).run();
                 if (next[0] < steps.size()) ch.postFrameCallback(this);
-                else finishTab(tabNow, gen);
+                else finishTab(tabNow, gen, done);
             }
         });
     }
 
-    private void finishTab(final int tabNow, final int gen) {
+    private void finishTab(final int tabNow, final int gen, final Runnable done) {
         refresh();
-        // 保險：進場動畫結束後，把每一項強制恢復為完全顯示（避免動畫停在透明，內容看不見、點不到）
-        box.postDelayed(() -> {
-            if (gen != tabGen) return;
-            if (tabNow == tab) { box.setAlpha(1f); box.setTranslationX(0f); box.setTranslationY(0f); }
-            for (int k = 0; k < box.getChildCount(); k++) {
-                View ch = box.getChildAt(k);
-                ch.setAlpha(1f);
-                ch.setTranslationX(0f);
-                ch.setTranslationY(0f);
-            }
-        }, 1200);
         kickGlass();
+        if (done != null) done.run();
     }
 
     private android.animation.ValueAnimator titleAnim;
