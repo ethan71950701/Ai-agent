@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1530
+
 - 自動操作：看圖那一步模型說了不存在的動作時，下一步還是給截圖重來，不再退回元件清單又 look 一次｜Automation: if the model names a non-existent action on a screenshot step, the next step retries with the screenshot instead of falling back to the element list and looking again
 
 ## 1.0.1529
