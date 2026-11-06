@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 頂欄毛玻璃：修好後面的內容永遠畫成「沒捲動」的頁面頂端（系統錄捲動容器時會減掉捲動量，手動畫要自己減）｜Frosted top bar: fixed the glass always showing the unscrolled top of the page (the system subtracts the scroll offset when it records a scroll container; drawing manually has to do it itself)
+
+## 1.0.1561
+
 - 新增實驗功能「頂欄毛玻璃」（設定 → 外觀，預設關）：功能、設定頁的標題列變成模糊的玻璃，內容捲到它後面會透出來｜New experimental "Frosted top bar" (Settings → Appearance, off by default): the title bar on Features and Settings becomes frosted glass, content scrolling behind it shows through blurred
 
 ## 1.0.1559
