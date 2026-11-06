@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1529
+
 - 路由不再用關鍵字：開 Wi-Fi、音量、截圖這些指令也由便宜模型判斷（多一次很快的判斷，沒網路時固定指令暫時不能用）｜Routing no longer uses keywords: even commands like Wi-Fi, volume and screenshot are decided by the cheap model (one quick extra call; fixed commands do not work offline for now)
 
 ## 1.0.1528
