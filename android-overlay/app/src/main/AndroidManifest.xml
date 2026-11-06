@@ -213,10 +213,12 @@
 
         <activity
             android:name=".GuideActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity
             android:name=".MicTestActivity"
+            android:theme="@style/AppTheme.Sub"
             android:exported="false" />
 
         <activity

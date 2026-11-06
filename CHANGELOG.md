@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正打開「設定導覽」「麥克風測試」時整個畫面變黑、返回時出現一層一層殘影：這兩個頁面補上跟其他子頁面一樣的透明主題｜Fix the screen going black when opening Setup guide and Mic test, and trailing ghost images when going back: these two pages now use the same translucent theme as the other sub-pages
+
 - 診斷頁新增「動畫期間的更新率」：量動畫與彈簧期間每一幀的實際間隔｜The diagnostics page now shows the refresh rate measured during animations and springs
 
 ## 1.0.1488
