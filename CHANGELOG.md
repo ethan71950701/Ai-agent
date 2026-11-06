@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 診斷頁的「按鈕透鏡」多顯示形變、縮放、旋轉等狀態，用來查透鏡偶爾變成梯形的原因｜The diagnostics page now shows the lens deformation, scale and rotation, to find why the lens sometimes turns into a trapezoid
+
 - 拖動底欄時透鏡的外形像果凍一樣沿移動方向拉長、上下壓扁，停下來彈回（圖示反向補償不變形）；強度用「拖動形變強度」滑桿調｜While dragging the bar, the lens now squashes and stretches like jelly along the drag direction and springs back (icons are counter-scaled so they stay undistorted); the strength follows the "Drag deformation strength" slider
 
 ## 1.0.1465

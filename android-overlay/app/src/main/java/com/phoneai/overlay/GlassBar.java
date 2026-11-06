@@ -593,7 +593,9 @@ final class GlassBar extends FrameLayout {
         canvas.clipPath(clip);
         canvas.drawRenderNode(node);
         canvas.restore();
-        if (lens) lensInfo = L.t("強度 ") + String.format("%.2f", amount) + L.t("、模糊倍率 ") + String.format("%.2f", blurFactor) + L.t("、歪斜 ") + String.format("%.3f", skewNow);
+        if (lens) lensInfo = L.t("強度 ") + String.format("%.2f", amount) + L.t("、模糊倍率 ") + String.format("%.2f", blurFactor) + L.t("、歪斜 ") + String.format("%.3f", skewNow)
+                + String.format(java.util.Locale.US, " | stretch %.2f,%.2f jelly %.2f,%.2f view scale %.2f,%.2f rot %.1f/%.1f/%.1f pivot %.0f,%.0f size %dx%d",
+                        stretchX, stretchY, jellyX, jellyY, getScaleX(), getScaleY(), getRotation(), getRotationX(), getRotationY(), getPivotX(), getPivotY(), w, h);;
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
     }
 
