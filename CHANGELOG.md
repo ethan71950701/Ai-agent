@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1531
+
 - 自動操作：tap／雙擊／長按沒給座標時不再點到螢幕左上角還說「已點擊」，會回錯誤讓模型重來；出錯的那一步在任務過程裡附上模型原始回覆｜Automation: tap/double-tap/long-press without coordinates no longer taps the top-left corner and reports success; it returns an error instead, and the failed step shows the model's raw reply in the task log
 
 ## 1.0.1530
