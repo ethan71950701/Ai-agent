@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1485
+
 - 診斷頁的「子頁面展開」在還沒量到時會說明該怎麼做｜The "sub-page expand" line on the diagnostics page now explains what to do when nothing has been measured yet
 
 ## 1.0.1484
