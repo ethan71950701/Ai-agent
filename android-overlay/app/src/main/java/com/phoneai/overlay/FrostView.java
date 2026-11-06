@@ -28,12 +28,8 @@ final class FrostView extends View {
         setWillNotDraw(false);
         int surface = Ui.attr(c, com.google.android.material.R.attr.colorSurface);
         int onSurface = Ui.attr(c, com.google.android.material.R.attr.colorOnSurface);
-        // 玻璃的底色：背景色稍微提亮一點（混 10% 的前景色），約 40% 不透明。以前是純背景色 53%，整條偏暗、跟下面的頁面色差太大
-        int mixed = android.graphics.Color.rgb(
-                (android.graphics.Color.red(surface) * 90 + android.graphics.Color.red(onSurface) * 10) / 100,
-                (android.graphics.Color.green(surface) * 90 + android.graphics.Color.green(onSurface) * 10) / 100,
-                (android.graphics.Color.blue(surface) * 90 + android.graphics.Color.blue(onSurface) * 10) / 100);
-        tint.setColor((mixed & 0x00FFFFFF) | 0x66000000);
+        // 玻璃的底色：就是頁面的背景色（約 45% 不透明）。沒有內容透出來的地方，玻璃跟頁面一模一樣，漸層過渡就不會有色差、斷層
+        tint.setColor((surface & 0x00FFFFFF) | 0x73000000);
         mask.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));   // 漸層遮罩：留下玻璃的程度 = 遮罩的不透明度
     }
 

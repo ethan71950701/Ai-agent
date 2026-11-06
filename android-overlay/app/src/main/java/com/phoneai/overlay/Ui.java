@@ -162,8 +162,8 @@ final class Ui {
         tlp.setCollapseMode(com.google.android.material.appbar.CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PIN);
         ctl.addView(tb, tlp);
         com.google.android.material.appbar.AppBarLayout.LayoutParams clp =
-                new com.google.android.material.appbar.AppBarLayout.LayoutParams(-1, dp(a, 160));
-        clp.setScrollFlags(com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                new com.google.android.material.appbar.AppBarLayout.LayoutParams(-1, dp(a, frost ? 56 : 160));   // 毛玻璃模式：標題列固定高度、不收合（錄影看到大標題往上收的時候會被切掉一半）
+        if (!frost) clp.setScrollFlags(com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                 | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
         bar.addView(ctl, clp);
         final androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams barLp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);

@@ -576,9 +576,9 @@ public class MainActivity extends Activity {
             for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
                 View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
                 if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams) {
-                    c.getLayoutParams().height = Ui.dp(this, on ? 116 : 56);   // 功能／設定頁的標題區縮小，首頁維持原樣
+                    c.getLayoutParams().height = Ui.dp(this, on && !frostTop ? 116 : 56);   // 功能／設定頁的標題區縮小，首頁維持原樣；毛玻璃模式固定 56dp（不收合）
                     ((com.google.android.material.appbar.AppBarLayout.LayoutParams) c.getLayoutParams()).setScrollFlags(
-                            on ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                            on && !frostTop ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                                | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED : 0);
                     c.requestLayout();
                 }
@@ -586,7 +586,7 @@ public class MainActivity extends Activity {
         if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
             androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
             sv.setNestedScrollingEnabled(on);
-            if (fv != null) sv.setPadding(0, Ui.dp(this, on ? 116 : 0), 0, 0);   // 毛玻璃模式：內容延伸到標題列後面，上面留出標題列的高度
+            if (fv != null) sv.setPadding(0, Ui.dp(this, on ? 56 : 0), 0, 0);   // 毛玻璃模式：內容延伸到標題列後面，上面留出標題列的高度（56dp）
             sv.setOverScrollMode(on ? View.OVER_SCROLL_IF_CONTENT_SCROLLS : View.OVER_SCROLL_NEVER);
         }
     }
