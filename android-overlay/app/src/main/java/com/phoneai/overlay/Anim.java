@@ -18,7 +18,27 @@ final class Anim {
     /** 按壓回饋的彈簧：按下是「臨界阻尼」（不過衝、稍微放慢，不會啪一下縮到底）；放開是較軟的彈簧、只輕輕過衝一點（以前剛性 900／500、阻尼 0.9／0.45，按下太硬、放開太彈）。 */
     static final float PRESS_IN_K = 600f, PRESS_IN_D = 1f, PRESS_OUT_K = 320f, PRESS_OUT_D = 0.72f;
 
+    private static final int R_FPS = 0x7f0a0e59;   // View.setTag 用的鍵
+
+    /**
+     * 動畫期間要求高更新率（Android 15 以上）。這支手機的螢幕會依內容自動降更新率省電；手指離開後只剩一個小東西在彈，
+     * 系統就把更新率降得很低，彈簧看起來一格一格的。這裡明確告訴系統「現在有動畫，請用高更新率」，ms 毫秒後恢復預設。
+     */
+    static void boostFrames(View v, long ms) {
+        if (v == null || android.os.Build.VERSION.SDK_INT < 35) return;
+        try {
+            final View root = v.getRootView();
+            root.setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH);
+            Object old = root.getTag(R_FPS);
+            if (old instanceof Runnable) root.removeCallbacks((Runnable) old);
+            Runnable r = () -> root.setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_DEFAULT);
+            root.setTag(R_FPS, r);
+            root.postDelayed(r, ms);
+        } catch (Throwable ignored) { }
+    }
+
     static void spring(View v, DynamicAnimation.ViewProperty prop, float to, float stiffness, float damping) {
+        boostFrames(v, 900);
         // 同一個 View 的同一個屬性只留一個彈簧；舊的沒取消會在新的結束後繼續跑，把值拉回舊目標（按鈕卡在縮小狀態就是這樣來的）
         java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation> m = RUNNING.get(v);
         if (m == null) { m = new java.util.HashMap<>(); RUNNING.put(v, m); }
@@ -69,6 +89,7 @@ final class Anim {
      * 展開是先快後慢、收合是先慢後快。同時間只跑一個，連點會從目前的高度接著動，不會跳。
      */
     static void expandSmooth(final View body, final boolean show) {
+        boostFrames(body, 700);
         final ViewGroup.LayoutParams lp = body.getLayoutParams();
         Object old = body.getTag(R_EXPAND);
         if (old instanceof android.animation.ValueAnimator) ((android.animation.ValueAnimator) old).cancel();
