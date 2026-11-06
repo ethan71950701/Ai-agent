@@ -147,20 +147,20 @@ final class GlassBar extends FrameLayout {
     private final boolean lens;
     private View source, iconSource;
     // 透鏡裡的圖示：也要經過折射著色器（之前只是直接畫，所以沒有形變、彩色光暈）
-    private final RenderNode iconNode = new RenderNode("lensIcons");
+    private RenderNode iconNode = new RenderNode("lensIcons");
     private RuntimeShader iconShader;
     private GlassBar parentBar;   // 透鏡所在的底欄：透鏡下面直接用底欄已經模糊好的背景，不會變透明
-    private final RenderNode capNode = new RenderNode("glassBackdrop");
+    private RenderNode capNode = new RenderNode("glassBackdrop");
     private boolean capReady;
     private Bitmap bmp;
     private Canvas bc;
-    private final RenderNode node = new RenderNode("glass");
+    private RenderNode node = new RenderNode("glass");
     private final Paint bandPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     static volatile String touchInfo = "";   // 診斷用：最近一次觸控的壓力與接觸面積
-    private final RenderNode shadowNode = new RenderNode("lensShadow");   // 透鏡外面的柔和陰影（按住時才出現）
+    private RenderNode shadowNode = new RenderNode("lensShadow");   // 透鏡外面的柔和陰影（按住時才出現）
     private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
-    private final RuntimeShader shader;
+    private RenderNode underNode = new RenderNode("lensUnder");   // 透鏡底下：直接用底欄抓好的背景圖再模糊，不經過底欄的折射著色器
+    private RuntimeShader shader;
     private final Paint bmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
     private final Paint tint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -324,6 +324,17 @@ final class GlassBar extends FrameLayout {
             underNode.discardDisplayList();
             shadowNode.discardDisplayList();
             capNode.discardDisplayList();
+        } catch (Throwable ignored) { }
+        // 只丟掉錄製內容還不夠：App 在背景被系統回收繪圖資源後，舊的 RenderNode 與 RuntimeShader 可能留著壞掉的狀態（透鏡／底欄變梯形，重開 App 才好）。
+        // 一律換成全新的實例，下一幀照新的重錄。
+        try {
+            node = new RenderNode("glass");
+            iconNode = new RenderNode("lensIcons");
+            capNode = new RenderNode("glassBackdrop");
+            shadowNode = new RenderNode("lensShadow");
+            underNode = new RenderNode("lensUnder");
+            shader = new RuntimeShader(lens ? AGSL_LENS : AGSL_BAR);
+            if (lens) iconShader = new RuntimeShader(AGSL_LENS);
         } catch (Throwable ignored) { }
         capReady = false;
         invalidate();

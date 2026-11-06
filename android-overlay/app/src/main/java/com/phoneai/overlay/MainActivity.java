@@ -1172,6 +1172,7 @@ public class MainActivity extends Activity {
             refresh();
             if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
+            if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
         }
         kickGlass();
     }
@@ -1190,6 +1191,7 @@ public class MainActivity extends Activity {
         if (level >= TRIM_MEMORY_UI_HIDDEN) {   // 畫面被藏起來、系統可能回收繪圖資源
             if (glass != null) glass.resetGpu();
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
+            if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
         }
     }
 
