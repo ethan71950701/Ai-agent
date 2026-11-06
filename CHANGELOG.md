@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正換分頁時閃一下：新頁的第一段在換頁的同一幀就建好，不再先出現一格空白｜Fix the flash when switching tabs: the first slice of the new page is built in the same frame, so there is no empty frame first
+
 - 換到功能頁、設定頁時內容分成幾段建立（每一幀一段），建好的那一段再從下方浮上來，換分頁掉幀會更少｜Switching to the Functions and Settings tabs now builds the content in slices, one per frame, and each slice rises into view, so there are fewer dropped frames when switching tabs
 
 ## 1.0.1495

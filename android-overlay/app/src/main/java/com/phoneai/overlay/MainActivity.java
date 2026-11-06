@@ -444,17 +444,22 @@ public class MainActivity extends Activity {
 
     private int tabGen;
 
-    /** 一幀跑一段：換分頁很快連按時（gen 變了）就放棄舊的。 */
+    /** 第一段在換頁的同一幀就建好（不然換頁那一瞬間畫面是空的，看起來像閃一下），其餘每一幀跑一段；換分頁很快連按時（gen 變了）就放棄舊的。 */
     private void runTabSteps(final java.util.List<Runnable> steps, final int tabNow, final int gen) {
         final android.view.Choreographer ch = android.view.Choreographer.getInstance();
         final int[] next = {0, 0};   // 下一段、已經做過進場動畫的項目數
+        final Runnable once = () -> {
+            int before = box.getChildCount();
+            steps.get(next[0]++).run();
+            for (int k = before; k < box.getChildCount() && next[1] < 10; k++, next[1]++) Ui.riseIn(box.getChildAt(k), 0);
+        };
+        once.run();
+        if (next[0] >= steps.size()) { finishTab(tabNow, gen); return; }
         ch.postFrameCallback(new android.view.Choreographer.FrameCallback() {
             @Override
             public void doFrame(long frameTimeNanos) {
                 if (gen != tabGen || tabNow != tab || isFinishing() || isDestroyed()) return;
-                int before = box.getChildCount();
-                steps.get(next[0]++).run();
-                for (int k = before; k < box.getChildCount() && next[1] < 10; k++, next[1]++) Ui.riseIn(box.getChildAt(k), 0);
+                once.run();
                 if (next[0] < steps.size()) ch.postFrameCallback(this);
                 else finishTab(tabNow, gen);
             }
