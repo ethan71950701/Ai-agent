@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 任務過程與任務詳細的卡片改成邊展開邊一小段一小段建立：不卡動畫，也不會展開完才空一下才出現｜Task history and task detail cards are now built in small slices while the page expands: no stutter, and no empty pause after the expansion
 
+## 1.0.1481
+
 - 修正點開任務過程等子頁面時「頓一下」：重的內容改成展開動畫結束後才建立、再淡入；任務卡片改成一張一張淡入升起，不再用彈簧彈出來｜Fix the stutter when opening sub-pages such as Task history: heavy content is now built after the expand animation and faded in, and task cards rise in one by one instead of bouncing in on a spring
 
 ## 1.0.1480
