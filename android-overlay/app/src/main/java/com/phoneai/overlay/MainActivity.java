@@ -56,8 +56,19 @@ public class MainActivity extends Activity {
         indicator.postOnAnimation(new Runnable() {
             @Override
             public void run() {
-                if (!barDragging) {
-                    stretching = false;
+                if (!barDragging) {   // 手指放開：形變量平順衰減到 0 再結束（以前直接結束，形變可能卡在非 0，靜止的透鏡就一直是歪的）
+                    stretchD *= 0.85f;
+                    stretchV = 0f;
+                    if (indicator instanceof GlassBar) {
+                        ((GlassBar) indicator).setStretch(0.25f * stretchD, -0.2f * stretchD);
+                        ((GlassBar) indicator).kick(200);
+                    }
+                    if (Math.abs(stretchD) < 0.003f) {
+                        if (indicator instanceof GlassBar) ((GlassBar) indicator).setStretch(0f, 0f);
+                        stretching = false;
+                        return;
+                    }
+                    indicator.postOnAnimation(this);
                     return;
                 }
                 long now = android.os.SystemClock.uptimeMillis();

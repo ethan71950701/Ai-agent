@@ -75,6 +75,9 @@ final class GlassBar extends FrameLayout {
             + "    float2 offset = -normal * circleMap * amount;\n"
             + "    float2 refracted = xy + offset + float2(skew * p.y, 0.0);\n"
             + "    refracted -= float2(stretch.x * p.x, stretch.y * p.y) * edge * edge;\n"   // 形變只在邊緣：離邊界越近越強，中心不動
+            + "    float2 lo = float2(0.5);\n"
+            + "    float2 hi = center * 2.0 - float2(0.5);\n"   // 取樣限制在節點範圍內：推到範圍外會讀到透明，結果被畫成黑色，邊角像被咬掉
+            + "    refracted = clamp(refracted, lo, hi);\n"
             + "    half4 base = backdrop.eval(refracted);\n"
             + "    float factor = dispersion * (p.x * p.y) / max(halfSize.x * halfSize.y, 1.0);\n"
             + "    if (dispersion > 0.0 && edge > 0.0) {\n"
@@ -85,7 +88,7 @@ final class GlassBar extends FrameLayout {
             + "        for (int k = 0; k < 7; k++) {\n"
             + "            float t = float(k) / 6.0;\n"
             + "            float3 w = float3(clamp(1.0 - 2.0 * t, 0.0, 1.0), clamp(1.0 - abs(2.0 * t - 1.0), 0.0, 1.0), clamp(2.0 * t - 1.0, 0.0, 1.0));\n"
-            + "            half4 s = backdrop.eval(refracted + separated * (1.0 - 2.0 * t));\n"
+            + "            half4 s = backdrop.eval(clamp(refracted + separated * (1.0 - 2.0 * t), lo, hi));\n"
             + "            acc += float3(s.rgb) * w;\n"
             + "            wsum += w;\n"
             + "            alphaSum += float(s.a);\n"
