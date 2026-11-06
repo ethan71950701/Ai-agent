@@ -775,6 +775,7 @@ public class AssistantSheet {
 
     private void gotText(String t) {
         act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).edit().putInt("voice_fail", 0).apply();   // 辨識成功：連續失敗次數歸零
+        LifeLog.add(act, "面板辨識完成 " + t.length() + " 字，開始倒數 " + COUNTDOWN_SECONDS + " 秒");
         setText(t);
         setWaveState(WaveView.IDLE);
         aurora.setEnergy(0.3f);
@@ -786,13 +787,13 @@ public class AssistantSheet {
         long total = COUNTDOWN_SECONDS * 1000L;
         timer = new CountDownTimer(total, 50) {
             public void onTick(long ms) { send.setProgress(ms / (float) total); }  // 送出鈕外圈細線慢慢縮短
-            public void onFinish() { send.setProgress(0f); submit(); }
+            public void onFinish() { send.setProgress(0f); LifeLog.add(act, "面板倒數結束，自動送出"); submit(); }
         };
         timer.start();
     }
 
     private void cancelCountdown() {
-        if (timer != null) { timer.cancel(); timer = null; }
+        if (timer != null) { LifeLog.add(act, "面板倒數被取消"); timer.cancel(); timer = null; }
         send.setProgress(0f);
     }
 
@@ -807,6 +808,7 @@ public class AssistantSheet {
     }
 
     private void submit() {
+        LifeLog.add(act, "面板送出（" + input.getText().length() + " 字）");
         Notify.stopSpeaking();
         cancelCountdown();
         String t = input.getText().toString().trim();

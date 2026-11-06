@@ -121,6 +121,10 @@ final class SpeechCapture {
                 if (total > RATE * 30) break;                              // 最長 30 秒（以前 20 秒，長句會被硬切）
             }
             finished = true;   // 之後不再送邊說邊辨識的結果，免得蓋掉最後的完整辨識
+            try {   // 診斷：為什麼停止錄音（語音被提早切掉、或自己送出時，看「最近事件」）
+                String why = cancel ? "被取消" : stop ? "手動停止" : !spoke ? "沒開口" : total > RATE * 30 ? "到了 30 秒上限" : "停頓超過 " + String.format(java.util.Locale.US, "%.1f", endChunks / 10f) + " 秒";
+                LifeLog.add(App.ctx, "錄音結束：" + why + "，共 " + String.format(java.util.Locale.US, "%.1f", total / (float) RATE) + " 秒");
+            } catch (Throwable ignored) { }
             if (cancel) return;
             if (!spoke) { UI.post(() -> cb.onDone(null)); return; }
             short[] pcm = new short[total];

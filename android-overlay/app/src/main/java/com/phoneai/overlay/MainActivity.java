@@ -714,6 +714,7 @@ public class MainActivity extends Activity {
     private void homeStage(final String t) {
         setWaves(WaveView.IDLE);
         if (homeEt == null) { homeAsk(t); return; }
+        LifeLog.add(this, "首頁辨識完成 " + t.length() + " 字，開始倒數 1 秒");
         homeProg = true;
         homeEt.setText(t);
         homeEt.setSelection(homeEt.getText().length());
@@ -724,6 +725,7 @@ public class MainActivity extends Activity {
         ring.addUpdateListener(a -> { if (act != null) act.setProgress((float) a.getAnimatedValue()); });
         final Runnable go = () -> {
             homePending = null;
+            LifeLog.add(MainActivity.this, "首頁倒數結束，自動送出");
             if (act != null) act.setProgress(0f);
             if (homeEt == null) return;
             String now = homeEt.getText().toString().trim();
@@ -745,6 +747,7 @@ public class MainActivity extends Activity {
 
     private void cancelHomePending() {
         if (homePending != null && homeEt != null) homeEt.removeCallbacks(homePending);
+        if (homePending != null) LifeLog.add(this, "首頁倒數被取消");
         homePending = null;
         if (homeRing != null) { homeRing.cancel(); homeRing = null; }
         if (homeAction != null) homeAction.setProgress(0f);
