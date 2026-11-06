@@ -16,8 +16,8 @@ final class ExpressiveLoader extends View {
     private static final int SAMPLES = 140;
     private static final int STEP_MS = 1400;   // 一個形狀換到下一個的週期：蓄力 → 突然加速旋轉並換形 → 輕輕回彈
     private static final double STEP_TURN = Math.PI * 2 / 5 * 2;   // 每次換形旋轉 144 度（跟五邊形的對稱一致，轉完看起來很自然）
-    // 形狀順序（循環）：圓、圓角五邊形、橫橢圓、圓角五邊形、直橢圓
-    private static final int[] SEQ = {0, 3, 1, 3, 2};
+    // 形狀順序（循環）：圓角五邊形、橫橢圓、圓角五邊形、直橢圓（沒有正圓）
+    private static final int[] SEQ = {3, 1, 3, 2};
     private final Paint shape = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
     private final float sizePx;
