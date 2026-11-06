@@ -83,7 +83,8 @@ public class AuroraView extends View {
         float gy = glowY > 0 ? glowY : h * 0.75f;
 
         for (int i = 0; i < BLOBS; i++) {
-            float cx = w * (0.5f + 0.42f * (float) Math.sin(t * (0.35f + 0.11f * i) + i * 1.7f));
+            // 四團光各守一段（由左到右排開），只在自己的位置附近緩緩擺動：以前整個在 0.08～0.92 之間亂晃，常常全部擠到同一邊，另一邊就全黑
+            float cx = w * (0.12f + 0.253f * i + 0.10f * (float) Math.sin(t * (0.35f + 0.11f * i) + i * 1.7f));
             float cy = gy + 30 * d * (float) Math.sin(t * (0.5f + 0.09f * i) + i * 2.3f);
             float s = 0.7f + 0.4f * energy + 0.08f * (float) Math.sin(t * 1.1f + i);
             blob.setShader(shaders[i]);

@@ -570,7 +570,7 @@ public class MainActivity extends Activity {
     private void showHomeBar() {
         removeHomeBar();
         // 跟助理面板、底欄同一種液態玻璃膠囊（兩端半圓，高度 8＋48＋8＝64dp），不再是一塊平的灰色圓角方塊
-        final GlassBar glassRow = new GlassBar(this, 0xFF23262A, 0x00000000, 0x44FFFFFF, Ui.dp(this, 32), false);
+        final GlassBar glassRow = new GlassBar(this, 0xFF23262A, 0x00000000, 0x44FFFFFF, Ui.dp(this, 28), false);   // 高 56dp，半徑 28＝兩端半圓
         glassRow.setSource(root);
         glassRow.setGlowColor(0xFFFFFFFF);
         glassRow.setClipChildren(false);
@@ -578,7 +578,7 @@ public class MainActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        bar.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+        bar.setPadding(Ui.dp(this, 20), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));   // Material 3 搜尋列：高 56dp＝4＋48＋4，尾端是 48dp 的圖示按鈕
         glassRow.addView(bar, new android.widget.FrameLayout.LayoutParams(-1, -2));
         final android.widget.EditText et = new android.widget.EditText(this);
         homeEt = et;
@@ -587,7 +587,7 @@ public class MainActivity extends Activity {
         et.setBackground(null);
         et.setTextColor(0xFFFFFFFF);
         et.setHintTextColor(0xA0FFFFFF);
-        et.setTextSize(17);
+        et.setTextSize(16);   // Material 3 的 body large
         et.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
         final ActionButtonView action = new ActionButtonView(this);
         action.setAccent(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));

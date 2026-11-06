@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 首頁輸入列照 Material 3 搜尋列調整：高 56dp、尾端麥克風不再放灰色圓底（有字或正在聽才是主色實心圓）；底部光暈四團各守一段、只在原位附近擺動，不再整團擠到一邊讓另一邊全黑｜Home input bar follows the Material 3 search bar: 56dp tall, the trailing mic has no grey disc (a filled primary circle only when there is text or while listening); the four glow blobs each keep their own region and sway nearby, so one side no longer goes fully black
 - 首頁輸入框改成跟助理面板、底欄同一種液態玻璃膠囊（兩端半圓、白字）｜Home input bar is now the same liquid-glass pill as the assistant panel and bottom bar (rounded ends, white text)
 
 ## 1.0.1538

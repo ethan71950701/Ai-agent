@@ -60,13 +60,10 @@ public class ActionButtonView extends View {
     @Override
     protected void onDraw(Canvas c) {
         float w = getWidth(), h = getHeight(), box = Math.min(w, h), cx = w / 2f, cy = h / 2f;
-        if (mode == LISTENING) {   // 正在聽：藍色實心圓
+        if (mode == LISTENING || mode == SEND) {   // 正在聽、可以送出：主色實心圓（Material 3 的 filled 圖示按鈕）
             fill.setColor(accent);
             c.drawCircle(cx, cy, box / 2f - 2 * d, fill);
-        } else if (mode == MIC) {  // 待機：淡淡的圓底，讓人知道這是按鈕
-            fill.setColor(0x22FFFFFF);
-            c.drawCircle(cx, cy, box / 2f - 2 * d, fill);
-        }
+        }   // 待機（MIC）：不畫圓底。Material 3 搜尋列的尾端圖示是單純的圖示按鈕，膠囊裡再放一個灰圓像圓中有圓；只有正在聽與送出才是實心圓
         if (mode == SEND) drawPlane(c, box); else drawMic(c, cx, cy, box);
         if (progress > 0f) {
             float pad = 2 * d;
