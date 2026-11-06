@@ -404,7 +404,10 @@ final class GlassBar extends FrameLayout {
         // 光源在鏡頭左上方：水平方向隨玻璃位置改變（玻璃越往右，光越從左邊斜射進來），垂直方向只略偏上，所以高光落在透鏡中間附近
         float tx = Math.max(-0.7f, Math.min(0.7f, (lx - cx) / (0.9f * dm.widthPixels))) - skewNow * 0.8f;
         float ty = -0.22f;
-        return new float[]{ang, Math.max(0.3f, sx), Math.max(0.3f, sy), tx, ty};
+        // 累計縮放只用來修正邊緣法線的方向，合理範圍大約 1.0～1.3；上層容器若殘留奇怪的縮放（NaN、極大或極小），法線會被拉歪、高光變形，所以限制在 0.8～1.5
+        sx = Float.isNaN(sx) ? 1f : Math.max(0.8f, Math.min(1.5f, sx));
+        sy = Float.isNaN(sy) ? 1f : Math.max(0.8f, Math.min(1.5f, sy));
+        return new float[]{ang, sx, sy, tx, ty};
     }
 
     private void configure(RuntimeShader sh, float skewValue) {

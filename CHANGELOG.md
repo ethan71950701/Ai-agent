@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 玻璃高光：上層容器的縮放超出合理範圍時不再拉歪邊緣法線（限制在 0.8～1.5）｜Glass highlight: the accumulated parent scale is now limited to 0.8–1.5 so a stale scale cannot skew the edge normals
 - 診斷頁新增「最近事件」：離開、回來（背景多久）、系統通知回收記憶體、螢幕開關，查底欄偶爾變形時用｜Diagnostics: a "Recent events" list (leave, return with time in background, memory-trim notices, screen on/off) to help investigate the occasionally deformed bottom bar
 
 ## 1.0.1545
