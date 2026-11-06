@@ -204,6 +204,13 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         live = new java.lang.ref.WeakReference<>(this);
+        LifeLog.add(this, b == null ? "建立（冷啟動或第一次）" : "建立（重建／恢復）");
+        screenRx = new android.content.BroadcastReceiver() {
+            @Override public void onReceive(android.content.Context c, Intent i) { LifeLog.add(c, "螢幕" + (Intent.ACTION_SCREEN_OFF.equals(i.getAction()) ? "關" : "開")); }
+        };
+        android.content.IntentFilter sf = new android.content.IntentFilter(Intent.ACTION_SCREEN_OFF);
+        sf.addAction(Intent.ACTION_SCREEN_ON);
+        registerReceiver(screenRx, sf);
         MemoryActivity.warm();   // 先在背景讀好記憶，點進去就不用等
         final boolean hadRoot = Root.knownRoot();
         new Thread(() -> {   // 背景判斷有沒有 root；跟畫面上畫的不一樣就重建（背景模式等只有 root 才顯示的項目）
@@ -1169,6 +1176,7 @@ public class MainActivity extends Activity {
             root.postDelayed(() -> { A11yGuard.ensure(this); refresh(); }, 450);
         } else {
             stoppedSince = false;
+            LifeLog.add(this, "回來（背景約 " + (stoppedAt == 0 ? "?" : String.valueOf((android.os.SystemClock.elapsedRealtime() - stoppedAt) / 1000)) + " 秒），重建玻璃");
             A11yGuard.ensure(this);
             refresh();
             if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
@@ -1179,6 +1187,15 @@ public class MainActivity extends Activity {
     }
 
     private boolean resumedBefore, stoppedSince;
+    private long stoppedAt;
+    private android.content.BroadcastReceiver screenRx;
+
+    @Override
+    protected void onDestroy() {
+        LifeLog.add(this, "銷毀" + (isChangingConfigurations() ? "（設定變更）" : ""));
+        try { if (screenRx != null) unregisterReceiver(screenRx); } catch (Exception ignored) { }
+        super.onDestroy();
+    }
 
     private static java.lang.ref.WeakReference<MainActivity> live;
 
@@ -1195,12 +1212,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         stoppedSince = true;
+        stoppedAt = android.os.SystemClock.elapsedRealtime();
+        LifeLog.add(this, "離開（onStop）");
         super.onStop();
     }
 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
+        LifeLog.add(this, "系統通知回收記憶體 level=" + level);
         if (level >= TRIM_MEMORY_UI_HIDDEN) {   // 畫面被藏起來、系統可能回收繪圖資源
             if (glass != null) glass.resetGpu();
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();

@@ -242,6 +242,7 @@ final class LEn {
         m.put("重建玻璃（底欄變形時按）", "Rebuild glass (press when the bottom bar is deformed)");
         m.put("已重建，回到首頁看看有沒有恢復", "Rebuilt. Go back home to see if it recovered");
         m.put("主畫面不在，沒有東西可以重建", "The main screen is gone, nothing to rebuild");
+        m.put("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n", "\n[Recent events (leave, return, memory trim, screen on/off)]\n");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

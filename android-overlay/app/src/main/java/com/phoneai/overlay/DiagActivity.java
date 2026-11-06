@@ -118,6 +118,7 @@ public class DiagActivity extends Activity {
         sb.append(L.t("\n【電源鍵相關設定（只讀）】\n")).append(Maintenance.suRun(
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
+        sb.append(L.t("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n")).append(LifeLog.read(this)).append("\n\n");
         sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
         sb.append(L.t("動畫期間的更新率：")).append(Anim.frameInfo().isEmpty() ? L.t("（還沒量到：先按幾張卡片或開個子頁面）") : Anim.frameInfo()).append('\n');
