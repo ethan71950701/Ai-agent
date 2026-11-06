@@ -948,11 +948,28 @@ public class MainActivity extends Activity {
             recreate();
             return;
         }
-        A11yGuard.ensure(this);
-        refresh();
-        if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
-        if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
+        // 從子頁面返回（主畫面一直沒被 stop 過）：系統剛好在返回動畫的最後一幀通知我們，這時重建首頁卡片、查權限會讓最後一幀掉幀；
+        // 延到動畫結束後再做。真的離開過 App（被 stop）再回來才立刻做，也才需要把玻璃的繪圖暫存重錄。
+        final boolean fromSub = resumedBefore && !stoppedSince;
+        resumedBefore = true;
+        if (fromSub) {
+            root.postDelayed(() -> { A11yGuard.ensure(this); refresh(); }, 450);
+        } else {
+            stoppedSince = false;
+            A11yGuard.ensure(this);
+            refresh();
+            if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
+            if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
+        }
         kickGlass();
+    }
+
+    private boolean resumedBefore, stoppedSince;
+
+    @Override
+    protected void onStop() {
+        stoppedSince = true;
+        super.onStop();
     }
 
     @Override

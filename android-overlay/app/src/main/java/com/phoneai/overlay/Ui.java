@@ -642,15 +642,10 @@ final class Ui {
         root.setTag(R_VEIL, veil);
     }
 
-    /** 動畫結束：蓋層只隱藏（INVISIBLE 不會重新排版；removeView 會讓整頁重排，剛好卡在最後一幀）。真的拿掉等之後閒下來再做。 */
+    /** 動畫結束：蓋層只隱藏、留在原處（INVISIBLE 不會重新排版；removeView／addView 都會讓整頁重排，卡在動畫的第一幀或最後一幀）。返回時直接拿來用。 */
     private static void removeVeil(final View root) {
-        final Object v = root.getTag(R_VEIL);
-        root.setTag(R_VEIL, null);
-        if (!(v instanceof View)) return;
-        ((View) v).setVisibility(View.INVISIBLE);
-        root.postDelayed(() -> {
-            if (((View) v).getParent() instanceof ViewGroup) ((ViewGroup) ((View) v).getParent()).removeView((View) v);
-        }, 600);
+        Object v = root.getTag(R_VEIL);
+        if (v instanceof View) ((View) v).setVisibility(View.INVISIBLE);
     }
 
     private static void setupClip(View root) {
@@ -672,7 +667,13 @@ final class Ui {
         root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         setupClip(root);
         Anim.boostFrames(root, 700, "子頁返回");
-        installVeil(a, root, 0f, EXIT_SNAP.get(a));   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
+        Object old = root.getTag(R_VEIL);
+        if (old instanceof View) {   // 打開時放好的蓋層直接拿來用，不用臨時 addView（會讓整頁重新排版）
+            ((View) old).setAlpha(0f);
+            ((View) old).setVisibility(View.VISIBLE);
+        } else {
+            installVeil(a, root, 0f, EXIT_SNAP.get(a));
+        }   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
         va.setDuration(340);
         va.setInterpolator(SMOOTH_IO);

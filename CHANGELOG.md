@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 子頁面返回更順：從子頁面回到主畫面時，重建首頁卡片與查權限延到返回動畫結束後；返回用打開時放好的蓋層，不再臨時加｜Returning from a sub-page is smoother: rebuilding the home cards and checking permissions now wait until the return animation ends, and the return reuses the veil placed when opening instead of adding one on the spot
+
 - 子頁面展開結束那一幀掉幀的修正：蓋層改成隱藏、圓角裁切與繪圖層晚一點才拆；診斷頁的動畫更新率會註明每段動畫是什麼｜Fix the dropped frame at the very end of the sub-page expansion: the veil is now hidden instead of removed and the clip and layer are torn down later; the diagnostics page now labels each animation window
 
 ## 1.0.1491
