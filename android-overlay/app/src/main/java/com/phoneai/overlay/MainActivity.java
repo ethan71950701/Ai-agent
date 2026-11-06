@@ -710,15 +710,15 @@ public class MainActivity extends Activity {
 
     private void buildHome() {
         box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面中間偏上（下面留空間給輸入膠囊）
-        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 260));
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 400));
         MarkView mark = new MarkView(this);
-        LinearLayout.LayoutParams mkp = new LinearLayout.LayoutParams(Ui.dp(this, 150), Ui.dp(this, 84));
+        LinearLayout.LayoutParams mkp = new LinearLayout.LayoutParams(Ui.dp(this, 210), Ui.dp(this, 118));
         mkp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
         box.addView(mark, mkp);
         TextView greet = new TextView(this);
         int hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
         greet.setText(L.t(hr >= 5 && hr < 11 ? "早安" : hr >= 11 && hr < 17 ? "午安" : "晚安"));
-        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 34);
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 40);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
         greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
