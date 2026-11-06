@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 圈選截圖變快：root／Shizuku 改讀原始像素，不再編成 PNG 再解開｜Circle-to-ask screenshots are faster: root/Shizuku now read raw pixels instead of encoding and decoding a PNG
 - 圈選提問回來了：開面板就直接在畫面上圈，圈完自動變成長方形（可拖角或邊調整、拖裡面移動），再說或打問題問 AI；不需要按鈕｜Circle to ask is back: open the panel and draw directly on the screen; the loop becomes an adjustable rectangle (drag corners or edges, drag inside to move), then ask by voice or text, no button needed
 
 ## 1.0.1523

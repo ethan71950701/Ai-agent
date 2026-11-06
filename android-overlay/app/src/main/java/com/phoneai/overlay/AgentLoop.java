@@ -555,6 +555,8 @@ final class AgentLoop {
     /** 目前主螢幕的完整截圖（圈選用；不管背景模式開不開，都截主螢幕）。截不到回 null。 */
     static Bitmap screenshotBitmap() {
         if (!Root.available()) return Phone.screenshot();
+        Bitmap raw = rawScreenshot();   // 先試原始像素（不用編成 PNG 再解開，快很多）；失敗再退回 PNG
+        if (raw != null) return raw;
         try {
             byte[] png;
             if (ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) {
@@ -568,6 +570,39 @@ final class AgentLoop {
             }
             return png.length < 100 ? null : BitmapFactory.decodeByteArray(png, 0, png.length);
         } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** `screencap`（不加 -p）直接輸出原始像素：開頭是寬、高、格式（各 4 位元組，新版 Android 還多一個色彩空間），後面是 RGBA。 */
+    private static Bitmap rawScreenshot() {
+        try {
+            byte[] raw;
+            if (ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) {
+                raw = ShizukuBackend.runBytes("screencap");
+                if (raw == null) return null;
+            } else {
+                Process p = new ProcessBuilder(Root.su(), "-c", "screencap").redirectErrorStream(false).start();
+                p.getOutputStream().close();
+                ByteArrayOutputStream bo = new ByteArrayOutputStream(1 << 25);
+                byte[] buf = new byte[1 << 17];
+                int n;
+                java.io.InputStream in = p.getInputStream();
+                while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+                p.waitFor();
+                raw = bo.toByteArray();
+            }
+            if (raw.length < 64) return null;
+            java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(raw).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+            int w = bb.getInt(0), h = bb.getInt(4), fmt = bb.getInt(8);
+            if (w < 100 || h < 100 || w > 10000 || h > 10000 || fmt != 1) return null;   // 1 = RGBA_8888，其他格式不處理，退回 PNG
+            int pixels = w * h * 4, header = raw.length - pixels;
+            if (header != 12 && header != 16) return null;
+            Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            bb.position(header);
+            bmp.copyPixelsFromBuffer(bb);
+            return bmp;
+        } catch (Throwable e) {
             return null;
         }
     }
