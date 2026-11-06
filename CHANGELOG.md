@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1463
+
 - 內部整理：移除已停用的圈選提問程式碼與舊的展開動畫，沒有功能變動｜Internal clean-up: removed the retired circle-to-ask code and the old spring-based expand animation; no behaviour change
 
 ## 1.0.1462
