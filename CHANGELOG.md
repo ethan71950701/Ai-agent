@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1502
+
 - 通知列的小圖示換成波形（跟 App 圖示同一個主題）｜The notification status-bar icon is now the wave motif, matching the app icon
 
 ## 1.0.1501
