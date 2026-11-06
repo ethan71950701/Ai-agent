@@ -71,7 +71,7 @@ public class AssistantSheet {
     static volatile java.util.concurrent.CountDownLatch questionShown;
     private boolean questionMode;
     private TextView questionView;
-    private View bgBtnView, circleBtnView;
+    private View bgBtnView;
     private SpeechCapture capture;     // 目前正在錄的這一句（SenseVoice 用）
     private int voiceGen;              // 每次開始聽加一；辨識結果回來時對不上就丟掉（使用者已取消或重說）
     private boolean replyMode;   // 顯示回答卡片中：卡片在上方、下面是可以接續對話的輸入列（語音／打字）
@@ -216,15 +216,6 @@ public class AssistantSheet {
         blp.rightMargin = (int) (2 * d);
         bar.addView(bgBtn, blp);
         bgBtnView = bgBtn;
-        // 圈選提問：收起面板、截下目前畫面，圈出想問的地方（自動變長方形，可以調整）
-        IconView circleBtn = new IconView(a, "select", 0xFFFFFFFF);
-        circleBtn.setContentDescription(L.t("圈選提問"));
-        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, () -> root.animate().alpha(0f).setDuration(150).start(),
-                () -> { root.animate().cancel(); root.setAlpha(1f); }, AssistantSheet.this::dismiss));
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
-        clp.rightMargin = (int) (2 * d);
-        bar.addView(circleBtn, clp);
-        circleBtnView = circleBtn;
         FrameLayout center = new FrameLayout(a);
         center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
         center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
@@ -233,7 +224,7 @@ public class AssistantSheet {
         send = new ActionButtonView(a);
         send.setAccent(accent);
         send.setOnClickListener(v -> {   // 有字＝送出；沒字＝開始／停止聽
-            if (input.getText().length() > 0) submit();
+            if (input.getText().length() > 0 || circleBox != null) submit();
             else if (listening) stopListening();
             else startVoice();
         });
@@ -266,6 +257,80 @@ public class AssistantSheet {
         setStatus(L.t("直接說話，或在這裡打字"));
     }
 
+    // ---------- 圈選提問：面板一打開就在背景截一張，直接在畫面上圈（圈完自動變長方形，可以調整） ----------
+    private CircleCanvas canvas;
+    private Bitmap shot;
+    private RectF circleBox;
+
+    /** 面板打開時由 AskActivity 呼叫：背景截圖，好了就把圈選畫布放在面板後面（暗幕與光暈之下）。 */
+    public void prefetchShot() {
+        CircleShot.prefetch(act.getApplicationContext(), this::attachShot);
+    }
+
+    private void attachShot(Bitmap b) {
+        if (dismissing || b == null || questionMode) return;
+        shot = b;
+        if (canvas != null) { canvas.setShot(b); return; }
+        canvas = new CircleCanvas(act, b, new CircleCanvas.Listener() {
+            @Override public void onSelected(RectF box) {
+                circleBox = box;
+                setStatus(L.t("已選取，說出或打字問題（空白也可以）"));
+                refreshAction();
+            }
+            @Override public void onCleared() {
+                circleBox = null;
+                refreshAction();
+            }
+            @Override public void onTap() {
+                if (circleBox != null) { circleBox = null; canvas.clearSel(); refreshAction(); }   // 點選取框外面：取消選取
+                else dismiss();                                                                    // 沒有選取：跟點旁邊一樣收起面板
+            }
+        });
+        root.addView(canvas, root.indexOfChild(aurora), new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private String circleCrop() {
+        int pad = (int) (12 * d);
+        int l = Math.max(0, (int) circleBox.left - pad), t = Math.max(0, (int) circleBox.top - pad);
+        int rr = Math.min(shot.getWidth(), (int) circleBox.right + pad), bb = Math.min(shot.getHeight(), (int) circleBox.bottom + pad);
+        Bitmap crop = (rr - l < 8 || bb - t < 8) ? shot : Bitmap.createBitmap(shot, l, t, rr - l, bb - t);
+        return CircleShot.jpeg64(crop, 1280, 85);
+    }
+
+    /** 有選取：把選取的區域（加一張縮小的整個畫面當上下文）和問題一起交給聊天模型，回答顯示在回答卡片。 */
+    private void askCircle(final String q) {
+        final JSONArray msgs = new JSONArray();
+        try {
+            JSONArray content = new JSONArray();
+            content.put(CircleShot.img(circleCrop()));
+            content.put(CircleShot.img(CircleShot.jpeg64(shot, 800, 70)));
+            content.put(new JSONObject().put("type", "text").put("text", (L.en()
+                    ? "The first image is the region the user selected; the second is the whole screen for context. The user's question: "
+                    : "第一張圖是使用者選取的區域，第二張是整個畫面（給你看上下文）。使用者的問題：")
+                    + (q.isEmpty() ? (L.en() ? "What is this? Explain briefly and add useful related information." : "這是什麼？請簡短說明，並補充有用的相關資訊。") : q)));
+            msgs.put(new JSONObject().put("role", "user").put("content", content));
+        } catch (Exception e) {
+            return;
+        }
+        circleBox = null;
+        if (canvas != null) canvas.clearSel();
+        stopRecognizer();
+        hideKeyboard();
+        setText("");
+        setStatus(L.t("思考中…"));
+        setWaveState(WaveView.THINKING);
+        final Context app = act.getApplicationContext();
+        new Thread(() -> {
+            String r = ChatEngine.visionChat(app, msgs, true);
+            act.runOnUiThread(() -> {
+                if (dismissing) return;
+                setWaveState(WaveView.IDLE);
+                if (r == null) showReply("", L.t("連不上 AI：") + ChatEngine.lastError);
+                else showReply("", r);
+            });
+        }, "circle-ask-panel").start();
+    }
+
     public View view() { return root; }
 
     /** 進入「回答問題」模式：顯示 AI 的問題，藏起左邊的背景模式鈕（回答問題用不到），語音／打字都可以。面板已經開著時也能呼叫（重新開始）。 */
@@ -274,7 +339,6 @@ public class AssistantSheet {
         questionView.setText(q);
         questionView.setVisibility(View.VISIBLE);
         bgBtnView.setVisibility(View.GONE);
-        circleBtnView.setVisibility(View.GONE);
         waiting = false;
         root.removeCallbacks(waitTimeout);
         row.animate().cancel();
@@ -708,8 +772,9 @@ public class AssistantSheet {
         Notify.stopSpeaking();
         cancelCountdown();
         String t = input.getText().toString().trim();
-        if (t.isEmpty()) return;
+        if (t.isEmpty() && circleBox == null) return;
         if (questionMode) { answerQuestion(t); return; }
+        if (circleBox != null && shot != null) { askCircle(t); return; }   // 有選取：這次問的是選起來的地方
         // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）
         Assist.Route route = Assist.route(t);
         root.post(() -> runLocal(route, t));
@@ -821,7 +886,7 @@ public class AssistantSheet {
     }
 
     private void refreshAction() {
-        boolean hasText = input != null && input.getText().length() > 0;
+        boolean hasText = (input != null && input.getText().length() > 0) || circleBox != null;   // 有選取時空白也能送出
         send.setMode(hasText ? ActionButtonView.SEND : listening ? ActionButtonView.LISTENING : ActionButtonView.MIC);
         send.setEnabled(!waiting);
         send.setAlpha(waiting ? 0.35f : 1f);   // 思考中不能按

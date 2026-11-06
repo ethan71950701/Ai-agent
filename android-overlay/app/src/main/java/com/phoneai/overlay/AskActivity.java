@@ -18,6 +18,7 @@ public class AskActivity extends Activity {
         sheet = new AssistantSheet(this);
         setContentView(sheet.view());
         sheet.enter();
+        sheet.prefetchShot();   // 背景截一張畫面，好了就能直接在畫面上圈選提問
         String preset = getIntent().getStringExtra("text");   // 首頁輸入框送來的文字：直接送出（不自動聽）
         if (preset != null && !preset.isEmpty()) sheet.presetAndSend(preset);
         String fill = getIntent().getStringExtra("fill");   // 分享過來的文字：只填進輸入框，等使用者送出
