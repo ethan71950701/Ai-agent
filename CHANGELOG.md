@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 標題列下緣加一段漸層淡出：內容捲到標題列下面時慢慢淡掉，不再被一刀切成一條黑邊｜A soft gradient fade under the title bar: content scrolling beneath it now fades out instead of being cut off in a hard dark line
+
+## 1.0.1558
+
 - 子頁完全展開後四個角也保持螢幕的 R 角（以前展開完把圓角裁切關掉，錄影、截圖看起來是直角）；圓角值改存在各頁自己身上，不再互相影響｜Sub-pages keep the screen's rounded corners after they are fully open (the clip used to be switched off, so recordings and screenshots showed square corners); the corner value now lives on each page instead of being shared
 
 ## 1.0.1557
