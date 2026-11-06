@@ -6,6 +6,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 子頁展開還沒跑完就按返回：現在會從目前的進度接著縮回去，不再跳一下｜Pressing back while a sub-page is still opening now reverses from the current progress instead of jumping
 
+## 1.0.1503
+
 - App 改名為 Vertex（原名 PhoneAI Overlay）；收到的檔案仍放在「下載/PhoneAI」，更新方式不變｜The app is renamed Vertex (formerly PhoneAI Overlay); received files still go to Download/PhoneAI and updating works as before
 
 ## 1.0.1502
