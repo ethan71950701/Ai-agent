@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 診斷頁「最近事件」多記語音的過程：錄音為什麼停（停頓、手動、30 秒上限）、辨識了幾個字、倒數開始、被取消或自動送出，查語音突然自己送出的問題用｜Diagnostics "Recent events" now also record the voice flow: why recording stopped, how many characters were recognized, countdown start, cancel or auto-send, to investigate voice suddenly sending by itself
+
+## 1.0.1549
+
 - 長句語音：邊說邊顯示的文字不再讓前面的字消失（太長只顯示最後 60 字、結果突然變短就先不更新），錄音上限 20 秒改 30 秒｜Long sentences: the live text no longer loses its beginning (only the last 60 characters are shown, and a sudden shorter result is ignored), and the recording limit goes from 20 s to 30 s
 
 ## 1.0.1548
