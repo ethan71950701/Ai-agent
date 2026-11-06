@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1546
+
 - 診斷頁新增「最近事件」：離開、回來（背景多久）、系統通知回收記憶體、螢幕開關，查底欄偶爾變形時用｜Diagnostics: a "Recent events" list (leave, return with time in background, memory-trim notices, screen on/off) to help investigate the occasionally deformed bottom bar
 
 ## 1.0.1545
