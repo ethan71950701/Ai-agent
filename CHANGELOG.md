@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1552
+
 - 語音可以一直說下去：說到約 15 秒、遇到停頓時，前面那一段先辨識固定下來，繼續錄下一段；邊說邊顯示只算目前這一段，不會越來越慢。安全上限改成 3 分鐘｜Voice can go on as long as you like: after about 15 seconds, at a pause, the earlier part is recognized and locked in while recording continues; the live text only re-decodes the current part, so it no longer slows down. The safety limit is now 3 minutes
 
 ## 1.0.1551
