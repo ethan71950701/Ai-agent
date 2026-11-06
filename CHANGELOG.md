@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1563
+
 - 頂欄毛玻璃：底邊不再是一條硬邊，玻璃往下多延伸一小段並漸漸變透明，從模糊自然過渡到清楚的內容｜Frosted top bar: the bottom edge is no longer a hard line; the glass extends a little further down and fades out so it blends smoothly from blurred to sharp content
 
 ## 1.0.1562
