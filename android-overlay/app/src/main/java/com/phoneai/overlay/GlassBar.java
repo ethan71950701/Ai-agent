@@ -168,6 +168,8 @@ final class GlassBar extends FrameLayout {
     private final Path clip = new Path();
     private final RectF rect = new RectF();
     private boolean capturing, failed, plain;
+    private long failedAt;   // 出錯的時間：過幾秒會再試一次（不再永遠退回半透明，直到重開 App）
+    private static long lastFailLog;
     private float stretchX, stretchY;   // 拖動形變量，見 setStretch
     private long until;
     private final int bgColor, tintColor;
@@ -367,6 +369,7 @@ final class GlassBar extends FrameLayout {
             node.setRenderEffect(currentEffect());
         } catch (Throwable e) {
             failed = true;
+            failedAt = SystemClock.uptimeMillis();
             status = L.t("失敗，已退回半透明：") + e;
         }
     }
@@ -432,19 +435,26 @@ final class GlassBar extends FrameLayout {
             return;
         }
         int w = getWidth(), h = getHeight();
+        if (failed && SystemClock.uptimeMillis() - failedAt > 3000) failed = false;   // 過了幾秒：再試一次
         boolean glass = !failed && source != null && w > 0 && h > 0 && canvas.isHardwareAccelerated() && true;
         if (lens) updateSkew();
         if (glass) {
+            final int saved = canvas.save();   // 記下畫布狀態：畫到一半出錯時要還原，不然裁切與縮放會留在畫布上，後面的畫面跟著歪
             try {
                 boolean jelly = lens && (jellyX != 1f || jellyY != 1f);
                 if (jelly) { canvas.save(); canvas.scale(jellyX, jellyY, w / 2f, h / 2f); }
                 try { drawGlass(canvas, w, h); } finally { if (jelly) canvas.restore(); }
+                canvas.restoreToCount(saved);
                 status = L.t("正常（玻璃效果執行中）");
-            } catch (Throwable e) {   // 這支手機的玻璃效果不能用：退回半透明底色，不要讓 App 閃退
+            } catch (Throwable e) {   // 這幀玻璃效果出錯：退回半透明底色，不要讓 App 閃退（幾秒後會再試）
+                canvas.restoreToCount(saved);
                 failed = true;
+                failedAt = SystemClock.uptimeMillis();
                 capturing = false;
                 anyCapture = false;
                 status = L.t("失敗，已退回半透明：") + e;
+                long now = SystemClock.uptimeMillis();
+                if (now - lastFailLog > 30000) { lastFailLog = now; CrashLog.w(lens ? "玻璃透鏡" : "玻璃底欄", e); }
                 drawFlat(canvas);
             }
         } else {
