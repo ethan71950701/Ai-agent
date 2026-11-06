@@ -547,6 +547,7 @@ final class Ui {
     static volatile String enterInfo = "";
     private static final java.util.ArrayDeque<String> ENTER_LOG = new java.util.ArrayDeque<>();
     private static float[] tapRect;
+    private static long tapAt;
     private static android.graphics.Bitmap tapSnap;
     private static final java.util.WeakHashMap<android.app.Activity, android.graphics.Bitmap> EXIT_SNAP = new java.util.WeakHashMap<>();
     private static final java.util.WeakHashMap<android.app.Activity, float[]> EXIT_RECT = new java.util.WeakHashMap<>();
@@ -567,6 +568,7 @@ final class Ui {
         tapX = loc[0] + v.getWidth() / 2f;
         tapY = loc[1] + v.getHeight() / 2f;
         tapRect = new float[]{loc[0], loc[1], v.getWidth(), v.getHeight()};
+        tapAt = android.os.SystemClock.uptimeMillis();
     }
 
     private static final android.view.animation.PathInterpolator EMPHASIZED = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
@@ -707,8 +709,18 @@ final class Ui {
     static void enterSpring(final android.app.Activity a) {
         a.overridePendingTransition(0, 0);
         final View root = a.getWindow().getDecorView();
-        final float[] rect = tapRect;
+        float[] rect0 = tapRect;
         tapRect = null;
+        if (rect0 != null && android.os.SystemClock.uptimeMillis() - tapAt > 2000) {   // 太久以前點的（這次不是從那張卡片開的）：不要從舊位置長出來
+            rect0 = null;
+            tapSnap = null;
+        }
+        if (rect0 == null) {   // 不是點卡片開的（對話框按鈕、第一次開啟…）：用畫面中間一張虛擬的卡片當起點，這樣每個子頁的展開、返回、預測返回都一樣有圓角
+            android.util.DisplayMetrics dm = a.getResources().getDisplayMetrics();
+            rect0 = new float[]{dm.widthPixels * 0.2f, dm.heightPixels * 0.42f, dm.widthPixels * 0.6f, dp(a, 120)};
+            tapSnap = null;
+        }
+        final float[] rect = rect0;
         if (rect != null) {   // 從卡片展開（像桌面打開 App）
             EXIT_RECT.put(a, rect);
             final android.graphics.Bitmap snap = tapSnap;
