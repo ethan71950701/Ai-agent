@@ -708,6 +708,13 @@ public class MainActivity extends Activity {
         homeFx = null;
     }
 
+    // 首頁問候語（中文原文，顯示時才 L.t）
+    private static final String[] GREET_MORNING = {"早安，今天想做什麼？", "新的一天開始了", "早，先喝杯水吧"};
+    private static final String[] GREET_DAY = {"午安，來杯咖啡？", "肚子餓了嗎？", "下午好，撐住"};
+    private static final String[] GREET_EVENING = {"晚上好，辛苦了", "今天過得如何？", "要不要休息一下？"};
+    private static final String[] GREET_NIGHT = {"還沒睡嗎？", "夜深了，小聲點", "熬夜對身體不好喔"};
+    private static final String[] GREET_ANY = {"嗨，有什麼我能幫的？", "說吧，我在聽", "今天想玩點什麼？"};
+
     private void buildHome() {
         box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面中間偏上（下面留空間給輸入膠囊）
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 400));
@@ -717,7 +724,10 @@ public class MainActivity extends Activity {
         box.addView(mark, mkp);
         TextView greet = new TextView(this);
         int hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
-        greet.setText(L.t(hr >= 5 && hr < 11 ? "早安" : hr >= 11 && hr < 17 ? "午安" : "晚安"));
+        String[] slot = hr >= 5 && hr < 11 ? GREET_MORNING : hr >= 11 && hr < 17 ? GREET_DAY : hr >= 17 && hr < 23 ? GREET_EVENING : GREET_NIGHT;
+        java.util.Random rnd = new java.util.Random();
+        int pick = rnd.nextInt(slot.length + GREET_ANY.length);   // 時段專屬的和通用的一起抽
+        greet.setText(L.t(pick < slot.length ? slot[pick] : GREET_ANY[pick - slot.length]));
         greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 40);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);

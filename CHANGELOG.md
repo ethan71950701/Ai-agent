@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 首頁問候語改成隨機：依時段（早上、白天、晚上、深夜）加上通用的趣味句子｜Home greeting is now random: time-of-day lines plus a few playful general ones
 
 ## 1.0.1507
 
