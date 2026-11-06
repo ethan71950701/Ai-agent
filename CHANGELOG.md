@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1556
+
 - 子頁完全展開時的圓角改成手機螢幕的 R 角（以前是直角），縮回卡片時再漸變成卡片的圓角；預測返回一開始滑就是螢幕的 R 角｜When a sub-page is fully open its corners now match the phone's screen corner radius (they used to be square), blending into the card's corners as it shrinks back; predictive back starts with the screen's corner radius
 
 ## 1.0.1555
