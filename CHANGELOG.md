@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1541
+
 - 首頁輸入列照 Material 3 搜尋列調整：高 56dp、尾端麥克風不再放灰色圓底（有字或正在聽才是主色實心圓）；底部光暈照舊到處流動，另外左右兩邊各加一團固定的淡底光，擠到一邊時另一邊不會全黑｜Home input bar follows the Material 3 search bar: 56dp tall, the trailing mic has no grey disc (a filled primary circle only when there is text or while listening); the bottom glow still roams freely, with a faint fixed glow on each side so one side never goes fully black
 
 ## 1.0.1540
