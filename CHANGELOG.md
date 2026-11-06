@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1555
+
 - 所有子頁的展開、返回、預測返回都有圓角：不是點卡片打開的頁面（對話框按鈕、第一次開啟…）改用畫面中間一張虛擬卡片當起點；太久以前點的位置不再被拿來用｜Every sub-page now has rounded corners when opening, closing and on predictive back: pages not opened from a card (dialog buttons, first run...) start from a virtual card in the middle of the screen, and an old tap position is no longer reused
 
 ## 1.0.1554
