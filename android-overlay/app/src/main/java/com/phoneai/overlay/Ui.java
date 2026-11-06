@@ -527,16 +527,8 @@ final class Ui {
     }
 
     private static final android.view.animation.PathInterpolator EMPHASIZED = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
-    /** Material 3 的完整「強調」曲線（前面慢慢起步、中段加速、後面慢慢停）：容器展開用它，才不會一開始就衝出去。 */
-    private static final android.view.animation.PathInterpolator EMPH_FULL;
-    static {
-        android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(0f, 0f);
-        p.cubicTo(0.05f, 0f, 0.133333f, 0.06f, 0.166666f, 0.4f);
-        p.cubicTo(0.208333f, 0.82f, 0.25f, 1f, 1f, 1f);
-        EMPH_FULL = new android.view.animation.PathInterpolator(p);
-    }
-    private static final android.view.animation.PathInterpolator EMPH_ACCEL = new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f);
+    /** 平順的「慢進慢出」（跟 Android 的 FastOutSlowIn 一樣）：起步比官方強調曲線溫和，容器展開不會一下子衝出去。 */
+    private static final android.view.animation.PathInterpolator SMOOTH_IO = new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f);
 
     /**
      * 像桌面打開 App：整頁從點的那張卡片的位置和大小展開到全螢幕（圓角跟著變小），內容稍微慢一點淡入；
@@ -600,8 +592,8 @@ final class Ui {
         setupClip(root);
         installVeil(a, root, 0f);   // 縮回去的時候，內容也淡成卡片顏色
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
-        va.setDuration(300);
-        va.setInterpolator(EMPH_ACCEL);
+        va.setDuration(340);
+        va.setInterpolator(SMOOTH_IO);
         va.addUpdateListener(an -> applyExpand(root, r, (float) an.getAnimatedValue(), corner));
         va.addListener(new android.animation.AnimatorListenerAdapter() {
             @Override public void onAnimationEnd(android.animation.Animator an) { a.finish(); a.overridePendingTransition(0, 0); }
@@ -630,8 +622,8 @@ final class Ui {
                     root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                     applyExpand(root, rect, 0f, corner);
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
-                    va.setDuration(500);   // Material 3：卡片展開成全螢幕用長持續時間 500 毫秒 + 強調曲線
-                    va.setInterpolator(EMPH_FULL);
+                    va.setDuration(480);
+                    va.setInterpolator(SMOOTH_IO);
                     va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), corner));
                     va.addListener(new android.animation.AnimatorListenerAdapter() {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
@@ -641,7 +633,8 @@ final class Ui {
                             root.setLayerType(View.LAYER_TYPE_NONE, null);
                         }
                     });
-                    va.start();
+                    // 先讓第一次繪製（建立繪圖層、畫出第一幀）完成再開始跑時間：頁面很重時前一兩幀會卡，動畫時間照跑的話，卡完會直接跳到後面
+                    root.post(() -> root.postOnAnimation(va::start));
                     return true;
                 }
             });
