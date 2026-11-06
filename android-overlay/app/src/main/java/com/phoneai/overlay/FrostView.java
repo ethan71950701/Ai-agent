@@ -70,7 +70,25 @@ final class FrostView extends View {
             RecordingCanvas rc = node.beginRecording(w, h);
             rc.drawColor(Ui.attr(getContext(), com.google.android.material.R.attr.colorSurface));
             rc.translate(b[0] - a[0], b[1] - a[1]);   // 捲動區在這塊玻璃座標裡的位置
-            source.draw(rc);
+            // 不能直接 source.draw(rc)：系統自己錄捲動容器時會先減掉捲動量，手動呼叫 draw 不會，結果畫出來的永遠是「沒捲動」的頁面頂端
+            // （底欄玻璃也踩過同一個坑：背景凍結）。所以改成自己逐個子 View 畫，並減掉捲動量。
+            if (source.getBackground() != null) source.getBackground().draw(rc);
+            if (source instanceof android.view.ViewGroup) {
+                android.view.ViewGroup g = (android.view.ViewGroup) source;
+                for (int k = 0; k < g.getChildCount(); k++) {
+                    View ch = g.getChildAt(k);
+                    if (ch.getVisibility() != View.VISIBLE || ch.getAlpha() <= 0f) continue;
+                    int save = rc.save();
+                    rc.translate(ch.getLeft() + ch.getTranslationX() - g.getScrollX(), ch.getTop() + ch.getTranslationY() - g.getScrollY());
+                    if (ch.getAlpha() < 1f) rc.saveLayerAlpha(0, 0, ch.getWidth(), ch.getHeight(), Math.round(ch.getAlpha() * 255));
+                    rc.clipRect(0, 0, ch.getWidth(), ch.getHeight());
+                    rc.translate(-ch.getScrollX(), -ch.getScrollY());
+                    ch.draw(rc);
+                    rc.restoreToCount(save);
+                }
+            } else {
+                source.draw(rc);
+            }
             node.endRecording();
             canvas.drawRenderNode(node);
         } catch (Throwable t) {
