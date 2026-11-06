@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 嘗試修正透鏡偶爾卡成梯形、重開 App 才好：回到 App 或畫面被藏起來時，玻璃重錄所有繪圖暫存｜Attempted fix for the lens occasionally getting stuck as a trapezoid until the app is restarted: the glass now re-records all its render nodes when the app returns or the UI is hidden
 
+## 1.0.1468
+
 - 修正診斷頁「按鈕透鏡」那一行一直是空的｜Fix the "button lens" line on the diagnostics page that was always empty
 
 ## 1.0.1467
