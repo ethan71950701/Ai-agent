@@ -133,7 +133,14 @@ final class Ui {
 
         com.google.android.material.appbar.AppBarLayout bar = new com.google.android.material.appbar.AppBarLayout(a);
         bar.setBackgroundColor(frost ? android.graphics.Color.TRANSPARENT : attr(a, com.google.android.material.R.attr.colorSurface));
-        if (frost) bar.setElevation(0f);
+        if (frost) {
+            bar.setElevation(0f);
+            // 標題列往上收的時候，標題字不要被狀態列的內距線或標題列自己的邊界切掉一半（玻璃是延伸到螢幕最上緣的，字被切在中間很怪）
+            root.setClipToPadding(false);
+            root.setClipChildren(false);
+            bar.setClipChildren(false);
+            bar.setClipToPadding(false);
+        }
         bar.setFitsSystemWindows(false);
         com.google.android.material.appbar.CollapsingToolbarLayout ctl = new com.google.android.material.appbar.CollapsingToolbarLayout(a);
         ctl.setTitle(title);
@@ -142,7 +149,7 @@ final class Ui {
         ctl.setExpandedTitleColor(attr(a, com.google.android.material.R.attr.colorPrimary));   // 大標題用主題的強調色
         ctl.setCollapsedTitleTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
         ctl.setContentScrimColor(frost ? android.graphics.Color.TRANSPARENT : attr(a, com.google.android.material.R.attr.colorSurface));
-        if (frost) ctl.setStatusBarScrimColor(android.graphics.Color.TRANSPARENT);
+        if (frost) { ctl.setStatusBarScrimColor(android.graphics.Color.TRANSPARENT); ctl.setClipChildren(false); }
         ctl.setExpandedTitleMarginStart(dp(a, 24));
         ctl.setExpandedTitleMarginBottom(dp(a, 20));
         com.google.android.material.appbar.MaterialToolbar tb = new com.google.android.material.appbar.MaterialToolbar(a);

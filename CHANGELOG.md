@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 頂欄毛玻璃：底色改成稍微提亮的淡色（不再偏暗、跟頁面色差大）；標題字往上收的時候不再被切掉一半｜Frosted top bar: the tint is now a slightly lightened soft color (no longer dark and mismatched with the page), and the title is no longer cut in half as it moves up
 - 頂欄毛玻璃：底邊不再是一條硬邊，玻璃往下多延伸一小段並漸漸變透明，從模糊自然過渡到清楚的內容｜Frosted top bar: the bottom edge is no longer a hard line; the glass extends a little further down and fades out so it blends smoothly from blurred to sharp content
 
 ## 1.0.1562
