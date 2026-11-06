@@ -47,7 +47,8 @@ public class WaveView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int ow, int oh) {
         super.onSizeChanged(w, h, ow, oh);
-        line.setShader(new LinearGradient(0, 0, w, 0, COLORS, null, Shader.TileMode.CLAMP));
+        int[] cs = {COLORS[0] & 0x00FFFFFF, COLORS[0], COLORS[1], COLORS[2], COLORS[3], COLORS[3] & 0x00FFFFFF};   // 兩端淡出成透明
+        line.setShader(new LinearGradient(0, 0, w, 0, cs, new float[]{0f, 0.07f, 0.36f, 0.64f, 0.93f, 1f}, Shader.TileMode.CLAMP));
     }
 
     public void setState(int s) {
@@ -79,7 +80,7 @@ public class WaveView extends View {
             path.reset();
             for (int i = 0; i <= steps; i++) {
                 float u = i / (float) steps;                                    // 0~1，由左到右
-                float env = (float) Math.pow(Math.sin(Math.PI * u), 2);          // 兩端 0、中間 1
+                float env = 0.2f + 0.8f * (float) Math.pow(Math.sin(Math.PI * u), 0.6);   // 兩端還是會動、中間最大（以前兩端是 0，只有中間在動，整條很空）；兩端的淡出交給漸層的透明度
                 double a = Math.sin(2 * Math.PI * wv[0] * u + phase * wv[1]);
                 double b = Math.sin(2 * Math.PI * wv[2] * u + phase * wv[3]);
                 float y = cy + maxA * amp * wv[4] * breathe * env * (float) (0.65 * a + 0.35 * b);
