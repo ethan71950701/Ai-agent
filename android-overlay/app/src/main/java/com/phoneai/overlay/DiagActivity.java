@@ -109,6 +109,7 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
+        sb.append(L.t("子頁面展開：")).append(Ui.enterInfo).append('\n');
         sb.append(L.t("\n最近的任務（含用量估價）：\n"));
         try {
             org.json.JSONArray h = TaskLog.list(this);

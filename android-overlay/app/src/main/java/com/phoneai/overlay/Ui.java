@@ -514,17 +514,19 @@ final class Ui {
     }
 
     /**
-     * 把「建 count 個項目」切成很多小段：每一幀只花約 4 毫秒建幾個，不會卡住展開動畫，內容也會邊展開邊陸續出現
+     * 把「建 count 個項目」切成很多小段：每一幀只花約 2.5 毫秒建幾個，不會卡住展開動畫，內容也會邊展開邊陸續出現
      * （以前是一口氣建完，或等動畫結束才建，前者會頓一下、後者展開完要空一下）。build 在主執行緒執行；done 可以是 null。
      */
     static void chunked(final android.app.Activity a, final int count, final java.util.function.IntConsumer build, final Runnable done) {
         final android.view.Choreographer ch = android.view.Choreographer.getInstance();
         final int[] next = {0};
+        final long startNs = System.nanoTime();
         ch.postFrameCallback(new android.view.Choreographer.FrameCallback() {
             @Override
             public void doFrame(long frameTimeNanos) {
                 if (a.isFinishing() || a.isDestroyed()) return;
-                long deadline = System.nanoTime() + 4_000_000L;
+                if (System.nanoTime() - startNs < 90_000_000L) { ch.postFrameCallback(this); return; }   // 動畫剛起步的前約 0.09 秒不建（那時在建立繪圖層，最容易掉幀）
+                long deadline = System.nanoTime() + 2_500_000L;
                 do {   // 至少建一個；用完這一幀的時間預算就等下一幀
                     build.accept(next[0]++);
                 } while (next[0] < count && System.nanoTime() < deadline);
@@ -543,6 +545,8 @@ final class Ui {
     }
 
     /** 點的那張卡片在螢幕上的位置與大小（打開頁面時從這裡長出來、關閉時縮回這裡）；開完會清掉，免得下次從別的地方開時用到舊的。 */
+    /** 診斷用：最近一次展開動畫的幀數與卡頓（超過 24 毫秒的幀間隔）。 */
+    static volatile String enterInfo = "";
     private static float[] tapRect;
     private static android.graphics.Bitmap tapSnap;
     private static final java.util.WeakHashMap<android.app.Activity, android.graphics.Bitmap> EXIT_SNAP = new java.util.WeakHashMap<>();
@@ -697,9 +701,17 @@ final class Ui {
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
                     va.setDuration(480);
                     va.setInterpolator(SMOOTH_IO);
-                    va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), corner));
+                    final long[] st = {0, 0, 0, 0};   // 上一幀時間、最長間隔、超過 24 毫秒的次數、總幀數
+                    va.addUpdateListener(an -> {
+                        applyExpand(root, rect, (float) an.getAnimatedValue(), corner);
+                        long now = android.os.SystemClock.uptimeMillis();
+                        if (st[0] != 0) { long gap = now - st[0]; if (gap > st[1]) st[1] = gap; if (gap > 24) st[2]++; }
+                        st[0] = now;
+                        st[3]++;
+                    });
                     va.addListener(new android.animation.AnimatorListenerAdapter() {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
+                            enterInfo = a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒，超過 24 毫秒 " + st[2] + " 次";
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
                             root.setClipToOutline(false);

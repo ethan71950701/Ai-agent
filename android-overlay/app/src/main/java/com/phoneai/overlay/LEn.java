@@ -934,6 +934,7 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("子頁面展開：", "Sub-page expand: ");
         m.put("停止聆聽", "Stop listening");
         m.put("開始說話", "Start speaking");
         m.put("要自己選 Claude 的模型嗎？", "Pick your own Claude models?");
