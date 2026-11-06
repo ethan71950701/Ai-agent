@@ -314,6 +314,13 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 拖動時的形變量（只畫在透鏡邊緣，中間的內容不動）。要配合 kick() 讓畫面更新。 */
+    private float jellyX = 1f, jellyY = 1f;   // 果凍形變：拖動時透鏡的外形沿著移動方向拉長、另一邊壓扁（圖示反向補償，不會被拉歪）
+
+    void setJelly(float jx, float jy) {
+        jellyX = jx;
+        jellyY = jy;
+    }
+
     void setStretch(float sx, float sy) {
         stretchX = sx;
         stretchY = sy;
@@ -415,7 +422,9 @@ final class GlassBar extends FrameLayout {
         if (lens) updateSkew();
         if (glass) {
             try {
-                drawGlass(canvas, w, h);
+                boolean jelly = lens && (jellyX != 1f || jellyY != 1f);
+                if (jelly) { canvas.save(); canvas.scale(jellyX, jellyY, w / 2f, h / 2f); }
+                try { drawGlass(canvas, w, h); } finally { if (jelly) canvas.restore(); }
                 status = L.t("正常（玻璃效果執行中）");
             } catch (Throwable e) {   // 這支手機的玻璃效果不能用：退回半透明底色，不要讓 App 閃退
                 failed = true;
@@ -653,6 +662,7 @@ final class GlassBar extends FrameLayout {
         if (!GlassPrefs.iconRefr) {   // 實驗：不經過折射著色器，直接畫放大的圖示（用來確認方塊是不是來自圖示層）
             canvas.save();
             canvas.clipPath(clip);
+            canvas.scale(1f / jellyX, 1f / jellyY, getWidth() / 2f, getHeight() / 2f);   // 外形被拉歪時，圖示反向補償
             canvas.translate(-ox, -oy);
             canvas.scale(s, s, cx, cy);
             iconSource.draw(canvas);
@@ -673,6 +683,7 @@ final class GlassBar extends FrameLayout {
         iconNode.setRenderEffect(RenderEffect.createRuntimeShaderEffect(iconShader, "backdrop"));
         canvas.save();
         canvas.clipPath(clip);
+        canvas.scale(1f / jellyX, 1f / jellyY, getWidth() / 2f, getHeight() / 2f);
         canvas.drawRenderNode(iconNode);
         canvas.restore();
     }

@@ -44,6 +44,15 @@ public class MainActivity extends Activity {
     private static final float ACC_DEAD = 0.004f, VEL_DEAD = 0.02f;
 
     /** 按住時每一幀更新透鏡與底欄的縮放：按住放大逐漸到位（pressP），再加上由手指加速度驅動的彈簧阻尼形變（d）。 */
+    /** 果凍形變：d 越大（加速度越大）透鏡越往移動的方向拉長、上下壓扁；強度跟著「拖動形變強度」滑桿（預設 2 ＝ 係數 1）。 */
+    private void applyJelly(float d) {
+        if (!(indicator instanceof GlassBar)) return;
+        float k = GlassPrefs.stretch / 2f;
+        float jx = Math.max(0.8f, Math.min(1.7f, 1f + 0.16f * k * d));
+        float jy = Math.max(0.65f, Math.min(1.15f, 1f - 0.10f * k * d));
+        ((GlassBar) indicator).setJelly(jx, jy);
+    }
+
     private void startStretch() {
         if (stretching) return;
         stretching = true;
@@ -61,10 +70,11 @@ public class MainActivity extends Activity {
                     stretchV = 0f;
                     if (indicator instanceof GlassBar) {
                         ((GlassBar) indicator).setStretch(0.25f * stretchD * GlassPrefs.stretch, -0.2f * stretchD * GlassPrefs.stretch);
+                        applyJelly(stretchD);
                         ((GlassBar) indicator).kick(200);
                     }
                     if (Math.abs(stretchD) < 0.003f) {
-                        if (indicator instanceof GlassBar) ((GlassBar) indicator).setStretch(0f, 0f);
+                        if (indicator instanceof GlassBar) { ((GlassBar) indicator).setStretch(0f, 0f); ((GlassBar) indicator).setJelly(1f, 1f); }
                         stretching = false;
                         return;
                     }
@@ -88,6 +98,7 @@ public class MainActivity extends Activity {
                 indicator.setScaleY(1f + (GlassPrefs.pressY - 1f) * pressP);
                 if (indicator instanceof GlassBar) {
                     ((GlassBar) indicator).setStretch(0.25f * d * GlassPrefs.stretch, -0.2f * d * GlassPrefs.stretch);
+                    applyJelly(d);
                     ((GlassBar) indicator).kick(200);
                 }
                 bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP);

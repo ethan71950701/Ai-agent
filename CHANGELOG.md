@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 拖動底欄時透鏡的外形像果凍一樣沿移動方向拉長、上下壓扁，停下來彈回（圖示反向補償不變形）；強度用「拖動形變強度」滑桿調｜While dragging the bar, the lens now squashes and stretches like jelly along the drag direction and springs back (icons are counter-scaled so they stay undistorted); the strength follows the "Drag deformation strength" slider
+
 - 設定 → 底欄玻璃：新增「拖動形變強度」滑桿，預設比以前強兩倍（拖動時透鏡邊緣被拉扯得更明顯）｜Settings → Glass bar: new "Drag deformation strength" slider; the default is now twice as strong (the lens edge is pulled more visibly while dragging)
 
 ## 1.0.1464
