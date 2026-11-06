@@ -552,9 +552,17 @@ final class GlassBar extends FrameLayout {
         }
     }
 
+    /** 診斷頁「按鈕透鏡」那一行：強度、模糊、歪斜、形變、縮放、旋轉。 */
+    private void updateLensInfo(int w, int h) {
+        lensInfo = L.t("強度 ") + String.format("%.2f", amount) + L.t("、模糊倍率 ") + String.format("%.2f", blurFactor) + L.t("、歪斜 ") + String.format("%.3f", skewNow)
+                + String.format(java.util.Locale.US, " | stretch %.2f,%.2f jelly %.2f,%.2f view scale %.2f,%.2f rot %.1f/%.1f/%.1f pivot %.0f,%.0f size %dx%d",
+                        stretchX, stretchY, jellyX, jellyY, getScaleX(), getScaleY(), getRotation(), getRotationX(), getRotationY(), getPivotX(), getPivotY(), w, h);
+    }
+
     private void drawGlass(Canvas canvas, int w, int h) {
         refreshTint();
         if (lens && parentBar != null) {
+            updateLensInfo(w, h);
             // 透鏡：底下用底欄的模糊背景（不再另外抓頁面，所以不會透明），圖示照常放大與折射
             drawOuterShadow(canvas);
             drawUnderLens(canvas);
@@ -593,9 +601,7 @@ final class GlassBar extends FrameLayout {
         canvas.clipPath(clip);
         canvas.drawRenderNode(node);
         canvas.restore();
-        if (lens) lensInfo = L.t("強度 ") + String.format("%.2f", amount) + L.t("、模糊倍率 ") + String.format("%.2f", blurFactor) + L.t("、歪斜 ") + String.format("%.3f", skewNow)
-                + String.format(java.util.Locale.US, " | stretch %.2f,%.2f jelly %.2f,%.2f view scale %.2f,%.2f rot %.1f/%.1f/%.1f pivot %.0f,%.0f size %dx%d",
-                        stretchX, stretchY, jellyX, jellyY, getScaleX(), getScaleY(), getRotation(), getRotationX(), getRotationY(), getPivotX(), getPivotY(), w, h);;
+        if (lens) updateLensInfo(w, h);
         if (lens && iconSource != null && amount > 0.02f) drawMagnifiedIcons(canvas);
     }
 
