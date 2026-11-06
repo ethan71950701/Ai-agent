@@ -225,6 +225,16 @@ final class LEn {
         m.put("紅蘿蔔，因為它「紅」了。", "The carrot. It's the one that's famous.");
         m.put("電腦為什麼不怕冷？", "Why is a computer never cold?");
         m.put("因為它有 Windows。", "Because it has Windows.");
+        m.put("什麼茶不能喝？", "What tea can't you drink?");
+        m.put("找茶，因為諧音「找碴」。", "Reality, it's hard to swallow.");
+        m.put("哪個國家的人最不愛蹲？", "Which country's people never squat?");
+        m.put("不丹，因為諧音「不蹲」。", "Bhutan. In Chinese it sounds like \"doesn't squat\".");
+        m.put("蝙蝠為什麼倒著掛？", "Why do bats hang upside down?");
+        m.put("因為這樣就是「福到」了。", "In Chinese, an upside-down bat sounds like \"good fortune has arrived\".");
+        m.put("什麼東西一碰就破？", "What breaks the moment you touch it?");
+        m.put("紀錄。", "A record.");
+        m.put("什麼瓜不能吃？", "What kind of melon can't you eat?");
+        m.put("傻瓜。", "A silly melon, also known as a fool.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");
