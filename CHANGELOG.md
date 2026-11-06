@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1559
+
 - 標題列下緣加一段漸層淡出：內容捲到標題列下面時慢慢淡掉，不再被一刀切成一條黑邊｜A soft gradient fade under the title bar: content scrolling beneath it now fades out instead of being cut off in a hard dark line
 
 ## 1.0.1558
