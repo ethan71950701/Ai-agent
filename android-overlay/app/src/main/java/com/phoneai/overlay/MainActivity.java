@@ -395,7 +395,7 @@ public class MainActivity extends Activity {
 
     private void showTab(int i) {
         kickGlass();
-        Anim.boostFrames(root, 900);   // 換分頁的動畫期間要高更新率
+        Anim.boostFrames(root, 900, "換分頁");   // 換分頁的動畫期間要高更新率
         final int prev = shown;
         shown = i;
         tab = i;

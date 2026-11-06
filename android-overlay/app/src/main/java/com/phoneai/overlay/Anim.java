@@ -24,8 +24,16 @@ final class Anim {
      * 動畫期間要求高更新率（Android 15 以上）。這支手機的螢幕會依內容自動降更新率省電；手指離開後只剩一個小東西在彈，
      * 系統就把更新率降得很低，彈簧看起來一格一格的。這裡明確告訴系統「現在有動畫，請用高更新率」，ms 毫秒後恢復預設。
      */
-    static void boostFrames(View v, long ms) {
+    static void boostFrames(View v, long ms) { boostFrames(v, ms, null); }
+
+    /** tag：這段動畫是什麼（診斷頁會寫出來，才知道哪個動作掉幀）。 */
+    static void boostFrames(View v, long ms, String tag) {
         if (v == null) return;
+        String who = "";
+        android.content.Context c = v.getContext();
+        while (c instanceof android.content.ContextWrapper && !(c instanceof android.app.Activity)) c = ((android.content.ContextWrapper) c).getBaseContext();
+        if (c instanceof android.app.Activity) who = c.getClass().getSimpleName().replace("Activity", "");
+        monTags.add((tag == null ? "動畫" : tag) + (who.isEmpty() ? "" : "@" + who));
         monitorFrames(ms);
         if (android.os.Build.VERSION.SDK_INT < 35) return;
         try {
@@ -43,6 +51,7 @@ final class Anim {
     private static boolean monitoring;
     private static long monUntil, monLast, monMax, monSum;
     private static int monN, monSlow;
+    private static final java.util.LinkedHashSet<String> monTags = new java.util.LinkedHashSet<>();
     private static final java.util.ArrayDeque<String> FPS_LOG = new java.util.ArrayDeque<>();
 
     /** 動畫期間記下每一幀的間隔：平均間隔就是實際更新率（8.3 毫秒≈120Hz、16.7≈60Hz、33≈30Hz），診斷頁看。 */
@@ -65,10 +74,12 @@ final class Anim {
                 monLast = t;
                 if (android.os.SystemClock.uptimeMillis() < monUntil) { ch.postFrameCallback(this); return; }
                 monitoring = false;
+                java.util.LinkedHashSet<String> keep = new java.util.LinkedHashSet<>(monTags);
+                monTags.clear();
                 if (monN >= 6) {
                     float avg = monSum / (float) monN;
-                    FPS_LOG.addFirst(String.format(java.util.Locale.US, "%d 幀，平均間隔 %.1f 毫秒（約 %d Hz），最長 %d 毫秒，超過 20 毫秒 %d 次",
-                            monN, avg, Math.round(1000f / avg), monMax, monSlow));
+                    FPS_LOG.addFirst(String.format(java.util.Locale.US, "[%s] %d 幀，平均間隔 %.1f 毫秒（約 %d Hz），最長 %d 毫秒，超過 20 毫秒 %d 次",
+                            android.text.TextUtils.join("、", keep), monN, avg, Math.round(1000f / avg), monMax, monSlow));
                     while (FPS_LOG.size() > 5) FPS_LOG.removeLast();
                 }
             }
@@ -79,7 +90,7 @@ final class Anim {
     static String frameInfo() { return android.text.TextUtils.join("\n　　", FPS_LOG); }
 
     static void spring(View v, DynamicAnimation.ViewProperty prop, float to, float stiffness, float damping) {
-        boostFrames(v, 900);
+        boostFrames(v, 900, "彈簧");
         // 同一個 View 的同一個屬性只留一個彈簧；舊的沒取消會在新的結束後繼續跑，把值拉回舊目標（按鈕卡在縮小狀態就是這樣來的）
         java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation> m = RUNNING.get(v);
         if (m == null) { m = new java.util.HashMap<>(); RUNNING.put(v, m); }
@@ -130,7 +141,7 @@ final class Anim {
      * 展開是先快後慢、收合是先慢後快。同時間只跑一個，連點會從目前的高度接著動，不會跳。
      */
     static void expandSmooth(final View body, final boolean show) {
-        boostFrames(body, 700);
+        boostFrames(body, 700, "群組展開");
         final ViewGroup.LayoutParams lp = body.getLayoutParams();
         Object old = body.getTag(R_EXPAND);
         if (old instanceof android.animation.ValueAnimator) ((android.animation.ValueAnimator) old).cancel();

@@ -508,7 +508,7 @@ final class Ui {
 
     /** 一組內容一張一張「升起」：從下面 20dp 淡入滑上來（Material 的強調減速曲線），不用彈簧、不縮放，比彈出來穩。delay 是起始延遲（毫秒）。 */
     static void riseIn(View v, long delay) {
-        Anim.boostFrames(v, 900 + delay);
+        Anim.boostFrames(v, 900 + delay, "升起");
         v.setAlpha(0f);
         v.setTranslationY(dp(v.getContext(), 20));
         v.animate().alpha(1f).translationY(0f).setStartDelay(delay).setDuration(320).setInterpolator(EMPHASIZED).start();
@@ -642,10 +642,15 @@ final class Ui {
         root.setTag(R_VEIL, veil);
     }
 
-    private static void removeVeil(View root) {
-        Object v = root.getTag(R_VEIL);
-        if (v instanceof View && ((View) v).getParent() instanceof ViewGroup) ((ViewGroup) ((View) v).getParent()).removeView((View) v);
+    /** 動畫結束：蓋層只隱藏（INVISIBLE 不會重新排版；removeView 會讓整頁重排，剛好卡在最後一幀）。真的拿掉等之後閒下來再做。 */
+    private static void removeVeil(final View root) {
+        final Object v = root.getTag(R_VEIL);
         root.setTag(R_VEIL, null);
+        if (!(v instanceof View)) return;
+        ((View) v).setVisibility(View.INVISIBLE);
+        root.postDelayed(() -> {
+            if (((View) v).getParent() instanceof ViewGroup) ((ViewGroup) ((View) v).getParent()).removeView((View) v);
+        }, 600);
     }
 
     private static void setupClip(View root) {
@@ -666,7 +671,7 @@ final class Ui {
         final float corner = dp(a, 22);
         root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         setupClip(root);
-        Anim.boostFrames(root, 700);
+        Anim.boostFrames(root, 700, "子頁返回");
         installVeil(a, root, 0f, EXIT_SNAP.get(a));   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
         va.setDuration(340);
@@ -719,12 +724,14 @@ final class Ui {
                             enterInfo = android.text.TextUtils.join("\n　　", ENTER_LOG);
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
-                            root.setClipToOutline(false);
-                            root.setLayerType(View.LAYER_TYPE_NONE, null);
+                            root.postDelayed(() -> {   // 結束那一幀不要同時做這麼多事：圓角裁切與繪圖層晚一點才拆
+                                root.setClipToOutline(false);
+                                root.setLayerType(View.LAYER_TYPE_NONE, null);
+                            }, 250);
                         }
                     });
                     // 先讓第一次繪製（建立繪圖層、畫出第一幀）完成再開始跑時間：頁面很重時前一兩幀會卡，動畫時間照跑的話，卡完會直接跳到後面
-                    Anim.boostFrames(root, 900);
+                    Anim.boostFrames(root, 900, "子頁展開");
                     root.post(() -> root.postOnAnimation(va::start));
                     return true;
                 }

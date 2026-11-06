@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 子頁面展開結束那一幀掉幀的修正：蓋層改成隱藏、圓角裁切與繪圖層晚一點才拆；診斷頁的動畫更新率會註明每段動畫是什麼｜Fix the dropped frame at the very end of the sub-page expansion: the veil is now hidden instead of removed and the clip and layer are torn down later; the diagnostics page now labels each animation window
+
 - 內部整理：移除沒有入口的「麥克風測試」頁面｜Internal clean-up: removed the Mic test page, which had no entry point
 
 ## 1.0.1490
