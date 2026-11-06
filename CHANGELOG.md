@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 任務過程：點進詳細頁再返回，動畫不再壞掉（以前返回時整串卡片被清掉重建，縮回去的那張卡片剛好不見了；現在內容沒變就不重建）｜Task log: opening a detail page and coming back no longer breaks the animation (the whole card list used to be cleared and rebuilt on return, so the card being shrunk back into had vanished; now it is left alone when nothing changed)
+
+## 1.0.1552
+
 - 語音可以一直說下去：說到約 15 秒、遇到停頓時，前面那一段先辨識固定下來，繼續錄下一段；邊說邊顯示只算目前這一段，不會越來越慢。安全上限改成 3 分鐘｜Voice can go on as long as you like: after about 15 seconds, at a pause, the earlier part is recognized and locked in while recording continues; the live text only re-decodes the current part, so it no longer slows down. The safety limit is now 3 minutes
 
 ## 1.0.1551
