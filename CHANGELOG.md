@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1487
+
 - 診斷頁的子頁面展開量測多記「最長間隔發生在動畫進度的幾 %」｜The sub-page expand stats on the diagnostics page now also record at what percentage of the animation the longest gap happened
 
 ## 1.0.1486
