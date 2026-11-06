@@ -160,7 +160,6 @@ public class AssistantSheet {
         partialView.setLineSpacing(0, 1.15f);
         partialView.setShadowLayer(8 * d, 0, 0, 0xCC000000);
         partialView.setMaxLines(4);
-        partialView.setEllipsize(android.text.TextUtils.TruncateAt.START);   // 太長就把前面的字省略，永遠看得到最新的
         partialView.setPadding((int) (14 * d), (int) (8 * d), (int) (14 * d), (int) (10 * d));
         partialView.setVisibility(View.GONE);
         content.addView(partialView, new LinearLayout.LayoutParams(-1, -2));
@@ -570,7 +569,8 @@ public class AssistantSheet {
     }
 
     private void showPartial(String t) {
-        partialView.setText(t);
+        // 太長只留最後 60 字（前面加「…」）：以前靠 TextView 的 ellipsize=START，多行時前面的字會莫名消失
+        partialView.setText(t.length() > 60 ? "…" + t.substring(t.length() - 60) : t);
         partialView.setVisibility(View.VISIBLE);
     }
 

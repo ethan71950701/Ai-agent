@@ -47,6 +47,7 @@ final class SpeechCapture {
     private java.util.function.Consumer<String> partial;
     private final java.util.concurrent.atomic.AtomicBoolean decoding = new java.util.concurrent.atomic.AtomicBoolean();
     private volatile boolean finished;
+    private volatile String lastPartial;
     private static final java.util.concurrent.ExecutorService PARTIAL_EX = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     private void maybePartial(ArrayList<short[]> chunks, int total) {
@@ -58,7 +59,13 @@ final class SpeechCapture {
         PARTIAL_EX.execute(() -> {
             try {
                 String t = SherpaEngine.recognize(ctx, toFloat(snap), RATE);
-                if (!finished && !cancel && t != null && !t.isEmpty()) UI.post(() -> { if (!finished && !cancel) partial.accept(t); });
+                if (!finished && !cancel && t != null && !t.isEmpty()) {
+                    // 穩定化：整段重新辨識時，偶爾新結果比上一次短很多（前面的字掉了）。那種就先不更新畫面，等下一輪；最後一次完整辨識不受影響
+                    String prev = lastPartial;
+                    if (prev != null && t.length() < prev.length() * 0.7f && !prev.startsWith(t)) return;
+                    lastPartial = t;
+                    UI.post(() -> { if (!finished && !cancel) partial.accept(t); });
+                }
             } catch (Throwable ignored) {
             } finally {
                 decoding.set(false);
@@ -111,7 +118,7 @@ final class SpeechCapture {
                 if (rms > thr) { spoke = true; silent = 0; } else if (spoke) silent++;
                 if (spoke && (silent >= endChunks || stop)) break;         // 說過話、停頓超過設定的秒數（或被叫停）
                 if (!spoke && (stop || total > RATE * 8)) break;          // 還沒開口：被叫停或 8 秒
-                if (total > RATE * 20) break;                              // 最長 20 秒
+                if (total > RATE * 30) break;                              // 最長 30 秒（以前 20 秒，長句會被硬切）
             }
             finished = true;   // 之後不再送邊說邊辨識的結果，免得蓋掉最後的完整辨識
             if (cancel) return;

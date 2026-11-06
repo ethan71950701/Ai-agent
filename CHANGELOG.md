@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 長句語音：邊說邊顯示的文字不再讓前面的字消失（太長只顯示最後 60 字、結果突然變短就先不更新），錄音上限 20 秒改 30 秒｜Long sentences: the live text no longer loses its beginning (only the last 60 characters are shown, and a sudden shorter result is ignored), and the recording limit goes from 20 s to 30 s
 - 說話稍微停頓就被切掉：離線辨識的「說完」停頓時間從固定 1 秒改成預設 1.6 秒，並可在設定 → 語音調整（0.8～4 秒）｜Getting cut off when you pause briefly: the pause that ends your sentence in offline recognition is now 1.6 s by default instead of a fixed 1 s, adjustable in Settings → Voice (0.8-4 s)
 
 ## 1.0.1547

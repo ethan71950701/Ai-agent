@@ -704,7 +704,7 @@ public class MainActivity extends Activity {
                 }, "home-voice").start();
             }
             @Override public void onError(String msg) { homeCapture = null; setWaves(WaveView.IDLE); showAnswer(L.t("錄音失敗：") + msg); }
-        }, t -> { if (homeCapture != null) showAnswer(t); });   // 邊說邊顯示：目前聽到的字放在問候語下面
+        }, t -> { if (homeCapture != null) showAnswer(t.length() > 60 ? "…" + t.substring(t.length() - 60) : t); });   // 邊說邊顯示：目前聽到的字放在問候語下面
     }
 
     private Runnable homePending;
