@@ -281,6 +281,7 @@ public class AssistantSheet {
         canvas = new CircleCanvas(act, b, new CircleCanvas.Listener() {
             @Override public void onSelected(RectF box) {
                 circleBox = box;
+                circleConvo = new JSONArray();   // 選了新的區域：對話重來
                 setStatus(L.t("已選取，說出或打字問題（空白也可以）"));
                 refreshAction();
             }
@@ -304,18 +305,24 @@ public class AssistantSheet {
         return CircleShot.jpeg64(crop, 1280, 85);
     }
 
-    /** 有選取：把選取的區域（加一張縮小的整個畫面當上下文）和問題一起交給聊天模型，回答顯示在回答卡片。 */
-    private void askCircle(final String q) {
-        final JSONArray msgs = new JSONArray();
+    private JSONArray circleConvo = new JSONArray();   // 這一個選取區域的整段對話（第一輪有圖，之後接著問都帶著，才有上下文）
+
+    /** 有選取：把選取的區域（加一張縮小的整個畫面當上下文）和問題一起交給聊天模型；之後不用再選，直接接著問（同一段對話）。 */
+    private void askCircle(final String q, final boolean followUp) {
         try {
             JSONArray content = new JSONArray();
-            content.put(CircleShot.img(circleCrop()));
-            content.put(CircleShot.img(CircleShot.jpeg64(shot, 800, 70)));
-            content.put(new JSONObject().put("type", "text").put("text", (L.en()
-                    ? "The first image is the region the user selected; the second is the whole screen for context. The user's question: "
-                    : "第一張圖是使用者選取的區域，第二張是整個畫面（給你看上下文）。使用者的問題：")
-                    + (q.isEmpty() ? (L.en() ? "What is this? Explain briefly and add useful related information." : "這是什麼？請簡短說明，並補充有用的相關資訊。") : q)));
-            msgs.put(new JSONObject().put("role", "user").put("content", content));
+            if (!followUp) {
+                circleConvo = new JSONArray();
+                content.put(CircleShot.img(circleCrop()));
+                content.put(CircleShot.img(CircleShot.jpeg64(shot, 800, 70)));
+                content.put(new JSONObject().put("type", "text").put("text", (L.en()
+                        ? "The first image is the region the user selected; the second is the whole screen for context. The user's question: "
+                        : "第一張圖是使用者選取的區域，第二張是整個畫面（給你看上下文）。使用者的問題：")
+                        + (q.isEmpty() ? (L.en() ? "What is this? Explain briefly and add useful related information." : "這是什麼？請簡短說明，並補充有用的相關資訊。") : q)));
+            } else {
+                content.put(new JSONObject().put("type", "text").put("text", q));
+            }
+            circleConvo.put(new JSONObject().put("role", "user").put("content", content));
         } catch (Exception e) {
             return;
         }
@@ -327,13 +334,19 @@ public class AssistantSheet {
         setStatus(L.t("思考中…"));
         setWaveState(WaveView.THINKING);
         final Context app = act.getApplicationContext();
+        final JSONArray convo = circleConvo;
         new Thread(() -> {
-            String r = ChatEngine.visionChat(app, msgs, true);
+            String r = ChatEngine.visionChat(app, convo, true);
             act.runOnUiThread(() -> {
                 if (dismissing) return;
                 setWaveState(WaveView.IDLE);
-                if (r == null) showReply("", L.t("連不上 AI：") + ChatEngine.lastError);
-                else showReply("", r);
+                if (r == null) {
+                    if (convo.length() > 0) convo.remove(convo.length() - 1);   // 失敗的這一輪不留，重送才不會疊兩次
+                    showReply("", L.t("連不上 AI：") + ChatEngine.lastError);
+                } else {
+                    try { convo.put(new JSONObject().put("role", "assistant").put("content", r)); } catch (Exception ignored) { }
+                    showReply("", r);
+                }
             });
         }, "circle-ask-panel").start();
     }
@@ -781,7 +794,8 @@ public class AssistantSheet {
         String t = input.getText().toString().trim();
         if (t.isEmpty() && circleBox == null) return;
         if (questionMode) { answerQuestion(t); return; }
-        if (circleBox != null && shot != null) { askCircle(t); return; }   // 有選取：這次問的是選起來的地方
+        if (circleBox != null && shot != null) { askCircle(t, false); return; }   // 有選取：這次問的是選起來的地方
+        if (circleConvo.length() > 0 && !t.isEmpty()) { askCircle(t, true); return; }   // 剛問完圈選：接著問就是同一段對話
         // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）
         Assist.Route route = Assist.route(t);
         root.post(() -> runLocal(route, t));
