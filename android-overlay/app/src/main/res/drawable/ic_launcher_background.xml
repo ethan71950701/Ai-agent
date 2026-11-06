@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 應用圖示背景：單一的近白色（沒有漸層）。 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient
-        android:type="radial"
-        android:centerX="0.5"
-        android:centerY="0.5"
-        android:gradientRadius="76dp"
-        android:startColor="#FF2F3275"
-        android:endColor="#FF121218" />
+    <solid android:color="#FFF2F5F6" />
 </shape>
