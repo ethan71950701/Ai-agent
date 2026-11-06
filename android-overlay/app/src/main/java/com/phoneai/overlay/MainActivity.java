@@ -949,7 +949,18 @@ public class MainActivity extends Activity {
         }
         A11yGuard.ensure(this);
         refresh();
+        if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
+        if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
         kickGlass();
+    }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_UI_HIDDEN) {   // 畫面被藏起來、系統可能回收繪圖資源
+            if (glass != null) glass.resetGpu();
+            if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
+        }
     }
 
     private void applyPowerKey(boolean on) {

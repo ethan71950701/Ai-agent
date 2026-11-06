@@ -314,6 +314,20 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 拖動時的形變量（只畫在透鏡邊緣，中間的內容不動）。要配合 kick() 讓畫面更新。 */
+    /** 回到 App、或系統回收了繪圖資源之後：把這個玻璃所有 RenderNode 的錄製內容丟掉，下一幀整個重錄（偶爾透鏡會一直是歪的梯形，重開 App 才好）。 */
+    void resetGpu() {
+        try {
+            node.discardDisplayList();
+            iconNode.discardDisplayList();
+            underNode.discardDisplayList();
+            shadowNode.discardDisplayList();
+            capNode.discardDisplayList();
+        } catch (Throwable ignored) { }
+        capReady = false;
+        invalidate();
+        kick(600);
+    }
+
     private float jellyX = 1f, jellyY = 1f;   // 果凍形變：拖動時透鏡的外形沿著移動方向拉長、另一邊壓扁（圖示反向補償，不會被拉歪）
 
     void setJelly(float jx, float jy) {
