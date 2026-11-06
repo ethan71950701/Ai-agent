@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1507
+
 - 首頁改版：中間是三條波的標誌與問候語（早安/午安/晚安），底部膠囊右邊的圓鈕按下去整條變成波開始聽，有字時變成送出｜Home redesign: the three-wave mark and a greeting in the middle; in the bottom pill the round button turns the whole pill into a wave while listening, and becomes send when you have typed text
 
 ## 1.0.1506
