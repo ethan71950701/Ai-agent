@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1470
+
 - 玻璃畫圖出錯時：還原畫布狀態、記錄錯誤、幾秒後自動再試（以前會永遠退回半透明，重開 App 才好）｜When the glass fails to draw, the canvas state is restored, the error is logged and it retries a few seconds later (it used to stay in the flat fallback until the app was restarted)
 
 ## 1.0.1469
