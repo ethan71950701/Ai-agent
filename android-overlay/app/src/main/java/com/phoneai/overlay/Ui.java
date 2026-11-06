@@ -534,22 +534,6 @@ final class Ui {
         });
     }
 
-    /** 展開動畫結束後才執行 r（沒有在展開就立刻執行）。 */
-    static void afterEnter(android.app.Activity a, Runnable r) {
-        java.util.ArrayList<Runnable> l = PENDING.get(a);
-        if (l == null) r.run(); else l.add(r);
-    }
-
-    /** 展開動畫結束後才執行 r（建內容），box 先隱藏、建好後淡入。 */
-    static void afterEnterFade(android.app.Activity a, final View box, final Runnable r) {
-        if (!PENDING.containsKey(a)) { r.run(); return; }
-        box.setAlpha(0f);
-        afterEnter(a, () -> {
-            r.run();
-            box.animate().alpha(1f).setDuration(240).start();
-        });
-    }
-
     /** 示意圖第一次出現時彈一下（彈簧，有點過衝）。 */
     static void bounceIn(View v) {
         v.setScaleX(0.6f);
