@@ -95,7 +95,7 @@ final class NotifDigest {
                     + "每個是 {\"title\":\"簡短標題\",\"date\":\"yyyy-MM-dd，沒有就空字串\",\"time\":\"HH:mm（24 小時制），沒有就空字串\","
                     + "\"type\":\"calendar（有明確時間的活動）或 reminder（待辦、期限）\",\"from\":\"哪個 App\"}；「明天、下週一」要換成實際日期；沒有就給 []。只輸出 JSON。\n\n"
                     + snap;
-            JSONObject body = new JSONObject().put("model", ChatEngine.MODEL).put("max_tokens", 1200)
+            JSONObject body = new JSONObject().put("model", ChatEngine.MODEL).put("max_tokens", 3000)
                     .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
             JSONObject r = null;
             for (int attempt = 0; ; attempt++) {   // 服務暫時太忙（502、503、504）通常幾秒就好：自動多試兩次，不用你重按
@@ -114,6 +114,11 @@ final class NotifDigest {
             for (int i = 0; content != null && i < content.length(); i++)
                 if ("text".equals(content.getJSONObject(i).optString("type"))) sb.append(content.getJSONObject(i).optString("text"));
             JSONObject o = parse(sb.toString());
+            if (o == null) {
+                // JSON 解不開（常見：回答太長被截斷、或前後多了字）：只記長度與結束原因（不記通知內容），再盡量把摘要文字救出來顯示
+                CrashLog.w("通知整理", new Exception("parse failed, len=" + sb.length() + ", stop=" + r.optString("stop_reason")));
+                o = salvage(sb.toString());
+            }
             if (o == null) return L.t("AI 的回答看不懂，請再試一次");
             o.put("time", System.currentTimeMillis());
             save(c, o);
@@ -126,6 +131,25 @@ final class NotifDigest {
         } catch (Exception e) {
             CrashLog.w("通知整理", e);
             return L.t("整理失敗：") + e.getMessage();
+        }
+    }
+
+    /** 救回摘要：JSON 不完整時，從 "summary" 欄位或整段文字取出可讀的內容（沒有可加入的項目）。 */
+    static JSONObject salvage(String raw) {
+        try {
+            String t = raw.replace("```json", "").replace("```", "").trim();
+            if (t.isEmpty()) return null;
+            String sum = t;
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"summary\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)", java.util.regex.Pattern.DOTALL).matcher(t);
+            if (m.find()) {
+                sum = m.group(1).replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\").trim();
+            } else if (t.startsWith("{")) {
+                return null;   // 看起來是壞掉的 JSON、又抓不到摘要：不要把原始 JSON 當摘要顯示
+            }
+            if (sum.length() < 8) return null;
+            return new JSONObject().put("summary", sum).put("items", new JSONArray());
+        } catch (Exception e) {
+            return null;
         }
     }
 
