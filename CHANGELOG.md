@@ -4,7 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
-- 首頁：問候語下面與輸入框裡加了函數波形，按麥克風時隨音量起伏｜Home: function-wave lines under the greeting and inside the input bar; they react to your voice while recording
+- 首頁輸入框預設是語音模式：整個框是一條函數波（跟助理面板一樣），按麥克風錄音時隨音量起伏，點框才切成打字｜Home input bar now defaults to voice mode: a function wave like the assistant panel that reacts to your voice; tap the bar to type
 
 ## 1.0.1504
 

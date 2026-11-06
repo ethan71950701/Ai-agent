@@ -539,7 +539,7 @@ public class MainActivity extends Activity {
     private String myTheme = "";
 
     private View homeBar;
-    private WaveView barWave, greetWave;
+    private WaveView barWave;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
     private void setHomeScroll(boolean on) {
@@ -585,13 +585,29 @@ public class MainActivity extends Activity {
             String t = et.getText().toString().trim();
             if (t.isEmpty()) return;
             et.setText("");
+            et.clearFocus();
             homeAsk(t);
         };
         et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
-        bar.addView(et, new LinearLayout.LayoutParams(0, -2, 1f));
-        barWave = new WaveView(this);   // 輸入框裡的小波形：平常輕輕流動，錄音時隨音量起伏
+        // 預設是語音模式：整個框是一條波（跟助理面板一樣）；點框才切成打字，沒打字就離開時變回波
+        final android.widget.FrameLayout holder = new android.widget.FrameLayout(this);
+        barWave = new WaveView(this);
         barWave.setIdle(0.5f);
-        bar.addView(barWave, new LinearLayout.LayoutParams(Ui.dp(this, 56), Ui.dp(this, 30)));
+        holder.addView(barWave, new android.widget.FrameLayout.LayoutParams(-1, Ui.dp(this, 34), android.view.Gravity.CENTER_VERTICAL));
+        et.setVisibility(View.GONE);
+        holder.addView(et, new android.widget.FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
+        final WaveView bw = barWave;
+        holder.setOnClickListener(v -> {
+            bw.setVisibility(View.GONE);
+            et.setVisibility(View.VISIBLE);
+            et.requestFocus();
+            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (im != null) im.showSoftInput(et, 0);
+        });
+        et.setOnFocusChangeListener((v, has) -> {
+            if (!has && et.getText().length() == 0) { et.setVisibility(View.GONE); bw.setVisibility(View.VISIBLE); }
+        });
+        bar.addView(holder, new LinearLayout.LayoutParams(0, Ui.dp(this, 44), 1f));
         IconView mic = new IconView(this, "mic", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         mic.setOnClickListener(v -> homeVoice());   // 語音直接在首頁錄音、辨識、回答（不開面板）
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44));
@@ -658,7 +674,7 @@ public class MainActivity extends Activity {
         if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
         SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { setWaves(WaveView.LISTENING); }
-            @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); if (greetWave != null) greetWave.setLevel(v); }
+            @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); }
             @Override public void onDone(short[] pcm) {
                 setWaves(WaveView.THINKING);
                 if (pcm == null) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
@@ -676,7 +692,6 @@ public class MainActivity extends Activity {
 
     private void setWaves(int st) {
         if (barWave != null) barWave.setState(st);
-        if (greetWave != null) greetWave.setState(st);
     }
 
     private void showAnswer(String text) {
@@ -705,12 +720,6 @@ public class MainActivity extends Activity {
         gp.topMargin = Ui.dp(this, 48);
         gp.bottomMargin = Ui.dp(this, 16);
         box.addView(greet, gp);
-        greetWave = new WaveView(this);   // 問候語下面的一條函數波
-        greetWave.setIdle(0.55f);
-        LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 64));
-        wp.leftMargin = wp.rightMargin = Ui.dp(this, 24);
-        wp.bottomMargin = Ui.dp(this, 8);
-        box.addView(greetWave, wp);
         answerView = new TextView(this);   // 回答顯示在問候語下面
         answerView.setVisibility(View.GONE);
         answerView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);
