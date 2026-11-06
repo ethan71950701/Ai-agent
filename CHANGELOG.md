@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 圈選提問回答後可以接著問，同一段對話有上下文（選新區域才重來）｜After a circle-to-ask answer you can keep asking in the same conversation with context (selecting a new region starts over)
+
+## 1.0.1526
+
 - 圈選截圖不再拍到面板的開場動畫：面板先藏著，截好圖才出現（最多等 1.5 秒）｜Circle-to-ask screenshots no longer capture the panel's opening animation: the panel stays hidden until the shot is taken (up to 1.5 s)
 
 ## 1.0.1525
