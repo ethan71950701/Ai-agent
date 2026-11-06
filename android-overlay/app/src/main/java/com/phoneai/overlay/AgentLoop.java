@@ -467,6 +467,7 @@ final class AgentLoop {
                         String think = action.optString("think");
                         history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
                         recordStep(recorded, macroValid, action, tree, useTree, result.startsWith("已"));
+                        if (result.startsWith("沒有「") && (wasForced || !useTree)) forceShot = true;   // 看圖那一步模型亂說了不存在的動作：下一步還是給截圖（Sonnet 重來），不要退回元件清單又 look 一次
                         // 指令類動作（亮度、Wi-Fi、藍牙、音量）：模型說「做完任務就完成」(finish) 而且指令成功，就直接結束，不再多問一次模型
                         String fin = action.optString("finish", "").trim();
                         if (!fin.isEmpty() && (name.equals("brightness") || name.equals("volume") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
