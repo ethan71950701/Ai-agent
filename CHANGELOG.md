@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1565
+
 - 頂欄毛玻璃：標題列改成固定高度、不再收合（大標題往上收時會被切掉一半）；玻璃底色改成跟頁面背景同色，過渡不再有色差斷層｜Frosted top bar: the title bar is now a fixed height and no longer collapses (the large title used to be cut in half as it moved up), and the glass tint is the same color as the page background so the fade has no color seam
 
 ## 1.0.1564
