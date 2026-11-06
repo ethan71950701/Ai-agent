@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 診斷頁新增「透鏡著色器」那一行（餵給透鏡的尺寸、光源、縮放），以及「重建玻璃」按鈕：底欄變梯形時按一下，看會不會恢復｜Diagnostics: a "Lens shader" line (size, light and scale fed to the lens) and a "Rebuild glass" button to press when the bottom bar is deformed, to see whether it recovers
 - 底欄偶爾變梯形（掛在背景再回來）：回到 App 時，玻璃的繪圖節點與著色器改成全部換新的，不再沿用可能壞掉的舊物件｜Bottom bar occasionally turning into a trapezoid (after leaving the app in the background): on return the glass now gets brand-new render nodes and shaders instead of reusing possibly broken ones
 
 ## 1.0.1543

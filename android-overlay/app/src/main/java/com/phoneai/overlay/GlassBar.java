@@ -142,6 +142,7 @@ final class GlassBar extends FrameLayout {
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
     static volatile String status = L.t("還沒畫過");
+    static volatile String shaderInfo = "";   // 診斷用：最近一次餵給透鏡著色器的值
     static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
     private final boolean lens;
@@ -421,6 +422,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("highlightAlpha", lens ? HIGHLIGHT * progress : 0f);   // 邊緣高光：被左上光源照到的亮邊，背景再平也有玻璃感；按住才慢慢出現
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
+        if (lens && sh == shader) shaderInfo = String.format(java.util.Locale.US, "halfSize %.0fx%.0f radius %.0f lightAngle %.2f viewScale %.2f,%.2f light %.2f,%.2f nodes %dx%d/%dx%d", w / 2f, h / 2f, radius, lp[0], lp[1], lp[2], lp[3], lp[4], node.getWidth(), node.getHeight(), underNode.getWidth(), underNode.getHeight());
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);

@@ -238,6 +238,10 @@ final class LEn {
         m.put("路由失敗，當成聊天", "Routing failed, treated as chat");
         m.put("路由：看不懂便宜模型的回答，當成聊天", "Route: could not parse the cheap model's answer, treated as chat");
         m.put("（便宜模型沒把握，改問較強的模型）", " (the cheap model was unsure, asked a stronger one)");
+        m.put("透鏡著色器：", "Lens shader: ");
+        m.put("重建玻璃（底欄變形時按）", "Rebuild glass (press when the bottom bar is deformed)");
+        m.put("已重建，回到首頁看看有沒有恢復", "Rebuilt. Go back home to see if it recovered");
+        m.put("主畫面不在，沒有東西可以重建", "The main screen is gone, nothing to rebuild");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

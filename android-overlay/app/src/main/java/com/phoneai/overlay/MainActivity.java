@@ -203,6 +203,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        live = new java.lang.ref.WeakReference<>(this);
         MemoryActivity.warm();   // 先在背景讀好記憶，點進去就不用等
         final boolean hadRoot = Root.knownRoot();
         new Thread(() -> {   // 背景判斷有沒有 root；跟畫面上畫的不一樣就重建（背景模式等只有 root 才顯示的項目）
@@ -1178,6 +1179,18 @@ public class MainActivity extends Activity {
     }
 
     private boolean resumedBefore, stoppedSince;
+
+    private static java.lang.ref.WeakReference<MainActivity> live;
+
+    /** 診斷頁的「重建玻璃」：底欄變梯形時按一下，看會不會恢復（恢復＝繪圖資源壞掉；沒恢復＝別的原因）。 */
+    static boolean rebuildGlass() {
+        MainActivity m = live == null ? null : live.get();
+        if (m == null) return false;
+        if (m.glass != null) m.glass.resetGpu();
+        if (m.indicator instanceof GlassBar) ((GlassBar) m.indicator).resetGpu();
+        if (m.homeBar instanceof GlassBar) ((GlassBar) m.homeBar).resetGpu();
+        return true;
+    }
 
     @Override
     protected void onStop() {

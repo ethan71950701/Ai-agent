@@ -55,6 +55,8 @@ public class DiagActivity extends Activity {
                 Ui.button(this, L.t("清除"), v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("清除錯誤紀錄？"))
                         .setPositiveButton(L.t("清除"), (d, w) -> { CrashLog.clear(this); refresh(); })
                         .setNegativeButton(L.t("取消"), null).show()));
+        Ui.buttons(this, box, Ui.button(this, L.t("重建玻璃（底欄變形時按）"), v ->
+                android.widget.Toast.makeText(this, MainActivity.rebuildGlass() ? L.t("已重建，回到首頁看看有沒有恢復") : L.t("主畫面不在，沒有東西可以重建"), android.widget.Toast.LENGTH_LONG).show()));
     }
 
     /** 一個欄位實際用的服務與模型；Claude 沒另外選模型時顯示內建名稱。 */
@@ -116,6 +118,7 @@ public class DiagActivity extends Activity {
         sb.append(L.t("\n【電源鍵相關設定（只讀）】\n")).append(Maintenance.suRun(
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
+        sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
         sb.append(L.t("動畫期間的更新率：")).append(Anim.frameInfo().isEmpty() ? L.t("（還沒量到：先按幾張卡片或開個子頁面）") : Anim.frameInfo()).append('\n');
         sb.append(L.t("子頁面展開：")).append(Ui.enterInfo.isEmpty() ? L.t("（還沒有量到：先打開一個子頁面，例如功能 → 任務過程，再回來這裡看）") : Ui.enterInfo).append('\n');
