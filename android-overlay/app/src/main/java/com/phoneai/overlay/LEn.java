@@ -227,6 +227,11 @@ final class LEn {
         m.put("因為它有 Windows。", "Because it has Windows.");
         m.put("為什麼雞要過馬路？", "Why did the chicken cross the road?");
         m.put("因為他想去對面。", "To get to the other side.");
+        m.put("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）", "Screenshot failed (turn on the accessibility service, or use root/Shizuku mode)");
+        m.put("圈出想問的地方，會自動變成長方形，可以拖角調整", "Circle what you want to ask about; it becomes a rectangle you can drag to adjust");
+        m.put("問這個…（可以空白）", "Ask about this… (can be empty)");
+        m.put("圈選失敗：", "Circle failed: ");
+        m.put("AI 沒有回答", "The AI gave no answer");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

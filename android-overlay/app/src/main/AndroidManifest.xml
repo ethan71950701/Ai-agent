@@ -212,6 +212,14 @@
             android:exported="false" />
 
         <activity
+            android:name=".CircleActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AssistTheme" />
+
+        <activity
             android:name=".GuideActivity"
             android:theme="@style/AppTheme.Sub"
             android:exported="false" />

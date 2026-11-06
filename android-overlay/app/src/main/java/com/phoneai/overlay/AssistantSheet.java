@@ -71,7 +71,7 @@ public class AssistantSheet {
     static volatile java.util.concurrent.CountDownLatch questionShown;
     private boolean questionMode;
     private TextView questionView;
-    private View bgBtnView;
+    private View bgBtnView, circleBtnView;
     private SpeechCapture capture;     // 目前正在錄的這一句（SenseVoice 用）
     private int voiceGen;              // 每次開始聽加一；辨識結果回來時對不上就丟掉（使用者已取消或重說）
     private boolean replyMode;   // 顯示回答卡片中：卡片在上方、下面是可以接續對話的輸入列（語音／打字）
@@ -216,6 +216,15 @@ public class AssistantSheet {
         blp.rightMargin = (int) (2 * d);
         bar.addView(bgBtn, blp);
         bgBtnView = bgBtn;
+        // 圈選提問：收起面板、截下目前畫面，圈出想問的地方（自動變長方形，可以調整）
+        IconView circleBtn = new IconView(a, "select", 0xFFFFFFFF);
+        circleBtn.setContentDescription(L.t("圈選提問"));
+        circleBtn.setOnClickListener(v -> CircleActivity.begin(act, () -> root.animate().alpha(0f).setDuration(150).start(),
+                () -> { root.animate().cancel(); root.setAlpha(1f); }, AssistantSheet.this::dismiss));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
+        clp.rightMargin = (int) (2 * d);
+        bar.addView(circleBtn, clp);
+        circleBtnView = circleBtn;
         FrameLayout center = new FrameLayout(a);
         center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
         center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
@@ -265,6 +274,7 @@ public class AssistantSheet {
         questionView.setText(q);
         questionView.setVisibility(View.VISIBLE);
         bgBtnView.setVisibility(View.GONE);
+        circleBtnView.setVisibility(View.GONE);
         waiting = false;
         root.removeCallbacks(waitTimeout);
         row.animate().cancel();
