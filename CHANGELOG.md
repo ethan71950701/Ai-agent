@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1497
+
 - 修正換分頁時閃一下：新頁的第一段在換頁的同一幀就建好，不再先出現一格空白｜Fix the flash when switching tabs: the first slice of the new page is built in the same frame, so there is no empty frame first
 
 ## 1.0.1496
