@@ -515,7 +515,7 @@ final class Ui {
     }
 
     /**
-     * 把「建 count 個項目」切成很多小段：每一幀只花約 2.5 毫秒建幾個，不會卡住展開動畫，內容也會邊展開邊陸續出現
+     * 把「建 count 個項目」切成很多小段：每一幀只建一個，不會卡住展開動畫，內容也會邊展開邊陸續出現
      * （以前是一口氣建完，或等動畫結束才建，前者會頓一下、後者展開完要空一下）。build 在主執行緒執行；done 可以是 null。
      */
     static void chunked(final android.app.Activity a, final int count, final java.util.function.IntConsumer build, final Runnable done) {
@@ -527,10 +527,7 @@ final class Ui {
             public void doFrame(long frameTimeNanos) {
                 if (a.isFinishing() || a.isDestroyed()) return;
                 if (System.nanoTime() - startNs < 90_000_000L) { ch.postFrameCallback(this); return; }   // 動畫剛起步的前約 0.09 秒不建（那時在建立繪圖層，最容易掉幀）
-                long deadline = System.nanoTime() + 2_500_000L;
-                do {   // 至少建一個；用完這一幀的時間預算就等下一幀
-                    build.accept(next[0]++);
-                } while (next[0] < count && System.nanoTime() < deadline);
+                build.accept(next[0]++);   // 每一幀只建一個：加進去之後系統還要排版、算文字、畫出來，這些不算在建的時間裡，一次建多個會讓那一幀太重
                 if (next[0] < count) ch.postFrameCallback(this);
                 else if (done != null) done.run();
             }

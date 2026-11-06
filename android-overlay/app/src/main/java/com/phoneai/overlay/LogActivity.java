@@ -110,7 +110,6 @@ public class LogActivity extends Activity {
                 text.setText(o.getString("text"));
                 text.setTextSize(15);
                 text.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
-                text.setTextIsSelectable(true);
                 String reply = o.optString("reply", "");
                 col.addView(time);
                 col.addView(text);

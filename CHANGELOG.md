@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 任務過程列表建卡片更輕：每一幀只建一張，列表上的文字不再設成可選取（點整張卡片進詳情）｜Building the task-history cards is lighter: one card per frame, and the list text is no longer selectable (tapping a card opens its details)
+
 - 子頁面返回更順：從子頁面回到主畫面時，重建首頁卡片與查權限延到返回動畫結束後；返回用打開時放好的蓋層，不再臨時加｜Returning from a sub-page is smoother: rebuilding the home cards and checking permissions now wait until the return animation ends, and the return reuses the veil placed when opening instead of adding one on the spot
 
 ## 1.0.1492
