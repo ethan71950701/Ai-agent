@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1480
+
 - 點開卡片時，卡片上的文字不再瞬間消失變空白：展開一開始跟被點的卡片一模一樣，文字隨展開淡出，新內容再淡入（返回時反過來）｜Opening a card no longer blanks its text instantly: the transition starts looking exactly like the tapped card, its text fades out as it expands and the new content fades in (and the reverse on the way back)
 
 ## 1.0.1479
