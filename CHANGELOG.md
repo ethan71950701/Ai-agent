@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 圈選提問回來了：開面板就直接在畫面上圈，圈完自動變成長方形（可拖角或邊調整、拖裡面移動），再說或打問題問 AI；不需要按鈕｜Circle to ask is back: open the panel and draw directly on the screen; the loop becomes an adjustable rectangle (drag corners or edges, drag inside to move), then ask by voice or text, no button needed
 
+## 1.0.1523
+
+- 圈選提問回來了：助理面板左邊的圈選鈕 → 凍結畫面、隨便圈一圈會自動變成長方形（可拖角或邊調整、拖裡面移動），再輸入問題問 AI｜Circle to ask is back: the new button in the assistant panel freezes the screen; draw any loop and it becomes an adjustable rectangle (drag corners or edges, drag inside to move), then ask the AI
+
 ## 1.0.1514
 
 - 首頁問候語改成隨機：依時段加上通用的趣味句子，偶爾出現一問一答的冷笑話（點一下看答案）｜Home greeting is random: time-of-day and playful lines, plus an occasional Q&A cold joke (tap for the answer)
