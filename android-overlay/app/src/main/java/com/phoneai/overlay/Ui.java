@@ -506,6 +506,43 @@ final class Ui {
         return card;
     }
 
+    /** 一組內容一張一張「升起」：從下面 20dp 淡入滑上來（Material 的強調減速曲線），不用彈簧、不縮放，比彈出來穩。delay 是起始延遲（毫秒）。 */
+    static void riseIn(View v, long delay) {
+        v.setAlpha(0f);
+        v.setTranslationY(dp(v.getContext(), 20));
+        v.animate().alpha(1f).translationY(0f).setStartDelay(delay).setDuration(320).setInterpolator(EMPHASIZED).start();
+    }
+
+    // ---------- 展開動畫期間先不建重的內容 ----------
+    // 子頁面一打開就在主執行緒建一堆卡片，剛好卡在展開動畫那幾幀（點擊會頓一下）。重的內容改成動畫結束後才建，再淡入。
+    private static final java.util.WeakHashMap<android.app.Activity, java.util.ArrayList<Runnable>> PENDING = new java.util.WeakHashMap<>();
+
+    private static void beginEnter(final android.app.Activity a) {
+        PENDING.put(a, new java.util.ArrayList<>());
+        a.getWindow().getDecorView().postDelayed(() -> finishEnter(a), 900);   // 保險：動畫沒正常結束也不會一直不建
+    }
+
+    private static void finishEnter(android.app.Activity a) {
+        java.util.ArrayList<Runnable> l = PENDING.remove(a);
+        if (l != null) for (Runnable r : l) { if (!a.isFinishing() && !a.isDestroyed()) r.run(); }
+    }
+
+    /** 展開動畫結束後才執行 r（沒有在展開就立刻執行）。 */
+    static void afterEnter(android.app.Activity a, Runnable r) {
+        java.util.ArrayList<Runnable> l = PENDING.get(a);
+        if (l == null) r.run(); else l.add(r);
+    }
+
+    /** 展開動畫結束後才執行 r（建內容），box 先隱藏、建好後淡入。 */
+    static void afterEnterFade(android.app.Activity a, final View box, final Runnable r) {
+        if (!PENDING.containsKey(a)) { r.run(); return; }
+        box.setAlpha(0f);
+        afterEnter(a, () -> {
+            r.run();
+            box.animate().alpha(1f).setDuration(240).start();
+        });
+    }
+
     /** 示意圖第一次出現時彈一下（彈簧，有點過衝）。 */
     static void bounceIn(View v) {
         v.setScaleX(0.6f);
@@ -646,6 +683,7 @@ final class Ui {
     /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
     static void enterSpring(final android.app.Activity a) {
         a.overridePendingTransition(0, 0);
+        beginEnter(a);
         final View root = a.getWindow().getDecorView();
         final float[] rect = tapRect;
         tapRect = null;
@@ -674,6 +712,7 @@ final class Ui {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
+                            finishEnter(a);
                             root.setClipToOutline(false);
                             root.setLayerType(View.LAYER_TYPE_NONE, null);
                         }
@@ -705,7 +744,7 @@ final class Ui {
                 // 沒有點的卡片位置時的備用動畫：整頁從 0.92 倍淡入放大到原大小，用 Material 的強調減速曲線（不用彈簧，才不會像突然冒出來再彈一下）
                 root.animate().alpha(1f).setDuration(200).setInterpolator(EMPHASIZED).start();
                 root.animate().scaleX(1f).scaleY(1f).setDuration(400).setInterpolator(EMPHASIZED)
-                        .withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start();
+                        .withEndAction(() -> { root.setLayerType(View.LAYER_TYPE_NONE, null); finishEnter(a); }).start();
                 return true;
             }
         });

@@ -22,6 +22,11 @@ public class TaskDetailActivity extends Activity {
         setContentView(Ui.screen(this, L.t("任務過程"), true, c));
         Ui.enterSpring(this);
         LinearLayout box = c[0];
+        final LinearLayout fbox = box;
+        Ui.afterEnterFade(this, box, () -> build(fbox));   // 展開動畫結束後才建卡片，再淡入（不然一點擊會頓一下）
+    }
+
+    private void build(LinearLayout box) {
         JSONObject t = TaskLog.get(this, getIntent().getLongExtra("id", 0));
         if (t == null) {
             box.addView(Ui.body(this, L.t("找不到這筆任務。")));
@@ -81,8 +86,7 @@ public class TaskDetailActivity extends Activity {
                             : L.t("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet")));
                 }
             }
-            final View v = card;
-            v.postDelayed(() -> Ui.bounceIn(v), 60L * i + 120);   // 一張一張彈出來
+            Ui.riseIn(card, 40L * Math.min(i, 8));   // 一張一張升起來（不用彈簧）
         }
     }
 }

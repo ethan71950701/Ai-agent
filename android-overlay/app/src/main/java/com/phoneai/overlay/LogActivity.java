@@ -30,6 +30,7 @@ public class LogActivity extends Activity {
     private final long startedAt = System.currentTimeMillis();
     private TextView body, status;
     private LinearLayout taskBox;
+    private boolean taskShown, cardsAnimated;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -72,7 +73,10 @@ public class LogActivity extends Activity {
     private void reloadTasks() {
         new Thread(() -> {
             JSONArray list = TaskLog.list(this);
-            runOnUiThread(() -> showTasks(list));
+            runOnUiThread(() -> {
+                if (taskShown) showTasks(list);   // 之後的重新整理（加星星）直接換
+                else { taskShown = true; Ui.afterEnterFade(this, taskBox, () -> showTasks(list)); }   // 第一次：展開動畫結束後才建卡片、再淡入
+            });
         }).start();
     }
 
@@ -144,12 +148,12 @@ public class LogActivity extends Activity {
                 row.addView(star);
 
                 card.addView(row);
-                final View bounce = card;
-                bounce.postDelayed(() -> Ui.bounceIn(bounce), 40L * k);   // 一張一張彈出來
+                if (!cardsAnimated) Ui.riseIn(card, 40L * Math.min(k, 8));   // 第一次：一張一張升起來（不用彈簧）；加星星之後重排就不要再動一次
             } catch (Exception ignored) {
                 // 壞掉的一筆跳過，其他照常顯示
             }
         }
+        cardsAnimated = true;
     }
 
     private void reload() {
