@@ -6,6 +6,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 修好「回到 App 後底欄玻璃消失、透鏡跑位、圖示漂到頁面上」：上一版重建玻璃時，新的繪圖節點沒有設大小，等於畫在 0×0；現在重建後立刻補上大小｜Fixed the bottom bar glass vanishing, the lens drifting and icons ghosting onto the page after returning to the app: the render nodes recreated last time had no size (0x0); the size is now set right after recreating
 - 語音撞到錄音上限（30 秒）時不再自動送出：字留在輸入框，面板按麥克風可以接著說（接在後面）、或按送出｜When recording hits the 30 s limit the text is no longer sent automatically: it stays in the box, and in the panel you can tap the mic to keep talking (it appends) or send
+
+## 1.0.1550
+
 - 診斷頁「最近事件」多記語音的過程：錄音為什麼停（停頓、手動、30 秒上限）、辨識了幾個字、倒數開始、被取消或自動送出，查語音突然自己送出的問題用｜Diagnostics "Recent events" now also record the voice flow: why recording stopped, how many characters were recognized, countdown start, cancel or auto-send, to investigate voice suddenly sending by itself
 
 ## 1.0.1549
