@@ -33,7 +33,7 @@ final class ElementList {
 
     /**
      * 由上往下（依圖層）的候選視窗：別的 App 的應用程式視窗，以及佔螢幕四成以上高度的系統視窗（拉下來的通知欄、快速設定）。
-     * 略過 PhoneAI 自己的視窗、鍵盤、無障礙懸浮層；狀態列、導覽列這種細長的系統視窗也略過。
+     * 略過 Vertex 自己的視窗、鍵盤、無障礙懸浮層；狀態列、導覽列這種細長的系統視窗也略過。
      */
     private static List<AccessibilityNodeInfo> candidateRoots(RippleAccessibilityService svc, int h) {
         List<AccessibilityNodeInfo> roots = new ArrayList<>();
@@ -63,7 +63,7 @@ final class ElementList {
         return r == null || r.getPackageName() == null ? null : r.getPackageName().toString();
     }
 
-    /** 不是 PhoneAI 自己的應用程式視窗；優先取活動中的那個（助理面板也是 PhoneAI 的視窗，要略過）。 */
+    /** 不是 Vertex 自己的應用程式視窗；優先取活動中的那個（助理面板也是 Vertex 的視窗，要略過）。 */
     private static AccessibilityNodeInfo targetRoot(RippleAccessibilityService svc) {
         AccessibilityNodeInfo fallback = null;
         List<AccessibilityWindowInfo> wins = svc.getWindows();

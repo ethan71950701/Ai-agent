@@ -20,7 +20,7 @@ public class InstallResultReceiver extends BroadcastReceiver {
         if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(i.getAction())) {
             Updater.finishInstall(c);   // 更新完成：App 被系統關掉又換成新版，用通知告訴使用者
             Intent launch = c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
-            notify(c, L.t("PhoneAI 已更新"), L.t("已更新到 1.0.") + BuildConfig.VERSION_CODE + L.t("，點這裡開啟"),
+            notify(c, L.t("Vertex 已更新"), L.t("已更新到 1.0.") + BuildConfig.VERSION_CODE + L.t("，點這裡開啟"),
                     launch == null ? null : PendingIntent.getActivity(c, 2, launch, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
             return;
         }
@@ -32,13 +32,13 @@ public class InstallResultReceiver extends BroadcastReceiver {
             ask.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             try { c.startActivity(ask); } catch (Exception ignored) { }
             // 背景啟動可能被系統擋下：同時放一則通知，點了一樣能打開安裝確認
-            notify(c, L.t("PhoneAI 更新"), L.t("點這裡完成安裝"),
+            notify(c, L.t("Vertex 更新"), L.t("點這裡完成安裝"),
                     PendingIntent.getActivity(c, 1, ask, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT));
             return;
         }
         Updater.finishInstall(c);
         if (st != PackageInstaller.STATUS_SUCCESS) {
-            notify(c, L.t("PhoneAI 更新失敗"), (msg == null ? "" : msg) + " (" + st + ")", null);
+            notify(c, L.t("Vertex 更新失敗"), (msg == null ? "" : msg) + " (" + st + ")", null);
         } else {
             c.getSystemService(NotificationManager.class).cancel(Updater.NOTE + 1);
         }

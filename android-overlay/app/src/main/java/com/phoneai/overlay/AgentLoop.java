@@ -185,7 +185,7 @@ final class AgentLoop {
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
         if (!Root.available() && RippleAccessibilityService.instance == null)
-            return L.t("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。");
+            return L.t("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 Vertex 的無障礙服務。");
         Memory.seedLessons(c);
         int[] wh = screenSize();
         State st = new State();
@@ -293,7 +293,7 @@ final class AgentLoop {
                 lastTreeText = treeText;
                 if (useTree && sameTree >= 1 && waits >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 連續等了兩次、清單還是沒變：可能卡住，這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot();
-                if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 PhoneAI。");
+                if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 Vertex。");
                 List<String> lessonApps = new ArrayList<>(st.opened);   // 只帶「這次用到的 App」的經驗，不是全部
                 String fg = ElementList.foregroundPackage();
                 if (fg != null && !lessonApps.contains(fg)) lessonApps.add(fg);
@@ -1052,7 +1052,7 @@ final class AgentLoop {
             to[i][0] = px(f.optDouble("x2"), w); to[i][1] = px(f.optDouble("y2"), h);
             ms[i] = clamp(f.optInt("ms", 400), 50, 5000);
         }
-        if (!ensureTouch(c)) return "多指觸控啟動失敗（請確認 root 已允許 PhoneAI）";
+        if (!ensureTouch(c)) return "多指觸控啟動失敗（請確認 root 已允許 Vertex）";
         double[][] cur = new double[n][];
         for (int i = 0; i < n; i++) cur[i] = from[i].clone();
         LiveInput.send(eLine("DOWN", 0, cur, 1));
@@ -1096,7 +1096,7 @@ final class AgentLoop {
         st.dragDown = false;
     }
 
-    private static final String NO_SERVICE = "做不到：請先到系統設定開啟 PhoneAI 的無障礙服務";
+    private static final String NO_SERVICE = "做不到：請先到系統設定開啟 Vertex 的無障礙服務";
 
     /** 沒有 root 時的動作；回 null 表示這個動作不用特別處理（交給原本的流程）。 */
     private static String executeNoRoot(JSONObject a, int w, int h, Context c, State st) {

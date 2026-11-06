@@ -65,7 +65,7 @@ final class NotifDigest {
         if (!Root.isRoot() && !NotifListener.enabled(c)) {   // 有 root 可以直接讀通知紀錄，不一定要通知存取
             if (Root.available()) NotifListener.ensure(c);
             if (!NotifListener.enabled(c)) {
-                String msg = L.t("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → PhoneAI");
+                String msg = L.t("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → Vertex");
                 if (notify) post(c, L.t("通知整理沒有完成"), msg);
                 return msg;
             }

@@ -11,7 +11,7 @@ final class LEn {
 
     static void fill(HashMap<String, String> m) {
         m.put("• 刪除 Downloads 裡的記憶備份檔\n", "• Delete the memory backup file in Downloads\n");
-        m.put("• 刪除 PhoneAI 的 Claude API Key、記憶與紀錄（隨 App 一起刪除）\n", "• Delete PhoneAI's Claude API key, memory and logs (removed together with the app)\n");
+        m.put("• 刪除 Vertex 的 Claude API Key、記憶與紀錄（隨 App 一起刪除）\n", "• Delete Vertex's Claude API key, memory and logs (removed together with the app)\n");
         m.put("a11y 自動修復 rc=", "a11y auto-repair rc=");
         m.put("a11y 自動修復失敗: ", "a11y auto-repair failed: ");
         m.put("刪除", "Delete");
@@ -116,16 +116,16 @@ final class LEn {
         m.put("用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。", "Talk to the assistant by voice. Speech recognition runs offline on the phone and your voice is not uploaded.");
         m.put("AI 需要 Anthropic 的 API Key 才能思考。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。", "The AI needs an Anthropic API key to think. The key is stored only in this app's folder on the phone and is not uploaded anywhere else.");
         m.put("語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。", "The speech model (SenseVoice) is downloaded to the phone and then works offline; your voice is not uploaded. About 228 MB, Wi-Fi recommended. Without it you cannot use offline speech recognition; you can come back and download it any time.");
-        m.put("設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。", "After setting this up, a long-press of the power key opens PhoneAI. Samsung phones: a long-press already opens the native voice assistant, so just change the default digital assistant to PhoneAI. Xiaomi and other phones: go to \"Features → Settings → Invocation\" and turn on \"Long-press power key opens the assistant\" (needs root).");
+        m.put("設定後長按電源鍵就能叫出 Vertex。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 Vertex 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。", "After setting this up, a long-press of the power key opens Vertex. Samsung phones: a long-press already opens the native voice assistant, so just change the default digital assistant to Vertex. Xiaomi and other phones: go to \"Features → Settings → Invocation\" and turn on \"Long-press power key opens the assistant\" (needs root).");
         m.put("回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。", "Go back to Home, type a sentence in \"Ask\", for example \"what time is it\" or \"turn on Bluetooth\", and press send. The first time you will see the assistant panel; after that you can use it directly.");
-        m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。", "If no dialog appears: open your root manager, find the Superuser list and set PhoneAI Overlay to allowed.");
+        m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 Vertex 設成允許。", "If no dialog appears: open your root manager, find the Superuser list and set Vertex to allowed.");
         m.put("回到這裡，按下面的「檢查 root」。", "Come back here and tap \"Check root\" below.");
         m.put("按「開啟權限頁」。", "Tap \"Open permission page\".");
-        m.put("在清單裡找到 PhoneAI Overlay，把開關打開。", "Find PhoneAI Overlay in the list and turn the switch on.");
+        m.put("在清單裡找到 Vertex，把開關打開。", "Find Vertex in the list and turn the switch on.");
         m.put("按返回鍵回到這裡，狀態會自動更新。", "Press Back to return here; the status updates by itself.");
         m.put("按「允許通知」，在系統跳出的視窗按「允許」。", "Tap \"Allow notifications\" and press \"Allow\" in the system dialog.");
         m.put("按「開啟無障礙設定」。", "Tap \"Open accessibility settings\".");
-        m.put("找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。", "Find \"Downloaded apps\" or PhoneAI Overlay, open it, turn the switch on and press \"Allow\" in the prompt.");
+        m.put("找到「已下載的應用程式」或 Vertex，點進去打開開關，在提示視窗按「允許」。", "Find \"Downloaded apps\" or Vertex, open it, turn the switch on and press \"Allow\" in the prompt.");
         m.put("按「允許麥克風」，在系統視窗按「允許」。", "Tap \"Allow microphone\" and press \"Allow\" in the system dialog.");
         m.put("用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。", "Open console.anthropic.com on a computer or phone browser and sign up or log in.");
         m.put("到 Plans & Billing 儲值（預付制，金額你自己決定）。建議到 Limits 設定每月上限。", "Go to Plans & Billing and add credit (prepaid; the amount is up to you). Setting a monthly limit under Limits is recommended.");
@@ -136,7 +136,7 @@ final class LEn {
         m.put("按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "Tap \"Download speech model\" and download it right on this page; progress is shown here.");
         m.put("下載完成後會自動顯示「已下載」。", "When the download finishes it shows \"Downloaded\" automatically.");
         m.put("不想現在下載可以先跳過，之後回到這一頁再按一次即可。", "If you do not want to download now, skip this step and come back to this page later.");
-        m.put("按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "Tap \"Open voice input settings\" and choose PhoneAI Overlay under \"Digital assistant\" or \"Default digital assistant\".");
+        m.put("按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 Vertex。", "Tap \"Open voice input settings\" and choose Vertex under \"Digital assistant\" or \"Default digital assistant\".");
         m.put("找不到的話，就用上面小米的方法。", "If you cannot find it, use the Xiaomi method above.");
         m.put("有問題就到「功能 → 進階與診斷」看狀態。", "If something is wrong, check the status under \"Features → Advanced & diagnostics\".");
         m.put("把畫面文字貼給開發者時，不要貼 API Key。", "When you paste on-screen text to the developer, never include your API key.");
@@ -161,7 +161,7 @@ final class LEn {
         m.put("尚未設定", "Not set yet");
         m.put("✓ 已下載", "✓ Downloaded");
         m.put("尚未下載（可以先跳過）", "Not downloaded yet (you can skip this)");
-        m.put("請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）", "Please check yourself: choose PhoneAI under \"Digital assistant\" (the app cannot tell)");
+        m.put("請自己確認：在「數位助理」裡選到 Vertex（程式無法判斷）", "Please check yourself: choose Vertex under \"Digital assistant\" (the app cannot tell)");
         m.put("做完這一步就可以開始用了", "Finish this step and you can start using it");
         m.put("串流結束", "Stream ended");
         m.put("自我檢查", "Self-check");
@@ -258,7 +258,7 @@ final class LEn {
         m.put("背景模式（實驗）", "Background mode (experimental)");
         m.put("任務在第二螢幕執行，不動目前的畫面", "Run the task on a second display without touching the current screen");
         m.put("無障礙自動修復", "Accessibility auto-repair");
-        m.put("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）", "Re-enable it with root when the system turns it off (only PhoneAI's own)");
+        m.put("被系統關掉時用 root 重新打開（只動 Vertex 自己的）", "Re-enable it with root when the system turns it off (only Vertex's own)");
         m.put("元件清單模式（省錢）", "Element list mode (saves money)");
         m.put("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用", "No screenshot; the AI gets an element list and Haiku picks a number to tap (escalates to Sonnet when stuck). On-screen text is sent to the AI; not available in background mode");
         m.put("沒有記錄原本的值，所以不動它。請到「設定」裡改回你要的長按電源鍵動作", "The original value was not recorded, so it is left alone. Please set the power-key long-press action you want in Settings");
@@ -306,7 +306,7 @@ final class LEn {
         m.put("標為完成", "Mark as done");
         m.put("無", "none");
         m.put("助理", "Assistant");
-        m.put("歡迎使用 PhoneAI", "Welcome to PhoneAI");
+        m.put("歡迎使用 Vertex", "Welcome to Vertex");
         m.put("隨時叫出它", "Call it any time");
         m.put("用說的，或用打的", "Speak or type");
         m.put("它會自己操作", "It operates by itself");
@@ -322,13 +322,13 @@ final class LEn {
         m.put("先選一個主題色（之後可以在「設定 → 外觀」再改）", "Pick a theme color first (you can change it later under \"Settings → Appearance\")");
         m.put("（還沒發過通知）", "(no notification sent yet)");
         m.put("執行狀態", "Run status");
-        m.put("PhoneAI 待命中", "PhoneAI is standing by");
+        m.put("Vertex 待命中", "Vertex is standing by");
         m.put("等待 agent2.py 連線", "Waiting for agent2.py to connect");
         m.put("停止", "Stop");
         m.put("完成", "Done");
         m.put("接手", "Take over");
         m.put("正在停止…", "Stopping…");
-        m.put("停止失敗：請允許 PhoneAI Overlay 使用 root", "Stop failed: please allow PhoneAI Overlay to use root");
+        m.put("停止失敗：請允許 Vertex 使用 root", "Stop failed: please allow Vertex to use root");
         m.put("AI 正在操作手機（測試）", "AI is operating your phone (test)");
         m.put("第 1/3 步 · 點擊「畫面中央」", "Step 1/3 · tap \"screen center\"");
         m.put("第 2/3 步 · 滑動", "Step 2/3 · swipe");
@@ -354,8 +354,8 @@ final class LEn {
         m.put("莫奈", "Monet");
         m.put("這會：\n", "This will:\n");
         m.put("• 把長按電源鍵設定還原成原來的值\n", "• restore the power-key long-press setting to its original value\n");
-        m.put("• 最後解除安裝 PhoneAI Overlay 本身\n\n刪除後無法復原。", "• finally uninstall PhoneAI Overlay itself\n\nThis cannot be undone.");
-        m.put("解除安裝 PhoneAI", "Uninstall PhoneAI");
+        m.put("• 最後解除安裝 Vertex 本身\n\n刪除後無法復原。", "• finally uninstall Vertex itself\n\nThis cannot be undone.");
+        m.put("解除安裝 Vertex", "Uninstall Vertex");
         m.put("繼續", "Continue");
         m.put("正在檢查或更新中", "A check or update is already running");
         m.put("檢查更新中…", "Checking for updates…");
@@ -379,13 +379,13 @@ final class LEn {
         m.put("簽章不同，無法直接覆蓋（請看「設定導覽」的說明）", "The signature differs so it cannot be installed over the old one (see the Setup guide)");
         m.put("安裝失敗：", "Install failed: ");
         m.put("點這裡完成安裝", "Tap here to finish installing");
-        m.put("PhoneAI 更新失敗", "PhoneAI update failed");
-        m.put("PhoneAI 已更新", "PhoneAI updated");
+        m.put("Vertex 更新失敗", "Vertex update failed");
+        m.put("Vertex 已更新", "Vertex updated");
         m.put("，點這裡開啟", ", tap here to open");
         m.put("App 更新結果", "App update result");
-        m.put("請先允許 PhoneAI「安裝未知應用程式」，再按一次更新", "Please allow PhoneAI to \"install unknown apps\", then tap Update again");
+        m.put("請先允許 Vertex「安裝未知應用程式」，再按一次更新", "Please allow Vertex to \"install unknown apps\", then tap Update again");
         m.put("請在跳出的畫面按「安裝」", "Tap \"Install\" on the screen that appears");
-        m.put("PhoneAI 更新", "PhoneAI update");
+        m.put("Vertex 更新", "Vertex update");
         m.put("安裝", "Install");
         m.put("找不到發布版本（404）：repo 是私人的，App 沒有權杖就查不到", "Release not found (404): the repo is private, so the app cannot see it without a token");
         m.put("GitHub 回應 ", "GitHub replied ");
@@ -403,7 +403,7 @@ final class LEn {
         m.put("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。", "No Claude API key yet: set it under \"Features → Maintenance → Claude API Key\".");
         m.put("第 ", "Step ");
         m.put(" 步", "");
-        m.put("截圖失敗：請確認 root 已允許 PhoneAI。", "Screenshot failed: make sure root is allowed for PhoneAI.");
+        m.put("截圖失敗：請確認 root 已允許 Vertex。", "Screenshot failed: make sure root is allowed for Vertex.");
         m.put("連不上 AI：", "Cannot reach the AI: ");
         m.put("估價約 $%.4f（第三方價格，以 Console 為準）", "Est. $%.4f (third-party prices; check Console)");
         m.put("%s · 輸入 %,d、輸出 %,d · 估價約 $%.4f", "%s · input %,d, output %,d · est. $%.4f");
@@ -448,7 +448,7 @@ final class LEn {
         m.put("目前記住 %d 個任務", "%d tasks remembered");
         m.put("新增行事曆事件（直接建立，沒有權限才打開畫面）", "Add a calendar event (created directly; the screen only opens when permission is missing)");
         m.put("在地圖上找地方、撥號（只打開並填好，不會自動導航或撥出）", "Find a place on the map, dial a number (only opens and prefills; it does not navigate or call by itself)");
-        m.put("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 PhoneAI 的無障礙服務。", "Without root, operating the phone relies on the accessibility service: please turn on PhoneAI's accessibility service in system settings first.");
+        m.put("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 Vertex 的無障礙服務。", "Without root, operating the phone relies on the accessibility service: please turn on Vertex's accessibility service in system settings first.");
         m.put("不使用 root（測試用）", "Do not use root (for testing)");
         m.put("1. 選擇執行模式", "1. Choose an execution mode");
         m.put("選一種執行模式，之後隨時可以在設定改。不確定就選「普通」，什麼都不用裝。", "Pick an execution mode; you can change it any time in Settings. Not sure? Choose Normal, nothing to install.");
@@ -646,7 +646,7 @@ final class LEn {
                 + "• Volume, Back, Home, notification shade and screenshot work directly\n\n"
                 + "Not sure? Start with Normal and upgrade later.");
         m.put("想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。", "To use root: the first time it is needed, your root manager (Magisk, KernelSU...) shows a prompt; tap Allow.");
-        m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。", "If no prompt appears: open your root manager, find the Superuser list and allow PhoneAI Overlay.");
+        m.put("如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 Vertex 設成允許。", "If no prompt appears: open your root manager, find the Superuser list and allow Vertex.");
         m.put("回到這裡，按下面的「檢查 root」。", "Come back here and tap \"Check root\" below.");
         m.put("先安裝 Shizuku App（Google Play 或它的 GitHub），打開它，照它的說明啟動服務（無線偵錯或 root；手機重開機後要再啟動一次）。", "Install the Shizuku app (Google Play or its GitHub), open it and start the service as it explains (wireless debugging or root; start it again after every reboot).");
         m.put("回到這裡按「授權 Shizuku」，在 Shizuku 跳出的視窗按「允許」。", "Come back and tap \"Authorize Shizuku\", then tap Allow in the Shizuku prompt.");
@@ -663,7 +663,7 @@ final class LEn {
         m.put("Shizuku 沒有在執行：打開 Shizuku 啟動它", "Shizuku is not running: open Shizuku and start it");
         m.put("還沒授權：按「授權 Shizuku」", "Not authorized: tap \"Authorize Shizuku\"");
         m.put("Shizuku 版本太舊，請更新", "Shizuku is too old, please update it");
-        m.put("未授權：到 root 管理器允許 PhoneAI，回來按「檢查 root」；沒有 root 可以改選 Shizuku 或普通模式", "Not authorized: allow PhoneAI in your root manager and tap \"Check root\"; without root pick Shizuku or Normal mode");
+        m.put("未授權：到 root 管理器允許 Vertex，回來按「檢查 root」；沒有 root 可以改選 Shizuku 或普通模式", "Not authorized: allow Vertex in your root manager and tap \"Check root\"; without root pick Shizuku or Normal mode");
         m.put("執行模式", "Execution mode");
         m.put("（點一下切換）", " (tap to switch)");
         m.put("不做任何 root 動作，改用無障礙與系統 API，用來測試沒有 root 的情況；有些功能（Wi-Fi、藍牙、深色模式…）只能打開設定頁", "No root actions at all; accessibility and system APIs are used instead, to test the no-root case. Some features (Wi-Fi, Bluetooth, dark mode…) can only open the settings page");
@@ -674,7 +674,7 @@ final class LEn {
         m.put("讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。", "Lets the app tap, swipe, type, read the buttons and text on screen, and draw tap ripples. Without root it also takes screenshots and presses Back and Home, so it must be on if you do not have root.");
         m.put("有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。", "Some phones turn it off after a reinstall. With root you can restore it later under \"Features → Advanced and diagnostics → Repair permissions\"; without root you have to turn it on again yourself.");
         m.put("✓ 已授權（會優先用 root，更快更完整）", "✓ Granted (root is used first: faster and more complete)");
-        m.put("未授權（選用）：沒有 root 也能用；之後想給，到 root 管理器允許 PhoneAI，回來按「檢查 root」", "Not granted (optional): it works without root; to grant it later, allow PhoneAI in your root manager and tap \"Check root\" here");
+        m.put("未授權（選用）：沒有 root 也能用；之後想給，到 root 管理器允許 Vertex，回來按「檢查 root」", "Not granted (optional): it works without root; to grant it later, allow Vertex in your root manager and tap \"Check root\" here");
         m.put("逐步檢查權限、Key（root 選用）", "Check permissions and the key step by step (root is optional)");
         m.put("元件清單：%d 個元件", "Element list: %d elements");
         m.put("元件清單：畫面連續沒變，這一步改用截圖＋Sonnet", "Element list: the screen has not changed for several steps, using screenshot + Sonnet for this step");
@@ -835,7 +835,7 @@ final class LEn {
         m.put("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限", "Limit how many Claude tokens can be used: see usage, set daily and monthly caps");
         m.put("搜尋待辦、筆記", "Search to-dos and notes");
         m.put("分享", "Share");
-        m.put("存到 PhoneAI 資料夾", "Save to PhoneAI folder");
+        m.put("存到 PhoneAI 資料夾", "Save to Vertex folder");
         m.put("已存到 下載/PhoneAI/", "Saved to Download/PhoneAI/");
         m.put("匯入", "Import");
         m.put("已匯出到下載資料夾的 phoneai_memory_backup.json", "Exported to the Downloads folder as phoneai_memory_backup.json");
@@ -925,7 +925,7 @@ final class LEn {
         m.put("還沒有設定 Claude 的 Key", "The Claude key is not set up yet");
         m.put("正在讀取通知，再交給 AI 整理，大約要幾秒到幾十秒", "Reading notifications, then asking the AI to digest them — a few seconds to a minute");
         m.put("整理通知中，請稍候…", "Digesting notifications, please wait…");
-        m.put("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → PhoneAI", "Turn on notification access first: Settings → Notifications → Advanced settings → Notification access → PhoneAI");
+        m.put("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → Vertex", "Turn on notification access first: Settings → Notifications → Advanced settings → Notification access → Vertex");
         m.put("設定時間", "Set time");
         m.put("通知整理好了", "Notification digest ready");
         m.put("通知整理沒有完成", "Notification digest not completed");
@@ -960,7 +960,7 @@ final class LEn {
         m.put("清除錯誤紀錄？", "Clear the error log?");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");
-        m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to PhoneAI folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");
+        m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to Vertex folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");
         m.put("匯出", "Export");
         m.put("匯出失敗：", "Export failed: ");
         m.put("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）", "This service already has a key; reusing it (to change it, go to Functions → Maintenance).");

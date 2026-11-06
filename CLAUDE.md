@@ -1,6 +1,6 @@
 # CLAUDE.md — 給 Claude Code 的專案說明
 
-這個 repo 是「用一個 App（PhoneAI Overlay）做的 AI 手機助手」，在 Android 手機上用 root、Shizuku 或普通（無障礙）三種模式之一執行。
+這個 repo 是「用一個 App（Vertex，原名 PhoneAI Overlay；內部套件名與 GitHub repo 仍是 phoneai／ai-agent，不要改）做的 AI 手機助手」，在 Android 手機上用 root、Shizuku 或普通（無障礙）三種模式之一執行。
 **App 就是全部**：不需要 Termux、不需要 Python 腳本。**接手前先讀 [`HANDOFF.md`](HANDOFF.md)**（目標、架構、狀態表、決策、安全規則、下一步）。
 
 ## 架構（現在）

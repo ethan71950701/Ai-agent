@@ -35,7 +35,7 @@ final class LogExport {
 
     static String build(Context c) {
         StringBuilder sb = new StringBuilder();
-        sb.append("PhoneAI 匯出紀錄\n");
+        sb.append("Vertex 匯出紀錄\n");
         sb.append("匯出時間：").append(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US).format(new java.util.Date())).append('\n');
         sb.append("App 版本：1.0.").append(BuildConfig.VERSION_CODE).append('\n');
         sb.append("裝置：").append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append("，Android ").append(Build.VERSION.RELEASE).append("（API ").append(Build.VERSION.SDK_INT).append("）\n");
@@ -98,7 +98,7 @@ final class LogExport {
                 try (FileOutputStream fo = new FileOutputStream(out)) { fo.write(text.getBytes(StandardCharsets.UTF_8)); }
                 Uri uri = androidx.core.content.FileProvider.getUriForFile(a, "com.phoneai.overlay.update", out);
                 Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
-                        .putExtra(Intent.EXTRA_SUBJECT, "PhoneAI").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        .putExtra(Intent.EXTRA_SUBJECT, "Vertex").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 a.runOnUiThread(() -> a.startActivity(Intent.createChooser(send, L.t("匯出紀錄"))));
             } catch (Exception e) {
                 a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("匯出失敗：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show());
@@ -156,7 +156,7 @@ final class LogExport {
                 try (FileOutputStream fo = new FileOutputStream(out)) { fo.write(build(a).getBytes(StandardCharsets.UTF_8)); }
                 Uri uri = androidx.core.content.FileProvider.getUriForFile(a, "com.phoneai.overlay.update", out);
                 Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_STREAM, uri)
-                        .putExtra(Intent.EXTRA_SUBJECT, "PhoneAI 紀錄").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        .putExtra(Intent.EXTRA_SUBJECT, "Vertex 紀錄").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 a.runOnUiThread(() -> a.startActivity(Intent.createChooser(send, L.t("匯出紀錄"))));
             } catch (Exception e) {
                 a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("匯出失敗：") + e.getMessage(), android.widget.Toast.LENGTH_LONG).show());

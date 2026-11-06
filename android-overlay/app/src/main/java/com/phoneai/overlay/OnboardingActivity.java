@@ -15,7 +15,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 /** 第一次開啟時的教學：左右滑動的分頁，每頁一個循環小動畫；底下的圓點用彈簧動畫拉長。可隨時略過；之後在「功能 → 進階 → 使用教學」重看。 */
 public class OnboardingActivity extends Activity {
-    private static final String[] TITLES = {"歡迎使用 PhoneAI", "隨時叫出它", "用說的，或用打的", "它會自己操作", "敏感操作先問你", "最後一步：設定"};
+    private static final String[] TITLES = {"歡迎使用 Vertex", "隨時叫出它", "用說的，或用打的", "它會自己操作", "敏感操作先問你", "最後一步：設定"};
     private static final String[] BODIES = {
             "住在你手機裡的 AI 助手：你說想做什麼，它看著螢幕幫你操作。",
             "長按電源鍵（先在系統設定把它設成預設數位助理），或打開螢幕邊緣的浮動按鈕。",

@@ -9,7 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 /**
- * 外網用：一鍵打開 Tailscale，並點一下它左上角的「連線」位置，然後回到 PhoneAI。
+ * 外網用：一鍵打開 Tailscale，並點一下它左上角的「連線」位置，然後回到 Vertex。
  * 需要 root（用 su 執行命令）。點擊位置可以在設定裡調整。
  */
 final class TailscaleLauncher {
@@ -47,7 +47,7 @@ final class TailscaleLauncher {
         }
     }
 
-    /** 在背景執行：打開 Tailscale → 點一下設定的位置 → 回到 PhoneAI。 */
+    /** 在背景執行：打開 Tailscale → 點一下設定的位置 → 回到 Vertex。 */
     static void connect(Context c, Runnable onFail) {
         new Thread(() -> {
             if (!installed(c)) {
@@ -92,7 +92,7 @@ final class TailscaleLauncher {
         }
     }
 
-    /** 檢查目前狀態：打開 Tailscale、讀顏色、回到 PhoneAI。結果記在 cfg（ts_on：1 開、0 關、-1 不知道）。 */
+    /** 檢查目前狀態：打開 Tailscale、讀顏色、回到 Vertex。結果記在 cfg（ts_on：1 開、0 關、-1 不知道）。 */
     static void checkState(Context c, java.util.function.Consumer<Boolean> done) {
         final Context app = c.getApplicationContext();
         new Thread(() -> {

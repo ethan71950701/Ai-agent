@@ -38,17 +38,17 @@ public class GuideActivity extends Activity {
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
             "AI 需要一個服務才能思考：Claude（預設）、Google Gemini（有免費額度）、OpenAI 等都可以，便宜模型和看圖模型也能分開選。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
             "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
-            "設定後長按電源鍵就能叫出 PhoneAI。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 PhoneAI 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
+            "設定後長按電源鍵就能叫出 Vertex。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 Vertex 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
             "回到首頁，在「問問看」輸入一句話，例如「現在幾點」或「開藍牙」，按送出。第一次會看到助理面板，之後就可以直接用了。"};
     private static final String[][] STEPS = {
             {"沒有 root、或還不想給：這一步可以直接跳過，按下面的箭頭往下走。",
                     "想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
-                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
+                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 Vertex 設成允許。",
                     "回到這裡，按下面的「檢查 root」。"},
-            {"按「開啟權限頁」。", "在清單裡找到 PhoneAI Overlay，把開關打開。", "按返回鍵回到這裡，狀態會自動更新。"},
+            {"按「開啟權限頁」。", "在清單裡找到 Vertex，把開關打開。", "按返回鍵回到這裡，狀態會自動更新。"},
             {"按「允許通知」，在系統跳出的視窗按「允許」。"},
             {"按「開啟無障礙設定」。",
-                    "找到「已下載的應用程式」或 PhoneAI Overlay，點進去打開開關，在提示視窗按「允許」。",
+                    "找到「已下載的應用程式」或 Vertex，點進去打開開關，在提示視窗按「允許」。",
                     "有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。"},
             {"按「允許麥克風」，在系統視窗按「允許」。"},
             {"按下面的「選擇 AI 服務與 Key」，選一家服務；非 Claude 的服務會有申請 Key 的教學與預設模型。",
@@ -60,7 +60,7 @@ public class GuideActivity extends Activity {
                     "複製 Key（只會顯示一次），回到這裡按「輸入 API Key」，貼上後按儲存。",
                     "不要把 Key 貼給任何人，包括 AI 助手。"},
             {"按「下載語音模型」，直接在這一頁下載，進度會顯示在這裡。", "下載完成後會自動顯示「已下載」。", "不想現在下載可以先跳過，之後回到這一頁再按一次即可。"},
-            {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 PhoneAI Overlay。", "找不到的話，就用上面小米的方法。"},
+            {"按「開啟語音輸入設定」，在「數位助理」或「預設數位助理」裡選 Vertex。", "找不到的話，就用上面小米的方法。"},
             {"有問題就到「功能 → 進階與診斷」看狀態。", "把畫面文字貼給開發者時，不要貼 API Key。"}};
     /** 三種模式的比較（引導頁第一頁的「三種模式比較」按鈕）。 */
     static final String COMPARE =
@@ -81,7 +81,7 @@ public class GuideActivity extends Activity {
             + "不確定就先選「普通」，想要更完整再改。";
     private static final String[][] MODE_STEPS = {
             {"想用 root：第一次需要時，root 管理器（Magisk、KernelSU 等）會跳出授權視窗，按「允許」。",
-                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 PhoneAI Overlay 設成允許。",
+                    "如果沒有跳出視窗：打開你的 root 管理器，找到「超級使用者」（Superuser）清單，把 Vertex 設成允許。",
                     "回到這裡，按下面的「檢查 root」。"},
             {"先安裝 Shizuku App（Google Play 或它的 GitHub），打開它，照它的說明啟動服務（無線偵錯或 root；手機重開機後要再啟動一次）。",
                     "回到這裡按「授權 Shizuku」，在 Shizuku 跳出的視窗按「允許」。",
@@ -379,7 +379,7 @@ public class GuideActivity extends Activity {
                 boolean mic = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
                 if (ExecMode.NORMAL.equals(mode)) set(0, true, L.t("✓ 普通模式（不需要額外授權）"));
                 else if (ExecMode.SHIZUKU.equals(mode)) set(0, sz == 0, sz == 0 ? L.t("✓ Shizuku 已可用") : !shz ? L.t("尚未安裝 Shizuku") : sz == 1 ? L.t("Shizuku 沒有在執行：打開 Shizuku 啟動它") : sz == 2 ? L.t("還沒授權：按「授權 Shizuku」") : L.t("Shizuku 版本太舊，請更新"));
-                else set(0, root, root ? L.t("✓ 已授權（會優先用 root，更快更完整）") : L.t("未授權：到 root 管理器允許 PhoneAI，回來按「檢查 root」；沒有 root 可以改選 Shizuku 或普通模式"));
+                else set(0, root, root ? L.t("✓ 已授權（會優先用 root，更快更完整）") : L.t("未授權：到 root 管理器允許 Vertex，回來按「檢查 root」；沒有 root 可以改選 Shizuku 或普通模式"));
                 set(1, ov, ov ? L.t("✓ 已開啟") : L.t("尚未開啟"));
                 set(2, nt, nt ? L.t("✓ 已允許") : L.t("尚未允許"));
                 set(3, a11y, a11y ? L.t("✓ 已開啟") : L.t("尚未開啟"));
@@ -387,7 +387,7 @@ public class GuideActivity extends Activity {
                 set(5, key, key ? L.t("✓ 已設定") : L.t("尚未設定"));
                 boolean voice = SherpaEngine.ready(this);
                 set(6, voice, voice ? L.t("✓ 已下載") : L.t("尚未下載（可以先跳過）"));
-                set(7, false, L.t("請自己確認：在「數位助理」裡選到 PhoneAI（程式無法判斷）"));
+                set(7, false, L.t("請自己確認：在「數位助理」裡選到 Vertex（程式無法判斷）"));
                 set(8, false, L.t("做完這一步就可以開始用了"));
                 pager.getAdapter().notifyDataSetChanged();
             });

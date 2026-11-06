@@ -48,7 +48,7 @@ public class NotifListener extends NotificationListenerService {
         try {
             c.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception ignored) { }
-        return "還沒有通知存取權限：已打開系統的「通知存取」設定頁，請使用者在清單裡開啟 PhoneAI，然後再問一次。";
+        return "還沒有通知存取權限：已打開系統的「通知存取」設定頁，請使用者在清單裡開啟 Vertex，然後再問一次。";
     }
 
     /** 遮掉看起來像驗證碼的數字（句子裡有驗證碼、OTP、code、密碼這類字時，4～8 位數字一律遮掉）。 */

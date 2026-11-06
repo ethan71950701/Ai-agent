@@ -28,7 +28,7 @@ final class ShizukuBackend {
         }
     }
 
-    /** 0＝可用；1＝服務沒在跑（沒啟動）；2＝還沒授權給 PhoneAI；3＝版本太舊。 */
+    /** 0＝可用；1＝服務沒在跑（沒啟動）；2＝還沒授權給 Vertex；3＝版本太舊。 */
     static int state() {
         try {
             if (!Shizuku.pingBinder()) return 1;

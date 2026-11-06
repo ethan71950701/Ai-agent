@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 別的 App 的「分享」選單選 PhoneAI（檔案）：挑要傳給哪一台已配對的裝置，然後在背景傳出去。
+ * 別的 App 的「分享」選單選 Vertex（檔案）：挑要傳給哪一台已配對的裝置，然後在背景傳出去。
  * 進度與停止都在通知列（同互傳檔案的其他傳輸）。
  */
 public class FileShareActivity extends Activity {

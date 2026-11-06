@@ -240,7 +240,7 @@ final class Phone {
         return id == null ? "不用 root 時沒辦法執行這個指令" : runNoRoot(c, id);
     }
 
-    private static String glob(String key, String ok) { return key(key) ? ok : "做不到：請先到系統設定開啟 PhoneAI 的無障礙服務"; }
+    private static String glob(String key, String ok) { return key(key) ? ok : "做不到：請先到系統設定開啟 Vertex 的無障礙服務"; }
 
     private static String page(Context c, String action, String what) {
         try {
@@ -292,7 +292,7 @@ final class Phone {
                 return on ? "已開啟勿擾模式" : "已關閉勿擾模式";
             }
             c.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            return "需要權限：已打開設定頁，請允許 PhoneAI 控制勿擾，之後再說一次";
+            return "需要權限：已打開設定頁，請允許 Vertex 控制勿擾，之後再說一次";
         } catch (Exception e) {
             return "勿擾模式失敗：" + e.getMessage();
         }
@@ -319,7 +319,7 @@ final class Phone {
         try {
             c.startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + c.getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception ignored) { }
-        return "需要權限：已打開設定頁，請允許 PhoneAI「修改系統設定」，之後再說一次";
+        return "需要權限：已打開設定頁，請允許 Vertex「修改系統設定」，之後再說一次";
     }
 
     /** 亮度 0～100（0 會用最低的 1）；會關掉自動亮度。 */

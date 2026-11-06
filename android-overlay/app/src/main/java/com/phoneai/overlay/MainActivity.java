@@ -196,7 +196,7 @@ public class MainActivity extends Activity {
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
-    private static final String[] TAB_TITLE = {"PhoneAI", "功能", "設定"};
+    private static final String[] TAB_TITLE = {"Vertex", "功能", "設定"};
     private static final String[] TAB_ICON = {"home", "apps", "tune"};
     private static final String[] TAB_LABEL = {"首頁", "功能", "設定"};
 
@@ -976,7 +976,7 @@ public class MainActivity extends Activity {
                     });
                 }).start();
             });
-            if (hasRoot) Ui.switchRow(this, g, k++, n, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 PhoneAI 自己的）"), A11yGuard.enabled(this),
+            if (hasRoot) Ui.switchRow(this, g, k++, n, "shield", L.t("無障礙自動修復"), L.t("被系統關掉時用 root 重新打開（只動 Vertex 自己的）"), A11yGuard.enabled(this),
                     (v, on) -> cfg().edit().putBoolean("a11y_guard", on).apply());
             Ui.switchRow(this, g, k++, n, "flask", L.t("元件清單模式（省錢）"), L.t("不截圖，改給 AI 看元件清單，用 Haiku 選編號點擊（卡住升級 Sonnet）。會把畫面文字送給 AI；背景模式不適用"),
                     cfg().getBoolean("tree_on", true), (v, on) -> cfg().edit().putBoolean("tree_on", on).apply());

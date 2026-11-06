@@ -143,7 +143,7 @@ final class Updater {
         try {
             if (!a.getPackageManager().canRequestPackageInstalls()) {
                 a.runOnUiThread(() -> {
-                    toast(a, L.t("請先允許 PhoneAI「安裝未知應用程式」，再按一次更新"));
+                    toast(a, L.t("請先允許 Vertex「安裝未知應用程式」，再按一次更新"));
                     a.startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, android.net.Uri.parse("package:" + a.getPackageName())));
                 });
                 busy = false;   // APK 留著：授權後再按更新，直接安裝不用重下載
@@ -163,7 +163,7 @@ final class Updater {
     private static Notification progress(Context c, String text, int pct, boolean indeterminate) {
         Notification.Builder b = new Notification.Builder(c, CH)
                 .setSmallIcon(R.drawable.ic_stat)
-                .setContentTitle(L.t("PhoneAI 更新"))
+                .setContentTitle(L.t("Vertex 更新"))
                 .setContentText(text)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setContentIntent(android.app.PendingIntent.getActivity(c, 0,   // 沒有 contentIntent 系統會把 Now Bar 膠囊藏起來（OverlayService 的註解有說明）

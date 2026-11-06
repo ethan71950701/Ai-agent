@@ -178,7 +178,7 @@ public class OverlayService extends Service {
         ch.enableVibration(false);
         nm.createNotificationChannel(ch);
         // 前景服務的類型是 Android 14（API 34）才有的要求；Android 13 不需要也不能傳
-        android.app.Notification n0 = build(L.t("PhoneAI 待命中"), L.t("等待 agent2.py 連線"), 0, 0);
+        android.app.Notification n0 = build(L.t("Vertex 待命中"), L.t("等待 agent2.py 連線"), 0, 0);
         if (android.os.Build.VERSION.SDK_INT >= 34) startForeground(NOTIF_ID, n0, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
         else startForeground(NOTIF_ID, n0);
         addOverlay();

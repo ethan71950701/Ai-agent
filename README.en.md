@@ -1,4 +1,4 @@
-# PhoneAI Overlay
+# Vertex (formerly PhoneAI Overlay)
 
 English | [繁體中文](README.md)
 
