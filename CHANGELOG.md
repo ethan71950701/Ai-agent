@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1535
+
 - 問「週一英文課在哪一節」這類答案在筆記裡的問題：路由會看到筆記開頭，答案在筆記裡就回聊天、不再去開 App；聊天助理看到的筆記不再截成 100 字（改 300 字）｜Questions whose answer is in your notes (like "when is Monday's English class") now route to chat instead of opening an app; the chat assistant sees notes up to 300 characters instead of 100
 
 ## 1.0.1534
