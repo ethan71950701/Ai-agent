@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1557
+
 - 預測返回一開始有時是直角：手勢一開始就先設好圓角，不再沿用上一個頁面留下的值｜Predictive back sometimes started with square corners: the corner radius is now set as soon as the gesture starts instead of reusing a value left by the previous page
 
 ## 1.0.1556
