@@ -196,7 +196,7 @@ public class MainActivity extends Activity {
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
-    private static final String[] TAB_TITLE = {"Vertex", "功能", "設定"};
+    private static final String[] TAB_TITLE = {"", "功能", "設定"};
     private static final String[] TAB_ICON = {"home", "apps", "tune"};
     private static final String[] TAB_LABEL = {"首頁", "功能", "設定"};
 
@@ -430,7 +430,7 @@ public class MainActivity extends Activity {
 
     private void prepareBox(int tabNow) {
         removeHomeBar();
-        removeHomeBar();
+        box.setGravity(android.view.Gravity.TOP);
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間
         setHomeScroll(tabNow != 0);
         box.removeAllViews();
@@ -540,6 +540,9 @@ public class MainActivity extends Activity {
 
     private View homeBar;
     private WaveView barWave;
+    private android.widget.EditText homeEt;
+    private ActionButtonView homeAction;
+    private SpeechCapture homeCapture;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
     private void setHomeScroll(boolean on) {
@@ -549,7 +552,7 @@ public class MainActivity extends Activity {
             for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
                 View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
                 if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams) {
-                    c.getLayoutParams().height = Ui.dp(this, on ? 116 : 160);   // 功能／設定頁的標題區縮小，首頁維持原樣
+                    c.getLayoutParams().height = Ui.dp(this, on ? 116 : 56);   // 功能／設定頁的標題區縮小，首頁維持原樣
                     ((com.google.android.material.appbar.AppBarLayout.LayoutParams) c.getLayoutParams()).setScrollFlags(
                             on ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                                | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED : 0);
@@ -563,24 +566,27 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 首頁底部的輸入框：文字（送出）、麥克風（語音）。 */
+    /** 首頁底部的膠囊：提示文字／輸入框＋右邊圓形按鈕（沒字＝麥克風，點了整條換成波開始聽；有字＝送出）。 */
     private void showHomeBar() {
         removeHomeBar();
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-        gd.setCornerRadius(Ui.dp(this, 28));
+        gd.setCornerRadius(Ui.dp(this, 32));
         gd.setColor(Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHigh));
         bar.setBackground(gd);
-        bar.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 6));
+        bar.setPadding(Ui.dp(this, 22), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
         final android.widget.EditText et = new android.widget.EditText(this);
-        et.setHint(L.t("問問看"));
+        homeEt = et;
+        et.setHint(L.t("輸入或按右邊說話"));
         et.setSingleLine(true);
         et.setBackground(null);
         et.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         et.setHintTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
         et.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
+        final ActionButtonView action = new ActionButtonView(this);
+        action.setAccent(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         Runnable send = () -> {
             String t = et.getText().toString().trim();
             if (t.isEmpty()) return;
@@ -589,41 +595,29 @@ public class MainActivity extends Activity {
             homeAsk(t);
         };
         et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
-        // 預設是語音模式：整個框是一條波（跟助理面板一樣）；點框才切成打字，沒打字就離開時變回波
+        et.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void afterTextChanged(android.text.Editable e) {
+                action.setMode(e.toString().trim().isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND);
+            }
+        });
         final android.widget.FrameLayout holder = new android.widget.FrameLayout(this);
-        barWave = new WaveView(this);
+        barWave = new WaveView(this);   // 語音模式：整條換成波（跟助理面板一樣）
         barWave.setIdle(0.5f);
-        holder.addView(barWave, new android.widget.FrameLayout.LayoutParams(-1, Ui.dp(this, 34), android.view.Gravity.CENTER_VERTICAL));
-        et.setVisibility(View.GONE);
+        barWave.setVisibility(View.GONE);
         holder.addView(et, new android.widget.FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
-        final WaveView bw = barWave;
-        holder.setOnClickListener(v -> {
-            bw.setVisibility(View.GONE);
-            et.setVisibility(View.VISIBLE);
-            et.requestFocus();
-            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-            if (im != null) im.showSoftInput(et, 0);
+        holder.addView(barWave, new android.widget.FrameLayout.LayoutParams(-1, Ui.dp(this, 34), android.view.Gravity.CENTER_VERTICAL));
+        bar.addView(holder, new LinearLayout.LayoutParams(0, Ui.dp(this, 48), 1f));
+        action.setOnClickListener(v -> {
+            if (homeCapture != null) { homeCapture.stop(); return; }   // 正在聽：再按一下結束
+            if (et.getText().toString().trim().isEmpty()) homeVoice(); else send.run();
         });
-        et.setOnFocusChangeListener((v, has) -> {
-            if (!has && et.getText().length() == 0) { et.setVisibility(View.GONE); bw.setVisibility(View.VISIBLE); }
-        });
-        bar.addView(holder, new LinearLayout.LayoutParams(0, Ui.dp(this, 44), 1f));
-        IconView mic = new IconView(this, "mic", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-        mic.setOnClickListener(v -> homeVoice());   // 語音直接在首頁錄音、辨識、回答（不開面板）
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44));
-        bar.addView(mic, mp);
-        android.widget.FrameLayout send44 = new android.widget.FrameLayout(this);
-        android.graphics.drawable.GradientDrawable cg = new android.graphics.drawable.GradientDrawable();
-        cg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        cg.setColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
-        send44.setBackground(cg);
-        IconView arrow = new IconView(this, "chevron", Ui.attr(this, com.google.android.material.R.attr.colorOnPrimary));
-        send44.addView(arrow, new android.widget.FrameLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22), android.view.Gravity.CENTER));
-        send44.setOnClickListener(v -> send.run());
-        bar.addView(send44, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
+        homeAction = action;
+        bar.addView(action, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
         // 底部光暈 + 粒子：跟助理面板同一個 AuroraView（貼著底邊的光），放在最底層
         final AuroraView aurora = new AuroraView(this);
-        aurora.setEnergy(0.3f);
+        aurora.setEnergy(0.2f);
         ((android.view.ViewGroup) root).addView(aurora, 0, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1));
         root.post(() -> aurora.setGlowY(root.getHeight() - Ui.dp(this, 200)));   // 光暈提高，不被底欄擋住
         homeFx = new android.view.View[]{aurora};
@@ -672,10 +666,11 @@ public class MainActivity extends Activity {
             return;
         }
         if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
-        SpeechCapture.start(new SpeechCapture.Cb() {
+        homeCapture = SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { setWaves(WaveView.LISTENING); }
             @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); }
             @Override public void onDone(short[] pcm) {
+                homeCapture = null;
                 setWaves(WaveView.THINKING);
                 if (pcm == null) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
                 new Thread(() -> {
@@ -686,12 +681,16 @@ public class MainActivity extends Activity {
                     runOnUiThread(() -> { if (t.isEmpty()) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽清楚，再按一次麥克風")); } else homeAsk(t); });
                 }, "home-voice").start();
             }
-            @Override public void onError(String msg) { setWaves(WaveView.IDLE); showAnswer(L.t("錄音失敗：") + msg); }
+            @Override public void onError(String msg) { homeCapture = null; setWaves(WaveView.IDLE); showAnswer(L.t("錄音失敗：") + msg); }
         });
     }
 
     private void setWaves(int st) {
-        if (barWave != null) barWave.setState(st);
+        boolean voice = st != WaveView.IDLE;   // 聽或想的時候整條是波，平常是輸入框
+        if (barWave != null) { barWave.setState(st); barWave.setVisibility(voice ? View.VISIBLE : View.GONE); }
+        if (homeEt != null) homeEt.setVisibility(voice ? View.INVISIBLE : View.VISIBLE);
+        if (homeAction != null && st == WaveView.LISTENING) homeAction.setMode(ActionButtonView.LISTENING);
+        else if (homeAction != null && st == WaveView.IDLE) homeAction.setMode(homeEt != null && homeEt.getText().toString().trim().isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND);
     }
 
     private void showAnswer(String text) {
@@ -710,14 +709,20 @@ public class MainActivity extends Activity {
     }
 
     private void buildHome() {
+        box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面正中間
+        MarkView mark = new MarkView(this);
+        LinearLayout.LayoutParams mkp = new LinearLayout.LayoutParams(Ui.dp(this, 96), Ui.dp(this, 56));
+        mkp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        box.addView(mark, mkp);
         TextView greet = new TextView(this);
-        greet.setText(L.t("你好，需要什麼幫忙？"));
-        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 34);
+        int hr = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
+        greet.setText(L.t(hr >= 5 && hr < 11 ? "早安" : hr >= 11 && hr < 17 ? "午安" : "晚安"));
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
         greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, -2);
-        gp.topMargin = Ui.dp(this, 48);
+        gp.topMargin = Ui.dp(this, 24);
         gp.bottomMargin = Ui.dp(this, 16);
         box.addView(greet, gp);
         answerView = new TextView(this);   // 回答顯示在問候語下面

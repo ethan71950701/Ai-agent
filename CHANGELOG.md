@@ -4,7 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
-- 首頁輸入框預設是語音模式：整個框是一條函數波（跟助理面板一樣），按麥克風錄音時隨音量起伏，點框才切成打字｜Home input bar now defaults to voice mode: a function wave like the assistant panel that reacts to your voice; tap the bar to type
+- 首頁改版：中間是三條波的標誌與問候語（早安/午安/晚安），底部膠囊右邊的圓鈕按下去整條變成波開始聽，有字時變成送出｜Home redesign: the three-wave mark and a greeting in the middle; in the bottom pill the round button turns the whole pill into a wave while listening, and becomes send when you have typed text
 
 ## 1.0.1505
 

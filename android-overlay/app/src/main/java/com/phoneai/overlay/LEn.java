@@ -185,7 +185,10 @@ final class LEn {
         m.put("沒聽到聲音，再按一次麥克風", "No sound heard, tap the microphone again");
         m.put("沒聽清楚，再按一次麥克風", "Could not understand, tap the microphone again");
         m.put("錄音失敗：", "Recording failed: ");
-        m.put("你好，需要什麼幫忙？", "Hi, how can I help?");
+        m.put("早安", "Good morning");
+        m.put("午安", "Good afternoon");
+        m.put("晚安", "Good evening");
+        m.put("輸入或按右邊說話", "Type, or tap the button to talk");
         m.put("資料", "Data");
         m.put("助理的記憶", "Assistant memory");
         m.put("待辦與筆記", "To-dos and notes");
