@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1527
+
 - 圈選提問回答後可以接著問，同一段對話有上下文（選新區域才重來）｜After a circle-to-ask answer you can keep asking in the same conversation with context (selecting a new region starts over)
 
 ## 1.0.1526
