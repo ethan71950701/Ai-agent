@@ -709,7 +709,8 @@ public class MainActivity extends Activity {
     }
 
     private void buildHome() {
-        box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面正中間
+        box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面中間偏上（下面留空間給輸入膠囊）
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 260));
         MarkView mark = new MarkView(this);
         LinearLayout.LayoutParams mkp = new LinearLayout.LayoutParams(Ui.dp(this, 150), Ui.dp(this, 84));
         mkp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
