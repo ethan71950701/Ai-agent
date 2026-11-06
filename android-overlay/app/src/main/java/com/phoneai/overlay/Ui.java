@@ -841,6 +841,7 @@ final class Ui {
                     prepareClose(a, root);
                     BACK_PREP.put(a, Boolean.TRUE);
                     BACK_P.put(a, p0);
+                    applyExpand(root, EXIT_RECT.get(a), p0, dp(a, 22));   // 手勢一開始就先把圓角設好：圓角值是共用的靜態變數，以前要等第一次 onBackProgressed 才更新，這之前會沿用上一個頁面留下的值（有時直角、有時圓角）
                 }
 
                 @Override
