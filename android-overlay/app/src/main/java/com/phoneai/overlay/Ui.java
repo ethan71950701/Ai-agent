@@ -702,17 +702,17 @@ final class Ui {
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
                     va.setDuration(480);
                     va.setInterpolator(SMOOTH_IO);
-                    final long[] st = {0, 0, 0, 0};   // 上一幀時間、最長間隔、超過 24 毫秒的次數、總幀數
+                    final long[] st = {0, 0, 0, 0, 0};   // 上一幀時間、最長間隔、超過 24 毫秒的次數、總幀數、最長間隔發生在進度的幾 %
                     va.addUpdateListener(an -> {
                         applyExpand(root, rect, (float) an.getAnimatedValue(), corner);
                         long now = android.os.SystemClock.uptimeMillis();
-                        if (st[0] != 0) { long gap = now - st[0]; if (gap > st[1]) st[1] = gap; if (gap > 24) st[2]++; }
+                        if (st[0] != 0) { long gap = now - st[0]; if (gap > st[1]) { st[1] = gap; st[4] = Math.round(an.getAnimatedFraction() * 100); } if (gap > 24) st[2]++; }
                         st[0] = now;
                         st[3]++;
                     });
                     va.addListener(new android.animation.AnimatorListenerAdapter() {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
-                            ENTER_LOG.addFirst(a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒，超過 24 毫秒 " + st[2] + " 次");
+                            ENTER_LOG.addFirst(a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒（在進度 " + st[4] + "%），超過 24 毫秒 " + st[2] + " 次");
                             while (ENTER_LOG.size() > 5) ENTER_LOG.removeLast();   // 留最近 5 次，診斷頁一起看
                             enterInfo = android.text.TextUtils.join("\n　　", ENTER_LOG);
                             applyExpand(root, rect, 1f, corner);
