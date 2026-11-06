@@ -116,7 +116,7 @@ public class AssistantSheet {
         content = new LinearLayout(a);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER_HORIZONTAL);
-        content.setPadding((int) (26 * d), 0, (int) (26 * d), (int) (14 * d));
+        content.setPadding((int) (NARROW_DP * d), 0, (int) (NARROW_DP * d), (int) (14 * d));
 
         if (OverlayService.agentRunning) {  // 任務正在執行：面板上直接給「停止」，不用去拉通知欄
             TextView stop = new TextView(a);
@@ -181,6 +181,7 @@ public class AssistantSheet {
         input.setPadding((int) (8 * d), (int) (14 * d), (int) (8 * d), (int) (14 * d));
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
         input.setSingleLine(true);
+        input.setEllipsize(android.text.TextUtils.TruncateAt.END);   // 面板窄的時候提示文字太長就用 … 收尾
         input.setOnTouchListener((v, ev) -> {
             if (ev.getAction() == MotionEvent.ACTION_DOWN) enterTyping();  // 碰輸入框 = 要打字，語音停止
             return false;
@@ -813,15 +814,40 @@ public class AssistantSheet {
         send.setMode(hasText ? ActionButtonView.SEND : listening ? ActionButtonView.LISTENING : ActionButtonView.MIC);
         send.setEnabled(!waiting);
         send.setAlpha(waiting ? 0.35f : 1f);   // 思考中不能按
+        updateWidth();
     }
 
     /** 聲波條的狀態：聽與思考時顯示聲波（蓋住輸入框），其他時候顯示輸入框。 */
     private void setWaveState(int st) {
         wave.setState(st);
+        waveState = st;
         boolean show = st == WaveView.LISTENING || st == WaveView.THINKING;
         wave.setVisibility(show ? View.VISIBLE : View.GONE);
         input.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
         refreshAction();
+    }
+
+    private static final int NARROW_DP = 46, WIDE_DP = 14;   // 面板左右留白：聽與待機時窄，打字或有字時展開
+    private boolean wideNow;
+    private int waveState = WaveView.IDLE;
+    private android.animation.ValueAnimator widthAnim;
+
+    /** 聽或思考時面板窄一點（只是聲波和兩顆按鈕）；打字或有字時展開，輸入框才有地方寫。 */
+    private void updateWidth() {
+        boolean listeningOrThinking = waveState == WaveView.LISTENING || waveState == WaveView.THINKING;
+        boolean wide = !listeningOrThinking && (typing || (input != null && input.getText().length() > 0));
+        if (wide == wideNow) return;
+        wideNow = wide;
+        if (widthAnim != null) widthAnim.cancel();
+        final int from = content.getPaddingLeft(), to = (int) ((wide ? WIDE_DP : NARROW_DP) * d);
+        widthAnim = android.animation.ValueAnimator.ofInt(from, to);
+        widthAnim.setDuration(240);
+        widthAnim.setInterpolator(new DecelerateInterpolator(2f));
+        widthAnim.addUpdateListener(an -> {
+            int p = (int) an.getAnimatedValue();
+            content.setPadding(p, 0, p, content.getPaddingBottom());
+        });
+        widthAnim.start();
     }
 
     private void typeNow() {

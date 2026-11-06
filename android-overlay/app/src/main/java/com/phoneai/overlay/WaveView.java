@@ -2,14 +2,16 @@ package com.phoneai.overlay;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Shader;
 import android.os.SystemClock;
 import android.view.View;
 
 /**
- * 聲波（取代以前的光球）：用函數畫的連續波浪線，三條不同相位與頻率的正弦波疊在一起，
- * 振幅 = 音量 × 包絡線（中間大、兩端漸漸收成 0）。聽的時候隨音量起伏，思考時以固定的振幅、較快的速度流動。
+ * 聲波（取代以前的光球）：五條用函數畫的波浪線疊在一起，每條由兩個不同頻率的正弦合成、振幅自己緩緩起伏，
+ * 再乘上「兩端 0、中間 1」的包絡線，並用漸層上色。聽的時候振幅隨音量；思考時以固定振幅、更快的速度流動。
  * 狀態與 {@link #setState}／{@link #setLevel} 沿用光球的用法，所以面板其他程式不用改。
  */
 public class WaveView extends View {
@@ -23,12 +25,15 @@ public class WaveView extends View {
     private long last;
     private float phase;
 
-    // 三條波：{頻率（週期數）、速度、相對振幅、透明度、線寬(dp)}
+    // 每條波：{頻率 1（週期數）、速度 1、頻率 2、速度 2、相對振幅、透明度、線寬(dp)}
     private static final float[][] WAVES = {
-            {1.6f, 3.4f, 1.00f, 255, 2.4f},
-            {2.4f, -2.7f, 0.62f, 150, 1.8f},
-            {3.3f, 4.6f, 0.38f, 90, 1.4f},
+            {1.5f, 3.0f, 3.1f, -4.2f, 1.00f, 255, 2.6f},
+            {2.1f, -2.4f, 4.3f, 3.1f, 0.78f, 190, 2.0f},
+            {2.9f, 3.8f, 5.0f, -2.2f, 0.58f, 140, 1.7f},
+            {1.2f, -1.8f, 2.6f, 2.9f, 0.90f, 100, 3.6f},
+            {3.7f, 5.0f, 6.1f, -3.5f, 0.42f, 80, 1.3f},
     };
+    private static final int[] COLORS = {0xFF6EA8FF, 0xFFB388FF, 0xFFFF7BAC, 0xFFFFC46B};   // 藍 → 紫 → 粉 → 暖黃（跟極光同一組顏色）
 
     public WaveView(Context c) {
         super(c);
@@ -36,7 +41,12 @@ public class WaveView extends View {
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeCap(Paint.Cap.ROUND);
         line.setStrokeJoin(Paint.Join.ROUND);
-        line.setColor(0xFFFFFFFF);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int ow, int oh) {
+        super.onSizeChanged(w, h, ow, oh);
+        line.setShader(new LinearGradient(0, 0, w, 0, COLORS, null, Shader.TileMode.CLAMP));
     }
 
     public void setState(int s) {
@@ -52,23 +62,28 @@ public class WaveView extends View {
         long now = SystemClock.uptimeMillis();
         float dt = last == 0 ? 0.016f : Math.min(0.05f, (now - last) / 1000f);
         last = now;
-        float goal = state == LISTENING ? 0.12f + 0.88f * ampTarget : (state == THINKING ? 0.5f : 0.06f);
+        float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.65f : 0.1f);
         amp += (goal - amp) * Math.min(1f, dt * 10f);
         phase += dt * (state == THINKING ? 1.9f : 1f);
+        float t = now / 1000f;
 
-        float w = getWidth(), h = getHeight(), cy = h / 2f, maxA = h * 0.46f;
-        int steps = Math.max(24, (int) (w / (3f * d)));
-        for (float[] wv : WAVES) {
+        float w = getWidth(), h = getHeight(), cy = h / 2f, maxA = h * 0.5f;
+        int steps = Math.max(32, (int) (w / (2.5f * d)));
+        for (int k = 0; k < WAVES.length; k++) {
+            float[] wv = WAVES[k];
+            float breathe = 0.72f + 0.28f * (float) Math.sin(t * (1.1f + 0.35f * k) + k * 1.9f);   // 每條自己的呼吸
             path.reset();
             for (int i = 0; i <= steps; i++) {
-                float u = i / (float) steps;                                   // 0~1，由左到右
-                float env = (float) Math.pow(Math.sin(Math.PI * u), 2);         // 兩端 0、中間 1
-                float y = cy + maxA * amp * wv[2] * env * (float) Math.sin(2 * Math.PI * wv[0] * u + phase * wv[1]);
+                float u = i / (float) steps;                                    // 0~1，由左到右
+                float env = (float) Math.pow(Math.sin(Math.PI * u), 2);          // 兩端 0、中間 1
+                double a = Math.sin(2 * Math.PI * wv[0] * u + phase * wv[1]);
+                double b = Math.sin(2 * Math.PI * wv[2] * u + phase * wv[3]);
+                float y = cy + maxA * amp * wv[4] * breathe * env * (float) (0.65 * a + 0.35 * b);
                 float x = u * w;
                 if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
             }
-            line.setStrokeWidth(wv[4] * d);
-            line.setAlpha((int) wv[3]);
+            line.setStrokeWidth(wv[6] * d);
+            line.setAlpha((int) wv[5]);
             c.drawPath(path, line);
         }
         postInvalidateOnAnimation();
