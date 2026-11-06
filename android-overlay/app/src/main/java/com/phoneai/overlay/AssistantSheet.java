@@ -541,11 +541,10 @@ public class AssistantSheet {
                 if (pcm == null) { idleMessage(L.t("沒聽到聲音，點右邊的麥克風再說一次")); return; }
                 setWaveState(WaveView.THINKING);
                 setStatus(L.t("辨識中…"));
-                final float[] f = SpeechCapture.toFloat(pcm);
                 new Thread(() -> {
                     String text = null, err = null;
                     try {
-                        text = SherpaEngine.recognize(act, f, SpeechCapture.RATE);
+                        text = SpeechCapture.recognizeFinal(act, pcm);   // 前面分段辨識好的 ＋ 最後一段
                     } catch (Throwable e) {
                         err = String.valueOf(e.getMessage() != null ? e.getMessage() : e);
                     }

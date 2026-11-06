@@ -697,7 +697,7 @@ public class MainActivity extends Activity {
                 if (pcm == null) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
                 new Thread(() -> {
                     String text = "";
-                    try { text = SherpaEngine.recognize(MainActivity.this, SpeechCapture.toFloat(pcm), SpeechCapture.RATE); }
+                    try { text = SpeechCapture.recognizeFinal(MainActivity.this, pcm); }
                     catch (Throwable e) { text = ""; }
                     final String t = text == null ? "" : text.trim();
                     runOnUiThread(() -> { if (t.isEmpty()) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽清楚，再按一次麥克風")); } else homeStage(t); });

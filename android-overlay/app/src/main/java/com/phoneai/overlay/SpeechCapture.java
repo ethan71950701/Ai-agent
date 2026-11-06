@@ -52,16 +52,65 @@ final class SpeechCapture {
     private volatile String lastPartial;
     private static final java.util.concurrent.ExecutorService PARTIAL_EX = java.util.concurrent.Executors.newSingleThreadExecutor();
 
-    private void maybePartial(ArrayList<short[]> chunks, int total) {
-        if (partial == null || ctx == null || decoding.get() || total < RATE / 2) return;
-        final short[] snap = new short[total];
+    /** 已經分段辨識完、固定下來的前面幾段文字（說很長時，每約 15 秒的停頓處先辨識一段）。 */
+    private final StringBuilder committed = new StringBuilder();
+    private final java.util.concurrent.atomic.AtomicInteger pendingCommits = new java.util.concurrent.atomic.AtomicInteger();
+    private final java.util.List<java.util.concurrent.Future<?>> commitFutures = new ArrayList<>();
+    private static final java.util.concurrent.ExecutorService COMMIT_EX = java.util.concurrent.Executors.newSingleThreadExecutor();
+    /** 最近一次錄音：前面分段已經辨識好的文字、以及最後一段有沒有人聲（給 {@link #recognizeFinal} 用）。 */
+    private static volatile String lastCommitted = "";
+    private static volatile boolean lastSegSpeech;
+
+    private String committedNow() { synchronized (committed) { return committed.toString(); } }
+
+    /** 把 chunks[from..] 這一段送去辨識，結果按順序接在 committed 後面。 */
+    private void commitSegment(ArrayList<short[]> chunks, int from, int samples) {
+        final short[] snap = join(chunks, from, samples);
+        pendingCommits.incrementAndGet();
+        synchronized (commitFutures) {
+            commitFutures.add(COMMIT_EX.submit(() -> {
+                try {
+                    String t = SherpaEngine.recognize(ctx, toFloat(snap), RATE);
+                    if (t != null && !t.isEmpty()) synchronized (committed) { committed.append(t); }
+                } catch (Throwable ignored) {
+                } finally {
+                    pendingCommits.decrementAndGet();
+                }
+            }));
+        }
+        lastPartial = null;
+    }
+
+    private static short[] join(ArrayList<short[]> chunks, int from, int samples) {
+        short[] out = new short[samples];
         int p = 0;
-        for (short[] c : chunks) { System.arraycopy(c, 0, snap, p, c.length); p += c.length; }
+        for (int i = from; i < chunks.size() && p < samples; i++) {
+            short[] c = chunks.get(i);
+            int n = Math.min(c.length, samples - p);
+            System.arraycopy(c, 0, out, p, n);
+            p += n;
+        }
+        return out;
+    }
+
+    /** 說完之後的最後辨識：前面分段辨識好的文字 ＋ 最後一段（沒有人聲就不辨識）。 */
+    static String recognizeFinal(android.content.Context c, short[] pcm) {
+        String head = lastCommitted;
+        String tail = "";
+        if (lastSegSpeech && pcm != null && pcm.length > RATE / 5) tail = SherpaEngine.recognize(c, toFloat(pcm), RATE);
+        return (head + (tail == null ? "" : tail)).trim();
+    }
+
+    private void maybePartial(ArrayList<short[]> chunks, int from, int samples) {
+        if (partial == null || ctx == null || decoding.get() || pendingCommits.get() > 0 || samples < RATE / 2) return;
+        final short[] snap = join(chunks, from, samples);
+        final String head = committedNow();
         decoding.set(true);
         PARTIAL_EX.execute(() -> {
             try {
-                String t = SherpaEngine.recognize(ctx, toFloat(snap), RATE);
-                if (!finished && !cancel && t != null && !t.isEmpty()) {
+                String t0 = SherpaEngine.recognize(ctx, toFloat(snap), RATE);
+                final String t = t0 == null ? "" : head + t0;   // 畫面上顯示：前面固定的 ＋ 這一段目前聽到的
+                if (!finished && !cancel && !t.isEmpty() && pendingCommits.get() == 0) {
                     // 穩定化：整段重新辨識時，偶爾新結果比上一次短很多（前面的字掉了）。那種就先不更新畫面，等下一輪；最後一次完整辨識不受影響
                     String prev = lastPartial;
                     if (prev != null && t.length() < prev.length() * 0.7f && !prev.startsWith(t)) return;
@@ -100,6 +149,8 @@ final class SpeechCapture {
             short[] buf = new short[1600];   // 0.1 秒一包
             double floor = 0;
             int calib = 0, silent = 0, total = 0;
+            int segStart = 0, segSamples = 0;   // 目前這一段從第幾包開始、有幾個取樣；說很長時每約 15 秒分一段先辨識
+            boolean segSpeech = false;
             boolean spoke = false;
             float pauseS = 1.6f;   // 停頓多久才算說完（設定 → 語音可調）；以前固定 1 秒，講話稍微停一下就被切掉
             try { pauseS = App.ctx.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getFloat("voice_pause_s", 1.6f); } catch (Throwable ignored) { }
@@ -114,26 +165,39 @@ final class SpeechCapture {
                 UI.post(() -> cb.onLevel(lv));
                 chunks.add(Arrays.copyOf(buf, n));
                 total += n;
-                if (spoke && chunks.size() % 8 == 0) maybePartial(chunks, total);   // 約每 0.8 秒邊說邊辨識一次
+                segSamples += n;
+                if (spoke && chunks.size() % 8 == 0) maybePartial(chunks, segStart, segSamples);   // 約每 0.8 秒邊說邊辨識一次（只辨識目前這一段，不會越來越慢）
                 if (calib < 5) { floor += rms / 5; calib++; continue; }   // 前 0.5 秒量環境噪音
                 double thr = Math.max(500, floor * 3);
-                if (rms > thr) { spoke = true; silent = 0; } else if (spoke) silent++;
+                if (rms > thr) { spoke = true; segSpeech = true; silent = 0; } else if (spoke) silent++;
+                if (ctx != null && spoke && !stop) {   // 這一段已經夠長、又剛好停頓一下：先辨識掉，繼續錄下一段；一路沒停頓就最多 25 秒硬切
+                    boolean atPause = silent >= 3;
+                    if ((segSamples >= RATE * 15 && atPause) || segSamples >= RATE * 25) {
+                        commitSegment(chunks, segStart, segSamples);
+                        segStart = chunks.size();
+                        segSamples = 0;
+                        segSpeech = false;
+                    }
+                }
                 if (spoke && (silent >= endChunks || stop)) break;         // 說過話、停頓超過設定的秒數（或被叫停）
                 if (!spoke && (stop || total > RATE * 8)) break;          // 還沒開口：被叫停或 8 秒
-                if (total > RATE * 30) break;                              // 最長 30 秒（以前 20 秒，長句會被硬切）
+                if (total > RATE * 180) break;                             // 安全上限 3 分鐘（旁邊一直有聲音時不要錄到天荒地老）
             }
             finished = true;   // 之後不再送邊說邊辨識的結果，免得蓋掉最後的完整辨識
-            lastHitCap = !cancel && !stop && spoke && total > RATE * 30;
+            lastHitCap = !cancel && !stop && spoke && total > RATE * 180;
+            // 等前面分段的辨識都做完，再把整段文字交出去
+            synchronized (commitFutures) {
+                for (java.util.concurrent.Future<?> f : commitFutures) { try { f.get(40, java.util.concurrent.TimeUnit.SECONDS); } catch (Throwable ignored) { } }
+            }
+            lastCommitted = committedNow();
+            lastSegSpeech = segSpeech || (segStart == 0 && spoke);
             try {   // 診斷：為什麼停止錄音（語音被提早切掉、或自己送出時，看「最近事件」）
-                String why = cancel ? "被取消" : stop ? "手動停止" : !spoke ? "沒開口" : total > RATE * 30 ? "到了 30 秒上限" : "停頓超過 " + String.format(java.util.Locale.US, "%.1f", endChunks / 10f) + " 秒";
+                String why = cancel ? "被取消" : stop ? "手動停止" : !spoke ? "沒開口" : total > RATE * 180 ? "到了 3 分鐘上限" : "停頓超過 " + String.format(java.util.Locale.US, "%.1f", endChunks / 10f) + " 秒";
                 LifeLog.add(App.ctx, "錄音結束：" + why + "，共 " + String.format(java.util.Locale.US, "%.1f", total / (float) RATE) + " 秒");
             } catch (Throwable ignored) { }
             if (cancel) return;
             if (!spoke) { UI.post(() -> cb.onDone(null)); return; }
-            short[] pcm = new short[total];
-            int p = 0;
-            for (short[] c : chunks) { System.arraycopy(c, 0, pcm, p, c.length); p += c.length; }
-            final short[] out = pcm;
+            final short[] out = join(chunks, segStart, segSamples);   // 只有最後一段；前面的已經辨識好、放在 lastCommitted（用 recognizeFinal 接起來）
             UI.post(() -> cb.onDone(out));
         } catch (Throwable e) {
             Log.w(TAG, "speech capture: " + e);
