@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1483
+
 - 任務過程與任務詳細的卡片改成邊展開邊一小段一小段建立：不卡動畫，也不會展開完才空一下才出現｜Task history and task detail cards are now built in small slices while the page expands: no stutter, and no empty pause after the expansion
 
 ## 1.0.1481
