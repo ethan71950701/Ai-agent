@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1537
+
 - 記憶改成「標題＋摘要」索引：長筆記在提示裡只列標題與一句摘要，要看細節時助理用 memory_read 讀全文；標題與摘要由寫入的模型順便產生，不多花呼叫｜Memory now uses a title + summary index: long notes appear in the prompt as a title and one-line summary, and the assistant reads the full text with memory_read when it needs details; the title and summary come from the model that writes the note, at no extra call
 
 ## 1.0.1536
