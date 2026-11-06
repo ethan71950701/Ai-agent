@@ -751,7 +751,7 @@ public class MainActivity extends Activity {
         String key = "";
         for (int tries = 0; tries < 12; tries++) {
             joke = rnd.nextInt(2) == 0;
-            if (joke) { idx = rnd.nextInt(JOKES.length); key = "J" + idx; }
+            if (joke) { idx = rnd.nextInt(JOKES.length); key = "J" + idx; if (L.t(JOKES[idx][0]).equals(JOKES[idx][0]) && L.en()) key = last; }   // 英文介面：沒有英文版的笑話不顯示（key 設成跟上次一樣，下一輪重抽）
             else { idx = rnd.nextInt(slot.length + GREET_ANY.length); key = "G" + (idx < slot.length ? slot[idx] : GREET_ANY[idx - slot.length]); }
             if (!key.equals(last)) break;
         }
