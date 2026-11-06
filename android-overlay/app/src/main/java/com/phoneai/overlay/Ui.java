@@ -516,9 +516,19 @@ final class Ui {
 
     /** 點的那張卡片在螢幕上的位置與大小（打開頁面時從這裡長出來、關閉時縮回這裡）；開完會清掉，免得下次從別的地方開時用到舊的。 */
     private static float[] tapRect;
+    private static android.graphics.Bitmap tapSnap;
+    private static final java.util.WeakHashMap<android.app.Activity, android.graphics.Bitmap> EXIT_SNAP = new java.util.WeakHashMap<>();
     private static final java.util.WeakHashMap<android.app.Activity, float[]> EXIT_RECT = new java.util.WeakHashMap<>();
 
     static void rememberTap(View v) {
+        tapSnap = null;
+        try {   // 把被點的卡片拍成一張小圖：展開一開始看起來要跟這張卡片一模一樣（文字還在），再淡出
+            if (v.getWidth() > 0 && v.getHeight() > 0) {
+                android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(v.getWidth(), v.getHeight(), android.graphics.Bitmap.Config.ARGB_8888);
+                v.draw(new android.graphics.Canvas(b));
+                tapSnap = b;
+            }
+        } catch (Throwable ignored) { }
         int[] loc = new int[2];
         v.getLocationOnScreen(loc);
         tapX = loc[0] + v.getWidth() / 2f;
@@ -547,6 +557,10 @@ final class Ui {
         if (v instanceof View) {
             float x = Math.max(0f, Math.min(1f, (p - 0.15f) / 0.5f));
             ((View) v).setAlpha(1f - x * x * (3f - 2f * x));
+            if (v instanceof Veil) {
+                float y = Math.max(0f, Math.min(1f, p / 0.3f));
+                ((Veil) v).setSnapAlpha(1f - y * y * (3f - 2f * y));   // 卡片上的文字在前 30% 淡出
+            }
         }
         cornerRadius = corner * k / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
         root.invalidateOutline();
@@ -555,12 +569,40 @@ final class Ui {
     private static float cornerRadius;
     private static final int R_VEIL = 0x7f0a0e58;   // View.setTag 用的鍵
 
-    /** 在頁面內容最上面蓋一層卡片顏色（alpha 之後由 applyExpand 依進度調整）。 */
-    private static void installVeil(android.app.Activity a, View root, float alpha) {
+    /** 蓋在頁面內容最上面的一層：卡片顏色＋被點卡片的小圖（小圖不跟著頁面變形，固定在容器左上角，隨展開淡出）。 */
+    private static final class Veil extends View {
+        private final android.graphics.Bitmap snap;
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
+        private float snapAlpha = 1f;
+
+        Veil(android.content.Context c, android.graphics.Bitmap snap) {
+            super(c);
+            this.snap = snap;
+        }
+
+        void setSnapAlpha(float a) {
+            snapAlpha = a;
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(android.graphics.Canvas canvas) {
+            canvas.drawColor(attr(getContext(), com.google.android.material.R.attr.colorSurfaceContainerHigh));
+            if (snap == null || snapAlpha <= 0.01f) return;
+            View root = getRootView();
+            float rsx = Math.max(0.01f, root.getScaleX()), rsy = Math.max(0.01f, root.getScaleY());
+            canvas.save();
+            canvas.scale(1f / rsx, 1f / rsy);   // 抵銷頁面被壓扁／放大的比例，小圖才不會變形
+            paint.setAlpha(Math.round(255 * snapAlpha));
+            canvas.drawBitmap(snap, 0f, 0f, paint);
+            canvas.restore();
+        }
+    }
+
+    private static void installVeil(android.app.Activity a, View root, float alpha, android.graphics.Bitmap snap) {
         ViewGroup content = a.findViewById(android.R.id.content);
         if (content == null) return;
-        View veil = new View(a);
-        veil.setBackgroundColor(attr(a, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        Veil veil = new Veil(a, snap);
         veil.setAlpha(alpha);
         content.addView(veil, new ViewGroup.LayoutParams(-1, -1));
         root.setTag(R_VEIL, veil);
@@ -590,7 +632,7 @@ final class Ui {
         final float corner = dp(a, 22);
         root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         setupClip(root);
-        installVeil(a, root, 0f);   // 縮回去的時候，內容也淡成卡片顏色
+        installVeil(a, root, 0f, EXIT_SNAP.get(a));   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
         va.setDuration(340);
         va.setInterpolator(SMOOTH_IO);
@@ -609,7 +651,10 @@ final class Ui {
         tapRect = null;
         if (rect != null) {   // 從卡片展開（像桌面打開 App）
             EXIT_RECT.put(a, rect);
-            installVeil(a, root, 1f);
+            final android.graphics.Bitmap snap = tapSnap;
+            tapSnap = null;
+            if (snap != null) EXIT_SNAP.put(a, snap);
+            installVeil(a, root, 1f, snap);
             root.setAlpha(0f);
             root.setPivotX(0f);
             root.setPivotY(0f);

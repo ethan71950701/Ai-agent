@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 點開卡片時，卡片上的文字不再瞬間消失變空白：展開一開始跟被點的卡片一模一樣，文字隨展開淡出，新內容再淡入（返回時反過來）｜Opening a card no longer blanks its text instantly: the transition starts looking exactly like the tapped card, its text fades out as it expands and the new content fades in (and the reverse on the way back)
+
 - 卡片、按鈕、方塊的按壓彈簧更柔和：按下不再啪一下縮到底、放開只輕輕回彈一點｜The press springs on cards, buttons and tiles are softer: no snap when pressing and only a gentle rebound on release
 
 - 子頁面展開、返回改用平順的慢進慢出曲線，並等第一幀畫好才開始動畫，修正一開始一格不動、下一格就跳一大段的生硬感｜Sub-page open/close use a smoother ease-in-out curve and wait for the first frame to be drawn before starting, fixing the stiff "nothing, then a big jump" at the start
