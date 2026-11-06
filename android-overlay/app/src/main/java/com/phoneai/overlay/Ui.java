@@ -3,6 +3,7 @@ package com.phoneai.overlay;
 import android.content.Context;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -526,6 +527,15 @@ final class Ui {
     }
 
     private static final android.view.animation.PathInterpolator EMPHASIZED = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
+    /** Material 3 的完整「強調」曲線（前面慢慢起步、中段加速、後面慢慢停）：容器展開用它，才不會一開始就衝出去。 */
+    private static final android.view.animation.PathInterpolator EMPH_FULL;
+    static {
+        android.graphics.Path p = new android.graphics.Path();
+        p.moveTo(0f, 0f);
+        p.cubicTo(0.05f, 0f, 0.133333f, 0.06f, 0.166666f, 0.4f);
+        p.cubicTo(0.208333f, 0.82f, 0.25f, 1f, 1f, 1f);
+        EMPH_FULL = new android.view.animation.PathInterpolator(p);
+    }
     private static final android.view.animation.PathInterpolator EMPH_ACCEL = new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f);
 
     /**
@@ -540,12 +550,35 @@ final class Ui {
         root.setScaleY(sy + (1f - sy) * p);
         root.setTranslationX(r[0] * k);
         root.setTranslationY(r[1] * k);
-        root.setAlpha(Math.min(1f, 0.35f + p * 1.2f));
+        root.setAlpha(1f);
+        Object v = root.getTag(R_VEIL);   // 蓋在內容上的一層「卡片顏色」：剛開始只看到一個變大的卡片，內容晚一點才淡入（不要一開始就看到縮小的整個頁面）
+        if (v instanceof View) {
+            float x = Math.max(0f, Math.min(1f, (p - 0.15f) / 0.5f));
+            ((View) v).setAlpha(1f - x * x * (3f - 2f * x));
+        }
         cornerRadius = corner * k / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
         root.invalidateOutline();
     }
 
     private static float cornerRadius;
+    private static final int R_VEIL = 0x7f0a0e58;   // View.setTag 用的鍵
+
+    /** 在頁面內容最上面蓋一層卡片顏色（alpha 之後由 applyExpand 依進度調整）。 */
+    private static void installVeil(android.app.Activity a, View root, float alpha) {
+        ViewGroup content = a.findViewById(android.R.id.content);
+        if (content == null) return;
+        View veil = new View(a);
+        veil.setBackgroundColor(attr(a, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        veil.setAlpha(alpha);
+        content.addView(veil, new ViewGroup.LayoutParams(-1, -1));
+        root.setTag(R_VEIL, veil);
+    }
+
+    private static void removeVeil(View root) {
+        Object v = root.getTag(R_VEIL);
+        if (v instanceof View && ((View) v).getParent() instanceof ViewGroup) ((ViewGroup) ((View) v).getParent()).removeView((View) v);
+        root.setTag(R_VEIL, null);
+    }
 
     private static void setupClip(View root) {
         root.setOutlineProvider(new android.view.ViewOutlineProvider() {
@@ -565,6 +598,7 @@ final class Ui {
         final float corner = dp(a, 22);
         root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         setupClip(root);
+        installVeil(a, root, 0f);   // 縮回去的時候，內容也淡成卡片顏色
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
         va.setDuration(300);
         va.setInterpolator(EMPH_ACCEL);
@@ -583,6 +617,7 @@ final class Ui {
         tapRect = null;
         if (rect != null) {   // 從卡片展開（像桌面打開 App）
             EXIT_RECT.put(a, rect);
+            installVeil(a, root, 1f);
             root.setAlpha(0f);
             root.setPivotX(0f);
             root.setPivotY(0f);
@@ -596,11 +631,12 @@ final class Ui {
                     applyExpand(root, rect, 0f, corner);
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
                     va.setDuration(500);   // Material 3：卡片展開成全螢幕用長持續時間 500 毫秒 + 強調曲線
-                    va.setInterpolator(EMPHASIZED);
+                    va.setInterpolator(EMPH_FULL);
                     va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), corner));
                     va.addListener(new android.animation.AnimatorListenerAdapter() {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
                             applyExpand(root, rect, 1f, corner);
+                            removeVeil(root);
                             root.setClipToOutline(false);
                             root.setLayerType(View.LAYER_TYPE_NONE, null);
                         }
