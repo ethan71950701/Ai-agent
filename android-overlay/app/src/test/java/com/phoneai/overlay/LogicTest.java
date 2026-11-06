@@ -40,6 +40,21 @@ public class LogicTest {
     }
 
     @Test
+    public void emptyInvokeFollowedByJsonUsesTheJson() throws Exception {
+        // Sonnet 實測：先寫一個空的 <invoke name="tap"></invoke>，後面才接正確的 JSON
+        JSONObject a = AgentLoop.parseReply("<invoke name=\"tap\">\n</invoke>\n```json\n{\"action\":\"tap\",\"x\":625,\"y\":780,\"what\":\"課表\"}\n```");
+        assertEquals("tap", a.getString("action"));
+        assertEquals(625, a.getInt("x"));
+        JSONObject b = AgentLoop.parseReply("<invoke name=\"tap\">\n</invoke>\n```\nOops, correcting:\n{\"action\":\"tap\",\"x\":625,\"y\":801}");
+        assertEquals(801, b.getInt("y"));
+        // 有帶參數的 invoke 照舊優先
+        JSONObject c = AgentLoop.parseReply("<invoke name=\"scroll\"><parameter name=\"dir\">down</parameter></invoke>");
+        assertEquals("down", c.getString("dir"));
+        // 只有空的 invoke、沒有 JSON：至少給動作名稱
+        assertEquals("tap", AgentLoop.parseReply("<invoke name=\"tap\"></invoke>").getString("action"));
+    }
+
+    @Test
     public void parseInvokeConvertsXmlToolCall() {
         JSONObject a = AgentLoop.parseInvoke("<invoke name=\"scroll\">\n<parameter name=\"dir\">down</parameter>\n"
                 + "<parameter name=\"wait\">1.5</parameter>\n<parameter name=\"enter\">true</parameter>\n"

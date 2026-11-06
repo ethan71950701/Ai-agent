@@ -692,11 +692,20 @@ final class AgentLoop {
         for (int i = 0; i < out.length(); i++) if ("text".equals(out.getJSONObject(i).optString("type"))) sb.append(out.getJSONObject(i).optString("text"));
         lastRawFull = sb.substring(0, Math.min(sb.length(), 700));
         lastRaw = sb.length() == 0 ? "（空）" + r.optString("stop_reason") : sb.substring(0, Math.min(sb.length(), 80));
-        if (sb.indexOf("<invoke") >= 0) {   // 模型有時回成工具呼叫的 XML 格式，不是 JSON
-            JSONObject inv = parseInvoke(sb.toString());
+        return parseReply(sb.toString());
+    }
+
+    /** 把模型的回覆文字解析成動作 JSON：帶參數的 <invoke> 優先；空的 <invoke> 後面如果接著正確的 JSON，用 JSON。 */
+    static JSONObject parseReply(String text) {
+        if (text.contains("<invoke")) {   // 模型有時回成工具呼叫的 XML 格式，不是 JSON
+            JSONObject inv = parseInvoke(text);
+            if (inv != null && inv.length() > 1) return inv;   // 有帶參數的才採用
+            // 空的 <invoke name="tap"></invoke> 後面常常才接著寫出正確的 JSON（Sonnet 實測）：優先用後面的 JSON，不要只拿到一個沒有座標的動作
+            JSONObject j = parseLast(text);
+            if (j != null && j.has("action")) return j;
             if (inv != null) return inv;
         }
-        return parseLast(sb.toString());
+        return parseLast(text);
     }
 
     /** 回覆被額度截斷、而且沒有任何文字（思考把額度用光了）。 */
