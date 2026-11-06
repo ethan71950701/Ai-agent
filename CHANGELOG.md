@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 自動操作：看圖那一步模型說了不存在的動作時，下一步還是給截圖重來，不再退回元件清單又 look 一次｜Automation: if the model names a non-existent action on a screenshot step, the next step retries with the screenshot instead of falling back to the element list and looking again
+
+## 1.0.1529
+
 - 路由不再用關鍵字：開 Wi-Fi、音量、截圖這些指令也由便宜模型判斷（多一次很快的判斷，沒網路時固定指令暫時不能用）｜Routing no longer uses keywords: even commands like Wi-Fi, volume and screenshot are decided by the cheap model (one quick extra call; fixed commands do not work offline for now)
 
 ## 1.0.1528
