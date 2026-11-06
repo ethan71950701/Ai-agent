@@ -190,7 +190,7 @@ final class Ui {
 
         @Override
         public boolean onDependentViewChanged(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
-            child.setTranslationY(dependency.getBottom());
+            child.setTranslationY(dependency.getBottom() - child.getTop());   // child 本身已經被狀態列的內距往下推了一段（getTop），要扣掉，否則漸層會比標題列低一截、蓋在卡片上
             return true;
         }
     }
