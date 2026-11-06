@@ -114,7 +114,7 @@ final class AgentLoop {
     /** 這個動作會不會實際操作手機（點、滑、輸入、開 App…）。思考、提問、搜尋、記憶、確認、等待不算。 */
     private static boolean operatesPhone(String name) {
         switch (name) {
-            case "done": case "fail": case "ask_user": case "ask": case "search": case "remember": case "wait": case "": return false;
+            case "done": case "fail": case "ask_user": case "ask": case "search": case "remember": case "note_add": case "wait": case "": return false;
             default: return true;
         }
     }
@@ -607,6 +607,17 @@ final class AgentLoop {
         }
     }
 
+    /** 把看畫面讀到的內容存成使用者的筆記（跟聊天助理的 memory_add 同一個地方；一則最多 300 字）。 */
+    private static String noteAdd(Context c, JSONObject a) {
+        String text = a.optString("text").trim();
+        if (text.isEmpty()) return "錯誤：text 不能空";
+        try {
+            return Memory.runTool(c, "memory_add", new JSONObject().put("kind", "note").put("text", text), null);
+        } catch (Exception e) {
+            return "存筆記失敗：" + e;
+        }
+    }
+
     private static String encodeJpeg(Bitmap bmp) {
         int h = Math.round(bmp.getHeight() * (WIDTH / (float) bmp.getWidth()));
         Bitmap small = Bitmap.createScaledBitmap(bmp, WIDTH, h, true);
@@ -1009,6 +1020,8 @@ final class AgentLoop {
                     st.opened.add(pkg);
                     return "已開啟 " + pkg;
                 }
+                case "note_add":
+                    return noteAdd(c, a);
                 case "reminder_create":
                     return reminderCreate(c, a);
                 case "reminder_draft":
@@ -1186,6 +1199,8 @@ final class AgentLoop {
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;
             }
+            case "note_add":
+                return noteAdd(c, a);
             case "reminder_create":
                 return reminderCreate(c, a);
             case "reminder_draft":
