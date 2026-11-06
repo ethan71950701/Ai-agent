@@ -210,7 +210,8 @@ final class Ui {
 
         @Override
         public boolean onDependentViewChanged(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
-            child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight());
+            // 玻璃的底邊比標題列再往下多 20dp，最下面 44dp 漸漸變透明：模糊的玻璃慢慢過渡到清楚的內容，不要一條硬邊
+            child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight() + 20f * child.getResources().getDisplayMetrics().density);
             child.invalidate();
             return true;
         }

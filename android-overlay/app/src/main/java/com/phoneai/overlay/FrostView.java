@@ -18,7 +18,7 @@ final class FrostView extends View {
     private View source;
     private RenderNode node = new RenderNode("frost");
     private final Paint tint = new Paint();
-    private final Paint line = new Paint();
+    private final Paint mask = new Paint();
     private final float d;
     private long until;
 
@@ -29,8 +29,7 @@ final class FrostView extends View {
         int surface = Ui.attr(c, com.google.android.material.R.attr.colorSurface);
         int onSurface = Ui.attr(c, com.google.android.material.R.attr.colorOnSurface);
         tint.setColor((surface & 0x00FFFFFF) | 0x88000000);   // 底色約 53% 不透明：模糊的內容隱約透出來，字還是看得清楚
-        line.setColor((onSurface & 0x00FFFFFF) | 0x1A000000);   // 底部一條很淡的細線，分出玻璃的邊
-        line.setStrokeWidth(Math.max(1f, d * 0.8f));
+        mask.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));   // 漸層遮罩：留下玻璃的程度 = 遮罩的不透明度
     }
 
     void setSource(View s) {
@@ -90,13 +89,21 @@ final class FrostView extends View {
                 source.draw(rc);
             }
             node.endRecording();
-            canvas.drawRenderNode(node);
         } catch (Throwable t) {
             CrashLog.w("頂欄毛玻璃", t);
             canvas.drawRect(0, 0, w, h, tint);
         }
-        canvas.drawRect(0, 0, w, h, tint);
-        canvas.drawLine(0, h - line.getStrokeWidth() / 2f, w, h - line.getStrokeWidth() / 2f, line);
+        // 玻璃（模糊＋底色）整塊畫在一個圖層上，再用漸層遮罩把最下面一段淡成透明
+        int sc = canvas.saveLayer(0, 0, w, h, null);
+        try {
+            canvas.drawRenderNode(node);
+            canvas.drawRect(0, 0, w, h, tint);
+            float fade = Math.min(h, 44f * d);
+            mask.setShader(new android.graphics.LinearGradient(0, h - fade, 0, h, 0xFF000000, 0x00000000, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, h - fade, w, h, mask);
+        } finally {
+            canvas.restoreToCount(sc);
+        }
         if (SystemClock.uptimeMillis() < until) postInvalidateOnAnimation();
     }
 }
