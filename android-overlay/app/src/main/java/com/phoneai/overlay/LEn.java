@@ -237,6 +237,7 @@ final class LEn {
         m.put("路由：", "Route: ");
         m.put("路由失敗，當成聊天", "Routing failed, treated as chat");
         m.put("路由：看不懂便宜模型的回答，當成聊天", "Route: could not parse the cheap model's answer, treated as chat");
+        m.put("（便宜模型沒把握，改問較強的模型）", " (the cheap model was unsure, asked a stronger one)");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

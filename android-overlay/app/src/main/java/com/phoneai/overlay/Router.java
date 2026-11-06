@@ -103,6 +103,23 @@ final class Router {
         return null;
     }
 
+    /** 問一次路由，回最後一個 JSON 物件的文字；連不上或沒有 JSON 回 null。 */
+    private static String askRoute(String model, String prompt, String key) throws Exception {
+        JSONObject body = new JSONObject().put("model", model).put("max_tokens", 400)
+                .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
+        JSONObject r = ChatEngine.post(body, key);
+        StringBuilder out = new StringBuilder();
+        JSONArray content = r.optJSONArray("content");
+        for (int i = 0; content != null && i < content.length(); i++) {
+            JSONObject b = content.getJSONObject(i);
+            if ("text".equals(b.optString("type"))) out.append(b.optString("text"));
+        }
+        Matcher m = Pattern.compile("\\{[^{}]*\\}").matcher(out);
+        String last = null;
+        while (m.find()) last = m.group();
+        return last;
+    }
+
     /** 回傳判斷結果；Key 讀不到、網路失敗、回答看不懂回 null（呼叫端改用聊天）。 */
     static Decision decide(Context c, String text) {
         String key = ChatEngine.key(c);
@@ -124,6 +141,7 @@ final class Router {
                 + "傳檔案：使用者要在自己的裝置之間傳檔案、找檔案、從另一台手機或電腦拿檔案、傳到另一台裝置，都回 chat（聊天助理有傳檔案工具）。"
                 + "使用者的筆記（記憶，只列開頭）：" + Memory.promptRows(Memory.load(c), "note", 50) + "\n"
                 + "如果使用者問的事，答案很可能已經在上面的筆記裡（例如課表、地址、號碼、他說過要記的事），回 chat：聊天助理看得到筆記的完整內容，不要再去開App或操作畫面查。\n"
+                + "如果你不太確定（例如聊天和自動操作都說得通），在JSON裡多加 \"conf\":\"low\"；很確定就不用寫這個欄位。\n"
                 + "只輸出一行JSON，不要解釋：\n"
                 + "{\"route\":\"cmd\",\"i\":指令編號} 或 {\"route\":\"app\",\"name\":\"App名稱\"} 或 {\"route\":\"chat\"} 或 {\"route\":\"agent\",\"steps\":整數,\"app\":\"要先開的App名稱，沒有就省略\"}\n"
                 + "chat = 純聊天或問答：問知識、解釋、翻譯、建議、閒聊、寫文字、算數，答案用你的常識就能直接說，完全不需要操作手機或查即時資料。使用者問他自己的東西或他說過的事（車停哪、東西放哪、之前告訴你的資訊），也回 chat，因為要先查記憶。"
@@ -140,21 +158,15 @@ final class Router {
             prompt = prompt + ms;
         }
         try {
-            JSONObject body = new JSONObject().put("model", MODEL).put("max_tokens", 400)
-                    .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
-            JSONObject r = ChatEngine.post(body, key);
-            StringBuilder out = new StringBuilder();
-            JSONArray content = r.optJSONArray("content");
-            for (int i = 0; content != null && i < content.length(); i++) {
-                JSONObject b = content.getJSONObject(i);
-                if ("text".equals(b.optString("type"))) out.append(b.optString("text"));
-            }
-            Matcher m = Pattern.compile("\\{[^{}]*\\}").matcher(out);
-            String last = null;
-            while (m.find()) last = m.group();
+            String last = askRoute(MODEL, prompt, key);
             if (last == null) { lastNote = L.t("路由：看不懂便宜模型的回答，當成聊天"); return null; }
             JSONObject d = new JSONObject(last);
-            lastNote = L.t("路由：") + last;
+            String note = "";
+            if ("low".equals(d.optString("conf"))) {   // 便宜模型自己說沒把握：換較強的模型再判斷一次（只有沒把握才多花一次）
+                String l2 = askRoute(AgentLoop.MODEL, prompt, key);
+                if (l2 != null) { last = l2; d = new JSONObject(l2); note = L.t("（便宜模型沒把握，改問較強的模型）"); }
+            }
+            lastNote = L.t("路由：") + last + note;
             switch (d.optString("route")) {
                 case CMD: {
                     int i = d.optInt("i", -1);
