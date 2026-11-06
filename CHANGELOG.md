@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1523
+
 - 圈選提問回來了：助理面板左邊的圈選鈕 → 凍結畫面、隨便圈一圈會自動變成長方形（可拖角或邊調整、拖裡面移動），再輸入問題問 AI｜Circle to ask is back: the new button in the assistant panel freezes the screen; draw any loop and it becomes an adjustable rectangle (drag corners or edges, drag inside to move), then ask the AI
 
 ## 1.0.1514
