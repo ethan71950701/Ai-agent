@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 照 Material 3 官方數值微調：助理面板高度 56dp、顏色跟著莫奈取色；子頁面從卡片展開改成 500 毫秒｜Tuned to the Material 3 specs: the assistant panel is 56dp tall and takes its colour from the Monet palette; opening a sub-page from a card now takes 500 ms
+
 - 助理面板聽與待機時更窄，打字或有字時才展開；聲波改成五條漸層色、各自起伏的波，空白更少｜The assistant panel is narrower while listening or idle and widens when you type; the sound wave is now five gradient-coloured waves that each breathe, so there is less empty space
 
 ## 1.0.1472

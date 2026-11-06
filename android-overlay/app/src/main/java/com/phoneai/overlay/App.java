@@ -30,6 +30,27 @@ public class App extends Application {
         return sp.getBoolean("monet_on", true) ? "monet" : "seed" + sp.getInt("seed_idx", 0);
     }
 
+    /** 目前主題的主色（莫奈取色或固定色）。助理面板的 Activity 沒套 Material 主題，所以自己組一個再讀；讀不到回 defColor。 */
+    static int accentColor(Context c, int defColor) {
+        try {
+            Context base = c.getApplicationContext();
+            android.view.ContextThemeWrapper tc = new android.view.ContextThemeWrapper(base, R.style.AppTheme);
+            SharedPreferences sp = base.getSharedPreferences("cfg", MODE_PRIVATE);
+            Context use = tc;
+            if (!sp.getBoolean("monet_on", true)) {
+                int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
+                tc.getTheme().applyStyle(ACCENTS[i], true);
+            } else {
+                use = DynamicColors.wrapContextIfAvailable(tc);
+            }
+            android.util.TypedValue tv = new android.util.TypedValue();
+            if (!use.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, tv, true)) return defColor;
+            return tv.data;
+        } catch (Throwable e) {
+            return defColor;
+        }
+    }
+
     private static boolean themed(Activity a) {
         return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof DiagActivity || a instanceof MemoryActivity
                 || a instanceof LogActivity || a instanceof DigestActivity || a instanceof MicTestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity || a instanceof TransferActivity

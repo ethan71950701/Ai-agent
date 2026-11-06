@@ -595,7 +595,7 @@ final class Ui {
                     root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                     applyExpand(root, rect, 0f, corner);
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
-                    va.setDuration(420);
+                    va.setDuration(500);   // Material 3：卡片展開成全螢幕用長持續時間 500 毫秒 + 強調曲線
                     va.setInterpolator(EMPHASIZED);
                     va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), corner));
                     va.addListener(new android.animation.AnimatorListenerAdapter() {

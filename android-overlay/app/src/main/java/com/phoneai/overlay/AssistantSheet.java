@@ -163,11 +163,12 @@ public class AssistantSheet {
         row = new LinearLayout(a);
         row.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable pb = new GradientDrawable();
-        pb.setColor(0xF2101015);
-        pb.setStroke((int) Math.max(1, d), 0x26FFFFFF);
+        final int accent = bright(App.accentColor(a, 0xFF6EA8FF));
+        pb.setColor(blend(0xFF101015, accent, 0.14f) & 0xFFFFFF | 0xF2000000);   // 深色底 + 一點主題色（跟著莫奈取色）
+        pb.setStroke((int) Math.max(1, d), (accent & 0xFFFFFF) | 0x33000000);
         pb.setCornerRadius(200 * d);   // 大於一半高度＝兩端是完整的半圓
         row.setBackground(pb);
-        row.setPadding((int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
+        row.setPadding((int) (6 * d), (int) (6 * d), (int) (6 * d), (int) (6 * d));   // 高度 = 6 + 44 + 6 = 56dp（Material 3 搜尋列的高度）；圓角 28 − 內距 6 = 按鈕半徑 22（官方的 optical roundness）
         final LinearLayout bar = new LinearLayout(a);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
@@ -178,7 +179,7 @@ public class AssistantSheet {
         input.setTextColor(Color.WHITE);
         input.setTextSize(17);
         input.setBackground(null);                 // 底色由整個面板提供
-        input.setPadding((int) (8 * d), (int) (14 * d), (int) (8 * d), (int) (14 * d));
+        input.setPadding((int) (8 * d), (int) (10 * d), (int) (8 * d), (int) (10 * d));
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
         input.setSingleLine(true);
         input.setEllipsize(android.text.TextUtils.TruncateAt.END);   // 面板窄的時候提示文字太長就用 … 收尾
@@ -212,22 +213,23 @@ public class AssistantSheet {
             bgBtn.setOn(on);
             v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);  // 不跳提示文字，只靠圖示變化
         });
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (46 * d), (int) (46 * d));
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
         blp.rightMargin = (int) (2 * d);
         bar.addView(bgBtn, blp);
         bgBtnView = bgBtn;
         FrameLayout center = new FrameLayout(a);
         center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
         center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
-        bar.addView(center, new LinearLayout.LayoutParams(0, (int) (50 * d), 1f));
+        bar.addView(center, new LinearLayout.LayoutParams(0, (int) (44 * d), 1f));
 
         send = new ActionButtonView(a);
+        send.setAccent(accent);
         send.setOnClickListener(v -> {   // 有字＝送出；沒字＝開始／停止聽
             if (input.getText().length() > 0) submit();
             else if (listening) stopListening();
             else startVoice();
         });
-        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (50 * d), (int) (50 * d));
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
         slp.leftMargin = (int) (2 * d);
         bar.addView(send, slp);
         content.addView(row, new LinearLayout.LayoutParams(-1, -2));
@@ -848,6 +850,20 @@ public class AssistantSheet {
             content.setPadding(p, 0, p, content.getPaddingBottom());
         });
         widthAnim.start();
+    }
+
+    /** 兩個顏色按比例混合：t = 0 全是 a，t = 1 全是 b。 */
+    private static int blend(int a, int b, float t) {
+        int r = Math.round(((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+        int g = Math.round(((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+        int bl = Math.round((a & 255) * (1 - t) + (b & 255) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
+    }
+
+    /** 主色太暗的話混一點白，在深色面板上才看得到（聽的時候的實心圓用它）。 */
+    private static int bright(int c) {
+        float lum = (0.299f * ((c >> 16) & 255) + 0.587f * ((c >> 8) & 255) + 0.114f * (c & 255)) / 255f;
+        return lum < 0.45f ? blend(c, 0xFFFFFFFF, 0.35f) : c;
     }
 
     private void typeNow() {

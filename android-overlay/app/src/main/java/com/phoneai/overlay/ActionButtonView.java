@@ -22,6 +22,13 @@ public class ActionButtonView extends View {
     private final float d;
     private float progress;
     private int mode = MIC;
+    private int accent = 0xFF4F6BED;
+
+    /** 正在聽時的實心圓顏色（主題主色）。 */
+    public void setAccent(int c) {
+        accent = c;
+        invalidate();
+    }
 
     public ActionButtonView(Context c) {
         super(c);
@@ -54,7 +61,7 @@ public class ActionButtonView extends View {
     protected void onDraw(Canvas c) {
         float w = getWidth(), h = getHeight(), box = Math.min(w, h), cx = w / 2f, cy = h / 2f;
         if (mode == LISTENING) {   // 正在聽：藍色實心圓
-            fill.setColor(0xFF4F6BED);
+            fill.setColor(accent);
             c.drawCircle(cx, cy, box / 2f - 2 * d, fill);
         } else if (mode == MIC) {  // 待機：淡淡的圓底，讓人知道這是按鈕
             fill.setColor(0x22FFFFFF);
