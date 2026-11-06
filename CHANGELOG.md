@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1494
+
 - 任務過程列表建卡片更輕：每一幀只建一張，列表上的文字不再設成可選取（點整張卡片進詳情）｜Building the task-history cards is lighter: one card per frame, and the list text is no longer selectable (tapping a card opens its details)
 
 ## 1.0.1493
