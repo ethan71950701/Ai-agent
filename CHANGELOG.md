@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 通知列的小圖示換成波形（跟 App 圖示同一個主題）｜The notification status-bar icon is now the wave motif, matching the app icon
 
+## 1.0.1501
+
 - 換了新的 App 圖示：白底、三條點對稱的黑色波；也加了 Android 13 以上主題圖示用的單色版｜New app icon: a white background with three point-symmetric black waves, plus a monochrome layer for themed icons on Android 13 and later
 
 ## 1.0.1500
