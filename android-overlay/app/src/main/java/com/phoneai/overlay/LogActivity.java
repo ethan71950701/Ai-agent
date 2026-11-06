@@ -30,7 +30,7 @@ public class LogActivity extends Activity {
     private final long startedAt = System.currentTimeMillis();
     private TextView body, status;
     private LinearLayout taskBox;
-    private boolean taskShown, cardsAnimated;
+    private boolean cardsAnimated;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -73,10 +73,7 @@ public class LogActivity extends Activity {
     private void reloadTasks() {
         new Thread(() -> {
             JSONArray list = TaskLog.list(this);
-            runOnUiThread(() -> {
-                if (taskShown) showTasks(list);   // 之後的重新整理（加星星）直接換
-                else { taskShown = true; Ui.afterEnterFade(this, taskBox, () -> showTasks(list)); }   // 第一次：展開動畫結束後才建卡片、再淡入
-            });
+            runOnUiThread(() -> showTasks(list));
         }).start();
     }
 
@@ -94,7 +91,8 @@ public class LogActivity extends Activity {
         }
         status.setText(L.t("點 ☆ 可以加星星，有星的會排在最前面。"));
         SimpleDateFormat f = new SimpleDateFormat("MM/dd HH:mm", Locale.TAIWAN);
-        for (int k = 0; k < list.length(); k++) {
+        final boolean first = !cardsAnimated;
+        Ui.chunked(this, list.length(), k -> {   // 每一幀只建幾張卡片：不卡展開動畫，卡片邊展開邊出現
             try {
                 JSONObject o = list.getJSONObject(k);
                 final long id = o.getLong("id");
@@ -148,12 +146,11 @@ public class LogActivity extends Activity {
                 row.addView(star);
 
                 card.addView(row);
-                if (!cardsAnimated) Ui.riseIn(card, 40L * Math.min(k, 8));   // 第一次：一張一張升起來（不用彈簧）；加星星之後重排就不要再動一次
+                if (first) Ui.riseIn(card, 0);   // 第一次：一張一張升起來（不用彈簧）；加星星之後重排就不要再動一次
             } catch (Exception ignored) {
                 // 壞掉的一筆跳過，其他照常顯示
             }
-        }
-        cardsAnimated = true;
+        }, () -> cardsAnimated = true);
     }
 
     private void reload() {

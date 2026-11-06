@@ -22,8 +22,7 @@ public class TaskDetailActivity extends Activity {
         setContentView(Ui.screen(this, L.t("任務過程"), true, c));
         Ui.enterSpring(this);
         LinearLayout box = c[0];
-        final LinearLayout fbox = box;
-        Ui.afterEnterFade(this, box, () -> build(fbox));   // 展開動畫結束後才建卡片，再淡入（不然一點擊會頓一下）
+        build(box);
     }
 
     private void build(LinearLayout box) {
@@ -56,9 +55,10 @@ public class TaskDetailActivity extends Activity {
             total.addView(Ui.body(this, L.t("這次沒有自動操作，只是一次對話。")));
             return;
         }
-        for (int i = 0; i < steps; i++) {
-            JSONObject d = detail.optJSONObject(i);
-            if (d == null) continue;
+        final JSONArray fdetail = detail;
+        Ui.chunked(this, steps, i -> {   // 每一步一張卡片，每一幀只建幾張：不卡展開動畫，卡片邊展開邊出現
+            JSONObject d = fdetail.optJSONObject(i);
+            if (d == null) return;
             LinearLayout card = Ui.card(this, box);
             boolean macroStep = d.optBoolean("macro");   // 巨集重播的步驟：沒有 AI 思考、沒有 token
             TextView title = Ui.body(this, macroStep ? L.t("巨集重播 · ") + d.optString("action")
@@ -86,7 +86,7 @@ public class TaskDetailActivity extends Activity {
                             : L.t("元件清單：上一步點不到編號，這一步改用截圖＋Sonnet")));
                 }
             }
-            Ui.riseIn(card, 40L * Math.min(i, 8));   // 一張一張升起來（不用彈簧）
-        }
+            Ui.riseIn(card, 0);   // 一張一張升起來（不用彈簧）
+        }, null);
     }
 }

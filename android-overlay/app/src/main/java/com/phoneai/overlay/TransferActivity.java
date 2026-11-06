@@ -64,7 +64,7 @@ public class TransferActivity extends Activity {
         super.onResume();
         visible = true;
         if (TransferStore.enabled(this) && !TransferService.running) TransferService.start(this);
-        Ui.afterEnter(this, this::render);   // 第一次進來：展開動畫結束後才建畫面
+        render();
         ui.postDelayed(tick, 1000);
     }
 

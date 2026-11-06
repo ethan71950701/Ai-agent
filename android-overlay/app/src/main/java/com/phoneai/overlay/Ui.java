@@ -513,18 +513,25 @@ final class Ui {
         v.animate().alpha(1f).translationY(0f).setStartDelay(delay).setDuration(320).setInterpolator(EMPHASIZED).start();
     }
 
-    // ---------- 展開動畫期間先不建重的內容 ----------
-    // 子頁面一打開就在主執行緒建一堆卡片，剛好卡在展開動畫那幾幀（點擊會頓一下）。重的內容改成動畫結束後才建，再淡入。
-    private static final java.util.WeakHashMap<android.app.Activity, java.util.ArrayList<Runnable>> PENDING = new java.util.WeakHashMap<>();
-
-    private static void beginEnter(final android.app.Activity a) {
-        PENDING.put(a, new java.util.ArrayList<>());
-        a.getWindow().getDecorView().postDelayed(() -> finishEnter(a), 900);   // 保險：動畫沒正常結束也不會一直不建
-    }
-
-    private static void finishEnter(android.app.Activity a) {
-        java.util.ArrayList<Runnable> l = PENDING.remove(a);
-        if (l != null) for (Runnable r : l) { if (!a.isFinishing() && !a.isDestroyed()) r.run(); }
+    /**
+     * 把「建 count 個項目」切成很多小段：每一幀只花約 4 毫秒建幾個，不會卡住展開動畫，內容也會邊展開邊陸續出現
+     * （以前是一口氣建完，或等動畫結束才建，前者會頓一下、後者展開完要空一下）。build 在主執行緒執行；done 可以是 null。
+     */
+    static void chunked(final android.app.Activity a, final int count, final java.util.function.IntConsumer build, final Runnable done) {
+        final android.view.Choreographer ch = android.view.Choreographer.getInstance();
+        final int[] next = {0};
+        ch.postFrameCallback(new android.view.Choreographer.FrameCallback() {
+            @Override
+            public void doFrame(long frameTimeNanos) {
+                if (a.isFinishing() || a.isDestroyed()) return;
+                long deadline = System.nanoTime() + 4_000_000L;
+                do {   // 至少建一個；用完這一幀的時間預算就等下一幀
+                    build.accept(next[0]++);
+                } while (next[0] < count && System.nanoTime() < deadline);
+                if (next[0] < count) ch.postFrameCallback(this);
+                else if (done != null) done.run();
+            }
+        });
     }
 
     /** 展開動畫結束後才執行 r（沒有在展開就立刻執行）。 */
@@ -683,7 +690,6 @@ final class Ui {
     /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
     static void enterSpring(final android.app.Activity a) {
         a.overridePendingTransition(0, 0);
-        beginEnter(a);
         final View root = a.getWindow().getDecorView();
         final float[] rect = tapRect;
         tapRect = null;
@@ -712,7 +718,6 @@ final class Ui {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
-                            finishEnter(a);
                             root.setClipToOutline(false);
                             root.setLayerType(View.LAYER_TYPE_NONE, null);
                         }
@@ -744,7 +749,7 @@ final class Ui {
                 // 沒有點的卡片位置時的備用動畫：整頁從 0.92 倍淡入放大到原大小，用 Material 的強調減速曲線（不用彈簧，才不會像突然冒出來再彈一下）
                 root.animate().alpha(1f).setDuration(200).setInterpolator(EMPHASIZED).start();
                 root.animate().scaleX(1f).scaleY(1f).setDuration(400).setInterpolator(EMPHASIZED)
-                        .withEndAction(() -> { root.setLayerType(View.LAYER_TYPE_NONE, null); finishEnter(a); }).start();
+                        .withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start();
                 return true;
             }
         });

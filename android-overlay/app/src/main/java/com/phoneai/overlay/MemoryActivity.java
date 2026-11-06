@@ -138,7 +138,7 @@ public class MemoryActivity extends Activity {
             final String e = err, inf = info;
             runOnUiThread(() -> {
                 diag = inf;
-                if (g != null) { data = g; cache = g; Ui.afterEnter(this, this::render); } else status.setText(e + "\n" + inf);
+                if (g != null) { data = g; cache = g; render(); } else status.setText(e + "\n" + inf);
             });
         }).start();
     }
