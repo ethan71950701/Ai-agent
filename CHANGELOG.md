@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1461
+
 - 修正用 Claude 整理通知常說「看不懂」：回答長度上限提高（原本太短會被截斷），解不開時改成盡量顯示摘要文字｜Fix the digest often saying it could not understand Claude's answer: the answer length limit is higher (it was truncating), and when the JSON cannot be parsed the digest now shows the summary text it can recover
 
 - 載入動畫拿掉正圓，只在圓角五邊形和橢圓之間變形｜The loading animation no longer includes the plain circle; it morphs between the rounded pentagon and ellipses only
