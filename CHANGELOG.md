@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 首頁輸入框改成跟助理面板、底欄同一種液態玻璃膠囊（兩端半圓、白字）｜Home input bar is now the same liquid-glass pill as the assistant panel and bottom bar (rounded ends, white text)
 - 首頁：底欄後面鋪一層跟背景同色的底，液態玻璃不再染上光暈的彩色漸層｜Home: a background-colored layer sits behind the bottom bar so the liquid glass no longer picks up the glow's color gradient
 
 ## 1.0.1537

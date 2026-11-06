@@ -569,21 +569,25 @@ public class MainActivity extends Activity {
     /** 首頁底部的膠囊：提示文字／輸入框＋右邊圓形按鈕（沒字＝麥克風，點了整條換成波開始聽；有字＝送出）。 */
     private void showHomeBar() {
         removeHomeBar();
+        // 跟助理面板、底欄同一種液態玻璃膠囊（兩端半圓，高度 8＋48＋8＝64dp），不再是一塊平的灰色圓角方塊
+        final GlassBar glassRow = new GlassBar(this, 0xFF23262A, 0x00000000, 0x44FFFFFF, Ui.dp(this, 32), false);
+        glassRow.setSource(root);
+        glassRow.setGlowColor(0xFFFFFFFF);
+        glassRow.setClipChildren(false);
+        glassRow.setLive(true);   // 後面的極光一直在動，玻璃要每幀更新
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-        gd.setCornerRadius(Ui.dp(this, 32));
-        gd.setColor(Ui.attr(this, com.google.android.material.R.attr.colorSurfaceContainerHigh));
-        bar.setBackground(gd);
-        bar.setPadding(Ui.dp(this, 22), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+        bar.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+        glassRow.addView(bar, new android.widget.FrameLayout.LayoutParams(-1, -2));
         final android.widget.EditText et = new android.widget.EditText(this);
         homeEt = et;
         et.setHint(L.t("輸入或按右邊說話"));
         et.setSingleLine(true);
         et.setBackground(null);
-        et.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
-        et.setHintTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
+        et.setTextColor(0xFFFFFFFF);
+        et.setHintTextColor(0xA0FFFFFF);
+        et.setTextSize(17);
         et.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEND);
         final ActionButtonView action = new ActionButtonView(this);
         action.setAccent(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
@@ -635,8 +639,8 @@ public class MainActivity extends Activity {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
         lp.gravity = android.view.Gravity.BOTTOM;
         lp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 96));   // 留在底部導覽列上方
-        ((android.view.ViewGroup) root).addView(bar, lp);
-        homeBar = bar;
+        ((android.view.ViewGroup) root).addView(glassRow, lp);
+        homeBar = glassRow;
     }
 
     /** 首頁直接回答：在問候語下面顯示回答（不開面板）。 */
