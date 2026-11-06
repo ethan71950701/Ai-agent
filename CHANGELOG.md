@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1503
+
 - App 改名為 Vertex（原名 PhoneAI Overlay）；收到的檔案仍放在「下載/PhoneAI」，更新方式不變｜The app is renamed Vertex (formerly PhoneAI Overlay); received files still go to Download/PhoneAI and updating works as before
 
 ## 1.0.1502
