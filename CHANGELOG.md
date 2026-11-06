@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 加入基準設定檔（Baseline Profile）：App 剛安裝或更新完，常用的程式碼就先編譯好，不用等手機閒置充電，更新後第一次用動畫與開頁面會比較順｜Added a Baseline Profile: the app's code is pre-compiled right after installing or updating, so animations and page opens are smoother the first time you use them after an update
 
+## 1.0.1494
+
 - 任務過程列表建卡片更輕：每一幀只建一張，列表上的文字不再設成可選取（點整張卡片進詳情）｜Building the task-history cards is lighter: one card per frame, and the list text is no longer selectable (tapping a card opens its details)
 
 ## 1.0.1493
