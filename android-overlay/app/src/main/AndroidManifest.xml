@@ -217,11 +217,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".MicTestActivity"
-            android:theme="@style/AppTheme.Sub"
-            android:exported="false" />
-
-        <activity
             android:name=".ConfirmActivity"
             android:exported="false"
             android:taskAffinity=""
