@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1536
+
 - 路由：便宜模型自己說沒把握時，才多問一次較強的模型；聊天助理新增筆記前會先看有沒有同一件事或互相矛盾的舊筆記，有就改那一則，不再並排新增｜Routing: only when the cheap model says it is unsure is a stronger model asked once more; before adding a note the chat assistant now checks for an older note on the same thing or one that contradicts it and updates that one instead of adding a second
 
 ## 1.0.1535
