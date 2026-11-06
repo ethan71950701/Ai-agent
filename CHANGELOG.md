@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1544
+
 - 底欄偶爾變梯形（掛在背景再回來）：回到 App 時，玻璃的繪圖節點與著色器改成全部換新的，不再沿用可能壞掉的舊物件｜Bottom bar occasionally turning into a trapezoid (after leaving the app in the background): on return the glass now gets brand-new render nodes and shaders instead of reusing possibly broken ones
 
 ## 1.0.1543
