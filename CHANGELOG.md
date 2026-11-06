@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1561
+
 - 新增實驗功能「頂欄毛玻璃」（設定 → 外觀，預設關）：功能、設定頁的標題列變成模糊的玻璃，內容捲到它後面會透出來｜New experimental "Frosted top bar" (Settings → Appearance, off by default): the title bar on Features and Settings becomes frosted glass, content scrolling behind it shows through blurred
 
 ## 1.0.1559
