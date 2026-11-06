@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 子頁面展開、返回改用平順的慢進慢出曲線，並等第一幀畫好才開始動畫，修正一開始一格不動、下一格就跳一大段的生硬感｜Sub-page open/close use a smoother ease-in-out curve and wait for the first frame to be drawn before starting, fixing the stiff "nothing, then a big jump" at the start
 
+## 1.0.1477
+
 - 子頁面展開改成「容器轉換」：先是卡片顏色的圓角容器慢慢起步展開，內容晚一點才淡入（不再一開始就看到縮小的整頁，也不再前面衝很快）｜Sub-pages now open like a container transform: a card-coloured rounded container starts gently and grows, and the content fades in later (no more tiny full page at the start and no more sudden rush)
 
 ## 1.0.1476
