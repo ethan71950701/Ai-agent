@@ -24,6 +24,7 @@ final class Brain {
         AgentLoop.cardNote = "";
         AgentLoop.macroNote = "";   // 上一個任務留下的值不能影響這一次（聊天回答不該跳卡片）
         ChatEngine.searchNote = "";
+        Router.lastNote = "";
         Usage.beginTally();
         String reply = null;
         try {
@@ -34,6 +35,7 @@ final class Brain {
             TaskLog.add(act, t, reply, AgentLoop.takeDetails(), tokens, cost);
             if (!AgentLoop.cardNote.isEmpty()) TaskLog.noteLatest(act, AgentLoop.cardNote);
             if (!AgentLoop.macroNote.isEmpty()) TaskLog.noteLatest(act, "macro", AgentLoop.macroNote);
+            if (!Router.lastNote.isEmpty()) TaskLog.noteLatest(act, "route", Router.lastNote);
             if (!ChatEngine.searchNote.isEmpty()) TaskLog.noteLatest(act, "search", ChatEngine.searchNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         }
         return reply;

@@ -43,6 +43,7 @@ public class TaskDetailActivity extends Activity {
         if (!t.optString("reply").isEmpty()) head.addView(Ui.body(this, t.optString("reply")));
         if (!t.optString("card").isEmpty()) head.addView(Ui.body(this, L.t("回答卡片：") + t.optString("card")));
         if (!t.optString("macro").isEmpty()) head.addView(Ui.body(this, L.t("巨集：") + t.optString("macro")));
+        if (!t.optString("route").isEmpty()) head.addView(Ui.body(this, t.optString("route")));
         if (!t.optString("search").isEmpty()) head.addView(Ui.body(this, t.optString("search")));
 
         LinearLayout total = Ui.card(this, box);

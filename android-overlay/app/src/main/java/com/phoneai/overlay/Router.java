@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
  */
 final class Router {
     static final String MODEL = "claude-haiku-5-5";
+    static volatile String lastNote = "";   // 這一次路由的結果（顯示在任務過程，看便宜模型到底判成什麼）
     static final String CMD = "cmd", APP = "app", CHAT = "chat", AGENT = "agent";
 
     static final class Decision {
@@ -118,7 +119,7 @@ final class Router {
                 + "請判斷這句話是不是下列某個固定指令或App的另一種說法（錯字、同音字、口語都算，例如「藍芽」=藍牙）。\n"
                 + "固定指令:\n" + cmds + "\nApp名稱: " + appNames + "\n"
                 + "規則：開和關、大聲和小聲是相反的動作，絕對不能搞混；意思不完全一樣就不要硬選。"
-                + "記憶與聊天：使用者要記住東西、問記過的事、改或刪待辦/筆記、問知識、閒聊，都回 chat（聊天助理有記憶工具可以自己處理）。但如果要記的內容得先去某個App或相簿裡看畫面、找圖片或檔案、讀畫面上的字才拿得到（例如「去相簿找到課表圖片幫我記起來」），聊天助理看不到畫面，要回 agent（自動操作看完畫面後可以自己存成筆記）。"
+                + "記憶與聊天：使用者要記住東西、問記過的事、改或刪待辦/筆記、問知識、閒聊，都回 chat（聊天助理有記憶工具可以自己處理）。但如果要記的內容得先去某個App或相簿裡看畫面、找圖片或檔案、讀畫面上的字才拿得到，聊天助理看不到畫面也不能點畫面，要回 agent（自動操作看完畫面後可以自己存成筆記）。例子：「去相簿的我的最愛找到課表幫我記起來」「打開蝦皮看我的訂單狀態再告訴我」→ agent；「幫我記住明天要開會」「我剛剛記了什麼」→ chat。要在別的App裡找東西、看東西、點東西的，就算還要記或回報，也一律是 agent。"
                 + "鬧鐘：使用者要設鬧鐘、幾點叫我，都回 chat（聊天助理有設鬧鐘的工具）。行事曆：使用者要新增行事曆、提醒某天某時的事、在地圖上找地方、打電話給某個號碼，也都回 chat（聊天助理有行事曆、地圖、撥號的工具）。使用者明確說要用「三星提醒」（Samsung Reminder）App 新增提醒，也回 chat（聊天助理有 samsung_reminder 工具）。"
                 + "傳檔案：使用者要在自己的裝置之間傳檔案、找檔案、從另一台手機或電腦拿檔案、傳到另一台裝置，都回 chat（聊天助理有傳檔案工具）。"
                 + "只輸出一行JSON，不要解釋：\n"
@@ -149,8 +150,9 @@ final class Router {
             Matcher m = Pattern.compile("\\{[^{}]*\\}").matcher(out);
             String last = null;
             while (m.find()) last = m.group();
-            if (last == null) return null;
+            if (last == null) { lastNote = L.t("路由：看不懂便宜模型的回答，當成聊天"); return null; }
             JSONObject d = new JSONObject(last);
+            lastNote = L.t("路由：") + last;
             switch (d.optString("route")) {
                 case CMD: {
                     int i = d.optInt("i", -1);
@@ -175,6 +177,7 @@ final class Router {
             }
         } catch (Exception e) {
             android.util.Log.w("Router", "路由失敗: " + e);
+            lastNote = L.t("路由失敗，當成聊天");
             return null;
         }
     }

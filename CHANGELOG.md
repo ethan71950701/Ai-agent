@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 路由：提示加上「要去別的 App 找東西、看東西，就算還要記，也是自動操作」的說明與例子；任務過程頁顯示便宜模型這次的判斷（chat／agent…）｜Routing: the prompt now says that looking things up in another app is automation even if you also want it remembered, with examples; the task log shows what the cheap model decided (chat/agent/…)
 - 自動操作：look 之後的看圖步驟改用較大的截圖（寬 720，原本 432），相簿縮圖、小圖示比較看得清楚｜Automation: the screenshot step after a look now uses a larger image (720 px wide instead of 432) so gallery thumbnails and small icons are easier to read
 
 ## 1.0.1531

@@ -234,6 +234,9 @@ final class LEn {
         m.put("AI 沒有回答", "The AI gave no answer");
         m.put("已選取，說出或打字問題（空白也可以）", "Selected. Say or type your question (or leave it blank).");
         m.put("模型原始回覆：", "Raw model reply: ");
+        m.put("路由：", "Route: ");
+        m.put("路由失敗，當成聊天", "Routing failed, treated as chat");
+        m.put("路由：看不懂便宜模型的回答，當成聊天", "Route: could not parse the cheap model's answer, treated as chat");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");
