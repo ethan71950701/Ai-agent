@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 預測返回一開始有時是直角：手勢一開始就先設好圓角，不再沿用上一個頁面留下的值｜Predictive back sometimes started with square corners: the corner radius is now set as soon as the gesture starts instead of reusing a value left by the previous page
+
+## 1.0.1556
+
 - 子頁完全展開時的圓角改成手機螢幕的 R 角（以前是直角），縮回卡片時再漸變成卡片的圓角；預測返回一開始滑就是螢幕的 R 角｜When a sub-page is fully open its corners now match the phone's screen corner radius (they used to be square), blending into the card's corners as it shrinks back; predictive back starts with the screen's corner radius
 
 ## 1.0.1555
