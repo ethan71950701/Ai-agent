@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1466
+
 - 拖動底欄時透鏡的外形像果凍一樣沿移動方向拉長、上下壓扁，停下來彈回（圖示反向補償不變形）；強度用「拖動形變強度」滑桿調｜While dragging the bar, the lens now squashes and stretches like jelly along the drag direction and springs back (icons are counter-scaled so they stay undistorted); the strength follows the "Drag deformation strength" slider
 
 ## 1.0.1465
