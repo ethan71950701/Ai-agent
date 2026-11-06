@@ -599,11 +599,11 @@ final class Ui {
         }
         float sr = screenCorner(root);   // 完全展開時圓角等於手機螢幕的 R 角（不是直角），縮回卡片時漸變成卡片的圓角
         float onScreen = sr + (corner - sr) * k;
-        cornerRadius = onScreen / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
+        root.setTag(R_CORNER, onScreen / Math.max(0.05f, root.getScaleX()));   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小；存在這個頁面自己的 View 上（以前是全 App 共用一個變數，頁面之間會互相影響）
         root.invalidateOutline();
     }
 
-    private static float cornerRadius;
+    private static final int R_CORNER = 0x7f0a0e59;   // View.setTag 用的鍵
     private static float screenR = -1f;
 
     /** 手機螢幕四個角的圓角半徑（像素，取左上角；系統有回報才用，沒有就 0）。 */
@@ -618,7 +618,7 @@ final class Ui {
                 }
             }
         } catch (Throwable ignored) { }
-        return 0f;   // 還拿不到（下一次再試），先當直角
+        return 36f * root.getResources().getDisplayMetrics().density;   // 系統沒回報：先用一個常見的值（約 36dp），不要變直角；下一次再試著拿真的
     }
     private static final int R_VEIL = 0x7f0a0e58;   // View.setTag 用的鍵
 
@@ -669,7 +669,7 @@ final class Ui {
 
     private static void setupClip(View root) {
         root.setOutlineProvider(new android.view.ViewOutlineProvider() {
-            @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), cornerRadius); }
+            @Override public void getOutline(View v, android.graphics.Outline o) { Object t = v.getTag(R_CORNER); o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), t instanceof Float ? (Float) t : 0f); }
         });
         root.setClipToOutline(true);
     }
@@ -778,7 +778,7 @@ final class Ui {
                             removeVeil(root);
                             root.postDelayed(() -> {
                                 if (CLOSING.containsKey(a)) return;   // 這時已經在返回，別拆掉返回要用的裁切   // 結束那一幀不要同時做這麼多事：圓角裁切與繪圖層晚一點才拆
-                                root.setClipToOutline(false);
+                                // 圓角裁切留著（完全展開時就是螢幕的 R 角）：以前這裡關掉，展開後四個角變直角（螢幕錄影、截圖看得到）
                                 root.setLayerType(View.LAYER_TYPE_NONE, null);
                             }, 250);
                         }
@@ -869,7 +869,7 @@ final class Ui {
                             removeVeil(root);
                             root.postDelayed(() -> {
                                 if (CLOSING.containsKey(a)) return;
-                                root.setClipToOutline(false);
+                                // 圓角裁切留著（完全展開時就是螢幕的 R 角）：以前這裡關掉，展開後四個角變直角（螢幕錄影、截圖看得到）
                                 root.setLayerType(View.LAYER_TYPE_NONE, null);
                             }, 250);
                         }
