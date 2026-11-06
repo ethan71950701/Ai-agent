@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 子頁面展開改成「容器轉換」：先是卡片顏色的圓角容器慢慢起步展開，內容晚一點才淡入（不再一開始就看到縮小的整頁，也不再前面衝很快）｜Sub-pages now open like a container transform: a card-coloured rounded container starts gently and grows, and the content fades in later (no more tiny full page at the start and no more sudden rush)
 
+## 1.0.1476
+
 - 修正從任務過程列表點進任務詳細頁（以及互傳檔案的「瀏覽」）時整頁突然冒出再彈一下：現在會從點的卡片展開；沒有位置時的備用動畫改成淡入放大｜Fix pages popping in fully open with a bounce when opened from a task card (and from the file-transfer "browse" button): they now expand from the tapped card, and the fallback animation is a fade-and-grow
 
 ## 1.0.1475
