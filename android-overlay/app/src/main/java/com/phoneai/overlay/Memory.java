@@ -175,13 +175,15 @@ final class Memory {
     }
 
     /** 給聊天提示用：「#編號 📌文字」列表。 */
-    static String promptRows(JSONObject d, String kind) {
+    static String promptRows(JSONObject d, String kind) { return promptRows(d, kind, 300); }   // 一則最多 300 字（存的時候就是這個上限），課表這種長筆記才不會被截掉
+
+    static String promptRows(JSONObject d, String kind, int maxLen) {
         StringBuilder sb = new StringBuilder();
         for (JSONObject it : live(d, kind)) {
             if (sb.length() > 0) sb.append("；");
             String t = it.optString("text");
             sb.append("#").append(it.optInt("id")).append(" ").append(it.optBoolean("pinned") ? "📌" : "")
-                    .append(t.length() > 100 ? t.substring(0, 100) : t);
+                    .append(t.length() > maxLen ? t.substring(0, maxLen) : t);
         }
         return sb.length() == 0 ? "（沒有）" : sb.toString();
     }
