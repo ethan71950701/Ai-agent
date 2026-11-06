@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1504
+
 - 子頁展開還沒跑完就按返回：現在會從目前的進度接著縮回去，不再跳一下｜Pressing back while a sub-page is still opening now reverses from the current progress instead of jumping
 
 ## 1.0.1503
