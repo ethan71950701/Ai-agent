@@ -935,6 +935,7 @@ final class LEn {
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
         m.put("子頁面展開：", "Sub-page expand: ");
+        m.put("（還沒有量到：先打開一個子頁面，例如功能 → 任務過程，再回來這裡看）", "(Nothing measured yet: open a sub-page such as Functions → Task history first, then come back here)");
         m.put("停止聆聽", "Stop listening");
         m.put("開始說話", "Start speaking");
         m.put("要自己選 Claude 的模型嗎？", "Pick your own Claude models?");

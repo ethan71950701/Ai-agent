@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 診斷頁的「子頁面展開」在還沒量到時會說明該怎麼做｜The "sub-page expand" line on the diagnostics page now explains what to do when nothing has been measured yet
+
 - 子頁面展開時每一幀建卡片的時間更少、前 0.09 秒先不建；診斷頁新增「子頁面展開」量測（幀數、最長間隔、卡頓次數）｜Sub-page expansion spends less time per frame building cards and waits 0.09 s before starting; the diagnostics page now shows the expand frame stats (frames, longest gap, number of janks)
 
 ## 1.0.1483
