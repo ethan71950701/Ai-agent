@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1553
+
 - 任務過程：點進詳細頁再返回，動畫不再壞掉（以前返回時整串卡片被清掉重建，縮回去的那張卡片剛好不見了；現在內容沒變就不重建）｜Task log: opening a detail page and coming back no longer breaks the animation (the whole card list used to be cleared and rebuilt on return, so the card being shrunk back into had vanished; now it is left alone when nothing changed)
 
 ## 1.0.1552
