@@ -539,6 +539,7 @@ public class MainActivity extends Activity {
     private String myTheme = "";
 
     private View homeBar;
+    private WaveView barWave, greetWave;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
     private void setHomeScroll(boolean on) {
@@ -588,6 +589,9 @@ public class MainActivity extends Activity {
         };
         et.setOnEditorActionListener((v, id, e) -> { send.run(); return true; });
         bar.addView(et, new LinearLayout.LayoutParams(0, -2, 1f));
+        barWave = new WaveView(this);   // 輸入框裡的小波形：平常輕輕流動，錄音時隨音量起伏
+        barWave.setIdle(0.5f);
+        bar.addView(barWave, new LinearLayout.LayoutParams(Ui.dp(this, 56), Ui.dp(this, 30)));
         IconView mic = new IconView(this, "mic", Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         mic.setOnClickListener(v -> homeVoice());   // 語音直接在首頁錄音、辨識、回答（不開面板）
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44));
@@ -630,6 +634,7 @@ public class MainActivity extends Activity {
             });
             final String fr = r == null ? "" : r;
             runOnUiThread(() -> {
+                setWaves(WaveView.IDLE);
                 if (answerView != null) answerView.setText(Md.render(fr));
                 Notify.say(this, fr);
                 // 操作手機時 App 已經退到背景，首頁的文字看不到：需要的話把回答卡片叫出來（跟助理面板一樣）
@@ -652,20 +657,26 @@ public class MainActivity extends Activity {
         }
         if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
         SpeechCapture.start(new SpeechCapture.Cb() {
-            @Override public void onListening() { }
-            @Override public void onLevel(float v) { }
+            @Override public void onListening() { setWaves(WaveView.LISTENING); }
+            @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); if (greetWave != null) greetWave.setLevel(v); }
             @Override public void onDone(short[] pcm) {
-                if (pcm == null) { showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
+                setWaves(WaveView.THINKING);
+                if (pcm == null) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽到聲音，再按一次麥克風")); return; }
                 new Thread(() -> {
                     String text = "";
                     try { text = SherpaEngine.recognize(MainActivity.this, SpeechCapture.toFloat(pcm), SpeechCapture.RATE); }
                     catch (Throwable e) { text = ""; }
                     final String t = text == null ? "" : text.trim();
-                    runOnUiThread(() -> { if (t.isEmpty()) showAnswer(L.t("沒聽清楚，再按一次麥克風")); else homeAsk(t); });
+                    runOnUiThread(() -> { if (t.isEmpty()) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽清楚，再按一次麥克風")); } else homeAsk(t); });
                 }, "home-voice").start();
             }
-            @Override public void onError(String msg) { showAnswer(L.t("錄音失敗：") + msg); }
+            @Override public void onError(String msg) { setWaves(WaveView.IDLE); showAnswer(L.t("錄音失敗：") + msg); }
         });
+    }
+
+    private void setWaves(int st) {
+        if (barWave != null) barWave.setState(st);
+        if (greetWave != null) greetWave.setState(st);
     }
 
     private void showAnswer(String text) {
@@ -694,6 +705,12 @@ public class MainActivity extends Activity {
         gp.topMargin = Ui.dp(this, 48);
         gp.bottomMargin = Ui.dp(this, 16);
         box.addView(greet, gp);
+        greetWave = new WaveView(this);   // 問候語下面的一條函數波
+        greetWave.setIdle(0.55f);
+        LinearLayout.LayoutParams wp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 64));
+        wp.leftMargin = wp.rightMargin = Ui.dp(this, 24);
+        wp.bottomMargin = Ui.dp(this, 8);
+        box.addView(greetWave, wp);
         answerView = new TextView(this);   // 回答顯示在問候語下面
         answerView.setVisibility(View.GONE);
         answerView.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyLarge);

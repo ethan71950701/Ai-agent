@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 首頁：問候語下面與輸入框裡加了函數波形，按麥克風時隨音量起伏｜Home: function-wave lines under the greeting and inside the input bar; they react to your voice while recording
 
 ## 1.0.1504
 

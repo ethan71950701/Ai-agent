@@ -22,6 +22,7 @@ public class WaveView extends View {
     private final float d;
     private int state = IDLE;
     private float amp, ampTarget;
+    private float idleGoal = 0.1f;
     private long last;
     private float phase;
 
@@ -54,6 +55,9 @@ public class WaveView extends View {
         invalidate();
     }
 
+    /** 閒置時的振幅（0~1）；首頁裝飾用較大的值，平常 0.1。 */
+    public void setIdle(float g) { idleGoal = Math.max(0f, Math.min(1f, g)); }
+
     /** 0~1，音量。 */
     public void setLevel(float v) { ampTarget = Math.max(0f, Math.min(1f, v)); }
 
@@ -62,7 +66,7 @@ public class WaveView extends View {
         long now = SystemClock.uptimeMillis();
         float dt = last == 0 ? 0.016f : Math.min(0.05f, (now - last) / 1000f);
         last = now;
-        float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.65f : 0.1f);
+        float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.65f : idleGoal);
         amp += (goal - amp) * Math.min(1f, dt * 10f);
         phase += dt * (state == THINKING ? 1.9f : 1f);
         float t = now / 1000f;
