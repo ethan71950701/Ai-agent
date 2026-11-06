@@ -31,16 +31,17 @@ public class MarkView extends View {
         float w = getWidth(), h = getHeight(), cy = h / 2f;
         int steps = 60;
         for (int k = 0; k < 3; k++) {
-            float breathe = 0.78f + 0.22f * (float) Math.sin(t * (0.9f + 0.3f * k) + k * 2.1f);
+            float breathe = 0.6f + 0.4f * (float) Math.sin(t * (1.7f + 0.55f * k) + k * 2.1f);   // 振幅明顯起伏
+            float wob = 0.55f * (float) Math.sin(t * (1.1f + 0.4f * k) + k);            // 相位來回擺，平均起來仍是點對稱
             path.reset();
             for (int i = 0; i <= steps; i++) {
                 float u = i / (float) steps * 2f - 1f;   // -1~1
                 float env = (float) Math.pow(Math.cos(u * Math.PI / 2), 2);   // 兩端 0、中間 1，左右對稱
-                float y = cy + h * 0.36f * breathe * env * (float) Math.sin(FREQ[k] * Math.PI * u);   // 奇函數：點對稱
+                float y = cy + h * 0.4f * breathe * env * (float) Math.sin(FREQ[k] * Math.PI * u + wob);   // 奇函數：點對稱
                 float x = (u + 1f) / 2f * w;
                 if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
             }
-            p.setStrokeWidth(WIDTH[k] * d * 0.55f);
+            p.setStrokeWidth(WIDTH[k] * d * 0.8f);
             p.setAlpha(ALPHA[k]);
             c.drawPath(path, p);
         }
