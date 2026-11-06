@@ -620,7 +620,16 @@ public class MainActivity extends Activity {
         aurora.setEnergy(0.2f);
         ((android.view.ViewGroup) root).addView(aurora, 0, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1));
         root.post(() -> aurora.setGlowY(root.getHeight() - Ui.dp(this, 200)));   // 光暈提高，不被底欄擋住
-        homeFx = new android.view.View[]{aurora};
+        // 底欄是液態玻璃，會折射它底下的畫面：光暈的漸層若蓋到底欄後面，玻璃就會染上彩色漸層。底欄後面鋪一層跟背景同色的底（上緣漸變），玻璃底下就只有純色
+        final View cover = new View(this);
+        int surf = Ui.attr(this, com.google.android.material.R.attr.colorSurface);
+        cover.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{surf & 0x00FFFFFF, surf, surf}));
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams cvp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 110));
+        cvp.gravity = android.view.Gravity.BOTTOM;
+        ((android.view.ViewGroup) root).addView(cover, 1, cvp);
+        root.post(this::kickGlass);
+        homeFx = new android.view.View[]{aurora, cover};
 
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams lp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
