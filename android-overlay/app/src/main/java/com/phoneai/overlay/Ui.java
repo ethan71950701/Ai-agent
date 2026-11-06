@@ -167,9 +167,32 @@ final class Ui {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1);
         slp.setBehavior(new com.google.android.material.appbar.AppBarLayout.ScrollingViewBehavior());
         root.addView(sv, slp);
+        // 標題列下緣的漸層淡出：內容捲到標題列下面時慢慢淡掉，不要被標題列一刀切（一條黑邊）
+        View fade = new View(a);
+        int surf = attr(a, com.google.android.material.R.attr.colorSurface);
+        fade.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{surf, surf & 0x00FFFFFF}));
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams flp =
+                new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, dp(a, 28));
+        flp.setBehavior(new FollowBarBehavior());
+        root.addView(fade, flp);
         content[0] = box;
         root.setTag(new Object[]{ctl, sv});   // 換分頁時改大標題、底欄隨捲動收起
         return root;
+    }
+
+    /** 讓一個 View 貼在 AppBarLayout 的下緣（標題列收合、展開時跟著動）。 */
+    static final class FollowBarBehavior extends androidx.coordinatorlayout.widget.CoordinatorLayout.Behavior<View> {
+        @Override
+        public boolean layoutDependsOn(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
+            return dependency instanceof com.google.android.material.appbar.AppBarLayout;
+        }
+
+        @Override
+        public boolean onDependentViewChanged(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
+            child.setTranslationY(dependency.getBottom());
+            return true;
+        }
     }
 
     /** 分組小標題（例如「呼叫方式」）。 */
