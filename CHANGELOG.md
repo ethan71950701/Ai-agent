@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 子頁完全展開後四個角也保持螢幕的 R 角（以前展開完把圓角裁切關掉，錄影、截圖看起來是直角）；圓角值改存在各頁自己身上，不再互相影響｜Sub-pages keep the screen's rounded corners after they are fully open (the clip used to be switched off, so recordings and screenshots showed square corners); the corner value now lives on each page instead of being shared
+
+## 1.0.1557
+
 - 預測返回一開始有時是直角：手勢一開始就先設好圓角，不再沿用上一個頁面留下的值｜Predictive back sometimes started with square corners: the corner radius is now set as soon as the gesture starts instead of reusing a value left by the previous page
 
 ## 1.0.1556
