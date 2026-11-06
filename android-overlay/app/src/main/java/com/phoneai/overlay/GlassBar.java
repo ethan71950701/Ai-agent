@@ -336,6 +336,12 @@ final class GlassBar extends FrameLayout {
             underNode = new RenderNode("lensUnder");
             shader = new RuntimeShader(lens ? AGSL_LENS : AGSL_BAR);
             if (lens) iconShader = new RuntimeShader(AGSL_LENS);
+            // 新的 RenderNode 沒有大小（0×0）：onSizeChanged 才會設，之後不會再設，所以這裡一定要補，否則這層什麼都畫不出來（底欄的玻璃整個消失、透鏡跑位）
+            int w = getWidth(), h = getHeight();
+            if (w > 0 && h > 0) {
+                node.setPosition(0, 0, w, h);
+                iconNode.setPosition(0, 0, w, h);
+            }
         } catch (Throwable ignored) { }
         capReady = false;
         invalidate();

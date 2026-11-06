@@ -714,6 +714,15 @@ public class MainActivity extends Activity {
     private void homeStage(final String t) {
         setWaves(WaveView.IDLE);
         if (homeEt == null) { homeAsk(t); return; }
+        if (SpeechCapture.lastHitCap) {   // 撞到錄音上限：話多半還沒說完，字放進輸入框，不自動送出，按右邊的鈕送出
+            LifeLog.add(this, "首頁辨識完成 " + t.length() + " 字，但到了錄音上限，不自動送出");
+            homeProg = true;
+            homeEt.setText(t);
+            homeEt.setSelection(homeEt.getText().length());
+            homeProg = false;
+            showAnswer(L.t("到了錄音上限，字已放進輸入框，確認後按右邊的鈕送出"));
+            return;
+        }
         LifeLog.add(this, "首頁辨識完成 " + t.length() + " 字，開始倒數 1 秒");
         homeProg = true;
         homeEt.setText(t);

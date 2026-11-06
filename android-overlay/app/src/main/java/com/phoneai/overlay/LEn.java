@@ -246,6 +246,8 @@ final class LEn {
         m.put("停頓多久才算說完", "Pause length that ends your sentence");
         m.put(" 秒", " s");
         m.put("說話中途停頓超過這個時間，就當作說完。常被切掉就調長，覺得等太久就調短", "A pause longer than this ends your sentence. Raise it if you get cut off, lower it if the wait feels long.");
+        m.put("到了錄音上限，按麥克風接著說，或按送出", "Recording limit reached. Tap the mic to keep talking, or send.");
+        m.put("到了錄音上限，字已放進輸入框，確認後按右邊的鈕送出", "Recording limit reached. The text is in the input box; check it and send.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

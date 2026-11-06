@@ -523,7 +523,7 @@ public class AssistantSheet {
         final int gen = ++voiceGen;
         trace(L.t("使用 SenseVoice（App 內離線辨識）"));
         listening = true;
-        setText("");
+        if (continueMode) carryText = input.getText().toString(); else { carryText = ""; setText(""); }   // 上一段撞到錄音上限：保留已經辨識出來的字，接著說的字接在後面
         setStatus(L.t("我在聽…"));
         setWaveState(WaveView.LISTENING);
         refreshAction();
@@ -773,7 +773,20 @@ public class AssistantSheet {
 
     // ---------- 文字 / 送出 ----------
 
+    private boolean continueMode;
+    private String carryText = "";
+
     private void gotText(String t) {
+        if (continueMode) t = carryText + t;
+        continueMode = SpeechCapture.lastHitCap;
+        if (continueMode) {   // 撞到 30 秒上限：話多半還沒說完，不要自動送出；字留在輸入框，按麥克風接著說、或按送出
+            LifeLog.add(act, "面板辨識完成 " + t.length() + " 字，但到了錄音上限，不自動送出");
+            setText(t);
+            setWaveState(WaveView.IDLE);
+            aurora.setEnergy(0.3f);
+            idleMessage(L.t("到了錄音上限，按麥克風接著說，或按送出"));
+            return;
+        }
         act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).edit().putInt("voice_fail", 0).apply();   // 辨識成功：連續失敗次數歸零
         LifeLog.add(act, "面板辨識完成 " + t.length() + " 字，開始倒數 " + COUNTDOWN_SECONDS + " 秒");
         setText(t);
