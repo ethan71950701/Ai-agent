@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1554
+
 - 預測返回改成跟展開、返回同一套動畫：頁面隨手指縮回你點開的那張卡片（同樣的曲線與圓角），放手再接著縮完；取消就回到原來大小。以前是整頁慢慢變透明｜Predictive back now uses the same container-transform animation as opening and closing: the page shrinks back toward the card you opened it from as you swipe (same curve and corners), finishes shrinking when you release, and returns to full size if you cancel. It used to just fade the whole page
 
 ## 1.0.1553
