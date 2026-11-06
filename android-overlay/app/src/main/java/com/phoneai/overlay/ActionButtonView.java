@@ -1,0 +1,97 @@
+package com.phoneai.overlay;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.view.View;
+
+/**
+ * 面板右邊的圓形按鈕：沒字時是麥克風（點一下開始聽）、正在聽時變成藍色實心圓（點一下停止）、有字時是白色線條的紙飛機（送出）。
+ * 倒數送出時外面有一圈細線慢慢縮短（{@link #setProgress} 1→0）。
+ */
+public class ActionButtonView extends View {
+    public static final int MIC = 0, LISTENING = 1, SEND = 2;
+
+    private final Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Path body = new Path();
+    private final RectF oval = new RectF();
+    private final float d;
+    private float progress;
+    private int mode = MIC;
+
+    public ActionButtonView(Context c) {
+        super(c);
+        d = c.getResources().getDisplayMetrics().density;
+        line.setColor(0xFFFFFFFF);
+        line.setStyle(Paint.Style.STROKE);
+        line.setStrokeCap(Paint.Cap.ROUND);
+        line.setStrokeJoin(Paint.Join.ROUND);
+        fill.setStyle(Paint.Style.FILL);
+        ring.setColor(0x99FFFFFF);
+        ring.setStyle(Paint.Style.STROKE);
+        ring.setStrokeCap(Paint.Cap.ROUND);
+        ring.setStrokeWidth(2 * d);
+    }
+
+    public void setMode(int m) {
+        if (mode == m) return;
+        mode = m;
+        setContentDescription(m == SEND ? L.t("送出") : m == LISTENING ? L.t("停止聆聽") : L.t("開始說話"));
+        invalidate();
+    }
+
+    /** 0 = 不顯示；1 = 整圈。 */
+    public void setProgress(float p) {
+        progress = Math.max(0f, Math.min(1f, p));
+        invalidate();
+    }
+
+    @Override
+    protected void onDraw(Canvas c) {
+        float w = getWidth(), h = getHeight(), box = Math.min(w, h), cx = w / 2f, cy = h / 2f;
+        if (mode == LISTENING) {   // 正在聽：藍色實心圓
+            fill.setColor(0xFF4F6BED);
+            c.drawCircle(cx, cy, box / 2f - 2 * d, fill);
+        } else if (mode == MIC) {  // 待機：淡淡的圓底，讓人知道這是按鈕
+            fill.setColor(0x22FFFFFF);
+            c.drawCircle(cx, cy, box / 2f - 2 * d, fill);
+        }
+        if (mode == SEND) drawPlane(c, box); else drawMic(c, cx, cy, box);
+        if (progress > 0f) {
+            float pad = 2 * d;
+            oval.set(pad, pad, w - pad, h - pad);
+            c.drawArc(oval, -90f, 360f * progress, false, ring);
+        }
+    }
+
+    private void drawMic(Canvas c, float cx, float cy, float box) {
+        float s = box * 0.46f;
+        line.setStrokeWidth(Math.max(1.8f * d, s * 0.09f));
+        fill.setColor(0xFFFFFFFF);
+        oval.set(cx - 0.17f * s, cy - 0.52f * s, cx + 0.17f * s, cy + 0.12f * s);
+        c.drawRoundRect(oval, 0.17f * s, 0.17f * s, fill);                       // 麥克風本體
+        oval.set(cx - 0.32f * s, cy - 0.30f * s, cx + 0.32f * s, cy + 0.34f * s);
+        c.drawArc(oval, 0f, 180f, false, line);                                  // 下面的 U 形
+        c.drawLine(cx, cy + 0.34f * s, cx, cy + 0.56f * s, line);                // 立柱
+        c.drawLine(cx - 0.16f * s, cy + 0.56f * s, cx + 0.16f * s, cy + 0.56f * s, line);   // 底座
+    }
+
+    private void drawPlane(Canvas c, float box) {
+        float s = box * 0.46f;
+        float ox = (getWidth() - s) / 2f, oy = (getHeight() - s) / 2f;
+        line.setStrokeWidth(Math.max(1.6f * d, s * 0.075f));
+        body.reset();
+        // 外框：左上、尖端（正右方）、左下、內凹點，封閉
+        body.moveTo(ox + 0.04f * s, oy + 0.10f * s);
+        body.lineTo(ox + 0.98f * s, oy + 0.50f * s);
+        body.lineTo(ox + 0.04f * s, oy + 0.90f * s);
+        body.lineTo(ox + 0.26f * s, oy + 0.50f * s);
+        body.close();
+        c.drawPath(body, line);
+        c.drawLine(ox + 0.26f * s, oy + 0.50f * s, ox + 0.98f * s, oy + 0.50f * s, line);   // 摺痕
+    }
+}

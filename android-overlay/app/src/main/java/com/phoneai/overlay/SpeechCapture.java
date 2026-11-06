@@ -17,7 +17,7 @@ import java.util.Arrays;
 final class SpeechCapture {
     interface Cb {
         void onListening();
-        void onLevel(float v);      // 0~1，給光球用
+        void onLevel(float v);      // 0~1，給聲波條用
         void onDone(short[] pcm);   // 錄到的聲音；沒聽到聲音或中途取消 = null
         void onError(String msg);
     }

@@ -45,7 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 仿 Gemini 的底部助理面板：變暗背景 + 極光/粒子 + 漸層光球 + 底下輸入框。預設一開就聽（語音優先），也能點輸入框打字。
+ * 仿 Gemini 的底部助理面板：變暗背景 + 極光/粒子 + 底部深色圓角面板（聲波、輸入框、麥克風／送出）。預設一開就聽（語音優先），也能點輸入框打字。
  * 語音用 App 內的 SpeechRecognizer（才能拿到音量畫動畫、邊說邊顯示文字）；沒有麥克風權限或找不到辨識服務時，退回系統的語音視窗。
  * 辨識完不立刻執行：倒數幾秒，期間改字或按取消就停止（聽錯直接執行很危險）。
  */
@@ -60,13 +60,13 @@ public class AssistantSheet {
     private final View scrim;
     private final AuroraView aurora;
     private final LinearLayout content;
-    private final OrbView orb;
+    private final WaveView wave;
     private final EditText input;
-    private final SendIconView send;
+    private final ActionButtonView send;
     private final LinearLayout row;
     /** 目前開著的面板（OverlayService 收到 reply／sheet_close 指令時用）。只在主執行緒讀寫。 */
     static AssistantSheet current;
-    /** AI 要問使用者問題時（agent2 的 ask_user）：問題顯示在光球上方；左邊的背景模式鈕藏起來；送出後答案交還給 agent2，不是當成新任務。 */
+    /** AI 要問使用者問題時（agent2 的 ask_user）：問題顯示在面板上方；左邊的背景模式鈕藏起來；送出後答案交還給 agent2，不是當成新任務。 */
     static volatile java.util.concurrent.CompletableFuture<String> questionAnswer;
     static volatile java.util.concurrent.CountDownLatch questionShown;
     private boolean questionMode;
@@ -101,7 +101,7 @@ public class AssistantSheet {
         d = a.getResources().getDisplayMetrics().density;
         root = new FrameLayout(a);
 
-        // 背景：由上到下漸深的暗幕（不是一個黑色方塊），讓字和光球在任何桌布上都看得清楚
+        // 背景：由上到下漸深的暗幕（不是一個黑色方塊），讓字在任何桌布上都看得清楚
         scrim = new View(a);
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{0x40000000, 0x99000000, 0xDD000000}));
@@ -112,11 +112,11 @@ public class AssistantSheet {
         aurora = new AuroraView(a);
         root.addView(aurora, new FrameLayout.LayoutParams(-1, -1));
 
-        // 內容：透明，只有光球和輸入列
+        // 內容：透明，只有底部的面板
         content = new LinearLayout(a);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER_HORIZONTAL);
-        content.setPadding((int) (18 * d), 0, (int) (14 * d), (int) (18 * d));
+        content.setPadding((int) (12 * d), 0, (int) (12 * d), (int) (12 * d));
 
         if (OverlayService.agentRunning) {  // 任務正在執行：面板上直接給「停止」，不用去拉通知欄
             TextView stop = new TextView(a);
@@ -140,7 +140,7 @@ public class AssistantSheet {
             content.addView(stop, stp);
         }
 
-        questionView = new TextView(a);   // 平常不顯示；AI 問問題時才出現在光球上方
+        questionView = new TextView(a);   // 平常不顯示；AI 問問題時才出現在面板上方
         questionView.setTextColor(Color.WHITE);
         questionView.setTextSize(18);
         questionView.setGravity(Gravity.CENTER);
@@ -152,28 +152,42 @@ public class AssistantSheet {
         questionView.setVisibility(View.GONE);
         content.addView(questionView, new LinearLayout.LayoutParams(-1, -2));
 
-        orb = new OrbView(a);
-        // 擴散圓環最大約球半徑的 2.65 倍、外圈光暈約 2 倍，都比 200dp 高的 View 還大；不關掉裁切，圓環與光暈的上下兩端會被 View 邊框切掉
+        // 擴散的光暈與提示卡可能超出內容範圍：不要裁切
         content.setClipChildren(false);
         root.setClipChildren(false);
-        orb.setOnClickListener(v -> { if (listening) stopListening(); else startVoice(); });
-        content.addView(orb, new LinearLayout.LayoutParams(-1, (int) (240 * d)));  // 多留一點高度給擴散圓環
+        wave = new WaveView(a);
+        wave.setVisibility(View.GONE);
+        wave.setOnClickListener(v -> typeNow());   // 點聲波 = 改成打字
 
-
+        // 單一個深色圓角面板（仿 Gemini）：頂端小橫條；下面一列＝左邊背景模式鈕、中間輸入框（聽或思考時換成聲波）、右邊麥克風／送出
         row = new LinearLayout(a);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setOrientation(LinearLayout.VERTICAL);
+        GradientDrawable pb = new GradientDrawable();
+        pb.setColor(0xF2101015);
+        pb.setStroke((int) Math.max(1, d), 0x26FFFFFF);
+        pb.setCornerRadius(32 * d);
+        row.setBackground(pb);
+        row.setPadding((int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (10 * d));
+        View handle = new View(a);
+        GradientDrawable hb = new GradientDrawable();
+        hb.setColor(0x66FFFFFF);
+        hb.setCornerRadius(2 * d);
+        handle.setBackground(hb);
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams((int) (36 * d), (int) (4 * d));
+        hlp.gravity = Gravity.CENTER_HORIZONTAL;
+        hlp.bottomMargin = (int) (4 * d);
+        row.addView(handle, hlp);
+        final LinearLayout bar = new LinearLayout(a);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(bar, new LinearLayout.LayoutParams(-1, -2));
 
         input = new EditText(a);
         input.setHintTextColor(0xA0FFFFFF);
         input.setTextColor(Color.WHITE);
         input.setTextSize(17);
-        GradientDrawable ib = new GradientDrawable();
-        ib.setColor(0x99121218);                   // 半透明深色玻璃，白字在任何背景都讀得到
-        ib.setStroke((int) Math.max(1, d), 0x50FFFFFF);
-        ib.setCornerRadius(40 * d);
-        input.setBackground(ib);
-        input.setPadding((int) (20 * d), (int) (14 * d), (int) (20 * d), (int) (14 * d));
+        input.setBackground(null);                 // 底色由整個面板提供
+        input.setPadding((int) (10 * d), (int) (14 * d), (int) (10 * d), (int) (14 * d));
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
         input.setSingleLine(true);
         input.setOnTouchListener((v, ev) -> {
@@ -206,17 +220,24 @@ public class AssistantSheet {
             bgBtn.setOn(on);
             v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);  // 不跳提示文字，只靠圖示變化
         });
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
-        blp.rightMargin = (int) (4 * d);
-        row.addView(bgBtn, blp);
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (46 * d), (int) (46 * d));
+        blp.rightMargin = (int) (2 * d);
+        bar.addView(bgBtn, blp);
         bgBtnView = bgBtn;
-        row.addView(input, new LinearLayout.LayoutParams(0, -2, 1f));
+        FrameLayout center = new FrameLayout(a);
+        center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
+        center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
+        bar.addView(center, new LinearLayout.LayoutParams(0, (int) (50 * d), 1f));
 
-        send = new SendIconView(a);
-        send.setOnClickListener(v -> submit());  // 右邊只有「送出」；要重新聽就點中間的光球
-        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (52 * d), (int) (52 * d));
-        slp.leftMargin = (int) (4 * d);
-        row.addView(send, slp);
+        send = new ActionButtonView(a);
+        send.setOnClickListener(v -> {   // 有字＝送出；沒字＝開始／停止聽
+            if (input.getText().length() > 0) submit();
+            else if (listening) stopListening();
+            else startVoice();
+        });
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (50 * d), (int) (50 * d));
+        slp.leftMargin = (int) (2 * d);
+        bar.addView(send, slp);
         content.addView(row, new LinearLayout.LayoutParams(-1, -2));
 
         root.addView(content, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
@@ -257,7 +278,7 @@ public class AssistantSheet {
         row.setAlpha(1f);
         row.setTranslationY(0f);
         row.setEnabled(true);
-        orb.setState(OrbView.IDLE);
+        setWaveState(WaveView.IDLE);
         setStatus(L.t("說出或打字你的回答"));
         java.util.concurrent.CountDownLatch l = questionShown;
         if (l != null) l.countDown();
@@ -280,7 +301,7 @@ public class AssistantSheet {
 
     // ---------- 進場 / 離場 ----------
 
-    /** 開場：先從螢幕最上方放出光波、灑下光點（AuroraView.playIntro），波過去後光球和輸入列再浮上來。 */
+    /** 開場：先從螢幕最上方放出光波、灑下光點（AuroraView.playIntro），波過去後面板再浮上來。 */
     /** 首頁輸入框送來的文字：直接填進面板並送出。 */
     /** AI 要問使用者問題：叫出面板顯示問題（語音或打字都可以），等回答。回 null = 叫不出面板；空字串 = 使用者取消。在背景執行緒呼叫。 */
     static String askUser(android.content.Context app, String question) {
@@ -405,21 +426,21 @@ public class AssistantSheet {
         listening = true;
         setText("");
         setStatus(L.t("我在聽…"));
-        orb.setState(OrbView.LISTENING);
+        setWaveState(WaveView.LISTENING);
         refreshAction();
         capture = SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { }
             @Override public void onLevel(float v) {
                 if (!listening || gen != voiceGen) return;
-                orb.setLevel(v);
+                wave.setLevel(v);
                 aurora.setEnergy(0.35f + 0.65f * v);
             }
             @Override public void onDone(short[] pcm) {
                 if (gen != voiceGen) return;
                 capture = null;
                 listening = false;
-                if (pcm == null) { idleMessage(L.t("沒聽到聲音，點一下光球再說一次")); return; }
-                orb.setState(OrbView.THINKING);
+                if (pcm == null) { idleMessage(L.t("沒聽到聲音，點右邊的麥克風再說一次")); return; }
+                setWaveState(WaveView.THINKING);
                 setStatus(L.t("辨識中…"));
                 final float[] f = SpeechCapture.toFloat(pcm);
                 new Thread(() -> {
@@ -433,7 +454,7 @@ public class AssistantSheet {
                     act.runOnUiThread(() -> {
                         if (gen != voiceGen) return;
                         if (e2 != null) { trace(L.t("SenseVoice 錯誤：") + e2); idleMessage(L.t("語音辨識失敗（") + e2 + L.t("），可以改用打字")); }
-                        else if (t == null || t.isEmpty()) idleMessage(L.t("沒聽清楚，點一下光球再說一次"));
+                        else if (t == null || t.isEmpty()) idleMessage(L.t("沒聽清楚，點右邊的麥克風再說一次"));
                         else gotText(t);
                     });
                 }, "sensevoice").start();
@@ -475,7 +496,7 @@ public class AssistantSheet {
             listening = true;
             setText("");
             setStatus(L.t("我在聽…"));
-            orb.setState(OrbView.LISTENING);
+            setWaveState(WaveView.LISTENING);
             refreshAction();
         } catch (Exception e) {
             trace(L.t("啟動失敗：") + e);
@@ -537,7 +558,7 @@ public class AssistantSheet {
                     .putExtra(RecognizerIntent.EXTRA_PROMPT, L.t("請說要做什麼")), REQ_FALLBACK);
         } catch (ActivityNotFoundException e) {
             setStatus(L.t("這支手機沒有語音辨識，請用下面的輸入框打字"));
-            orb.setState(OrbView.IDLE);
+            setWaveState(WaveView.IDLE);
         }
     }
 
@@ -558,7 +579,7 @@ public class AssistantSheet {
     private void stopListening() {
         if (capture != null) capture.stop();   // SenseVoice：立刻結束錄音，交出目前聽到的再辨識
         if (recognizer != null) recognizer.stopListening();
-        orb.setState(OrbView.THINKING);
+        setWaveState(WaveView.THINKING);
         setStatus(L.t("辨識中…"));
     }
 
@@ -581,13 +602,13 @@ public class AssistantSheet {
 
         @Override public void onRmsChanged(float rms) {
             float v = Math.max(0f, Math.min(1f, (rms + 2f) / 12f));  // 約 -2 ~ 10 dB
-            orb.setLevel(v);
+            wave.setLevel(v);
             aurora.setEnergy(0.35f + 0.65f * v);
         }
 
         @Override public void onEndOfSpeech() {
             listening = false;
-            orb.setState(OrbView.THINKING);
+            setWaveState(WaveView.THINKING);
             setStatus(L.t("辨識中…"));
         }
 
@@ -600,14 +621,14 @@ public class AssistantSheet {
             listening = false;
             ArrayList<String> r = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             if (r != null && !r.isEmpty()) gotText(r.get(0));
-            else idleMessage(L.t("沒聽清楚，點一下光球再說一次"));
+            else idleMessage(L.t("沒聽清楚，點右邊的麥克風再說一次"));
         }
 
         @Override public void onError(int e) {
             listening = false;
             trace(L.t("錯誤 ") + errName(e) + L.t("，服務=") + curSvc);
             if (e == SpeechRecognizer.ERROR_NO_MATCH || e == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
-                idleMessage(L.t("沒聽到聲音，點一下光球再說一次"));
+                idleMessage(L.t("沒聽到聲音，點右邊的麥克風再說一次"));
             } else if (e == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) {
                 fallbackDialog();
             } else if ((e == 12 || e == 13) && langIdx + 1 < langs().length) {  // 語言不支援/不可用：換下一種寫法再試
@@ -615,7 +636,7 @@ public class AssistantSheet {
                 setStatus(L.t("換一種語言設定再試…"));
                 beginRecognition();
             } else if (e == 8) {
-                idleMessage(L.t("辨識服務忙碌（8），稍後點光球再試"));
+                idleMessage(L.t("辨識服務忙碌（8），稍後點麥克風再試"));
             } else {
                 nextService(errName(e));  // 連不上/語言都不行/其他錯誤：換下一個辨識服務，全部失敗會退回系統語音視窗
             }
@@ -639,7 +660,7 @@ public class AssistantSheet {
     }
 
     private void idleMessage(String s) {
-        orb.setState(OrbView.IDLE);
+        setWaveState(WaveView.IDLE);
         aurora.setEnergy(0.3f);
         setStatus(s);
         refreshAction();
@@ -650,7 +671,7 @@ public class AssistantSheet {
     private void gotText(String t) {
         act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).edit().putInt("voice_fail", 0).apply();   // 辨識成功：連續失敗次數歸零
         setText(t);
-        orb.setState(OrbView.IDLE);
+        setWaveState(WaveView.IDLE);
         aurora.setEnergy(0.3f);
         startCountdown();
     }
@@ -674,8 +695,8 @@ public class AssistantSheet {
         typing = true;
         cancelCountdown();
         stopRecognizer();
-        orb.setState(OrbView.IDLE);
-        orb.setLevel(0f);
+        setWaveState(WaveView.IDLE);
+        wave.setLevel(0f);
         setStatus(L.t("打好按右邊的送出"));
         refreshAction();
     }
@@ -702,20 +723,21 @@ public class AssistantSheet {
             input.setEnabled(false);
             row.animate().alpha(0.5f).setDuration(200).start();
             setStatus(L.t("思考中…"));
-            orb.setState(OrbView.THINKING);
+            setWaveState(WaveView.THINKING);
+            refreshAction();
             root.postDelayed(waitTimeout, 30000);
             return;
         }
-        // 送出後面板不關：輸入列淡出，光球留著轉（思考中）。助理如果是用文字回答，光球會直接變成回答卡片；
+        // 送出後面板不關：輸入換成思考中的聲波、按鈕停用。助理如果是用文字回答，會出現回答卡片；
         // 如果是要操作手機或開 App，操作開始時會把面板收起來。30 秒都沒消息就自己收起來。
-        orb.setState(OrbView.THINKING);
-        row.animate().alpha(0f).translationY(30 * d).setDuration(240).start();
-        row.setEnabled(false);
         waiting = true;
+        input.setEnabled(false);
+        setWaveState(WaveView.THINKING);
+        row.setEnabled(false);
         root.postDelayed(waitTimeout, 30000);
     }
 
-    /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，光球收掉；下面留著縮小的光球和輸入列，可以接續對話。 */
+    /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t) {
         new Thread(() -> {
@@ -760,13 +782,9 @@ public class AssistantSheet {
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
         stopRecognizer();
-        // 光球留著（縮小，點一下可語音接續），輸入列也留著（打字接續）；背景模式鈕也留著（接續的話可能是要操作手機的任務），不再藏起來，免得旁邊的圈選鈕看起來像把它擠掉
-        orb.setVisibility(View.VISIBLE);
-        orb.setState(OrbView.IDLE);
-        orb.setLevel(0f);
-        ViewGroup.LayoutParams olp = orb.getLayoutParams();
-        olp.height = (int) (150 * d);
-        orb.setLayoutParams(olp);
+        // 面板留著（點麥克風可語音接續、打字也可以）；背景模式鈕也留著（接續的話可能是要操作手機的任務）
+        setWaveState(WaveView.IDLE);
+        wave.setLevel(0f);
         row.animate().cancel();
         row.setEnabled(true);
         row.setAlpha(1f);
@@ -775,7 +793,7 @@ public class AssistantSheet {
         setText("");
         setStatus(L.t("繼續問…"));
         aurora.setEnergy(0.45f);
-        final int topPad = (int) (56 * d), botPad = (int) (240 * d) + bottomInset;
+        final int topPad = (int) (56 * d), botPad = (int) (150 * d) + bottomInset;
         final int maxH = Math.max((int) (160 * d), root.getHeight() - topPad - botPad);   // 狀態列下面到輸入列上面之間能用的高度
         final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH);
         replyCard = card;
@@ -801,8 +819,29 @@ public class AssistantSheet {
 
     private void refreshAction() {
         boolean hasText = input != null && input.getText().length() > 0;
-        send.setEnabled(hasText);
-        send.setAlpha(hasText ? 1f : 0.35f);  // 沒內容時變暗，不能按
+        send.setMode(hasText ? ActionButtonView.SEND : listening ? ActionButtonView.LISTENING : ActionButtonView.MIC);
+        send.setEnabled(!waiting);
+        send.setAlpha(waiting ? 0.35f : 1f);   // 思考中不能按
+    }
+
+    /** 聲波條的狀態：聽與思考時顯示聲波（蓋住輸入框），其他時候顯示輸入框。 */
+    private void setWaveState(int st) {
+        wave.setState(st);
+        boolean show = st == WaveView.LISTENING || st == WaveView.THINKING;
+        wave.setVisibility(show ? View.VISIBLE : View.GONE);
+        input.setVisibility(show ? View.INVISIBLE : View.VISIBLE);
+        refreshAction();
+    }
+
+    private void typeNow() {
+        enterTyping();
+        input.requestFocus();
+        showKeyboard();
+    }
+
+    private void showKeyboard() {
+        android.view.inputmethod.InputMethodManager imm = act.getSystemService(android.view.inputmethod.InputMethodManager.class);
+        if (imm != null) imm.showSoftInput(input, 0);
     }
 
     /** 狀態文字顯示在輸入框的提示（沒字的時候才看得到）。 */

@@ -745,12 +745,12 @@ final class LEn {
         m.put("直接用系統語音視窗（主畫面勾選，或先前 App 內辨識都失敗而自動記住）", "Using the system speech window directly (ticked on the home screen, or remembered after in-app recognition failed)");
         m.put("可用辨識服務 ", "Available recognition services ");
         m.put("使用 SenseVoice（App 內離線辨識）", "Using SenseVoice (offline recognition inside the app)");
-        m.put("沒聽到聲音，點一下光球再說一次", "No sound heard; tap the orb and speak again");
+        m.put("沒聽到聲音，點右邊的麥克風再說一次", "No sound heard; tap the mic button and speak again");
         m.put("辨識中…", "Recognizing…");
         m.put("SenseVoice 錯誤：", "SenseVoice error: ");
         m.put("語音辨識失敗（", "Speech recognition failed (");
         m.put("），可以改用打字", "); you can type instead");
-        m.put("沒聽清楚，點一下光球再說一次", "Could not understand; tap the orb and speak again");
+        m.put("沒聽清楚，點右邊的麥克風再說一次", "Could not understand; tap the mic button and speak again");
         m.put("錄音錯誤：", "Recording error: ");
         m.put("錄音失敗（", "Recording failed (");
         m.put("，換另一個辨識服務…", ", trying another recognition service…");
@@ -768,7 +768,7 @@ final class LEn {
         m.put("這支手機沒有語音辨識，請用下面的輸入框打字", "This phone has no speech recognition; please type in the box below");
         m.put("，服務=", ", service=");
         m.put("換一種語言設定再試…", "Trying a different language setting…");
-        m.put("辨識服務忙碌（8），稍後點光球再試", "Recognition service busy (8); tap the orb to try again later");
+        m.put("辨識服務忙碌（8），稍後點麥克風再試", "Recognition service busy (8); tap the mic button to try again later");
         m.put("網路逾時（1）", "Network timeout (1)");
         m.put("網路錯誤（2）", "Network error (2)");
         m.put("麥克風錯誤（3）", "Microphone error (3)");
@@ -876,7 +876,7 @@ final class LEn {
         m.put("；自動操作 ", "; automatic actions ");
         m.put("；搜尋 ", "; search ");
         m.put("開面板時自動聽", "Listen when the panel opens");
-        m.put("叫出助理面板就開始聽；關掉就要自己點光球", "Start listening as soon as the assistant panel opens; turn off to tap the orb yourself");
+        m.put("叫出助理面板就開始聽；關掉就要自己點麥克風", "Start listening as soon as the assistant panel opens; turn off to tap the mic button yourself");
         m.put("選擇要匯入的備份", "Choose a backup to import");
         m.put("已匯出到下載資料夾：", "Exported to the Downloads folder: ");
         m.put("這個備份讀不了", "This backup cannot be read");
@@ -934,6 +934,8 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("停止聆聽", "Stop listening");
+        m.put("開始說話", "Start speaking");
         m.put("要自己選 Claude 的模型嗎？", "Pick your own Claude models?");
         m.put("向 Anthropic 查詢現在有哪些模型，再選你要的。不選就用內建的預設（便宜模型 Haiku、看圖模型 Sonnet）。需要已經設定好 Claude 的 Key。", "Ask Anthropic which models are available and pick the ones you want. Skip to use the built-in defaults (cheap = Haiku, vision = Sonnet). Needs your Claude key to be set up.");
         m.put("選模型", "Pick models");

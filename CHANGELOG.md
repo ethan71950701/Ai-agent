@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 助理面板改成像 Gemini 的底部深色面板：去掉光球，聽的時候中間是聲波條，右邊是麥克風／送出按鈕｜The assistant panel is now a Gemini-style dark bottom panel: the orb is gone, a sound-wave bar shows while listening, and the right button is a mic / send button
+
 ## 1.0.1470
 
 - 玻璃畫圖出錯時：還原畫布狀態、記錄錯誤、幾秒後自動再試（以前會永遠退回半透明，重開 App 才好）｜When the glass fails to draw, the canvas state is restored, the error is logged and it retries a few seconds later (it used to stay in the flat fallback until the app was restarted)
