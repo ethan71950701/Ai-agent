@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 內部整理：移除已停用的圈選提問程式碼與舊的展開動畫，沒有功能變動｜Internal clean-up: removed the retired circle-to-ask code and the old spring-based expand animation; no behaviour change
 
+## 1.0.1462
+
 - AI 服務選 Claude 時也能自己選模型（向 Anthropic 查詢清單，便宜與看圖各選一個；不選就用內建預設）｜Claude can now be set up with models you pick yourself (the list comes from Anthropic; one for cheap and one for vision; skip to keep the built-in defaults)
 
 ## 1.0.1461
