@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 設定 → 底欄玻璃：新增「拖動形變強度」滑桿，預設比以前強兩倍（拖動時透鏡邊緣被拉扯得更明顯）｜Settings → Glass bar: new "Drag deformation strength" slider; the default is now twice as strong (the lens edge is pulled more visibly while dragging)
 
+## 1.0.1464
+
 - 修正透鏡有時變成歪的梯形：放開手指後形變量沒有歸零；著色器取樣超出範圍時邊角被畫成黑色｜Fix the lens sometimes turning into a lopsided trapezoid: the drag stretch was not reset on release, and shader samples outside the node painted the corners black
 
 ## 1.0.1463
