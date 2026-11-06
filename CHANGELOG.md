@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 動畫與彈簧期間要求系統用高更新率（Android 15 以上），修正彈簧動畫幀數很低、看起來一格一格的｜Request a high refresh rate while animations and springs run (Android 15+), fixing springs that looked choppy because the screen dropped its refresh rate
 
+## 1.0.1487
+
 - 診斷頁的子頁面展開量測多記「最長間隔發生在動畫進度的幾 %」｜The sub-page expand stats on the diagnostics page now also record at what percentage of the animation the longest gap happened
 
 ## 1.0.1486
