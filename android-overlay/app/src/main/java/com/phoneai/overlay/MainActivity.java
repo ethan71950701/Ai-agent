@@ -709,11 +709,11 @@ public class MainActivity extends Activity {
     }
 
     // 首頁問候語（中文原文，顯示時才 L.t）
-    private static final String[] GREET_MORNING = {"早安，今天想做什麼？", "新的一天開始了", "早，先喝杯水吧"};
-    private static final String[] GREET_DAY = {"午安，來杯咖啡？", "肚子餓了嗎？", "下午好，撐住"};
-    private static final String[] GREET_EVENING = {"晚上好，辛苦了", "今天過得如何？", "要不要休息一下？"};
-    private static final String[] GREET_NIGHT = {"還沒睡嗎？", "夜深了，小聲點", "熬夜對身體不好喔"};
-    private static final String[] GREET_ANY = {"嗨，有什麼我能幫的？", "說吧，我在聽", "今天想玩點什麼？"};
+    private static final String[] GREET_MORNING = {"早安，今天想做什麼？", "新的一天開始了", "早，先喝杯水吧", "太陽都起床了，你呢？", "先喝咖啡，再叫我"};
+    private static final String[] GREET_DAY = {"午安，來杯咖啡？", "肚子餓了嗎？", "下午好，撐住", "去午休吧，我顧著"};
+    private static final String[] GREET_EVENING = {"晚上好，辛苦了", "今天過得如何？", "要不要休息一下？", "下班了？我也想下班"};
+    private static final String[] GREET_NIGHT = {"還沒睡嗎？", "夜深了，小聲點", "熬夜對身體不好喔", "月亮都睡了，你呢？"};
+    private static final String[] GREET_ANY = {"嗨，有什麼我能幫的？", "說吧，我在聽", "今天想玩點什麼？", "叮！你的 AI 上線了", "我已經充飽電了", "今天不當機，保證", "要不要我幫你偷懶？", "手指累了就用說的", "許願吧，限手機內", "先說好，我不會煮飯"};
 
     private void buildHome() {
         box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面中間偏上（下面留空間給輸入膠囊）

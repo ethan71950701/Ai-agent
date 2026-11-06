@@ -200,6 +200,18 @@ final class LEn {
         m.put("嗨，有什麼我能幫的？", "Hi, what can I do for you?");
         m.put("說吧，我在聽", "Go ahead, I'm listening");
         m.put("今天想玩點什麼？", "What shall we play with today?");
+        m.put("太陽都起床了，你呢？", "The sun is up, are you?");
+        m.put("先喝咖啡，再叫我", "Coffee first, then call me");
+        m.put("去午休吧，我顧著", "Go nap, I'll keep watch");
+        m.put("下班了？我也想下班", "Off work? I want off too");
+        m.put("月亮都睡了，你呢？", "Even the moon is asleep, you?");
+        m.put("叮！你的 AI 上線了", "Ding! Your AI is online");
+        m.put("我已經充飽電了", "Fully charged and ready");
+        m.put("今天不當機，保證", "No crashes today, promise");
+        m.put("要不要我幫你偷懶？", "Want me to do the boring bits?");
+        m.put("手指累了就用說的", "Tired fingers? Just talk");
+        m.put("許願吧，限手機內", "Make a wish (phone only)");
+        m.put("先說好，我不會煮飯", "Fair warning: I can't cook");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");
