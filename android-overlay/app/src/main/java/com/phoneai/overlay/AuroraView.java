@@ -82,9 +82,18 @@ public class AuroraView extends View {
         float t = now / 1000f, w = getWidth(), h = getHeight();
         float gy = glowY > 0 ? glowY : h * 0.75f;
 
+        // 左右兩邊各固定一團淡淡的底光：流動的光擠到一邊時，另一邊也不會變全黑
+        for (int side = 0; side < 2; side++) {
+            blob.setShader(shaders[side == 0 ? 0 : 2]);
+            blob.setAlpha((int) (255 * (0.14f + 0.20f * energy)));
+            c.save();
+            c.translate(side == 0 ? 0f : w, gy + 20 * d);
+            c.scale(0.8f, 0.8f);
+            c.drawCircle(0, 0, radius, blob);
+            c.restore();
+        }
         for (int i = 0; i < BLOBS; i++) {
-            // 四團光各守一段（由左到右排開），只在自己的位置附近緩緩擺動：以前整個在 0.08～0.92 之間亂晃，常常全部擠到同一邊，另一邊就全黑
-            float cx = w * (0.12f + 0.253f * i + 0.10f * (float) Math.sin(t * (0.35f + 0.11f * i) + i * 1.7f));
+            float cx = w * (0.5f + 0.42f * (float) Math.sin(t * (0.35f + 0.11f * i) + i * 1.7f));   // 到處流動
             float cy = gy + 30 * d * (float) Math.sin(t * (0.5f + 0.09f * i) + i * 2.3f);
             float s = 0.7f + 0.4f * energy + 0.08f * (float) Math.sin(t * 1.1f + i);
             blob.setShader(shaders[i]);
