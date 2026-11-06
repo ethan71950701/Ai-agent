@@ -936,6 +936,11 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("要自己選 Claude 的模型嗎？", "Pick your own Claude models?");
+        m.put("向 Anthropic 查詢現在有哪些模型，再選你要的。不選就用內建的預設（便宜模型 Haiku、看圖模型 Sonnet）。需要已經設定好 Claude 的 Key。", "Ask Anthropic which models are available and pick the ones you want. Skip to use the built-in defaults (cheap = Haiku, vision = Sonnet). Needs your Claude key to be set up.");
+        m.put("選模型", "Pick models");
+        m.put("用預設", "Use defaults");
+        m.put("還沒有設定 Claude 的 Key", "The Claude key is not set up yet");
         m.put("正在讀取通知，再交給 AI 整理，大約要幾秒到幾十秒", "Reading notifications, then asking the AI to digest them — a few seconds to a minute");
         m.put("整理通知中，請稍候…", "Digesting notifications, please wait…");
         m.put("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → PhoneAI", "Turn on notification access first: Settings → Notifications → Advanced settings → Notification access → PhoneAI");

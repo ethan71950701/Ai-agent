@@ -246,6 +246,7 @@ final class ChatEngine {
             key = own;
             if (slot.openai()) lastModel = slot.model;
             if (slot.openai()) return postOpenAi(app, body, slot, key);
+            if (!slot.model.isEmpty()) { body.put("model", slot.model); lastModel = slot.model; }   // 使用者自己選了 Claude 的模型：用他選的（沒選就用程式內建的）
         }
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;

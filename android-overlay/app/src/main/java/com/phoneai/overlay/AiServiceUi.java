@@ -56,10 +56,22 @@ final class AiServiceUi {
                 .setItems(names, (d, which) -> {
                     if (which == 0) {
                         for (String s : slots(scope)) LlmConfig.set(a, s, LlmConfig.ANTHROPIC, "", "");
-                        done.run();
+                        offerClaudeModels(a, scope, done);
                     } else guide(a, scope, LlmPresets.ALL[which - 1], done);
                 })
                 .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    /** 選了 Claude 之後：問要不要自己選 Claude 的模型（不選就用內建的：便宜 Haiku、看圖 Sonnet）。 */
+    private static void offerClaudeModels(Activity a, String scope, Runnable done) {
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("要自己選 Claude 的模型嗎？"))
+                .setMessage(L.t("向 Anthropic 查詢現在有哪些模型，再選你要的。不選就用內建的預設（便宜模型 Haiku、看圖模型 Sonnet）。需要已經設定好 Claude 的 Key。"))
+                .setPositiveButton(L.t("選模型"), (d, w) -> {
+                    List<String> order = new ArrayList<>();
+                    for (String s : slots(scope)) order.add(s);
+                    pickModels(a, order, 0, done);
+                })
+                .setNegativeButton(L.t("用預設"), (d, w) -> done.run()).show();
     }
 
     private static String[] slots(String scope) {
@@ -147,7 +159,7 @@ final class AiServiceUi {
         new Thread(() -> {
             List<String> ids = null;
             String err = null;
-            try { ids = listModels(slot.base, LlmConfig.readKey(a, slot)); } catch (Exception e) { err = String.valueOf(e.getMessage()); }
+            try { ids = slot.openai() ? listModels(slot.base, LlmConfig.readKey(a, slot)) : listClaudeModels(LlmConfig.readKey(a, slot)); } catch (Exception e) { err = String.valueOf(e.getMessage()); }
             final List<String> models = ids;
             final String e = err;
             a.runOnUiThread(() -> {
@@ -157,12 +169,17 @@ final class AiServiceUi {
                     return;
                 }
                 String title = LlmConfig.CHEAP.equals(name) ? L.t("選便宜模型（判斷、讀元件清單）") : L.t("選看圖模型（要能看圖）");
-                new MaterialAlertDialogBuilder(a).setTitle(title)
+                MaterialAlertDialogBuilder mb = new MaterialAlertDialogBuilder(a).setTitle(title)
                         .setItems(models.toArray(new String[0]), (d, which) -> {
-                            LlmConfig.set(a, name, LlmConfig.OPENAI, slot.base, models.get(which));
+                            LlmConfig.set(a, name, slot.openai() ? LlmConfig.OPENAI : LlmConfig.ANTHROPIC, slot.base, models.get(which));
                             pickModels(a, order, idx + 1, done);
                         })
-                        .setNegativeButton(L.t("保留目前的"), (d, w) -> pickModels(a, order, idx + 1, done)).show();
+                        .setNegativeButton(L.t("保留目前的"), (d, w) -> pickModels(a, order, idx + 1, done));
+                if (!slot.openai()) mb.setNeutralButton(L.t("用預設"), (d, w) -> {   // Claude：清掉自己選的，回到內建模型
+                    LlmConfig.set(a, name, LlmConfig.ANTHROPIC, "", "");
+                    pickModels(a, order, idx + 1, done);
+                });
+                mb.show();
             });
         }).start();
     }
@@ -175,6 +192,21 @@ final class AiServiceUi {
         con.setConnectTimeout(15000);
         con.setReadTimeout(20000);
         if (key != null) con.setRequestProperty("Authorization", "Bearer " + key);
+        int code = con.getResponseCode();
+        java.io.InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
+        String text = in == null ? "" : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        if (code >= 400) throw new Exception("HTTP " + code);
+        return parseModelIds(text);
+    }
+
+    /** Anthropic 的模型清單（GET /v1/models，要 x-api-key）。 */
+    static List<String> listClaudeModels(String key) throws Exception {
+        if (key == null) throw new Exception(L.t("還沒有設定 Claude 的 Key"));
+        HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/models?limit=100").openConnection();
+        con.setConnectTimeout(15000);
+        con.setReadTimeout(20000);
+        con.setRequestProperty("x-api-key", key);
+        con.setRequestProperty("anthropic-version", "2023-06-01");
         int code = con.getResponseCode();
         java.io.InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);

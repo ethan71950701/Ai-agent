@@ -20,7 +20,7 @@ final class LlmConfig {
         Slot(String provider, String base, String model) { this.provider = provider; this.base = base; this.model = model; }
         boolean openai() { return OPENAI.equals(provider); }
         boolean official() { return base.contains("api.openai.com"); }
-        String label() { return openai() ? model + " @ " + host(base) : "Claude"; }
+        String label() { return openai() ? model + " @ " + host(base) : model.isEmpty() ? "Claude" : "Claude（" + model + "）"; }
     }
 
     private static SharedPreferences p(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE); }
