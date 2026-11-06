@@ -15,6 +15,8 @@ final class Anim {
 
     private static final java.util.WeakHashMap<View, java.util.HashMap<DynamicAnimation.ViewProperty, SpringAnimation>> RUNNING = new java.util.WeakHashMap<>();
     static final float BOUNCY = 0.72f, SMOOTH = 1f;
+    /** 按壓回饋的彈簧：按下是「臨界阻尼」（不過衝、稍微放慢，不會啪一下縮到底）；放開是較軟的彈簧、只輕輕過衝一點（以前剛性 900／500、阻尼 0.9／0.45，按下太硬、放開太彈）。 */
+    static final float PRESS_IN_K = 600f, PRESS_IN_D = 1f, PRESS_OUT_K = 320f, PRESS_OUT_D = 0.72f;
 
     static void spring(View v, DynamicAnimation.ViewProperty prop, float to, float stiffness, float damping) {
         // 同一個 View 的同一個屬性只留一個彈簧；舊的沒取消會在新的結束後繼續跑，把值拉回舊目標（按鈕卡在縮小狀態就是這樣來的）
@@ -48,13 +50,13 @@ final class Anim {
         v.setOnTouchListener((x, e) -> {
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
-                    spring(x, DynamicAnimation.SCALE_X, pressed, 900f, 0.9f);
-                    spring(x, DynamicAnimation.SCALE_Y, pressed, 900f, 0.9f);
+                    spring(x, DynamicAnimation.SCALE_X, pressed, PRESS_IN_K, PRESS_IN_D);
+                    spring(x, DynamicAnimation.SCALE_Y, pressed, PRESS_IN_K, PRESS_IN_D);
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    spring(x, DynamicAnimation.SCALE_X, 1f, 500f, 0.45f);
-                    spring(x, DynamicAnimation.SCALE_Y, 1f, 500f, 0.45f);
+                    spring(x, DynamicAnimation.SCALE_X, 1f, PRESS_OUT_K, PRESS_OUT_D);
+                    spring(x, DynamicAnimation.SCALE_Y, 1f, PRESS_OUT_K, PRESS_OUT_D);
                     break;
                 default:
             }

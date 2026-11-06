@@ -35,8 +35,8 @@ final class StarView extends View {
         if (animate) {
             setScaleX(0.5f);
             setScaleY(0.5f);
-            Anim.spring(this, DynamicAnimation.SCALE_X, 1f, 500f, 0.45f);
-            Anim.spring(this, DynamicAnimation.SCALE_Y, 1f, 500f, 0.45f);
+            Anim.spring(this, DynamicAnimation.SCALE_X, 1f, 380f, 0.6f);
+            Anim.spring(this, DynamicAnimation.SCALE_Y, 1f, 380f, 0.6f);
         }
     }
 

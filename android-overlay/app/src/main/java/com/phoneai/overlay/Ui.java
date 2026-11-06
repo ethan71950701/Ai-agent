@@ -510,8 +510,8 @@ final class Ui {
     static void bounceIn(View v) {
         v.setScaleX(0.6f);
         v.setScaleY(0.6f);
-        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.45f);
-        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.45f);
+        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.62f);
+        Anim.spring(v, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f, 260f, 0.62f);
     }
 
     /** 點的那張卡片在螢幕上的位置與大小（打開頁面時從這裡長出來、關閉時縮回這裡）；開完會清掉，免得下次從別的地方開時用到舊的。 */
