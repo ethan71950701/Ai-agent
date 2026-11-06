@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1525
+
 - 圈選截圖變快：root／Shizuku 改讀原始像素，不再編成 PNG 再解開｜Circle-to-ask screenshots are faster: root/Shizuku now read raw pixels instead of encoding and decoding a PNG
 
 ## 1.0.1524
