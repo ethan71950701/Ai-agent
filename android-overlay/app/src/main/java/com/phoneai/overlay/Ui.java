@@ -597,11 +597,29 @@ final class Ui {
                 ((Veil) v).setSnapAlpha(1f - y * y * (3f - 2f * y));   // 卡片上的文字在前 30% 淡出
             }
         }
-        cornerRadius = corner * k / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
+        float sr = screenCorner(root);   // 完全展開時圓角等於手機螢幕的 R 角（不是直角），縮回卡片時漸變成卡片的圓角
+        float onScreen = sr + (corner - sr) * k;
+        cornerRadius = onScreen / Math.max(0.05f, root.getScaleX());   // 圓角在縮放前的座標，除以縮放才會是畫面上的大小
         root.invalidateOutline();
     }
 
     private static float cornerRadius;
+    private static float screenR = -1f;
+
+    /** 手機螢幕四個角的圓角半徑（像素，取左上角；系統有回報才用，沒有就 0）。 */
+    private static float screenCorner(View root) {
+        if (screenR >= 0f) return screenR;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 31) {
+                android.view.WindowInsets wi = root.getRootWindowInsets();
+                if (wi != null) {
+                    android.view.RoundedCorner c = wi.getRoundedCorner(android.view.RoundedCorner.POSITION_TOP_LEFT);
+                    if (c != null) { screenR = c.getRadius(); return screenR; }
+                }
+            }
+        } catch (Throwable ignored) { }
+        return 0f;   // 還拿不到（下一次再試），先當直角
+    }
     private static final int R_VEIL = 0x7f0a0e58;   // View.setTag 用的鍵
 
     /** 蓋在頁面內容最上面的一層：卡片顏色＋被點卡片的小圖（小圖不跟著頁面變形，固定在容器左上角，隨展開淡出）。 */

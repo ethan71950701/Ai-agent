@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 子頁完全展開時的圓角改成手機螢幕的 R 角（以前是直角），縮回卡片時再漸變成卡片的圓角；預測返回一開始滑就是螢幕的 R 角｜When a sub-page is fully open its corners now match the phone's screen corner radius (they used to be square), blending into the card's corners as it shrinks back; predictive back starts with the screen's corner radius
 - 所有子頁的展開、返回、預測返回都有圓角：不是點卡片打開的頁面（對話框按鈕、第一次開啟…）改用畫面中間一張虛擬卡片當起點；太久以前點的位置不再被拿來用｜Every sub-page now has rounded corners when opening, closing and on predictive back: pages not opened from a card (dialog buttons, first run...) start from a virtual card in the middle of the screen, and an old tap position is no longer reused
 
 ## 1.0.1554
