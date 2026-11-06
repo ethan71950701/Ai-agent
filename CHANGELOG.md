@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 換分頁時左上角的大標題也從切換那一邊橫向滑進來，排在所有元件前面｜When switching tabs the big title at the top left now also slides in from the side, ahead of all the components
+
 - 換分頁改成：新頁面的每個元件本來就在左邊或右邊，從上到下一個接一個橫向滑進來（舊頁面很快淡出），不再有空白一格的閃爍｜Switching tabs now works like this: every component of the new page starts off to the left or right and slides in one after another from top to bottom (the old page fades out quickly), with no empty-frame flash
 
 ## 1.0.1498

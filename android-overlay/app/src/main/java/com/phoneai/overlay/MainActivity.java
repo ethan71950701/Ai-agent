@@ -514,42 +514,25 @@ public class MainActivity extends Activity {
         kickGlass();
     }
 
-    private android.animation.ValueAnimator titleAnim;
-
     /**
-     * 左上方大標題換字：舊的字往切換的反方向滑出並淡出，換字後新的字從切換方向滑進來並淡入（以前是直接換，會突然跳掉）。
-     * CollapsingToolbarLayout 自己畫標題，所以動畫用「標題顏色的透明度」和「標題的左邊距」做。
+     * 左上方大標題換字：跟下面的元件同一套動作。舊的字很快往反方向淡出（約 0.11 秒，跟舊頁面一起），
+     * 換字後新的字從切換方向那一邊（畫面外）橫向滑進來，排在所有元件前面（第一個）。
+     * 動畫用整個 CollapsingToolbarLayout 的位移與透明度（它自己畫標題，改標題顏色或邊距在長距離位移時文字會被擠壞）。
      */
     private void animateTitle(final String text, final int dir) {
         final com.google.android.material.appbar.CollapsingToolbarLayout ctl = (com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0];
-        if (titleAnim != null) titleAnim.cancel();
-        if (dir == 0) { ctl.setTitle(text); return; }
-        final int base = Ui.dp(this, 24), shift = Ui.dp(this, 36);
-        final int exp = Ui.attr(this, com.google.android.material.R.attr.colorPrimary), col = Ui.attr(this, com.google.android.material.R.attr.colorOnSurface);
-        final boolean[] swapped = {false};
-        titleAnim = android.animation.ValueAnimator.ofFloat(0f, 1f);
-        titleAnim.setDuration(380);
-        titleAnim.setInterpolator(new android.view.animation.LinearInterpolator());
-        titleAnim.addUpdateListener(an -> {
-            float t = (float) an.getAnimatedValue();
-            float out = Math.min(1f, t / 0.4f), in = Math.max(0f, (t - 0.4f) / 0.6f);   // 前 40% 舊字離開，後 60% 新字進來
-            if (t >= 0.4f && !swapped[0]) { swapped[0] = true; ctl.setTitle(text); }
-            float alpha, off;
-            if (t < 0.4f) { alpha = 1f - out; off = -dir * shift * (out * out); }
-            else { float e = 1f - (1f - in) * (1f - in) * (1f - in); alpha = e; off = dir * shift * (1f - e); }
-            ctl.setExpandedTitleColor((exp & 0xFFFFFF) | (Math.round(255 * alpha) << 24));
-            ctl.setCollapsedTitleTextColor((col & 0xFFFFFF) | (Math.round(255 * alpha) << 24));
-            ctl.setExpandedTitleMarginStart(base + Math.round(off));
-        });
-        titleAnim.addListener(new android.animation.AnimatorListenerAdapter() {
-            @Override public void onAnimationEnd(android.animation.Animator an) {
-                ctl.setTitle(text);
-                ctl.setExpandedTitleColor(exp);
-                ctl.setCollapsedTitleTextColor(col);
-                ctl.setExpandedTitleMarginStart(base);
-            }
-        });
-        titleAnim.start();
+        ctl.animate().cancel();
+        if (dir == 0) { ctl.setTitle(text); ctl.setAlpha(1f); ctl.setTranslationX(0f); return; }
+        final float screenW = getResources().getDisplayMetrics().widthPixels;
+        ctl.animate().alpha(0f).translationX(-dir * Ui.dp(this, 32)).setDuration(110)
+                .setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f))
+                .withEndAction(() -> {
+                    ctl.setTitle(text);
+                    ctl.setAlpha(1f);
+                    ctl.setTranslationX(dir * screenW);
+                    ctl.animate().translationX(0f).setDuration(420)
+                            .setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).start();
+                }).start();
     }
 
     private LinearLayout hero;
