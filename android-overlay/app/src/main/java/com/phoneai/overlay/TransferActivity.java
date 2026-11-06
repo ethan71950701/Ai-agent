@@ -148,6 +148,7 @@ public class TransferActivity extends Activity {
                 card.addView(name);
                 com.google.android.material.button.MaterialButton send = Ui.button(this, L.t("傳檔案過去"), v -> pickFileFor(p));
                 com.google.android.material.button.MaterialButton browse = Ui.tonal(this, L.t("瀏覽"), v -> {
+                    Ui.rememberTap(v);
                     startActivity(new Intent(this, BrowseActivity.class).putExtra("peer_id", p.id));
                 });
                 Ui.buttons(this, card, send, browse);

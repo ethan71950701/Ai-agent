@@ -42,7 +42,7 @@ public class BrowseActivity extends Activity {
         where = Ui.body(this, "");
         top.addView(where);
         Ui.buttons(this, top, Ui.tonal(this, L.t("上一層"), v -> load(parentOf(path))),
-                Ui.tonal(this, L.t("搜尋這台"), v -> startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id))));
+                Ui.tonal(this, L.t("搜尋這台"), v -> { Ui.rememberTap(v); startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id)); }));
         status = Ui.body(this, "");
         box.addView(status);
         list = new LinearLayout(this);

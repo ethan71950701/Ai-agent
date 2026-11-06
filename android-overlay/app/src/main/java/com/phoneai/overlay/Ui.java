@@ -614,8 +614,8 @@ final class Ui {
         }
         // 先在第一次繪製前就設成縮小、透明，避免先看到整頁閃一下再縮小
         root.setAlpha(0f);
-        root.setScaleX(0.86f);   // 以前從 0.55 倍彈出，縮放幅度大又晃很久；改成小幅度放大＋快速停下，看起來比較穩也比較順
-        root.setScaleY(0.86f);
+        root.setScaleX(0.92f);
+        root.setScaleY(0.92f);
         root.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -628,14 +628,10 @@ final class Ui {
                 root.setPivotY(py);
                 // 動畫期間整頁畫在獨立的 GPU 層：縮放、淡入只動這一層，不用每幀重畫裡面的內容；結束後拿掉
                 root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-                root.animate().alpha(1f).setDuration(220).setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).start();
-                androidx.dynamicanimation.animation.SpringAnimation sx = new androidx.dynamicanimation.animation.SpringAnimation(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f);
-                androidx.dynamicanimation.animation.SpringAnimation sy = new androidx.dynamicanimation.animation.SpringAnimation(root, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_Y, 1f);
-                for (androidx.dynamicanimation.animation.SpringAnimation sp : new androidx.dynamicanimation.animation.SpringAnimation[]{sx, sy})
-                    sp.getSpring().setStiffness(500f).setDampingRatio(0.82f);   // 一點點回彈就停，不會晃
-                sx.addEndListener((an, canceled, v, vel) -> root.setLayerType(View.LAYER_TYPE_NONE, null));
-                sx.start();
-                sy.start();
+                // 沒有點的卡片位置時的備用動畫：整頁從 0.92 倍淡入放大到原大小，用 Material 的強調減速曲線（不用彈簧，才不會像突然冒出來再彈一下）
+                root.animate().alpha(1f).setDuration(200).setInterpolator(EMPHASIZED).start();
+                root.animate().scaleX(1f).scaleY(1f).setDuration(400).setInterpolator(EMPHASIZED)
+                        .withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start();
                 return true;
             }
         });

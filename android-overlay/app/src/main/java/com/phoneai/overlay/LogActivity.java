@@ -123,6 +123,7 @@ public class LogActivity extends Activity {
                 info.setPadding(0, Ui.dp(this, 6), 0, 0);
                 col.addView(info);
                 card.setOnClickListener(v -> {   // 點整張卡片進入任務詳細頁（每一步的思考與 token）
+                    Ui.rememberTap(v);   // 記下點的卡片位置：詳細頁才能從這張卡片展開
                     Intent it = new Intent(this, TaskDetailActivity.class).putExtra("id", id);
                     startActivity(it);
                 });
