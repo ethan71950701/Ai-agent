@@ -243,6 +243,9 @@ final class LEn {
         m.put("已重建，回到首頁看看有沒有恢復", "Rebuilt. Go back home to see if it recovered");
         m.put("主畫面不在，沒有東西可以重建", "The main screen is gone, nothing to rebuild");
         m.put("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n", "\n[Recent events (leave, return, memory trim, screen on/off)]\n");
+        m.put("停頓多久才算說完", "Pause length that ends your sentence");
+        m.put(" 秒", " s");
+        m.put("說話中途停頓超過這個時間，就當作說完。常被切掉就調長，覺得等太久就調短", "A pause longer than this ends your sentence. Raise it if you get cut off, lower it if the wait feels long.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

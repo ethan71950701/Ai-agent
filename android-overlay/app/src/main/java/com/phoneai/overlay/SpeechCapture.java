@@ -92,6 +92,9 @@ final class SpeechCapture {
             double floor = 0;
             int calib = 0, silent = 0, total = 0;
             boolean spoke = false;
+            float pauseS = 1.6f;   // 停頓多久才算說完（設定 → 語音可調）；以前固定 1 秒，講話稍微停一下就被切掉
+            try { pauseS = App.ctx.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE).getFloat("voice_pause_s", 1.6f); } catch (Throwable ignored) { }
+            final int endChunks = Math.max(6, Math.min(40, Math.round(pauseS * 10)));   // 每包 0.1 秒
             while (!cancel) {
                 int n = ar.read(buf, 0, buf.length);
                 if (n < 0) throw new Exception(L.t("讀麥克風失敗（") + n + L.t("）"));
@@ -106,7 +109,7 @@ final class SpeechCapture {
                 if (calib < 5) { floor += rms / 5; calib++; continue; }   // 前 0.5 秒量環境噪音
                 double thr = Math.max(500, floor * 3);
                 if (rms > thr) { spoke = true; silent = 0; } else if (spoke) silent++;
-                if (spoke && (silent >= 10 || stop)) break;                // 說過話、停頓約 1 秒（或被叫停）
+                if (spoke && (silent >= endChunks || stop)) break;         // 說過話、停頓超過設定的秒數（或被叫停）
                 if (!spoke && (stop || total > RATE * 8)) break;          // 還沒開口：被叫停或 8 秒
                 if (total > RATE * 20) break;                              // 最長 20 秒
             }

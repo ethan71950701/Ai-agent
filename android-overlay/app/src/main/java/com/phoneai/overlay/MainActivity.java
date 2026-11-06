@@ -1093,6 +1093,24 @@ public class MainActivity extends Activity {
                     (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
             Ui.switchRow(this, g, 2, 3, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
                     (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
+            {   // 說話停頓多久才算說完（離線辨識錄音用）
+                LinearLayout inner = Ui.card(this, g);
+                final float cur = Math.max(0.8f, Math.min(4f, cfg().getFloat("voice_pause_s", 1.6f)));
+                final TextView pt = Ui.body(this, L.t("停頓多久才算說完") + "　" + String.format(java.util.Locale.US, "%.1f", cur) + L.t(" 秒"));
+                pt.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                inner.addView(pt);
+                inner.addView(Ui.body(this, L.t("說話中途停頓超過這個時間，就當作說完。常被切掉就調長，覺得等太久就調短")));
+                com.google.android.material.slider.Slider sl = new com.google.android.material.slider.Slider(this);
+                sl.setValueFrom(0.8f);
+                sl.setValueTo(4f);
+                sl.setStepSize(0.1f);
+                sl.setValue(cur);
+                sl.addOnChangeListener((s, v, fromUser) -> {
+                    cfg().edit().putFloat("voice_pause_s", v).apply();
+                    pt.setText(L.t("停頓多久才算說完") + "　" + String.format(java.util.Locale.US, "%.1f", v) + L.t(" 秒"));
+                });
+                inner.addView(sl, new LinearLayout.LayoutParams(-1, -2));
+            }
 
         });
         steps.add(() -> {
