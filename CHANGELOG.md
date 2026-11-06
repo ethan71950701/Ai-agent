@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1500
+
 - 換分頁時左上角的大標題也從切換那一邊橫向滑進來，排在所有元件前面｜When switching tabs the big title at the top left now also slides in from the side, ahead of all the components
 
 ## 1.0.1499
