@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1465
+
 - 設定 → 底欄玻璃：新增「拖動形變強度」滑桿，預設比以前強兩倍（拖動時透鏡邊緣被拉扯得更明顯）｜Settings → Glass bar: new "Drag deformation strength" slider; the default is now twice as strong (the lens edge is pulled more visibly while dragging)
 
 ## 1.0.1464
