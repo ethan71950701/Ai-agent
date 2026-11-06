@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 診斷頁新增「最近事件」：離開、回來（背景多久）、系統通知回收記憶體、螢幕開關，查底欄偶爾變形時用｜Diagnostics: a "Recent events" list (leave, return with time in background, memory-trim notices, screen on/off) to help investigate the occasionally deformed bottom bar
+
+## 1.0.1545
+
 - 診斷頁新增「透鏡著色器」那一行（餵給透鏡的尺寸、光源、縮放），以及「重建玻璃」按鈕：底欄變梯形時按一下，看會不會恢復｜Diagnostics: a "Lens shader" line (size, light and scale fed to the lens) and a "Rebuild glass" button to press when the bottom bar is deformed, to see whether it recovers
 
 ## 1.0.1544
