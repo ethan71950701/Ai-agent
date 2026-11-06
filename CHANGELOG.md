@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1486
+
 - 診斷頁的模型改成顯示你實際選的服務與模型（以前寫死 Claude 的內建名稱）；子頁面展開量測保留最近 5 次｜The diagnostics page now shows the service and model you actually chose (it used to show the built-in Claude names); sub-page expand stats keep the last 5 runs
 
 ## 1.0.1485
