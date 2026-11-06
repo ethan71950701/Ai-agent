@@ -746,6 +746,7 @@ public class MainActivity extends Activity {
         // 大約一半是冷笑話、一半是一般問候；跟上一次不一樣（上一次存在設定裡，重開 App 也記得）
         String last = cfg().getString("last_greet", "");
         boolean joke = false;
+        boolean smallText = false;
         int idx = 0;
         String key = "";
         for (int tries = 0; tries < 12; tries++) {
@@ -764,13 +765,15 @@ public class MainActivity extends Activity {
                 final android.text.SpannableString qs = new android.text.SpannableString(q + "\n" + hint);
                 qs.setSpan(new android.text.style.RelativeSizeSpan(0.4f), q.length() + 1, qs.length(), 0);
                 greet.setText(qs);
+                smallText = true;
                 final boolean[] shown = {false};
                 greet.setOnClickListener(v -> { shown[0] = !shown[0]; greet.setText(shown[0] ? an : qs); });
             }
         } else {
-            greet.setText(L.t(idx < slot.length ? slot[idx] : GREET_ANY[idx - slot.length]));
+            // 逗號後換行，分成上下兩行（有逗號的才會分）
+            greet.setText(L.t(idx < slot.length ? slot[idx] : GREET_ANY[idx - slot.length]).replaceFirst("([，,])\\s*", "$1\n"));
         }
-        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, greet.getText().toString().indexOf((char) 10) >= 0 ? 30 : 40);
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, smallText ? 30 : 40);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
         greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
