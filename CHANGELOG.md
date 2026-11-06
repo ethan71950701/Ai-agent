@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 自動操作：tap／雙擊／長按沒給座標時不再點到螢幕左上角還說「已點擊」，會回錯誤讓模型重來；出錯的那一步在任務過程裡附上模型原始回覆｜Automation: tap/double-tap/long-press without coordinates no longer taps the top-left corner and reports success; it returns an error instead, and the failed step shows the model's raw reply in the task log
 - 自動操作：看圖那一步模型說了不存在的動作時，下一步還是給截圖重來，不再退回元件清單又 look 一次｜Automation: if the model names a non-existent action on a screenshot step, the next step retries with the screenshot instead of falling back to the element list and looking again
 
 ## 1.0.1529

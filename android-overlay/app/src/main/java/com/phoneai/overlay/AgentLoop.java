@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 final class AgentLoop {
     static final String MODEL = "claude-sonnet-5-5";
     static final String SEARCH_MODEL = "claude-sonnet-5-5";
+    static volatile String lastRawFull = "";   // 診斷：最近一次模型回覆的前 700 字
     static volatile String lastRaw = "";   // 最近一次模型回覆的開頭，解析不出動作時放進錯誤訊息
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
@@ -467,7 +468,9 @@ final class AgentLoop {
                         String think = action.optString("think");
                         history.add(step + ". " + action + (think.isEmpty() ? "" : "（" + think + "）") + " → " + result);
                         recordStep(recorded, macroValid, action, tree, useTree, result.startsWith("已"));
-                        if (result.startsWith("沒有「") && (wasForced || !useTree)) forceShot = true;   // 看圖那一步模型亂說了不存在的動作：下一步還是給截圖（Sonnet 重來），不要退回元件清單又 look 一次
+                        boolean badAct = result.startsWith("沒有「") || result.startsWith("錯誤：");
+                        if (badAct && (wasForced || !useTree)) forceShot = true;
+                        if (badAct) { try { det.put("raw", lastRawFull); } catch (Exception ignored) { } }   // 診斷：模型原始回覆的開頭，看它到底寫了什麼   // 看圖那一步模型亂說了不存在的動作：下一步還是給截圖（Sonnet 重來），不要退回元件清單又 look 一次
                         // 指令類動作（亮度、Wi-Fi、藍牙、音量）：模型說「做完任務就完成」(finish) 而且指令成功，就直接結束，不再多問一次模型
                         String fin = action.optString("finish", "").trim();
                         if (!fin.isEmpty() && (name.equals("brightness") || name.equals("volume") || name.equals("cmd")) && result.startsWith("已")) finalSay = fin;
@@ -683,6 +686,7 @@ final class AgentLoop {
         if (out == null) { lastRaw = "（沒有內容）"; return null; }
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < out.length(); i++) if ("text".equals(out.getJSONObject(i).optString("type"))) sb.append(out.getJSONObject(i).optString("text"));
+        lastRawFull = sb.substring(0, Math.min(sb.length(), 700));
         lastRaw = sb.length() == 0 ? "（空）" + r.optString("stop_reason") : sb.substring(0, Math.min(sb.length(), 80));
         if (sb.indexOf("<invoke") >= 0) {   // 模型有時回成工具呼叫的 XML 格式，不是 JSON
             JSONObject inv = parseInvoke(sb.toString());
@@ -921,6 +925,8 @@ final class AgentLoop {
     private static String executeInner(JSONObject a, int[] wh, Context c, State st) {
         int w = wh[0], h = wh[1];
         String name = a.optString("action");
+        if ((name.equals("tap") || name.equals("double_tap") || name.equals("longpress")) && !(a.has("x") && a.has("y")))
+            return "錯誤：" + name + " 沒有給 x、y 座標（0到1000），這一步沒有點任何地方。請給座標，或元件清單模式給 pick";   // 以前會把缺的座標當 0，點到螢幕左上角還回報「已點擊」
         try {
             if (!Root.available()) {   // 沒有 root：點擊、滑動、按鍵、開 App、查資訊改走無障礙與系統 API
                 String r = executeNoRoot(a, w, h, c, st);

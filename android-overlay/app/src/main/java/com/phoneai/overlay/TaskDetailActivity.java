@@ -78,6 +78,9 @@ public class TaskDetailActivity extends Activity {
                 if (d.has("retry")) {   // Haiku 的回覆看不懂、這一步多花了一次 Sonnet
                     card.addView(Ui.body(this, String.format(Locale.US, L.t("Haiku 的回覆看不懂，這一步改用 Sonnet 重問（回覆開頭：%s）"), d.optString("retry"))));
                 }
+                if (d.has("raw")) {   // 模型回了不存在的動作／缺座標：附上它原始回覆的開頭，方便看它到底寫了什麼
+                    card.addView(Ui.body(this, L.t("模型原始回覆：") + d.optString("raw")));
+                }
                 if (d.has("tree")) {   // 元件清單模式的診斷
                     int tn = d.optInt("tree");
                     card.addView(Ui.body(this, tn > 0 ? String.format(Locale.US, L.t("元件清單：%d 個元件"), tn)
