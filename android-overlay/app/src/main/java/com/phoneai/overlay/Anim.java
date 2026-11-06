@@ -62,22 +62,6 @@ final class Anim {
         });
     }
 
-    /** 一群內容依序從下方彈入（換分頁、展開時用）。 */
-    static void cascade(ViewGroup g, int maxItems, float fromX, float fromY, long step) {
-        int n = Math.min(g.getChildCount(), maxItems);
-        for (int i = 0; i < n; i++) {
-            final View c = g.getChildAt(i);
-            c.setAlpha(0f);
-            c.setTranslationX(fromX);
-            c.setTranslationY(fromY);
-            c.postDelayed(() -> {
-                spring(c, DynamicAnimation.ALPHA, 1f, 300f, SMOOTH);
-                spring(c, DynamicAnimation.TRANSLATION_X, 0f, 380f, 0.78f);
-                spring(c, DynamicAnimation.TRANSLATION_Y, 0f, 380f, 0.78f);
-            }, i * step);
-        }
-    }
-
     /**
      * 展開／收合：高度用「時間＋曲線」連續長出來（不是整塊淡入），下面的卡片跟著一格一格被推開；裡面的內容隨高度長出來而淡入。
      * 展開是先快後慢、收合是先慢後快。同時間只跑一個，連點會從目前的高度接著動，不會跳。
@@ -126,40 +110,4 @@ final class Anim {
     }
 
     private static final int R_EXPAND = 0x7f0a0e57;   // View.setTag 用的鍵（只要不跟系統的衝突）
-
-    /** 展開／收合：高度用彈簧長出來（展開有一點回彈、收合不回彈），裡面的列依序彈入。 */
-    static void expand(final ViewGroup body, final boolean show, final float dp) {
-        final ViewGroup.LayoutParams lp = body.getLayoutParams();
-        if (show) {
-            View parent = (View) body.getParent();
-            int w = parent.getWidth() > 0 ? parent.getWidth() : body.getResources().getDisplayMetrics().widthPixels;
-            body.setVisibility(View.VISIBLE);
-            body.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            final int target = body.getMeasuredHeight();
-            lp.height = 0;
-            body.setLayoutParams(lp);
-            cascade(body, 12, 0f, 14 * dp, 30);
-            run(body, lp, 0f, target, 380f, 0.8f, false);
-        } else {
-            run(body, lp, body.getHeight(), 0, 700f, SMOOTH, true);
-        }
-    }
-
-    private static void run(final View body, final ViewGroup.LayoutParams lp, float from, float to,
-                            float stiffness, float damping, final boolean hideAtEnd) {
-        SpringAnimation a = new SpringAnimation(new FloatValueHolder(from));
-        a.setSpring(new SpringForce(to).setStiffness(stiffness).setDampingRatio(damping));
-        a.setMinimumVisibleChange(1f);
-        a.addUpdateListener((an, v, vel) -> {
-            lp.height = Math.max(0, Math.round(v));
-            body.setLayoutParams(lp);
-        });
-        a.addEndListener((an, canceled, v, vel) -> {
-            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            if (hideAtEnd) body.setVisibility(View.GONE);
-            body.setLayoutParams(lp);
-        });
-        a.start();
-    }
 }

@@ -94,9 +94,6 @@ public class AssistantSheet {
     private boolean listening, typing, dismissing, programmatic;
     private int bottomInset;
     // 圈選：面板一打開就截一張圖，直接在上面圈（不用按 ◎）；圈完的範圍會跟著下一次送出一起問 AI
-    private CircleCanvas canvas;
-    private Bitmap shot;
-    private RectF circleBox;
     private boolean shotRequested;
 
     public AssistantSheet(Activity a) {
@@ -683,72 +680,10 @@ public class AssistantSheet {
         refreshAction();
     }
 
-    /** 截圖好了：把圈選畫布放在光球與輸入列下面（畫面的內容上面），點空白隱藏光球、直接在畫面上圈。 */
-    private void attachShot(Bitmap b) {
-        if (dismissing || b == null) return;
-        shot = b;
-        if (canvas != null) { canvas.setShot(b); return; }
-        canvas = new CircleCanvas(act, b, new CircleCanvas.Listener() {
-            @Override public void onSelected(RectF box) {
-                circleBox = box;
-                setStatus(L.t("已圈選，輸入問題後送出（可以空白）"));
-            }
-            @Override public void onCleared() {
-                circleBox = null;
-                setStatus(L.t("打好按右邊的送出"));
-            }
-            @Override public void onTap() {
-                orb.setVisibility(View.GONE);   // 點光球和輸入框以外的地方：隱藏光球，整個畫面可以圈
-            }
-        });
-        root.addView(canvas, root.indexOfChild(content), new FrameLayout.LayoutParams(-1, -1));
-    }
-
-    /** 圈選的範圍（含一點邊距）裁切出來，縮小後 base64。 */
-    private String circleCrop() {
-        int pad = (int) (12 * d);
-        int l = Math.max(0, (int) circleBox.left - pad), t = Math.max(0, (int) circleBox.top - pad);
-        int r = Math.min(shot.getWidth(), (int) circleBox.right + pad), b = Math.min(shot.getHeight(), (int) circleBox.bottom + pad);
-        Bitmap crop = (r - l < 8 || b - t < 8) ? shot : Bitmap.createBitmap(shot, l, t, r - l, b - t);
-        return CircleActivity.jpeg64(crop, 1280, 85);
-    }
-
-    /** 有圈選：把圈起來的區域（+ 整張畫面當上下文）和問題一起交給聊天模型，回答顯示在回答卡片。 */
-    private void askCircle(final String q) {
-        final JSONArray msgs = new JSONArray();
-        try {
-            JSONArray content = new JSONArray();
-            content.put(CircleActivity.img(circleCrop()));
-            content.put(CircleActivity.img(CircleActivity.jpeg64(shot, 800, 70)));
-            content.put(new JSONObject().put("type", "text").put("text", (L.en()
-                    ? "The first image is the region the user circled; the second is the whole screen for context. The user's question: "
-                    : "第一張圖是使用者圈選的區域，第二張是整個畫面（給你看上下文）。使用者的問題：")
-                    + (q.isEmpty() ? (L.en() ? "What is this? Explain briefly and add useful related information." : "這是什麼？請簡短說明，並補充有用的相關資訊。") : q)));
-            msgs.put(new JSONObject().put("role", "user").put("content", content));
-        } catch (Exception e) {
-            return;
-        }
-        circleBox = null;
-        if (canvas != null) canvas.clearSel();
-        setText("");
-        setStatus(L.t("思考中…"));
-        orb.setVisibility(View.VISIBLE);
-        orb.setState(OrbView.THINKING);
-        final Context app = act.getApplicationContext();
-        new Thread(() -> {
-            String r = ChatEngine.visionChat(app, msgs, true);
-            act.runOnUiThread(() -> {
-                if (r == null) showReply("", L.t("連不上 AI：") + ChatEngine.lastError);
-                else showReply("", r);
-            });
-        }, "circle-ask-panel").start();
-    }
-
     private void submit() {
         Notify.stopSpeaking();
         cancelCountdown();
         String t = input.getText().toString().trim();
-        if (circleBox != null && shot != null && !questionMode) { askCircle(t); return; }   // 有圈選：這次問的是圈起來的地方
         if (t.isEmpty()) return;
         if (questionMode) { answerQuestion(t); return; }
         // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）

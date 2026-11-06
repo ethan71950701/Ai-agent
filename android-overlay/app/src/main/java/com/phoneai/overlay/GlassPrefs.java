@@ -12,12 +12,12 @@ final class GlassPrefs {
 
     static float pressX = 1.2f, pressY = 1.4f, barPress = 1.06f;   // 按住時透鏡的橫向／直向放大倍數、整條底欄的放大倍數
     static float refr = 0.56f, chroma = 0.30f, zoom = 0.08f, skew = 0f, blur = 0f;   // 預設：折射較輕；色散只給上層透鏡（底欄不會有彩色光邊）
-    static boolean magnify = true, iconRefr = true, lensBg = true, skewOn = true, gpu = true;   // 圖示折射預設開啟
+    static boolean magnify = true, iconRefr = true, skewOn = true, gpu = true;   // 圖示折射預設開啟
     static float barDark = 0.66f;   // 底欄的暗度（0 = 幾乎透明，1 = 很暗）；預設跟之前的亮度一樣
 
     static final String K_PRESS_X = "g_pressX", K_PRESS_Y = "g_pressY", K_BAR_PRESS = "g_barPress";
     static final String K_REFR = "g_refr", K_CHROMA = "g_chroma", K_ZOOM = "g_zoom", K_SKEW = "g_skew", K_BLUR = "g_blur";
-    static final String K_MAGNIFY = "g_magnify", K_ICON_REFR = "g_iconRefr", K_LENS_BG = "g_lensBg", K_SKEW_ON = "g_skewOn", K_GPU = "g_gpu";
+    static final String K_MAGNIFY = "g_magnify", K_ICON_REFR = "g_iconRefr", K_SKEW_ON = "g_skewOn", K_GPU = "g_gpu";
     static final String K_BAR_DARK = "g_barDark";
 
     private static SharedPreferences sp(Context c) {
@@ -37,7 +37,6 @@ final class GlassPrefs {
         blur = p.getFloat(K_BLUR, 0f);
         magnify = p.getBoolean(K_MAGNIFY, true);
         iconRefr = p.getBoolean(K_ICON_REFR, true);
-        lensBg = p.getBoolean(K_LENS_BG, true);
         skewOn = p.getBoolean(K_SKEW_ON, true);
         gpu = p.getBoolean(K_GPU, true);
         barDark = p.getFloat(K_BAR_DARK, 0.66f);
@@ -56,7 +55,7 @@ final class GlassPrefs {
     /** 全部恢復預設。 */
     static void reset(Context c) {
         sp(c).edit().remove(K_REFR).remove(K_CHROMA).remove(K_ZOOM).remove(K_PRESS_X).remove(K_PRESS_Y).remove(K_BAR_PRESS).remove(K_SKEW).remove(K_BLUR)
-                .remove(K_MAGNIFY).remove(K_ICON_REFR).remove(K_LENS_BG).remove(K_SKEW_ON).remove(K_GPU).remove(K_BAR_DARK).apply();
+                .remove(K_MAGNIFY).remove(K_ICON_REFR).remove(K_SKEW_ON).remove(K_GPU).remove(K_BAR_DARK).apply();
         load(c);
     }
 }

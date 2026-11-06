@@ -220,14 +220,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".CircleActivity"
-            android:exported="false"
-            android:taskAffinity=""
-            android:excludeFromRecents="true"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/AssistTheme" />
-
-        <activity
             android:name=".ConfirmActivity"
             android:exported="false"
             android:taskAffinity=""

@@ -885,13 +885,9 @@ final class LEn {
         m.put("等你接手", "Waiting for you to take over");
         m.put("需要你接手", "Take-over needed");
         m.put("請你接手", "Please take over");
-        m.put("截圖失敗（需要開啟無障礙服務，或使用 root／Shizuku 模式）", "Screenshot failed (turn on the accessibility service, or use root / Shizuku mode)");
-        m.put("用手指圈出想問的地方（雙指可以放大縮小）", "Circle what you want to ask about (pinch to zoom)");
-        m.put("問這個…（可以空白）", "Ask about this… (can be empty)");
         m.put("送出", "Send");
         m.put("重新圈選", "Circle again");
         m.put("圈選提問", "Circle to ask");
-        m.put("圈選失敗：", "Circle failed: ");
                 m.put("（Key 不對）", " (wrong key)");
         m.put("（額度用完或太頻繁；沒設 Key 的免 Key 模式有次數限制）", " (quota used up or too many requests; keyless mode without a key has limits)");
         m.put("Tavily 沒有找到結果", "Tavily found no results");
@@ -953,7 +949,6 @@ final class LEn {
         m.put("已送出 %s 的計時（若時鐘畫面跳出來，要按開始）", "Timer request sent for %s (if the clock screen appears, press start).");
         m.put("錯誤：計時要在 1 秒到 24 小時之間", "Error: the timer must be between 1 second and 24 hours.");
         m.put("找不到可以計時的時鐘 App", "No clock app found that can set a timer.");
-        m.put("已圈選，輸入問題後送出（可以空白）", "Circled. Type a question and send (can be empty).");
         m.put("開始語音辨識", "Start voice recognition");
         m.put("（查詢次數用完，稍後再試）", " (query limit reached; try again later)");
         m.put("可信任的網站", "Trusted sites");
@@ -977,7 +972,6 @@ final class LEn {
         m.put("最新的在最下面。長按可以選取文字；分享或存檔前請自己看過。", "The newest entry is at the bottom. Long-press to select text; please review it before sharing or saving.");
         m.put("清除", "Clear");
         m.put("清除錯誤紀錄？", "Clear the error log?");
-        m.put("AI 沒有回答", "The AI gave no answer");
         m.put("匯出紀錄（分享成文字檔）", "Export log (share as a text file)");
         m.put("匯出紀錄", "Export log");
         m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to PhoneAI folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");

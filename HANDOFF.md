@@ -126,10 +126,10 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 | 記憶搜尋、匯出、匯入（`MemoryActivity`）：匯出到 `/sdcard/Download/phoneai_memory_backup.json`（用 root 寫）；匯入只加入沒有的項目 | 🟡 雲端編譯過，手機未測 | 匯入需要 root 讀下載資料夾，與解除安裝清除的是同一個檔 |
 | 回答卡片 Markdown 排版（`Md`）：粗體、行內程式碼、程式碼區塊、標題、清單 | ✅ 使用者實測正常（2026-10-23） | 助理提示詞要求不用 Markdown，所以多數回答看不到效果；朗讀仍讀原文 |
 | 桌面小工具「PhoneAI 語音」（`VoiceWidget`）：點一下開助理面板並開始聽 | ✅ 使用者實測正常（2026-10-23） | 小工具文字跟系統語言，不跟 App 內的語言選項 |
-| 透鏡邊緣彩虹環（仿酷安的多色邊緣，`GlassBar` 的 `EDGE_LINE`＝0.55）：顏色依邊界方向變化（紅到紫），不依賴背景，黑底上也看得見 | ✅ 使用者實測正常（2026-10-23） | 之前的主題色單色線已關掉（使用者不要）；彩虹環與色散都只在按住時出現（跟 progress 成正比）；要調強弱改 `EDGE_LINE` |
+| 透鏡邊緣：彩虹環已拿掉（`EDGE_LINE`＝0，2026-11-05 使用者覺得醜、像塑膠），改成貼邊的細高光（`HIGHLIGHT`＝0.32，整圈都有、朝向左上與右下較亮，著色器 `lit` 與 `outer`）＋邊緣微暗＋按住時的外圈陰影（`drawOuterShadow`）| 高光與去彩虹環 ✅（使用者：「看起来好多了」）；外圈陰影 🟡 | 彩虹環與色散原本只在按住時出現；色散（7 點光譜）保留。高光公式的教訓：只用「朝向光源的冪次」會在膠囊形上只剩角落一個白點，要有整圈的低保底亮度 |
 | 透鏡色散 7 點光譜取樣（仿酷安的彩虹邊）：`GlassBar` 的 `dispersion` 區塊 | ✅ 使用者實測正常（2026-10-23） | 著色器是執行時才編譯，若透鏡變成純半透明，表示著色器編譯失敗（看「診斷」頁的底欄玻璃效果）；要在「設定」把「色散」滑桿調高才看得到彩虹邊 |
 | 透鏡內部去底色、去變暗；圖示不加色散（仿酷安，`GlassBar`）| ✅ 使用者實測正常（2026-10-23） | 透鏡只留折射與邊緣色散；邊緣暗化（12%）仍在，酷安沒有這一項，要不要留待使用者決定 |
-| 透鏡靜止時微微提亮（磨砂感，`GlassBar` 的 `BODY_LIFT`＝0.08，按住時消失） | ✅ 使用者實測正常（2026-10-23） | 這是白色混合的整塊提亮，不是邊緣線；與之前「透鏡內部去底色」的要求有取捨，覺得太亮就把 `BODY_LIFT` 調低或設 0 |
+| 透鏡靜止時：比底欄微亮（`BODY_LIFT`＝0.08，按住時消失）＋跟底欄同樣的暗度與灰色提亮（`shade` 乘上 `1 - progress`，`paintBackdrop` 的 `lensDark`）| 🟡 | 2026-11-05 來回改了三次：先拿掉提亮（去塑膠感）→ 透鏡跟底欄一樣亮但「不清楚」→ 加回 0.08 提亮；最後這版使用者還沒回報。按住時透鏡底下只顯示頁面（清澈），不帶底欄暗色與光帶 |
 | 拖動形變門檻（`MainActivity` 的 `ACC_DEAD`＝0.004 dp/ms²、`VEL_DEAD`＝0.02 dp/ms）：輕微抖動不觸發形變 | 🟡 雲端編譯過，手機未測 | 門檻數字是估的，抖得還是太敏感就調高 `ACC_DEAD`，形變太遲鈍就調低 |
 | 拖動形變只在透鏡邊緣（仿酷安／KSU）：形變量改成著色器的 `stretch` 位移，不再縮放整個 View；彈簧改臨界阻尼（`c`＝26） | 🟡 雲端編譯過，手機未測 | 形變係數 0.25／-0.2 是估的，形變太大或太小就改 `MainActivity` 裡的 `setStretch`；底欄的形變也拿掉了，只留按住放大 |
 | 圖示抖動修正：圖示不再歪斜（`configure(iconShader, 0f)`），歪斜有速度門檻 `SKEW_DEAD`＝0.03 dp/ms，平滑改為 0.8／0.2 | 🟡 雲端編譯過，手機未測 | 推測原因是歪斜量跟速度噪音一起讓圖示剪切抖動；還沒在手機上確認，若仍抖要看拖動時是否還有別的來源 |
@@ -327,14 +327,24 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 | 更新下載進度顯示在 Now Bar（補 contentIntent 與顏色）| 🟡 | 使用者回報曾不顯示；後來「修復權限」重設 Now Bar 設定後正常，但 App 在前景時系統不顯示（系統行為）；這個通知本身的修法未驗證 |
 | 錯誤紀錄（`CrashLog`：未攔到的例外與主動記下的錯誤寫進 `app_errors.log`；進階與診斷頁最下面可看、分享、存檔、清除；匯出紀錄附上它與本 App 的 logcat）| ✅ 使用者實測（2026-11-02） | 還沒實測：故意讓 App 出錯後看有沒有記下、分享是否正常 |
 | 網頁搜尋（`TavilySearch`：功能頁貼 Tavily Key → `tavily_key`；說「幫我查／搜尋一下」才搜，結果標成資料附在問題後面、該輪不給 AI 工具；沒 Tavily 時用 Claude 內建搜尋；聊天與圈選提問都支援）| ✅ 使用者實測（2026-11-02） | Claude 內建搜尋使用者實測 ✅（「幫我查一下今天台北的天氣」）；搜尋細節：關鍵字由便宜模型想（`TavilySearch.plan`，參考上一輪對話，輸出 `{query, topic, domains}`；失敗退回 `cleanQuery`）、可信任網站是使用者自訂清單（功能頁，`parseTrusted`，預設放 `cwa.gov.tw`），模型只能從清單挑網域、先限定網域搜、沒結果放寬、新聞用 `topic=news&time_range=week`（兩者都在雲端用 curl 實測有結果）、回答下方列出網頁（`TavilySearch.sourcesBlock`，ReplyCard 讓網址可點）。Tavily 免 Key 模式（標頭 `X-Tavily-Access-Mode: keyless`，不用 Key 就能搜，有次數限制）已在雲端用 curl 實測可回 `results[].title/url/content`（2026-10-31，其中一筆內容是別的網站的錯誤訊息，所以搜尋結果一律當不可信資料）；App 內還沒實測。API 格式（POST `https://api.tavily.com/search`、`Authorization: Bearer`、`results[].title/url/content`）取自官方文件搜尋結果，未用真 Key 驗證 |
-| 動畫效能（`GlassBar.recordBackdrop`：背景改用 RenderNode 錄製、跳過底欄所在的子 View，取代每幀 CPU 畫進 Bitmap；`Ui.enterSpring` 小幅縮放＋硬體層；`Anim.expandSmooth` 用 TransitionManager；任何點擊都 kick 玻璃）| 🟡 | 雲端編譯通過；玻璃效果、透鏡、捲動與首頁極光都要在手機上確認畫面正確與順暢度 |
+| 動畫效能：底欄背景改用 GPU 錄製（`GlassBar.recordBackdrop`／`paintBackdrop`，設定 → 底欄玻璃「GPU 錄製背景」，預設開；關掉退回 Bitmap 抓取）；`Ui.enterSpring` 從點的卡片展開、`Anim.expandSmooth` 用時間＋曲線的高度動畫 | GPU 背景 ✅（使用者 2026-11-05：捲動、折射、色散都正常）；展開動畫 🟡 | GPU 版踩過的坑見第 7 節決策 24。子頁面「從點的卡片開／回到那裡」與分頁標題動畫使用者說「都正常了」；但「展開動畫還是怪怪的，感覺不連續」還沒確認是指設定群組展開還是子頁面開啟，未解決 |
 | 整理通知（`NotifListener`：通知存取，有 root 用 `cmd notification allow_listener` 自動開；聊天 `read_notifications`；略過本 App、常駐通知、群組摘要；受保護 App 不讀內容；驗證碼遮蔽；讀過通知後該輪只給唯讀工具）| 🟡 | 雲端編譯與單元測試通過，還沒在手機實測 |
 | 讀系統通知紀錄（`NotifHistory`：root 讀 `/data/system_ce/0/notification_history/history/*`，protobuf：外層 3＝通知；內層 1 套件、9 時間 ms、10 標題、11 內容；使用者手機實測確認結構）| 🟡 | 解析器有單元測試；App 內還沒實測 |
-| 定時通知整理（`NotifDigest` + `DigestActivity`：`ScheduleJob` 每 15 分鐘檢查，過了設定時間且今天沒做就整理；便宜模型無工具，只輸出 JSON 摘要＋最多 6 個有日期的項目；每項按鈕加入行事曆或三星提醒）| 🟡 | 雲端編譯通過，還沒在手機實測 |
+| 通知整理（`NotifDigest` + `DigestActivity`：「立即整理」馬上開頁、中間 `ExpressiveLoader` 載入動畫，整理完換成結果；`ScheduleJob` 每 15 分鐘檢查，過了設定時間且今天沒做就整理；便宜模型輸出 JSON 摘要＋最多 6 個有日期的項目；502／503／504 自動重試兩次；回答被截斷或 JSON 壞掉時用 `salvage` 救回摘要）| 摘要與整理 ✅（使用者 2026-11-05：Gemini 與 Claude 都正常）；載入動畫、自動重試、加入行事曆／提醒、定時整理 🟡 | Claude 說「看不懂」的原因推測是 `max_tokens` 1200 被截斷（沒看到原始回答），已改 3000 並加 `salvage`；失敗只記長度與結束原因（不記通知內容）。503 是 Google 那邊太忙，不是額度（額度是 429）。載入動畫：圓角五邊形、橫／直橢圓依序變形，蓄力→突然旋轉→回彈（使用者不要尖角、三角、方形、正圓），已推出但使用者還沒回報看起來如何 |
 | 計時（聊天 `set_timer` → `AlarmTool.setTimer`，系統標準 SET_TIMER）| ✅ Termux 實測倒數與名稱正確（2026-11-02）；App 內待測 |
-| 面板直接圈選（`CircleCanvas`）| ⏸ 暫時拿掉（2026-11-02，使用者覺得沒用）；程式碼保留，面板的 ◎ 與開啟時截圖都已移除 |
-| 圈選提問（助理面板 ◎ → `CircleActivity`：收面板、截圖、手指圈選、圈起來的區域＋縮小整張圖交給聊天模型 `ChatEngine.visionChat`，可追問）| 🟡 | 第一版一按就當機（使用者用 `logcat -b crash` 找到：`getInsetsController()` 在 `setContentView` 之前是 null），已修；修好後還沒在手機實測：截圖時面板有沒有收乾淨、圈選範圍與裁切是否對準、便宜模型是否看得懂圖（不行會自動換看圖模型）、受保護畫面（銀行）會是黑的 |
+| 圈選提問與面板直接圈選（`CircleActivity`、`CircleCanvas`、`ChatEngine.visionChat`）| ❌ 放棄並移除（2026-11-05 清死碼）| 使用者覺得沒用，2026-11-02 先拿掉入口，這次連程式碼與翻譯一起刪；需要時從 git 歷史找回 |
 | 修正 CHANGELOG 條目被插進檔案開頭說明、導致更新說明空白（1.0.1371～1.0.1380 左右）| ✅ | 之後的版本會列出更新內容 |
+
+**2026-11-05 這批（玻璃、通知整理、Claude 選模型）：**
+
+| 項目 | 狀態 | 備註 |
+|---|---|---|
+| 圖示折射與色散預設開（設定 → 底欄玻璃，`GlassPrefs.iconRefr`）；圖示層用 `keepAlpha` 保留透明、`shade`／`surface` 設 0 | ✅ 使用者實測（2026-11-05）| 以前預設關是因為會出現綠色、洋紅色斑塊與黑底：著色器最後一行永遠回傳不透明，圖示層透明處被畫成黑色 |
+| 透鏡正中央一條白細線（`n` 在膠囊中軸是零向量，`normalize` 得 NaN）→ 先檢查長度再正規化 | ✅ 使用者確認不會再出現 | 只在我們自己加高光之後才出現 |
+| 底欄中間橫向光帶停用（`BAND_ON`＝false）、透鏡上下漸層（`SHEEN`）關閉（0） | ✅ 光帶不再出現；漸層 🟡 | 光帶有時從透鏡裡透出來像一條怪線；`SHEEN` 做了又關，因為自己的底色加亮面就是塑膠感 |
+| Claude 也能自己選模型（`AiServiceUi.offerClaudeModels`、`listClaudeModels`，`ChatEngine.post` 依欄位覆蓋 `model`）| 🟡 | 以前 Claude 的兩個模型寫死（便宜 Haiku、看圖 Sonnet），設定流程選 Claude 就沒有選模型這步；沒選＝維持內建預設。費用顯示依模型名稱估算，換新模型可能不準 |
+| 清死碼：圈選相關（見上）、`Anim.expand`／`cascade`／`run`（舊彈簧版）、`GlassPrefs.lensBg` | 🟡 編譯與單元測試通過 | 沒有功能變動 |
+| 研究但不做：`gemini-2.5-computer-use-preview-10-2025` | ⏸ | 要用 Gemini 原生介面（不是 OpenAI 相容）、只送截圖、座標 0～1000、官方範例是瀏覽器；我們的無障礙元件清單更省更準。若遇到「元件清單是空、看圖模型點不準」的 App 再做成備援 |
 
 ## 7. 重要決策與理由
 
@@ -378,6 +388,8 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 21. **敏感一律問、不拒絕**：提示詞改為遇到付款/轉帳/刪除/安裝/傳訊息/登入/密碼等一律回 ask，不准 fail；ask 加 manual 欄位（true=請使用者自己輸入密碼/驗證碼，完成按是）。程式端：任務含 TASK_BLOCK 或 下載/安裝 等字，開始前確認；tap/type 再確認；用 open 開 Google Play 前一定確認。移除 INSTALL_TASK 閘門。注意：模型自己的安全判斷無法由程式覆蓋，若它仍回 fail 會當卡住處理並升級。**未實測**。
 22. **開始前等待預設 0**：AGENT_WAIT 預設 0 直接截圖；在 Termux 打指令時第一張圖是 Termux，提示詞要求它用 open/home 離開。assistant.py 不再提示「5 秒內切換」（path.py 本地模型路徑仍是 5 秒）。**未實測**。
 23. **執行中通知**：agent2 用 termux-notification 發常駐通知（id 7195，每步更新「第N步·點擊X」，輸入文字只顯示字數；有「停止」按鈕 -> pkill agent2.py，SIGTERM 已轉為正常結束以清理）。AGENT_NOTIFY=0 可關。結束發一則普通通知（id 7196）。**未實測**。三星 Now Bar 只吃 Live Updates 規格的通知，termux-notification 未必進得去（**未驗證**）；真要進 Now Bar 或畫點擊漣漪，需要自己的小 App（Android 16 promoted ongoing notification + SYSTEM_ALERT_WINDOW 懸浮層），尚未開發。AGENT_TOUCHES=1 會開系統「顯示點觸」，注入的 input tap 是否會畫圓點**未驗證**。
+24. **GPU 錄製底欄背景的坑（2026-11-05，使用者實測才查出）**：①`RenderNode` 裡直接 `drawRenderNode` 另一個 `RenderNode`，放在帶 `RenderEffect` 的節點裡，這支手機上不會被畫出來（透鏡變一塊黑）→ 底欄用 `capNode`＋`setUseCompositingLayer(true)`，透鏡底下改成直接重畫（`paintBackdrop`），不要嵌套；②手動畫子 View 時要自己 `translate(-scrollX, -scrollY)`，漏掉會讓捲動容器卡在最上面那一幀；③診斷的方法：`HardwareRenderer`＋`ImageReader` 把節點實際畫出來數顏色、再在背景裡畫一行會變的字，比猜有效（診斷程式已移除）。原則：這類問題先要使用者看實際畫面或貼數字，不要連續猜。
+
 
 ## 8. 實測數據與歷史問題
 
@@ -389,6 +401,10 @@ Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](d
 - 部分 App（Instagram 的輸入框等）無障礙輸入可能回報成功但沒輸入進去；已加驗證與退路，仍可能有例外。
 - Now Bar（Live Update）靠 `enable_notification_nowbar_test` 這個系統設定；重開機或系統更新後可能被清掉，到「功能 → 維護 → 修復權限」重設（需要 root 或 Shizuku）。App 在前景時系統不顯示 Now Bar 膠囊（系統行為）。
 - 三星提醒／時鐘的 AppFunctions 只在作者的機型實測；欄位名稱被混淆，詳見 `docs/APP_FUNCTIONS.md`；`findTasks` 的搜尋條件欄位還沒查。
+- 「展開動畫還是怪怪的、感覺不連續」（2026-11-05 使用者）：還不確定是設定群組展開（`Anim.expandSmooth`）還是子頁面開啟（`Ui.enterSpring`）；用戶沒回答是哪一個。
+- Gemini 的 `gemini-flash-lite-latest` 尖峰時段常回 503（伺服器忙、不是額度）；已在通知整理自動重試兩次，其他路徑（聊天、操作畫面）沒有。可建議使用者把便宜模型換成 `gemini-flash-latest`。
+- 玻璃的外圈陰影（`drawOuterShadow`）沒有被使用者確認看得到；透鏡靜止時的亮度（見狀態表）還在調。
+
 
 ## 10. 安全規則（不要放寬）
 
@@ -402,11 +418,13 @@ Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](d
 
 ## 11. 建議下一步（按優先順序）
 
-1. **等使用者實測並回報這批 🟡**：AI 自己學經驗（走錯路後的經驗是否合理）、乾淨巨集、程式層的傳訊息確認、「請你接手」懸浮卡片（解鎖畫面上是否看得到）、直接新增三星提醒、聊天模式的 `run_shell`、Gemini 工具呼叫、匯出紀錄的「存到 PhoneAI 資料夾」。
-2. 時鐘的鬧鐘／計時器也走 AppFunctions（`docs/APP_FUNCTIONS.md` 已列出函式，格式要照三星提醒的方法實測）；Google Tasks 是否有 AppFunctions 還沒查。
-3. 提醒的查詢、修改、刪除（`findTasks`／`updateTask`／`deleteTasks`）：先查搜尋條件的欄位名稱。
-4. 更多「難、不一定做得到」的 A/B 測試任務，持續比較便宜模型；Gemini 免費額度先用完再說。
-5. 考慮把狀態表（第 6 節）裡 Termux 時期的列移到 `docs/archive/`，讓這份文件再小一點。
+1. **等使用者實測並回報這批 🟡**：通知整理的載入動畫與自動重試、Claude 選模型、透鏡靜止時的亮度、外圈陰影，以及更早那批（AI 自己學經驗、乾淨巨集、程式層傳訊息確認、「請你接手」懸浮卡片、直接新增三星提醒、聊天模式 `run_shell`、Gemini 工具呼叫、定時通知整理與一鍵加入）。✅ 只能是使用者實測過的。
+2. **安全缺口**：用截圖操作時，若畫面是密碼、銀行頁面，要先跳確認框（目前只靠任務文字與受保護 App 清單）。
+3. **提醒的查詢、修改、刪除**（`findTasks`／`updateTask`／`deleteTasks`）與時鐘鬧鐘／計時器走 AppFunctions：需要使用者在 Termux 跑掃描指令把參數名稱貼回來（`docs/APP_FUNCTIONS.md`）。
+4. **通知整理的小改進**：某個 App 不整理的黑名單、只整理重要的人。
+5. **玻璃省電**：背景頁面沒變也沒觸碰時降低更新頻率（現在底欄在 GPU 模式每個頁面更新幀都重錄）。
+6. 更多「難、不一定做得到」的 A/B 測試任務，持續比較便宜模型；元件清單是空的 App 可以考慮 Gemini Computer Use 當備援（見狀態表 2026-11-05 那批的研究結論）。
+7. 考慮把狀態表（第 6 節）裡 Termux 時期的列移到 `docs/archive/`，讓這份文件再小一點。
 
 ## 11b. 開發環境備註（Claude Code 雲端）
 
