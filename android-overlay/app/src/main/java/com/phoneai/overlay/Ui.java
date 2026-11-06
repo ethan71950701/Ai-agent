@@ -550,6 +550,8 @@ final class Ui {
     private static android.graphics.Bitmap tapSnap;
     private static final java.util.WeakHashMap<android.app.Activity, android.graphics.Bitmap> EXIT_SNAP = new java.util.WeakHashMap<>();
     private static final java.util.WeakHashMap<android.app.Activity, float[]> EXIT_RECT = new java.util.WeakHashMap<>();
+    private static final java.util.WeakHashMap<android.app.Activity, android.animation.ValueAnimator> OPENING = new java.util.WeakHashMap<>();
+    private static final java.util.WeakHashMap<android.app.Activity, Boolean> CLOSING = new java.util.WeakHashMap<>();
 
     static void rememberTap(View v) {
         tapSnap = null;
@@ -655,7 +657,17 @@ final class Ui {
     /** 關閉：縮回打開時那張卡片再結束；沒有記錄（不是從卡片打開的）就淡出結束。 */
     static void closeToTap(final android.app.Activity a) {
         final View root = a.getWindow().getDecorView();
+        if (CLOSING.containsKey(a)) return;   // 已經在返回了，重複按返回不要再開一次
+        CLOSING.put(a, Boolean.TRUE);
         final float[] r = EXIT_RECT.get(a);
+        float startP = 1f;
+        android.animation.ValueAnimator opening = OPENING.remove(a);
+        if (opening != null) {   // 展開還沒跑完：從目前進度接著縮回去，不要跳到完全展開再縮
+            if (opening.isStarted()) startP = (float) opening.getAnimatedValue(); else startP = 0f;
+            opening.removeAllListeners();
+            opening.cancel();
+        }
+        final float from = startP;
         if (r == null || root.getWidth() == 0) {
             root.animate().alpha(0f).setDuration(160).withEndAction(() -> { a.finish(); a.overridePendingTransition(0, 0); }).start();
             return;
@@ -671,8 +683,8 @@ final class Ui {
         } else {
             installVeil(a, root, 0f, EXIT_SNAP.get(a));
         }   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
-        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(root.getScaleX() >= 0.999f ? 1f : 0f, 0f);
-        va.setDuration(340);
+        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(from, 0f);
+        va.setDuration(Math.round(340 * (0.35f + 0.65f * from)));
         va.setInterpolator(SMOOTH_IO);
         va.addUpdateListener(an -> applyExpand(root, r, (float) an.getAnimatedValue(), corner));
         va.addListener(new android.animation.AnimatorListenerAdapter() {
@@ -707,6 +719,7 @@ final class Ui {
                     android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
                     va.setDuration(480);
                     va.setInterpolator(SMOOTH_IO);
+                    OPENING.put(a, va);
                     final long[] st = {0, 0, 0, 0, 0};   // 上一幀時間、最長間隔、超過 24 毫秒的次數、總幀數、最長間隔發生在進度的幾 %
                     va.addUpdateListener(an -> {
                         applyExpand(root, rect, (float) an.getAnimatedValue(), corner);
@@ -720,9 +733,11 @@ final class Ui {
                             ENTER_LOG.addFirst(a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒（在進度 " + st[4] + "%），超過 24 毫秒 " + st[2] + " 次");
                             while (ENTER_LOG.size() > 5) ENTER_LOG.removeLast();   // 留最近 5 次，診斷頁一起看
                             enterInfo = android.text.TextUtils.join("\n　　", ENTER_LOG);
+                            OPENING.remove(a);
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
-                            root.postDelayed(() -> {   // 結束那一幀不要同時做這麼多事：圓角裁切與繪圖層晚一點才拆
+                            root.postDelayed(() -> {
+                                if (CLOSING.containsKey(a)) return;   // 這時已經在返回，別拆掉返回要用的裁切   // 結束那一幀不要同時做這麼多事：圓角裁切與繪圖層晚一點才拆
                                 root.setClipToOutline(false);
                                 root.setLayerType(View.LAYER_TYPE_NONE, null);
                             }, 250);
@@ -730,7 +745,7 @@ final class Ui {
                     });
                     // 先讓第一次繪製（建立繪圖層、畫出第一幀）完成再開始跑時間：頁面很重時前一兩幀會卡，動畫時間照跑的話，卡完會直接跳到後面
                     Anim.boostFrames(root, 900, "子頁展開");
-                    root.post(() -> root.postOnAnimation(va::start));
+                    root.post(() -> root.postOnAnimation(() -> { if (!CLOSING.containsKey(a)) va.start(); }));
                     return true;
                 }
             });
