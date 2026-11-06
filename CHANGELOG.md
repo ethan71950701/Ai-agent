@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1547
+
 - 玻璃高光：上層容器的縮放超出合理範圍時不再拉歪邊緣法線（限制在 0.8～1.5）｜Glass highlight: the accumulated parent scale is now limited to 0.8–1.5 so a stale scale cannot skew the edge normals
 
 ## 1.0.1546
