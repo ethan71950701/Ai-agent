@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 修正從任務過程列表點進任務詳細頁（以及互傳檔案的「瀏覽」）時整頁突然冒出再彈一下：現在會從點的卡片展開；沒有位置時的備用動畫改成淡入放大｜Fix pages popping in fully open with a bounce when opened from a task card (and from the file-transfer "browse" button): they now expand from the tapped card, and the fallback animation is a fade-and-grow
 
+## 1.0.1475
+
 - 助理面板改成跟底欄一樣的液態玻璃膠囊（高 64dp），麥克風換成 App 統一的線條圖示｜The assistant panel is now the same liquid-glass pill as the bottom bar (64dp tall), and the mic uses the app's shared line icon
 
 ## 1.0.1474
