@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
         return super.dispatchTouchEvent(e);
     }
 
-    private void kickGlass() { if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
+    private void kickGlass() { FrostView fv = frostView(); if (fv != null) fv.kick(1500); if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
@@ -220,7 +220,8 @@ public class MainActivity extends Activity {
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
         LinearLayout[] c = new LinearLayout[1];
-        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c);
+        frostTop = cfg().getBoolean("frost_top", false);   // 頂欄毛玻璃（實驗）
+        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c, frostTop);
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
@@ -553,9 +554,24 @@ public class MainActivity extends Activity {
     private SpeechCapture homeCapture;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
+    private boolean frostTop;
+
+    private View findAppBar() {
+        android.view.ViewGroup g = (android.view.ViewGroup) root;
+        for (int i = 0; i < g.getChildCount(); i++) if (g.getChildAt(i) instanceof com.google.android.material.appbar.AppBarLayout) return g.getChildAt(i);
+        return null;
+    }
+
+    private FrostView frostView() {
+        Object t = root == null ? null : root.getTag(Ui.R_FROST);
+        return t instanceof FrostView ? (FrostView) t : null;
+    }
+
     private void setHomeScroll(boolean on) {
         if (root == null) return;
-        View bar = ((android.view.ViewGroup) root).getChildAt(0);
+        View bar = findAppBar();
+        FrostView fv = frostView();
+        if (fv != null) { fv.setVisibility(on ? View.VISIBLE : View.GONE); fv.kick(1200); }   // 首頁不捲動、沒有標題，不需要毛玻璃
         if (bar instanceof com.google.android.material.appbar.AppBarLayout)
             for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
                 View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
@@ -570,6 +586,7 @@ public class MainActivity extends Activity {
         if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
             androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
             sv.setNestedScrollingEnabled(on);
+            if (fv != null) sv.setPadding(0, Ui.dp(this, on ? 116 : 0), 0, 0);   // 毛玻璃模式：內容延伸到標題列後面，上面留出標題列的高度
             sv.setOverScrollMode(on ? View.OVER_SCROLL_IF_CONTENT_SCROLLS : View.OVER_SCROLL_NEVER);
         }
     }
@@ -1027,6 +1044,8 @@ public class MainActivity extends Activity {
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
             Ui.themePicker(this, g);
+            Ui.switchRow(this, g, 0, 1, "layers", L.t("頂欄毛玻璃（實驗）"), L.t("功能、設定頁的標題列改成模糊的玻璃，內容捲到它後面會透出來；有問題就關掉"), frostTop,
+                    (v, on) -> { cfg().edit().putBoolean("frost_top", on).apply(); recreate(); });
             buildLanguageGroup();
             buildReplyCardGroup();
 
@@ -1212,6 +1231,7 @@ public class MainActivity extends Activity {
             if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
             if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
+            { FrostView fv0 = frostView(); if (fv0 != null) fv0.reset(); }
         }
         kickGlass();
     }
@@ -1255,6 +1275,7 @@ public class MainActivity extends Activity {
             if (glass != null) glass.resetGpu();
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
             if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
+            { FrostView fv0 = frostView(); if (fv0 != null) fv0.reset(); }
         }
     }
 

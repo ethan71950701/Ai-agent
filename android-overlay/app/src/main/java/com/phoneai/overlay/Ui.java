@@ -123,13 +123,17 @@ final class Ui {
      * 整個畫面：大標題頂欄（往下捲會縮成小標題）＋可捲動內容。內容要加進 content[0]。
      * back=true 時左上角有返回鍵。
      */
-    static View screen(android.app.Activity a, String title, boolean back, LinearLayout[] content) {
+    static View screen(android.app.Activity a, String title, boolean back, LinearLayout[] content) { return screen(a, title, back, content, false); }
+
+    /** frost = true：標題列做成毛玻璃（實驗）：內容延伸到標題列後面，標題列透明，後面放一塊 FrostView（模糊底下的內容）。 */
+    static View screen(android.app.Activity a, String title, boolean back, LinearLayout[] content, boolean frost) {
         androidx.coordinatorlayout.widget.CoordinatorLayout root = new androidx.coordinatorlayout.widget.CoordinatorLayout(a);
         root.setBackgroundColor(attr(a, com.google.android.material.R.attr.colorSurface));
         root.setFitsSystemWindows(true);
 
         com.google.android.material.appbar.AppBarLayout bar = new com.google.android.material.appbar.AppBarLayout(a);
-        bar.setBackgroundColor(attr(a, com.google.android.material.R.attr.colorSurface));
+        bar.setBackgroundColor(frost ? android.graphics.Color.TRANSPARENT : attr(a, com.google.android.material.R.attr.colorSurface));
+        if (frost) bar.setElevation(0f);
         bar.setFitsSystemWindows(false);
         com.google.android.material.appbar.CollapsingToolbarLayout ctl = new com.google.android.material.appbar.CollapsingToolbarLayout(a);
         ctl.setTitle(title);
@@ -137,7 +141,8 @@ final class Ui {
         ctl.setExpandedTitleTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_DisplaySmall);
         ctl.setExpandedTitleColor(attr(a, com.google.android.material.R.attr.colorPrimary));   // 大標題用主題的強調色
         ctl.setCollapsedTitleTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
-        ctl.setContentScrimColor(attr(a, com.google.android.material.R.attr.colorSurface));
+        ctl.setContentScrimColor(frost ? android.graphics.Color.TRANSPARENT : attr(a, com.google.android.material.R.attr.colorSurface));
+        if (frost) ctl.setStatusBarScrimColor(android.graphics.Color.TRANSPARENT);
         ctl.setExpandedTitleMarginStart(dp(a, 24));
         ctl.setExpandedTitleMarginBottom(dp(a, 20));
         com.google.android.material.appbar.MaterialToolbar tb = new com.google.android.material.appbar.MaterialToolbar(a);
@@ -154,7 +159,8 @@ final class Ui {
         clp.setScrollFlags(com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                 | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED);
         bar.addView(ctl, clp);
-        root.addView(bar, new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2));
+        final androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams barLp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
+        if (!frost) root.addView(bar, barLp);   // 毛玻璃模式要最後才加（要蓋在內容與玻璃上面）
 
         LinearLayout box = new LinearLayout(a);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -165,9 +171,20 @@ final class Ui {
         sv.addView(box, new android.view.ViewGroup.LayoutParams(-1, -2));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams slp =
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -1);
-        slp.setBehavior(new com.google.android.material.appbar.AppBarLayout.ScrollingViewBehavior());
+        if (!frost) slp.setBehavior(new com.google.android.material.appbar.AppBarLayout.ScrollingViewBehavior());   // 毛玻璃模式：內容不被標題列往下推，而是延伸到它後面
         root.addView(sv, slp);
+        if (frost) {
+            sv.setClipToPadding(false);
+            FrostView fv = new FrostView(a);
+            fv.setSource(sv);
+            androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams fvp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, dp(a, 116 + 60));
+            fvp.setBehavior(new FrostBehavior());
+            root.addView(fv, fvp);
+            root.setTag(R_FROST, fv);
+            root.addView(bar, barLp);
+        }
         // 標題列下緣的漸層淡出：內容捲到標題列下面時慢慢淡掉，不要被標題列一刀切（一條黑邊）
+        if (!frost) {   // 毛玻璃模式不需要漸層淡出
         View fade = new View(a);
         int surf = attr(a, com.google.android.material.R.attr.colorSurface);
         fade.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
@@ -176,9 +193,27 @@ final class Ui {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, dp(a, 28));
         flp.setBehavior(new FollowBarBehavior());
         root.addView(fade, flp);
+        }
         content[0] = box;
         root.setTag(new Object[]{ctl, sv});   // 換分頁時改大標題、底欄隨捲動收起
         return root;
+    }
+
+    static final int R_FROST = 0x7f0a0e5a;   // View.setTag 用的鍵（放 FrostView）
+
+    /** 毛玻璃的底邊貼在 AppBarLayout 的下緣（標題列收合時跟著上移）。 */
+    static final class FrostBehavior extends androidx.coordinatorlayout.widget.CoordinatorLayout.Behavior<View> {
+        @Override
+        public boolean layoutDependsOn(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
+            return dependency instanceof com.google.android.material.appbar.AppBarLayout;
+        }
+
+        @Override
+        public boolean onDependentViewChanged(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
+            child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight());
+            child.invalidate();
+            return true;
+        }
     }
 
     /** 讓一個 View 貼在 AppBarLayout 的下緣（標題列收合、展開時跟著動）。 */
