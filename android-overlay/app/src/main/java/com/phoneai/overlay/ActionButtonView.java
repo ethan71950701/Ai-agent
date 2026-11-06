@@ -75,16 +75,16 @@ public class ActionButtonView extends View {
         }
     }
 
+    private final Path[] micPaths = IconView.pathsOf("mic");   // 跟 App 其他地方同一組線條圖示
+
     private void drawMic(Canvas c, float cx, float cy, float box) {
-        float s = box * 0.46f;
-        line.setStrokeWidth(Math.max(1.8f * d, s * 0.09f));
-        fill.setColor(0xFFFFFFFF);
-        oval.set(cx - 0.17f * s, cy - 0.52f * s, cx + 0.17f * s, cy + 0.12f * s);
-        c.drawRoundRect(oval, 0.17f * s, 0.17f * s, fill);                       // 麥克風本體
-        oval.set(cx - 0.32f * s, cy - 0.30f * s, cx + 0.32f * s, cy + 0.34f * s);
-        c.drawArc(oval, 0f, 180f, false, line);                                  // 下面的 U 形
-        c.drawLine(cx, cy + 0.34f * s, cx, cy + 0.56f * s, line);                // 立柱
-        c.drawLine(cx - 0.16f * s, cy + 0.56f * s, cx + 0.16f * s, cy + 0.56f * s, line);   // 底座
+        float s = box * 0.56f / 24f;
+        c.save();
+        c.translate(cx - 12f * s, cy - 12f * s);
+        c.scale(s, s);
+        line.setStrokeWidth(1.9f);   // 座標已經縮放，這是圖示座標裡的線寬
+        for (Path p : micPaths) c.drawPath(p, line);
+        c.restore();
     }
 
     private void drawPlane(Canvas c, float box) {

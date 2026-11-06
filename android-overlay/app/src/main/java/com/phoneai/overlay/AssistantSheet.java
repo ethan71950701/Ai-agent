@@ -63,7 +63,7 @@ public class AssistantSheet {
     private final WaveView wave;
     private final EditText input;
     private final ActionButtonView send;
-    private final LinearLayout row;
+    private final GlassBar row;
     /** 目前開著的面板（OverlayService 收到 reply／sheet_close 指令時用）。只在主執行緒讀寫。 */
     static AssistantSheet current;
     /** AI 要問使用者問題時（agent2 的 ask_user）：問題顯示在面板上方；左邊的背景模式鈕藏起來；送出後答案交還給 agent2，不是當成新任務。 */
@@ -159,20 +159,19 @@ public class AssistantSheet {
         wave.setVisibility(View.GONE);
         wave.setOnClickListener(v -> typeNow());   // 點聲波 = 改成打字
 
-        // 單一個深色膠囊面板（仿 Gemini，兩端是半圓、沒有頂端橫條）：一列＝左邊背景模式鈕、中間輸入框（聽或思考時換成聲波）、右邊麥克風／送出
-        row = new LinearLayout(a);
-        row.setOrientation(LinearLayout.VERTICAL);
-        GradientDrawable pb = new GradientDrawable();
+        // 單一個玻璃膠囊面板（跟下面的底欄同一種液態玻璃，背景是極光；兩端半圓）：一列＝左邊背景模式鈕、中間輸入框（聽或思考時換成聲波）、右邊麥克風／送出
         final int accent = bright(App.accentColor(a, 0xFF6EA8FF));
-        pb.setColor(blend(0xFF101015, accent, 0.14f) & 0xFFFFFF | 0xF2000000);   // 深色底 + 一點主題色（跟著莫奈取色）
-        pb.setStroke((int) Math.max(1, d), (accent & 0xFFFFFF) | 0x33000000);
-        pb.setCornerRadius(200 * d);   // 大於一半高度＝兩端是完整的半圓
-        row.setBackground(pb);
-        row.setPadding((int) (6 * d), (int) (6 * d), (int) (6 * d), (int) (6 * d));   // 高度 = 6 + 44 + 6 = 56dp（Material 3 搜尋列的高度）；圓角 28 − 內距 6 = 按鈕半徑 22（官方的 optical roundness）
+        GlassBar glassRow = new GlassBar(a, 0xFF23262A, 0x00000000, 0x44FFFFFF, 32 * d, false);   // 圓角 32 = 一半高度（64dp）
+        glassRow.setSource(root);   // 玻璃折射的是面板後面的畫面：暗幕與極光（別的 App 的畫面抓不到）
+        glassRow.setGlowColor(0xFFFFFFFF);
+        glassRow.setClipChildren(false);
+        glassRow.setLive(true);     // 極光一直在動，玻璃要每幀更新
+        row = glassRow;
         final LinearLayout bar = new LinearLayout(a);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(bar, new LinearLayout.LayoutParams(-1, -2));
+        bar.setPadding((int) (8 * d), (int) (8 * d), (int) (8 * d), (int) (8 * d));   // 高度 = 8 + 48 + 8 = 64dp；圓角 32 − 內距 8 = 按鈕半徑 24（官方的 optical roundness）
+        row.addView(bar, new FrameLayout.LayoutParams(-1, -2));
 
         input = new EditText(a);
         input.setHintTextColor(0xA0FFFFFF);
@@ -220,7 +219,7 @@ public class AssistantSheet {
         FrameLayout center = new FrameLayout(a);
         center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
         center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
-        bar.addView(center, new LinearLayout.LayoutParams(0, (int) (44 * d), 1f));
+        bar.addView(center, new LinearLayout.LayoutParams(0, (int) (48 * d), 1f));
 
         send = new ActionButtonView(a);
         send.setAccent(accent);
@@ -229,7 +228,7 @@ public class AssistantSheet {
             else if (listening) stopListening();
             else startVoice();
         });
-        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (48 * d), (int) (48 * d));
         slp.leftMargin = (int) (2 * d);
         bar.addView(send, slp);
         content.addView(row, new LinearLayout.LayoutParams(-1, -2));

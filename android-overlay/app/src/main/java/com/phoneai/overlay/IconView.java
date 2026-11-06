@@ -54,6 +54,15 @@ final class IconView extends View {
         d("chevron_down", "M6,9 L12,15 L18,9");
     }
 
+    /** 圖示的路徑（24×24 的座標）：給別的自訂 View 畫同一組圖示用（例如助理面板的麥克風）。 */
+    static Path[] pathsOf(String name) {
+        String[] src = P.get(name);
+        if (src == null) src = P.get("sparkle");
+        Path[] out = new Path[src.length];
+        for (int i = 0; i < src.length; i++) out[i] = PathParser.createPathFromPathData(src[i]);
+        return out;
+    }
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path[] paths;
 
