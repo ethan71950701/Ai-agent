@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 路由不再用關鍵字：開 Wi-Fi、音量、截圖這些指令也由便宜模型判斷（多一次很快的判斷，沒網路時固定指令暫時不能用）｜Routing no longer uses keywords: even commands like Wi-Fi, volume and screenshot are decided by the cheap model (one quick extra call; fixed commands do not work offline for now)
 - 「去某個 App／相簿看畫面再記起來」這類指令現在由便宜模型判成自動操作（不再因為有「記」字被當成聊天），自動操作新增「存成筆記」動作，看完畫面可以直接存進你的筆記｜Commands like "go look at something in an app/album and remember it" are now routed to screen automation by the cheap model (not chat just because of the word remember), and automation gained a "save as note" action so it can store what it read on screen
 
 ## 1.0.1527

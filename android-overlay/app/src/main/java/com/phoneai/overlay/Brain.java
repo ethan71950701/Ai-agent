@@ -50,8 +50,6 @@ final class Brain {
         if (over != null) return over;
         Router.Decision d = Router.decide(act, t);
         String kind = d == null ? Router.CHAT : d.kind;
-        // Haiku 偶爾把「打開設定的 Wi-Fi 頁面」當成聊天（或路由失敗）：話裡有明顯的操作詞就改走自動操作
-        if (Router.CHAT.equals(kind) && Assist.looksLikeAction(t)) kind = Router.AGENT;
         switch (kind) {
             case Router.CMD:
                 return runFixed(act, Assist.fixed(d.cmdIndex));
