@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1473
+
 - 助理面板聽與待機時更窄，打字或有字時才展開；聲波改成五條漸層色、各自起伏的波，空白更少｜The assistant panel is narrower while listening or idle and widens when you type; the sound wave is now five gradient-coloured waves that each breathe, so there is less empty space
 
 ## 1.0.1472
