@@ -12,15 +12,15 @@ import java.io.ByteArrayOutputStream;
 final class CircleShot {
     private CircleShot() { }
 
-    /** 面板打開時在背景截一張畫面，好了在主執行緒回呼。 */
+    /** 面板打開時在背景截一張畫面，好了在主執行緒回呼（截不到回 null）。 */
     static void prefetch(final Context app, final java.util.function.Consumer<Bitmap> onReady) {
         new Thread(() -> {
             try {
-                Bitmap b = AgentLoop.screenshotBitmap();
-                if (b == null) return;
-                if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));
+                final Bitmap b = AgentLoop.screenshotBitmap();
+                if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));   // 截不到時 b 是 null
             } catch (Throwable t) {
                 CrashLog.w("圈選預先截圖", t);
+                if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(null));
             }
         }, "circle-prefetch").start();
     }

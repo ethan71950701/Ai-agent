@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 圈選截圖不再拍到面板的開場動畫：面板先藏著，截好圖才出現（最多等 1.5 秒）｜Circle-to-ask screenshots no longer capture the panel's opening animation: the panel stays hidden until the shot is taken (up to 1.5 s)
 - 圈選截圖變快：root／Shizuku 改讀原始像素，不再編成 PNG 再解開｜Circle-to-ask screenshots are faster: root/Shizuku now read raw pixels instead of encoding and decoding a PNG
 
 ## 1.0.1524

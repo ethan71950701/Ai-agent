@@ -262,9 +262,16 @@ public class AssistantSheet {
     private Bitmap shot;
     private RectF circleBox;
 
-    /** 面板打開時由 AskActivity 呼叫：背景截圖，好了就把圈選畫布放在面板後面（暗幕與光暈之下）。 */
-    public void prefetchShot() {
-        CircleShot.prefetch(act.getApplicationContext(), this::attachShot);
+    /** 面板打開時由 AskActivity 呼叫：面板先藏著、先截圖（才不會拍到開場動畫），好了把圈選畫布放在面板後面，再呼叫 ready 讓面板出現。 */
+    public void prefetchShot(final Runnable ready) {
+        final boolean[] fired = {false};
+        final Runnable fire = () -> { if (!fired[0]) { fired[0] = true; ready.run(); } };
+        root.postDelayed(fire, 1500);   // 太久截不到就不等了，照常打開面板（這時才來的截圖會拍到面板，丟掉）
+        CircleShot.prefetch(act.getApplicationContext(), b -> {
+            if (fired[0]) return;
+            if (b != null) attachShot(b);
+            fire.run();
+        });
     }
 
     private void attachShot(Bitmap b) {
