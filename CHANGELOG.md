@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 自動操作修好一個反覆出錯的原因：模型有時先寫一個空的 <invoke name="tap"></invoke>、後面才接正確的 JSON，以前只拿到沒有座標的動作，白花兩步；現在優先用後面的 JSON｜Automation: fixed a recurring failure where the model first writes an empty <invoke name="tap"></invoke> and only then the correct JSON; we used to keep just the empty action and waste two steps, now the JSON is used
+
+## 1.0.1533
+
 - 路由：提示加上「要去別的 App 找東西、看東西，就算還要記，也是自動操作」的說明與例子；任務過程頁顯示便宜模型這次的判斷（chat／agent…）｜Routing: the prompt now says that looking things up in another app is automation even if you also want it remembered, with examples; the task log shows what the cheap model decided (chat/agent/…)
 
 ## 1.0.1532
