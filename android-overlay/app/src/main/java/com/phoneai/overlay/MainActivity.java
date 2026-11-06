@@ -715,6 +715,15 @@ public class MainActivity extends Activity {
     private static final String[] GREET_NIGHT = {"還沒睡嗎？", "夜深了，小聲點", "熬夜對身體不好喔", "月亮都睡了，你呢？"};
     private static final String[] GREET_ANY = {"嗨，有什麼我能幫的？", "說吧，我在聽", "今天想玩點什麼？", "叮！你的 AI 上線了", "我已經充飽電了", "今天不當機，保證", "要不要我幫你偷懶？", "手指累了就用說的", "許願吧，限手機內", "先說好，我不會煮飯"};
 
+    private static final String[][] JOKES = {
+            {"為什麼手機老是愛睡覺？", "因為它每天都在待機。"},
+            {"什麼東西越洗越髒？", "水。"},
+            {"小明為什麼帶梯子去上學？", "因為他要上高中。"},
+            {"什麼蛋不能吃？", "笨蛋。"},
+            {"白蘿蔔和紅蘿蔔誰比較強？", "紅蘿蔔，因為它「紅」了。"},
+            {"電腦為什麼不怕冷？", "因為它有 Windows。"},
+    };
+
     private void buildHome() {
         box.setGravity(android.view.Gravity.CENTER);   // 標誌與問候語放在畫面中間偏上（下面留空間給輸入膠囊）
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 400));
@@ -727,8 +736,17 @@ public class MainActivity extends Activity {
         String[] slot = hr >= 5 && hr < 11 ? GREET_MORNING : hr >= 11 && hr < 17 ? GREET_DAY : hr >= 17 && hr < 23 ? GREET_EVENING : GREET_NIGHT;
         java.util.Random rnd = new java.util.Random();
         int pick = rnd.nextInt(slot.length + GREET_ANY.length);   // 時段專屬的和通用的一起抽
+        if (rnd.nextInt(4) == 0) {   // 四次大約有一次是冷笑話：點一下看答案，再點一下回到問題
+            final String[] jk = JOKES[rnd.nextInt(JOKES.length)];
+            final String q = L.t(jk[0]), an = L.t(jk[1]), hint = L.t("點一下看答案");
+            final android.text.SpannableString qs = new android.text.SpannableString(q + "\n" + hint);
+            qs.setSpan(new android.text.style.RelativeSizeSpan(0.4f), q.length() + 1, qs.length(), 0);
+            greet.setText(qs);
+            final boolean[] shown = {false};
+            greet.setOnClickListener(v -> { shown[0] = !shown[0]; greet.setText(shown[0] ? an : qs); });
+        } else
         greet.setText(L.t(pick < slot.length ? slot[pick] : GREET_ANY[pick - slot.length]));
-        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 40);
+        greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, greet.getText().toString().indexOf((char) 10) >= 0 ? 30 : 40);
         greet.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
         greet.setGravity(android.view.Gravity.CENTER);
         greet.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
