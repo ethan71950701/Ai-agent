@@ -32,6 +32,7 @@ final class AgentLoop {
     static volatile String lastRawFull = "";   // 診斷：最近一次模型回覆的前 700 字
     static volatile String lastRaw = "";   // 最近一次模型回覆的開頭，解析不出動作時放進錯誤訊息
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
+    static final int WIDTH_LOOK = 720;            // look 之後那一步的截圖寬度（縮圖格子、小圖示要看清楚）
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
     private static final int MAX_STEPS = 12;   // 傳訊息這種任務正常就要 8～10 步（開 App、進對話、輸入、確認、送出、檢查）
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 10;
@@ -293,7 +294,7 @@ final class AgentLoop {
                 sameTree = treeText != null && treeText.equals(lastTreeText) ? sameTree + 1 : 0;
                 lastTreeText = treeText;
                 if (useTree && sameTree >= 1 && waits >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 連續等了兩次、清單還是沒變：可能卡住，這一步改用截圖＋Sonnet 看看
-                String img = useTree ? null : screenshot();
+                String img = useTree ? null : screenshot(wasForced ? WIDTH_LOOK : WIDTH);   // look 之後的看圖步驟用大圖
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 Vertex。");
                 List<String> lessonApps = new ArrayList<>(st.opened);   // 只帶「這次用到的 App」的經驗，不是全部
                 String fg = ElementList.foregroundPackage();
@@ -527,10 +528,13 @@ final class AgentLoop {
     }
 
     /** root 截圖 → 縮成寬 WIDTH 的 JPEG → base64。失敗回 null。 */
-    static String screenshot() {
+    static String screenshot() { return screenshot(WIDTH); }
+
+    /** width：縮圖寬度。一般 432 省 token；look（元件清單裡找不到，要靠看圖找位置）用大一點的圖，縮圖、小圖示才看得清楚。 */
+    static String screenshot(int width) {
         if (!Root.available()) {   // 沒有 root：用無障礙截圖
             Bitmap shot = Phone.screenshot();
-            return shot == null ? null : encodeJpeg(shot);
+            return shot == null ? null : encodeJpeg(shot, width);
         }
         try {
             byte[] png;
@@ -546,8 +550,8 @@ final class AgentLoop {
             if (png.length < 100) return null;
             Bitmap bmp = BitmapFactory.decodeByteArray(png, 0, png.length);
             if (bmp == null) return null;
-            int h = Math.round(bmp.getHeight() * (WIDTH / (float) bmp.getWidth()));
-            Bitmap small = Bitmap.createScaledBitmap(bmp, WIDTH, h, true);
+            int h = Math.round(bmp.getHeight() * (width / (float) bmp.getWidth()));
+            Bitmap small = Bitmap.createScaledBitmap(bmp, width, h, true);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             small.compress(Bitmap.CompressFormat.JPEG, 80, out);
             return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
@@ -622,9 +626,9 @@ final class AgentLoop {
         }
     }
 
-    private static String encodeJpeg(Bitmap bmp) {
-        int h = Math.round(bmp.getHeight() * (WIDTH / (float) bmp.getWidth()));
-        Bitmap small = Bitmap.createScaledBitmap(bmp, WIDTH, h, true);
+    private static String encodeJpeg(Bitmap bmp, int width) {
+        int h = Math.round(bmp.getHeight() * (width / (float) bmp.getWidth()));
+        Bitmap small = Bitmap.createScaledBitmap(bmp, width, h, true);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         small.compress(Bitmap.CompressFormat.JPEG, 80, out);
         return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);

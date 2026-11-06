@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 自動操作：look 之後的看圖步驟改用較大的截圖（寬 720，原本 432），相簿縮圖、小圖示比較看得清楚｜Automation: the screenshot step after a look now uses a larger image (720 px wide instead of 432) so gallery thumbnails and small icons are easier to read
 - 自動操作：tap／雙擊／長按沒給座標時不再點到螢幕左上角還說「已點擊」，會回錯誤讓模型重來；出錯的那一步在任務過程裡附上模型原始回覆｜Automation: tap/double-tap/long-press without coordinates no longer taps the top-left corner and reports success; it returns an error instead, and the failed step shows the model's raw reply in the task log
 
 ## 1.0.1530
