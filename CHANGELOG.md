@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1476
+
 - 修正從任務過程列表點進任務詳細頁（以及互傳檔案的「瀏覽」）時整頁突然冒出再彈一下：現在會從點的卡片展開；沒有位置時的備用動畫改成淡入放大｜Fix pages popping in fully open with a bounce when opened from a task card (and from the file-transfer "browse" button): they now expand from the tapped card, and the fallback animation is a fade-and-grow
 
 ## 1.0.1475
