@@ -547,6 +547,7 @@ final class Ui {
     /** 點的那張卡片在螢幕上的位置與大小（打開頁面時從這裡長出來、關閉時縮回這裡）；開完會清掉，免得下次從別的地方開時用到舊的。 */
     /** 診斷用：最近一次展開動畫的幀數與卡頓（超過 24 毫秒的幀間隔）。 */
     static volatile String enterInfo = "";
+    private static final java.util.ArrayDeque<String> ENTER_LOG = new java.util.ArrayDeque<>();
     private static float[] tapRect;
     private static android.graphics.Bitmap tapSnap;
     private static final java.util.WeakHashMap<android.app.Activity, android.graphics.Bitmap> EXIT_SNAP = new java.util.WeakHashMap<>();
@@ -711,7 +712,9 @@ final class Ui {
                     });
                     va.addListener(new android.animation.AnimatorListenerAdapter() {
                         @Override public void onAnimationEnd(android.animation.Animator an) {
-                            enterInfo = a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒，超過 24 毫秒 " + st[2] + " 次";
+                            ENTER_LOG.addFirst(a.getClass().getSimpleName() + "：" + st[3] + " 幀，最長間隔 " + st[1] + " 毫秒，超過 24 毫秒 " + st[2] + " 次");
+                            while (ENTER_LOG.size() > 5) ENTER_LOG.removeLast();   // 留最近 5 次，診斷頁一起看
+                            enterInfo = android.text.TextUtils.join("\n　　", ENTER_LOG);
                             applyExpand(root, rect, 1f, corner);
                             removeVeil(root);
                             root.setClipToOutline(false);

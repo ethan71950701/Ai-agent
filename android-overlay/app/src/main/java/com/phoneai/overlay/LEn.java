@@ -934,6 +934,9 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("便宜模型（聊天、路由、判斷）：", "Cheap model (chat, routing, decisions): ");
+        m.put("看圖模型（自動操作、搜尋）：", "Vision model (auto operation, search): ");
+        m.put("（內建）", " (built-in)");
         m.put("子頁面展開：", "Sub-page expand: ");
         m.put("（還沒有量到：先打開一個子頁面，例如功能 → 任務過程，再回來這裡看）", "(Nothing measured yet: open a sub-page such as Functions → Task history first, then come back here)");
         m.put("停止聆聽", "Stop listening");

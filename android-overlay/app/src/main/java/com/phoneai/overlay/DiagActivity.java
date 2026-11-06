@@ -57,6 +57,12 @@ public class DiagActivity extends Activity {
                         .setNegativeButton(L.t("取消"), null).show()));
     }
 
+    /** 一個欄位實際用的服務與模型；Claude 沒另外選模型時顯示內建名稱。 */
+    private static String slotName(LlmConfig.Slot s, String builtin) {
+        if (s.openai()) return s.model + " @ " + LlmConfig.host(s.base);
+        return "Claude · " + (s.model.isEmpty() ? builtin + L.t("（內建）") : s.model);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -102,8 +108,10 @@ public class DiagActivity extends Activity {
         sb.append(L.t("系統長按電源鍵動作：")).append(powerLongPressText()).append('\n');
         sb.append(L.t("底欄玻璃效果：")).append(GlassBar.status).append('\n');
         sb.append(L.t("朗讀：")).append(Notify.ttsInfo.isEmpty() ? L.t("（還沒朗讀過）") : Notify.ttsInfo).append('\n');
-        sb.append(L.t("模型：聊天與路由 ")).append(ChatEngine.MODEL).append(L.t("；自動操作 ")).append(AgentLoop.MODEL)
-                .append(L.t("；搜尋 ")).append(AgentLoop.SEARCH_MODEL).append('\n');
+        // 實際用的服務與模型：依「設定 → AI 服務」選的便宜／看圖兩個欄位（Claude 沒另外選模型時用內建的 Haiku／Sonnet）
+        LlmConfig.Slot cheapS = LlmConfig.cheap(this), visionS = LlmConfig.vision(this);
+        sb.append(L.t("便宜模型（聊天、路由、判斷）：")).append(slotName(cheapS, ChatEngine.MODEL)).append('\n');
+        sb.append(L.t("看圖模型（自動操作、搜尋）：")).append(slotName(visionS, AgentLoop.MODEL)).append('\n');
         // 小米的小愛同學長按電源鍵可能綁在別的設定上：用 root 列出所有跟電源／長按／助理有關的設定名稱（只讀，不改）
         sb.append(L.t("\n【電源鍵相關設定（只讀）】\n")).append(Maintenance.suRun(
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
