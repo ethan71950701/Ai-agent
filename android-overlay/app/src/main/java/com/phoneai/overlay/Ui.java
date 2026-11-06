@@ -673,6 +673,21 @@ final class Ui {
             return;
         }
         final float corner = dp(a, 22);
+        if (BACK_PREP.remove(a) == null) prepareClose(a, root);   // 預測返回的手勢已經準備過了就不用再準備一次
+        Float gestureP = BACK_P.remove(a);
+        float start = gestureP != null ? gestureP : from;       // 手勢拖到哪裡，就從哪裡接著縮回去
+        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(start, 0f);
+        va.setDuration(Math.round(340 * (0.35f + 0.65f * start)));
+        va.setInterpolator(SMOOTH_IO);
+        va.addUpdateListener(an -> applyExpand(root, r, (float) an.getAnimatedValue(), corner));
+        va.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(android.animation.Animator an) { a.finish(); a.overridePendingTransition(0, 0); }
+        });
+        va.start();
+    }
+
+    /** 縮回去之前的準備：整頁畫在獨立的層、圓角裁切、蓋層（卡片的樣子）放好。 */
+    private static void prepareClose(android.app.Activity a, View root) {
         root.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         setupClip(root);
         Anim.boostFrames(root, 700, "子頁返回");
@@ -683,15 +698,10 @@ final class Ui {
         } else {
             installVeil(a, root, 0f, EXIT_SNAP.get(a));
         }   // 縮回去的時候，內容淡成卡片顏色，卡片上的文字再淡入
-        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(from, 0f);
-        va.setDuration(Math.round(340 * (0.35f + 0.65f * from)));
-        va.setInterpolator(SMOOTH_IO);
-        va.addUpdateListener(an -> applyExpand(root, r, (float) an.getAnimatedValue(), corner));
-        va.addListener(new android.animation.AnimatorListenerAdapter() {
-            @Override public void onAnimationEnd(android.animation.Animator an) { a.finish(); a.overridePendingTransition(0, 0); }
-        });
-        va.start();
     }
+
+    private static final java.util.WeakHashMap<android.app.Activity, Float> BACK_P = new java.util.WeakHashMap<>();       // 預測返回手勢目前拖到的進度（1＝完全展開、0＝縮回卡片）
+    private static final java.util.WeakHashMap<android.app.Activity, Boolean> BACK_PREP = new java.util.WeakHashMap<>();  // 手勢已經做過 prepareClose
 
     /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
     static void enterSpring(final android.app.Activity a) {
@@ -787,25 +797,58 @@ final class Ui {
         int prio = android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT;
         if (android.os.Build.VERSION.SDK_INT >= 34) {
             d.registerOnBackInvokedCallback(prio, new android.window.OnBackAnimationCallback() {
+                private float p0 = 1f;
+
+                private boolean container() { return EXIT_RECT.get(a) != null && root.getWidth() > 0; }
+
                 @Override
                 public void onBackStarted(android.window.BackEvent e) {
-                    root.setLayerType(View.LAYER_TYPE_HARDWARE, null);   // 返回時整頁畫在獨立的層上，避免多層疊加出現重影
+                    if (!container()) { root.setLayerType(View.LAYER_TYPE_HARDWARE, null); return; }
+                    // 預測返回跟點返回鈕用同一套動畫：頁面隨手指往點開的那張卡片縮回去（跟展開、返回的曲線與圓角一致），不再是整頁淡掉
+                    p0 = 1f;
+                    android.animation.ValueAnimator op = OPENING.remove(a);   // 展開還沒跑完就開始滑：接著目前的進度
+                    if (op != null) { if (op.isStarted()) p0 = (float) op.getAnimatedValue(); else p0 = 0f; op.removeAllListeners(); op.cancel(); }
+                    prepareClose(a, root);
+                    BACK_PREP.put(a, Boolean.TRUE);
+                    BACK_P.put(a, p0);
                 }
 
                 @Override
                 public void onBackProgressed(android.window.BackEvent e) {
-                    // 只淡出，不縮放：縮放加淡出時會跟系統的預覽重疊，看起來像重影
-                    root.setAlpha(Math.max(0f, 1f - 1.3f * e.getProgress()));
+                    if (!container()) { root.setAlpha(Math.max(0f, 1f - 1.3f * e.getProgress())); return; }
+                    float p = p0 * (1f - 0.6f * e.getProgress());   // 手勢拉滿大約縮到四成，放手再接著縮回去
+                    BACK_P.put(a, p);
+                    applyExpand(root, EXIT_RECT.get(a), p, dp(a, 22));
                 }
 
                 @Override
                 public void onBackCancelled() {
-                    root.animate().alpha(1f).setDuration(120).withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start();
+                    if (!container()) { root.animate().alpha(1f).setDuration(120).withEndAction(() -> root.setLayerType(View.LAYER_TYPE_NONE, null)).start(); return; }
+                    final float[] rect = EXIT_RECT.get(a);
+                    final float from = BACK_P.containsKey(a) ? BACK_P.get(a) : 1f;
+                    BACK_P.remove(a);
+                    BACK_PREP.remove(a);
+                    android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(from, 1f);   // 取消：展開回原來的大小
+                    va.setDuration(220);
+                    va.setInterpolator(SMOOTH_IO);
+                    va.addUpdateListener(an -> applyExpand(root, rect, (float) an.getAnimatedValue(), dp(a, 22)));
+                    va.addListener(new android.animation.AnimatorListenerAdapter() {
+                        @Override public void onAnimationEnd(android.animation.Animator an) {
+                            applyExpand(root, rect, 1f, dp(a, 22));
+                            removeVeil(root);
+                            root.postDelayed(() -> {
+                                if (CLOSING.containsKey(a)) return;
+                                root.setClipToOutline(false);
+                                root.setLayerType(View.LAYER_TYPE_NONE, null);
+                            }, 250);
+                        }
+                    });
+                    va.start();
                 }
 
                 @Override
                 public void onBackInvoked() {
-                    root.setAlpha(1f);
+                    if (!container()) root.setAlpha(1f);
                     closeToTap(a);
                 }
             });
