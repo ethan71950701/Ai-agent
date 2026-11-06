@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 修正診斷頁「按鈕透鏡」那一行一直是空的｜Fix the "button lens" line on the diagnostics page that was always empty
 
+## 1.0.1467
+
 - 診斷頁的「按鈕透鏡」多顯示形變、縮放、旋轉等狀態，用來查透鏡偶爾變成梯形的原因｜The diagnostics page now shows the lens deformation, scale and rotation, to find why the lens sometimes turns into a trapezoid
 
 ## 1.0.1466
