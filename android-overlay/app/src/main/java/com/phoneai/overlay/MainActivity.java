@@ -723,7 +723,7 @@ public class MainActivity extends Activity {
             {"牛牽到北京還是牛，那牛牽到北極是什麼？", "New Balance，牛被冷死。"},
             {"余光中覺得老婆煮晚餐很辛苦，說今天我來煮。這是什麼故事？", "這就是光中要煮的故事。"},
             {"麵包超人不小心扭到腳，結果變成什麼？", "牛角麵包超人。"},
-            {"玩遊戲的人得了便宜，會怎麼樣？", "得了便宜還 Minecraft。"},
+            {"得了便宜還 Minecraft。", ""},   // 沒有答案：直接顯示一句
             {"為什麼手機老是愛睡覺？", "因為它每天都在待機。"},
             {"什麼東西越洗越髒？", "水。"},
             {"小明為什麼帶梯子去上學？", "因為他要上高中。"},
@@ -746,12 +746,16 @@ public class MainActivity extends Activity {
         int pick = rnd.nextInt(slot.length + GREET_ANY.length);   // 時段專屬的和通用的一起抽
         if (rnd.nextInt(10) < 6) {   // 大約六成是冷笑話：點一下看答案，再點一下回到問題
             final String[] jk = JOKES[rnd.nextInt(JOKES.length)];
+            if (jk[1].isEmpty()) {   // 單句笑話：不用問答
+                greet.setText(L.t(jk[0]));
+            } else {
             final String q = L.t(jk[0]), an = L.t(jk[1]), hint = L.t("點一下看答案");
             final android.text.SpannableString qs = new android.text.SpannableString(q + "\n" + hint);
             qs.setSpan(new android.text.style.RelativeSizeSpan(0.4f), q.length() + 1, qs.length(), 0);
             greet.setText(qs);
             final boolean[] shown = {false};
             greet.setOnClickListener(v -> { shown[0] = !shown[0]; greet.setText(shown[0] ? an : qs); });
+            }
         } else
         greet.setText(L.t(pick < slot.length ? slot[pick] : GREET_ANY[pick - slot.length]));
         greet.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, greet.getText().toString().indexOf((char) 10) >= 0 ? 30 : 40);

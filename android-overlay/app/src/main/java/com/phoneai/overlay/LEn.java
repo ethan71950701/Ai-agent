@@ -239,8 +239,7 @@ final class LEn {
         m.put("這就是光中要煮的故事。", "The story of 'Guang-zhong is cooking'. (Sounds like the title of a famous poem.)");
         m.put("麵包超人不小心扭到腳，結果變成什麼？", "Anpanman sprains his ankle and becomes...?");
         m.put("牛角麵包超人。", "Croissant Man. (In Chinese, 'sprained foot' sounds like 'croissant'.)");
-        m.put("玩遊戲的人得了便宜，會怎麼樣？", "What does a gamer do after getting a bargain?");
-        m.put("得了便宜還 Minecraft。", "Still plays Minecraft. (In Chinese, 'show off' sounds like 'Minecraft'.)");
+        m.put("得了便宜還 Minecraft。", "Takes the bargain and still Minecraft. (In Chinese, 'show off' sounds like 'Minecraft'.)");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");
