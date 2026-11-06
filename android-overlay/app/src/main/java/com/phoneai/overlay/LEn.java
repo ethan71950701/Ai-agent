@@ -228,6 +228,8 @@ final class LEn {
         m.put("拖動時畫面被拖歪的程度", "How much the picture is dragged sideways while dragging");
         m.put("按住時放大圖示", "Magnify icons while pressed");
         m.put("拖動歪斜", "Drag skew");
+        m.put("拖動形變強度", "Drag deformation strength");
+        m.put("拖動時透鏡邊緣被拉扯的程度，0 = 沒有；預設 2", "How much the lens edge is pulled while dragging; 0 = none; default 2");
         m.put("圖示折射與色散", "Icon refraction and dispersion");
         m.put("GPU 錄製背景", "GPU-recorded backdrop");
         m.put("恢復預設", "Reset to defaults");

@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
                     stretchD *= 0.85f;
                     stretchV = 0f;
                     if (indicator instanceof GlassBar) {
-                        ((GlassBar) indicator).setStretch(0.25f * stretchD, -0.2f * stretchD);
+                        ((GlassBar) indicator).setStretch(0.25f * stretchD * GlassPrefs.stretch, -0.2f * stretchD * GlassPrefs.stretch);
                         ((GlassBar) indicator).kick(200);
                     }
                     if (Math.abs(stretchD) < 0.003f) {
@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
                 indicator.setScaleX(1f + (GlassPrefs.pressX - 1f) * pressP);
                 indicator.setScaleY(1f + (GlassPrefs.pressY - 1f) * pressP);
                 if (indicator instanceof GlassBar) {
-                    ((GlassBar) indicator).setStretch(0.25f * d, -0.2f * d);
+                    ((GlassBar) indicator).setStretch(0.25f * d * GlassPrefs.stretch, -0.2f * d * GlassPrefs.stretch);
                     ((GlassBar) indicator).kick(200);
                 }
                 bar.setScaleX(1f + (GlassPrefs.barPress - 1f) * pressP);
@@ -815,6 +815,7 @@ public class MainActivity extends Activity {
         glassSlider(g, L.t("按住放大（上下）"), L.t("按住時上層按鈕直向放大的倍數"), 1f, 1.8f, GlassPrefs.pressY, GlassPrefs.K_PRESS_Y);
         glassSlider(g, L.t("按住放大（整條底欄）"), L.t("按住時整條底欄放大的倍數，1 = 不放大"), 1f, 1.2f, GlassPrefs.barPress, GlassPrefs.K_BAR_PRESS);
         glassSlider(g, L.t("拖動歪斜量"), L.t("拖動時畫面被拖歪的程度"), 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
+        glassSlider(g, L.t("拖動形變強度"), L.t("拖動時透鏡邊緣被拉扯的程度，0 = 沒有；預設 2"), 0f, 6f, GlassPrefs.stretch, GlassPrefs.K_STRETCH);
         glassSlider(g, L.t("底欄暗度"), L.t("0 = 幾乎透明，1 = 很暗"), 0f, 1f, GlassPrefs.barDark, GlassPrefs.K_BAR_DARK);
         glassSwitch(g, 0, 4, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
         glassSwitch(g, 1, 4, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
