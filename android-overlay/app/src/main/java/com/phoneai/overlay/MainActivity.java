@@ -603,6 +603,7 @@ public class MainActivity extends Activity {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void afterTextChanged(android.text.Editable e) {
+                if (!homeProg) cancelHomePending();   // 使用者動了輸入框：取消自動送出
                 action.setMode(e.toString().trim().isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND);
             }
         });
@@ -679,7 +680,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
-        homeCapture = SpeechCapture.start(new SpeechCapture.Cb() {
+        homeCapture = SpeechCapture.start(this, new SpeechCapture.Cb() {
             @Override public void onListening() { setWaves(WaveView.LISTENING); }
             @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); }
             @Override public void onDone(short[] pcm) {
@@ -691,11 +692,54 @@ public class MainActivity extends Activity {
                     try { text = SherpaEngine.recognize(MainActivity.this, SpeechCapture.toFloat(pcm), SpeechCapture.RATE); }
                     catch (Throwable e) { text = ""; }
                     final String t = text == null ? "" : text.trim();
-                    runOnUiThread(() -> { if (t.isEmpty()) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽清楚，再按一次麥克風")); } else homeAsk(t); });
+                    runOnUiThread(() -> { if (t.isEmpty()) { setWaves(WaveView.IDLE); showAnswer(L.t("沒聽清楚，再按一次麥克風")); } else homeStage(t); });
                 }, "home-voice").start();
             }
             @Override public void onError(String msg) { homeCapture = null; setWaves(WaveView.IDLE); showAnswer(L.t("錄音失敗：") + msg); }
-        });
+        }, t -> { if (homeCapture != null) showAnswer(t); });   // 邊說邊顯示：目前聽到的字放在問候語下面
+    }
+
+    private Runnable homePending;
+    private boolean homeProg;
+
+    /** 辨識完的字先放進輸入框，停 1 秒（送出鈕外圈倒數）再自動送出；這 1 秒內動輸入框就取消，可以改字再自己送。 */
+    private void homeStage(final String t) {
+        setWaves(WaveView.IDLE);
+        if (homeEt == null) { homeAsk(t); return; }
+        homeProg = true;
+        homeEt.setText(t);
+        homeEt.setSelection(homeEt.getText().length());
+        homeProg = false;
+        final ActionButtonView act = homeAction;
+        final android.animation.ValueAnimator ring = android.animation.ValueAnimator.ofFloat(1f, 0f);
+        ring.setDuration(1000);
+        ring.addUpdateListener(a -> { if (act != null) act.setProgress((float) a.getAnimatedValue()); });
+        final Runnable go = () -> {
+            homePending = null;
+            if (act != null) act.setProgress(0f);
+            if (homeEt == null) return;
+            String now = homeEt.getText().toString().trim();
+            if (now.isEmpty()) return;
+            homeProg = true;
+            homeEt.setText("");
+            homeProg = false;
+            homeEt.clearFocus();
+            homeAsk(now);
+        };
+        cancelHomePending();
+        homePending = go;
+        homeRing = ring;
+        ring.start();
+        homeEt.postDelayed(go, 1000);
+    }
+
+    private android.animation.ValueAnimator homeRing;
+
+    private void cancelHomePending() {
+        if (homePending != null && homeEt != null) homeEt.removeCallbacks(homePending);
+        homePending = null;
+        if (homeRing != null) { homeRing.cancel(); homeRing = null; }
+        if (homeAction != null) homeAction.setProgress(0f);
     }
 
     private void setWaves(int st) {

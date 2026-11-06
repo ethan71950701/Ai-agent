@@ -29,10 +29,41 @@ final class SpeechCapture {
 
     private SpeechCapture() { }
 
-    static SpeechCapture start(Cb cb) {
+    static SpeechCapture start(Cb cb) { return start(null, cb, null); }
+
+    /**
+     * partial 不是 null 時邊說邊辨識：SenseVoice 不是串流模型，所以每約 0.8 秒把「到目前為止的整段聲音」重新辨識一次，
+     * 把最新的文字交給 partial（主執行緒）。上一次還沒辨識完就跳過這一輪，不會越積越多；前面的字可能被後面的修正。
+     */
+    static SpeechCapture start(android.content.Context ctx, Cb cb, java.util.function.Consumer<String> partial) {
         SpeechCapture c = new SpeechCapture();
+        c.ctx = ctx == null ? null : ctx.getApplicationContext();
+        c.partial = partial;
         new Thread(() -> c.run(cb), "speech-capture").start();
         return c;
+    }
+
+    private android.content.Context ctx;
+    private java.util.function.Consumer<String> partial;
+    private final java.util.concurrent.atomic.AtomicBoolean decoding = new java.util.concurrent.atomic.AtomicBoolean();
+    private volatile boolean finished;
+    private static final java.util.concurrent.ExecutorService PARTIAL_EX = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    private void maybePartial(ArrayList<short[]> chunks, int total) {
+        if (partial == null || ctx == null || decoding.get() || total < RATE / 2) return;
+        final short[] snap = new short[total];
+        int p = 0;
+        for (short[] c : chunks) { System.arraycopy(c, 0, snap, p, c.length); p += c.length; }
+        decoding.set(true);
+        PARTIAL_EX.execute(() -> {
+            try {
+                String t = SherpaEngine.recognize(ctx, toFloat(snap), RATE);
+                if (!finished && !cancel && t != null && !t.isEmpty()) UI.post(() -> { if (!finished && !cancel) partial.accept(t); });
+            } catch (Throwable ignored) {
+            } finally {
+                decoding.set(false);
+            }
+        });
     }
 
     /** 立刻結束，交出目前錄到的聲音。 */
@@ -71,6 +102,7 @@ final class SpeechCapture {
                 UI.post(() -> cb.onLevel(lv));
                 chunks.add(Arrays.copyOf(buf, n));
                 total += n;
+                if (spoke && chunks.size() % 8 == 0) maybePartial(chunks, total);   // 約每 0.8 秒邊說邊辨識一次
                 if (calib < 5) { floor += rms / 5; calib++; continue; }   // 前 0.5 秒量環境噪音
                 double thr = Math.max(500, floor * 3);
                 if (rms > thr) { spoke = true; silent = 0; } else if (spoke) silent++;
@@ -78,6 +110,7 @@ final class SpeechCapture {
                 if (!spoke && (stop || total > RATE * 8)) break;          // 還沒開口：被叫停或 8 秒
                 if (total > RATE * 20) break;                              // 最長 20 秒
             }
+            finished = true;   // 之後不再送邊說邊辨識的結果，免得蓋掉最後的完整辨識
             if (cancel) return;
             if (!spoke) { UI.post(() -> cb.onDone(null)); return; }
             short[] pcm = new short[total];

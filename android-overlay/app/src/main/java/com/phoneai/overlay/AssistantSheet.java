@@ -51,7 +51,7 @@ import java.util.List;
  */
 public class AssistantSheet {
     static final int REQ_MIC = 4712, REQ_FALLBACK = 4713;
-    static final int COUNTDOWN_SECONDS = 5;
+    static final int COUNTDOWN_SECONDS = 1;   // 辨識完停 1 秒就自動送出（送出鈕外圈倒數）；這 1 秒內動輸入框就取消
     static final String GOOGLE_PKG = "com.google.android.googlequicksearchbox";
 
     private final Activity act;
@@ -72,6 +72,7 @@ public class AssistantSheet {
     private boolean questionMode;
     private TextView questionView;
     private View bgBtnView;
+    private TextView partialView;
     private SpeechCapture capture;     // 目前正在錄的這一句（SenseVoice 用）
     private int voiceGen;              // 每次開始聽加一；辨識結果回來時對不上就丟掉（使用者已取消或重說）
     private boolean replyMode;   // 顯示回答卡片中：卡片在上方、下面是可以接續對話的輸入列（語音／打字）
@@ -151,6 +152,18 @@ public class AssistantSheet {
         questionView.setPadding((int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (4 * d));
         questionView.setVisibility(View.GONE);
         content.addView(questionView, new LinearLayout.LayoutParams(-1, -2));
+
+        partialView = new TextView(a);   // 邊說邊顯示：SenseVoice 每約 0.8 秒辨識一次，顯示目前聽到的字
+        partialView.setTextColor(Color.WHITE);
+        partialView.setTextSize(20);
+        partialView.setGravity(Gravity.CENTER);
+        partialView.setLineSpacing(0, 1.15f);
+        partialView.setShadowLayer(8 * d, 0, 0, 0xCC000000);
+        partialView.setMaxLines(4);
+        partialView.setEllipsize(android.text.TextUtils.TruncateAt.START);   // 太長就把前面的字省略，永遠看得到最新的
+        partialView.setPadding((int) (14 * d), (int) (8 * d), (int) (14 * d), (int) (10 * d));
+        partialView.setVisibility(View.GONE);
+        content.addView(partialView, new LinearLayout.LayoutParams(-1, -2));
 
         // 擴散的光暈與提示卡可能超出內容範圍：不要裁切
         content.setClipChildren(false);
@@ -515,7 +528,7 @@ public class AssistantSheet {
         setStatus(L.t("我在聽…"));
         setWaveState(WaveView.LISTENING);
         refreshAction();
-        capture = SpeechCapture.start(new SpeechCapture.Cb() {
+        capture = SpeechCapture.start(act, new SpeechCapture.Cb() {
             @Override public void onListening() { }
             @Override public void onLevel(float v) {
                 if (!listening || gen != voiceGen) return;
@@ -553,7 +566,12 @@ public class AssistantSheet {
                 trace(L.t("錄音錯誤：") + msg);
                 idleMessage(L.t("錄音失敗（") + msg + L.t("）"));
             }
-        });
+        }, t -> { if (listening && gen == voiceGen) showPartial(t); });
+    }
+
+    private void showPartial(String t) {
+        partialView.setText(t);
+        partialView.setVisibility(View.VISIBLE);
     }
 
     /** 目前這個辨識服務不行（連不上、語言都不支援…）：換下一個；全部用完退回系統語音視窗。 */
@@ -917,6 +935,7 @@ public class AssistantSheet {
     /** 聲波條的狀態：聽與思考時顯示聲波（蓋住輸入框），其他時候顯示輸入框。 */
     private void setWaveState(int st) {
         wave.setState(st);
+        if (st != WaveView.LISTENING) partialView.setVisibility(View.GONE);   // 聽完就收起邊說邊顯示的字，最後的字放進輸入框
         waveState = st;
         boolean show = st == WaveView.LISTENING || st == WaveView.THINKING;
         wave.setVisibility(show ? View.VISIBLE : View.GONE);
