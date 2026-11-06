@@ -174,6 +174,26 @@ final class Memory {
         return null;
     }
 
+    /** 筆記在提示裡的「索引」寫法：短的（60 字內）直接給全文；長的只給「標題：摘要」，要看全文用 memory_read。沒有標題的舊筆記，用前面的字當標題與摘要。 */
+    static String indexLine(JSONObject it) {
+        String text = it.optString("text");
+        if (text.length() <= 60) return text;
+        String title = it.optString("title").trim(), brief = it.optString("brief").trim();
+        if (title.isEmpty()) title = text.substring(0, 12) + "…";
+        if (brief.isEmpty()) brief = text.substring(0, 40) + "…";
+        return title + "：" + brief + "（全文 " + text.length() + " 字，要看用 memory_read）";
+    }
+
+    /** 給聊天與路由用的筆記索引：「#編號 📌標題：摘要」，不放長筆記的全文，提示才不會越來越長。 */
+    static String noteIndex(JSONObject d) {
+        StringBuilder sb = new StringBuilder();
+        for (JSONObject it : live(d, "note")) {
+            if (sb.length() > 0) sb.append("；");
+            sb.append("#").append(it.optInt("id")).append(" ").append(it.optBoolean("pinned") ? "📌" : "").append(indexLine(it));
+        }
+        return sb.length() == 0 ? "（沒有）" : sb.toString();
+    }
+
     /** 給聊天提示用：「#編號 📌文字」列表。 */
     static String promptRows(JSONObject d, String kind) { return promptRows(d, kind, 300); }   // 一則最多 300 字（存的時候就是這個上限），課表這種長筆記才不會被截掉
 
@@ -201,6 +221,9 @@ final class Memory {
                     JSONObject it = new JSONObject().put("id", d.optInt("next_id", 1)).put("kind", kind).put("text", text)
                             .put("created", now()).put("done", false).put("done_at", JSONObject.NULL)
                             .put("deleted", false).put("pinned", pinned);
+                    String title = args.optString("title").trim(), brief = args.optString("brief").trim();
+                    if (!title.isEmpty()) it.put("title", title.length() > 20 ? title.substring(0, 20) : title);   // 標題與摘要由寫入的模型順便給，不用多呼叫一次
+                    if (!brief.isEmpty()) it.put("brief", brief.length() > 60 ? brief.substring(0, 60) : brief);
                     d.getJSONArray("items").put(it);
                     d.put("next_id", it.getInt("id") + 1);
                     save(c, d);
@@ -211,7 +234,12 @@ final class Memory {
                     if (it == null) return "錯誤：找不到 #" + args.optInt("id");
                     if (it.optBoolean("pinned")) return "錯誤：#" + it.optInt("id") + " 這是永久記憶，只能在 App 的「助理的記憶」頁手動刪除或修改";
                     String text = args.optString("text").trim();
-                    if (!text.isEmpty()) it.put("text", text.length() > 300 ? text.substring(0, 300) : text);
+                    if (!text.isEmpty()) {
+                        it.put("text", text.length() > 300 ? text.substring(0, 300) : text);
+                        String nt = args.optString("title").trim(), nb = args.optString("brief").trim();
+                        it.put("title", nt.length() > 20 ? nt.substring(0, 20) : nt);   // 內容改了，舊標題與摘要作廢（沒給新的就退回用前面的字）
+                        it.put("brief", nb.length() > 60 ? nb.substring(0, 60) : nb);
+                    }
                     if (args.has("done") && it.optString("kind").equals("todo")) {
                         boolean done = args.optBoolean("done");
                         it.put("done", done);
@@ -251,6 +279,16 @@ final class Memory {
                         if (!it.optBoolean("pinned") && (scope.equals("all") || scope.equals(it.optString("kind")))) it.put("deleted", true);
                     save(c, d);
                     return "已刪除 " + n + " 項";
+                }
+                case "memory_read": {
+                    JSONArray ids = args.optJSONArray("ids");
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; ids != null && i < ids.length() && i < 8; i++) {
+                        JSONObject it = byId(d, ids.optInt(i, -1));
+                        if (it == null) { sb.append("#").append(ids.optInt(i, -1)).append(" 找不到\n"); continue; }
+                        sb.append("#").append(it.optInt("id")).append(" ").append(it.optString("text")).append("\n");
+                    }
+                    return sb.length() == 0 ? "錯誤：ids 不能空" : sb.toString().trim();
                 }
                 case "memory_list": {
                     boolean includeDone = args.optBoolean("include_done", false);

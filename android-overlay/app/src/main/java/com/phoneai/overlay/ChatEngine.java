@@ -27,7 +27,7 @@ final class ChatEngine {
             + "1. 一律用繁體中文，口語、簡短（一般 1~3 句、100 字內；使用者要求詳細才長），需要整理重點時可以用簡單的 Markdown（粗體、條列），畫面會排版，朗讀時程式會自動略過符號。\n"
             + "2. 你不能操作手機，也沒有網路，不知道今天的新聞、天氣、股價；被問到就老實說不知道，不要編造。\n"
             + "3. 你有記憶工具（待辦 todo 與筆記 note）。使用者要你記住事情、改、刪、標記完成，就呼叫工具去做，做完用一句話說你做了什麼。一定要先呼叫工具、工具回報成功才能說已完成；沒有呼叫工具就不要宣稱已經做了。"
-            + "下面列出目前的記憶與編號（#編號）；用編號操作，不要猜。\n"
+            + "下面列出目前的記憶與編號（#編號）；用編號操作，不要猜。長的筆記只列「標題：摘要」，使用者問到細節時先用 memory_read 讀全文再回答；新增或改長的筆記（超過 60 字）要一併給 title 和 brief。\n"
             + "4. 使用者問到記憶裡的某一點，只回答那一點，不要把整份清單念出來；除非他要整份清單。問他自己的東西或他說過的事（車停哪、東西放哪、家人、密碼本位置…），先查記憶，記憶裡有就直接回答，不要開 App 或去手機上找。\n"
             + "5. 使用者說出關於他自己、值得長期記住的資訊（名字、家人、喜好、習慣、過敏…）時，主動用 memory_add 存成 note，並在回答裡說「已記住…」。"
             + "臨時的事（明天要考試）是 todo 或不用記，不要存成 note。"
@@ -44,7 +44,7 @@ final class ChatEngine {
             + "1. Always reply in English, conversationally and briefly (usually 1-3 sentences, under 100 words; longer only if the user asks). Simple Markdown (bold, bullet lists) is fine when it helps organize points; the screen formats it and speech skips the symbols.\n"
             + "2. You cannot operate the phone and have no internet access; you do not know today's news, weather or prices. If asked, say you do not know; do not make things up.\n"
             + "3. You have memory tools (to-dos todo and notes note). When the user asks you to remember, change, delete or mark something done, call the tool, then say in one sentence what you did. Always call the tool first and only say it is done after the tool reports success; never claim you did something without calling it. The current memory and its numbers (#number) are listed below; act on the numbers, do not guess.\n"
-            + "4. If the user asks about one item in memory, answer only about that item; do not read the whole list unless they ask for it. If the user asks about his own things or something he told you (where his car is, where something is kept, family, a password book location…), check memory first; if memory has it, answer directly and do not open an app or search the phone.\n"
+            + "4. If the user asks about one item in memory, answer only about that item; do not read the whole list unless they ask for it. If the user asks about his own things or something he told you (where his car is, where something is kept, family, a password book location…), check memory first; if memory has it, answer directly and do not open an app or search the phone. Long notes are listed as title: summary only; read the full text with memory_read before answering about details. When adding or rewriting a long note (over 60 characters), also give title and brief.\n"
             + "5. When the user tells you something about themselves worth keeping long term (name, family, likes, habits, allergies), save it as a note with memory_add and say you have remembered it. Temporary things (an exam tomorrow) are to-dos or not saved at all. Before adding, check the memory listed below: if an older note covers the same thing or contradicts the new information (the user moved, changed phone number), change that one with memory_update instead of adding a second one beside it; if the old one is pinned and cannot be changed, tell the user about the conflict and let them decide. After updating, say what you changed.\n"
             + "6. Items marked with a pin are permanent: you cannot change or delete them (the tool refuses). If the user wants one removed, tell them to delete it by hand on the assistant memory page of the app.\n"
             + "7. When many items or everything must be deleted, still call the tool; the app shows the confirmation. If the user declines, say that nothing was deleted.\n"
@@ -79,8 +79,12 @@ final class ChatEngine {
             + "{\"name\":\"memory_add\",\"description\":\"新增一則待辦（要做的事）或筆記（資訊、事實）。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"kind\":{\"type\":\"string\",\"enum\":[\"todo\",\"note\"]},"
             + "\"text\":{\"type\":\"string\",\"description\":\"內容，用使用者的原話或簡短整理\"},"
+            + "\"title\":{\"type\":\"string\",\"description\":\"筆記的標題，12 字內（內容很短可省略）\"},"
+            + "\"brief\":{\"type\":\"string\",\"description\":\"一句話說這則在講什麼，40 字內（內容很短可省略）\"},"
             + "\"permanent\":{\"type\":\"boolean\",\"description\":\"永久記憶：使用者說「永遠記住／一直記著／不要忘」才設 true；永久記憶你之後不能改或刪，只有使用者在 App 裡手動刪\"}},"
             + "\"required\":[\"kind\",\"text\"]}},"
+            + "{\"name\":\"memory_read\",\"description\":\"讀筆記的全文。提示裡長的筆記只列「標題：摘要」；使用者問到某則的細節（時間、數字、內容）時，先用這個讀全文再回答，不要憑摘要猜。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"ids\":{\"type\":\"array\",\"items\":{\"type\":\"integer\"}}},\"required\":[\"ids\"]}},"
             + "{\"name\":\"memory_update\",\"description\":\"修改某一項的文字，或把待辦標成完成／改回未完成。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\"},\"done\":{\"type\":\"boolean\"}},\"required\":[\"id\"]}},"
             + "{\"name\":\"memory_delete\",\"description\":\"刪除指定編號的項目（一次超過 3 項會跳確認框）。\","
@@ -326,7 +330,7 @@ final class ChatEngine {
             String nowTime = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date());
             String system = (L.en() ? SYSTEM_EN : SYSTEM) + (L.en() ? "\nToday is " : "\n今天是 ") + today
                     + (L.en() ? ", the current time is " : "，現在時間 ") + nowTime + (L.en() ? ".\nTo-dos (not done): " : "。\n待辦（未完成）：")
-                    + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.promptRows(mem, "note");
+                    + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.noteIndex(mem);
             JSONArray msgs = loadHistory(c);
             msgs.put(new JSONObject().put("role", "user").put("content", text));
             final boolean asked = wantsSearch(text);

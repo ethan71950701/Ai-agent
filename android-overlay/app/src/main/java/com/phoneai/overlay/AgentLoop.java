@@ -620,7 +620,7 @@ final class AgentLoop {
         String text = a.optString("text").trim();
         if (text.isEmpty()) return "錯誤：text 不能空";
         try {
-            return Memory.runTool(c, "memory_add", new JSONObject().put("kind", "note").put("text", text), null);
+            return Memory.runTool(c, "memory_add", new JSONObject().put("kind", "note").put("text", text).put("title", a.optString("title")).put("brief", a.optString("brief")), null);
         } catch (Exception e) {
             return "存筆記失敗：" + e;
         }

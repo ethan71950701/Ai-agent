@@ -55,6 +55,21 @@ public class LogicTest {
     }
 
     @Test
+    public void noteIndexShowsShortNotesWholeAndLongOnesAsTitles() throws Exception {
+        String longText = "新竹高中205班115上課表。節次:1 8:00,2 9:10,3 10:10,4 11:10,午休,5 13:05,6 14:05,7 15:10。一:國文\\英文\\體育 二:公民\\選修生物";
+        JSONObject d = new JSONObject().put("items", new org.json.JSONArray()
+                .put(new JSONObject().put("id", 1).put("kind", "note").put("text", "車停在B2").put("done", false).put("deleted", false))
+                .put(new JSONObject().put("id", 2).put("kind", "note").put("text", longText).put("title", "課表").put("brief", "205班週一到週五課程與節次時間").put("done", false).put("deleted", false))
+                .put(new JSONObject().put("id", 3).put("kind", "note").put("text", longText).put("done", false).put("deleted", false)));
+        String idx = Memory.noteIndex(d);
+        assertTrue(idx.contains("#1 車停在B2"));
+        assertTrue(idx.contains("#2 課表：205班週一到週五課程與節次時間"));
+        assertTrue(idx.contains("memory_read"));
+        assertTrue(!idx.contains("午休"));   // 長筆記的全文不放進索引
+        assertTrue(idx.contains("#3 新竹高中205班"));   // 沒有標題的舊筆記：用前面的字
+    }
+
+    @Test
     public void parseInvokeConvertsXmlToolCall() {
         JSONObject a = AgentLoop.parseInvoke("<invoke name=\"scroll\">\n<parameter name=\"dir\">down</parameter>\n"
                 + "<parameter name=\"wait\">1.5</parameter>\n<parameter name=\"enter\">true</parameter>\n"
