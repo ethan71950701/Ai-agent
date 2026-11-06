@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1562
+
 - 頂欄毛玻璃：修好後面的內容永遠畫成「沒捲動」的頁面頂端（系統錄捲動容器時會減掉捲動量，手動畫要自己減）｜Frosted top bar: fixed the glass always showing the unscrolled top of the page (the system subtracts the scroll offset when it records a scroll container; drawing manually has to do it itself)
 
 ## 1.0.1561
