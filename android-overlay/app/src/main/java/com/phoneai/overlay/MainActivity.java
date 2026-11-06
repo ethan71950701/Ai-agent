@@ -744,7 +744,7 @@ public class MainActivity extends Activity {
         String[] slot = hr >= 5 && hr < 11 ? GREET_MORNING : hr >= 11 && hr < 17 ? GREET_DAY : hr >= 17 && hr < 23 ? GREET_EVENING : GREET_NIGHT;
         java.util.Random rnd = new java.util.Random();
         int pick = rnd.nextInt(slot.length + GREET_ANY.length);   // 時段專屬的和通用的一起抽
-        if (rnd.nextInt(4) == 0) {   // 四次大約有一次是冷笑話：點一下看答案，再點一下回到問題
+        if (rnd.nextInt(10) < 6) {   // 大約六成是冷笑話：點一下看答案，再點一下回到問題
             final String[] jk = JOKES[rnd.nextInt(JOKES.length)];
             final String q = L.t(jk[0]), an = L.t(jk[1]), hint = L.t("點一下看答案");
             final android.text.SpannableString qs = new android.text.SpannableString(q + "\n" + hint);
