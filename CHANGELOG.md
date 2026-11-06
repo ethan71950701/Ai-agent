@@ -5,7 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
-- 換分頁改成像翻頁一樣橫向滑過去：舊頁面往一邊滑出、新頁面（先在畫面外建好）從另一邊滑進來，不再先淡出再淡入，也就沒有閃一下｜Switching tabs now slides sideways like turning a page: the old page slides out and the new one (built off-screen first) slides in, so there is no fade-out-then-fade-in flash
+- 換分頁改成：新頁面的每個元件本來就在左邊或右邊，從上到下一個接一個橫向滑進來（舊頁面很快淡出），不再有空白一格的閃爍｜Switching tabs now works like this: every component of the new page starts off to the left or right and slides in one after another from top to bottom (the old page fades out quickly), with no empty-frame flash
 
 ## 1.0.1497
 
