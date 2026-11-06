@@ -116,7 +116,7 @@ public class AssistantSheet {
         content = new LinearLayout(a);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setGravity(Gravity.CENTER_HORIZONTAL);
-        content.setPadding((int) (12 * d), 0, (int) (12 * d), (int) (12 * d));
+        content.setPadding((int) (26 * d), 0, (int) (26 * d), (int) (14 * d));
 
         if (OverlayService.agentRunning) {  // 任務正在執行：面板上直接給「停止」，不用去拉通知欄
             TextView stop = new TextView(a);
@@ -159,24 +159,15 @@ public class AssistantSheet {
         wave.setVisibility(View.GONE);
         wave.setOnClickListener(v -> typeNow());   // 點聲波 = 改成打字
 
-        // 單一個深色圓角面板（仿 Gemini）：頂端小橫條；下面一列＝左邊背景模式鈕、中間輸入框（聽或思考時換成聲波）、右邊麥克風／送出
+        // 單一個深色膠囊面板（仿 Gemini，兩端是半圓、沒有頂端橫條）：一列＝左邊背景模式鈕、中間輸入框（聽或思考時換成聲波）、右邊麥克風／送出
         row = new LinearLayout(a);
         row.setOrientation(LinearLayout.VERTICAL);
         GradientDrawable pb = new GradientDrawable();
         pb.setColor(0xF2101015);
         pb.setStroke((int) Math.max(1, d), 0x26FFFFFF);
-        pb.setCornerRadius(32 * d);
+        pb.setCornerRadius(200 * d);   // 大於一半高度＝兩端是完整的半圓
         row.setBackground(pb);
-        row.setPadding((int) (10 * d), (int) (8 * d), (int) (10 * d), (int) (10 * d));
-        View handle = new View(a);
-        GradientDrawable hb = new GradientDrawable();
-        hb.setColor(0x66FFFFFF);
-        hb.setCornerRadius(2 * d);
-        handle.setBackground(hb);
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams((int) (36 * d), (int) (4 * d));
-        hlp.gravity = Gravity.CENTER_HORIZONTAL;
-        hlp.bottomMargin = (int) (4 * d);
-        row.addView(handle, hlp);
+        row.setPadding((int) (8 * d), (int) (6 * d), (int) (8 * d), (int) (6 * d));
         final LinearLayout bar = new LinearLayout(a);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
@@ -187,7 +178,7 @@ public class AssistantSheet {
         input.setTextColor(Color.WHITE);
         input.setTextSize(17);
         input.setBackground(null);                 // 底色由整個面板提供
-        input.setPadding((int) (10 * d), (int) (14 * d), (int) (10 * d), (int) (14 * d));
+        input.setPadding((int) (8 * d), (int) (14 * d), (int) (8 * d), (int) (14 * d));
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
         input.setSingleLine(true);
         input.setOnTouchListener((v, ev) -> {
