@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 載入動畫拿掉正圓，只在圓角五邊形和橢圓之間變形｜The loading animation no longer includes the plain circle; it morphs between the rounded pentagon and ellipses only
 
+## 1.0.1459
+
 - 載入動畫拿掉三角與方形，只留圓、圓角五邊形、橢圓；動作改成蓄力、突然加速旋轉並換形、輕輕回彈｜The loading animation drops the triangle and square, keeping the circle, rounded pentagon and ellipses; it now winds up, spins fast while changing shape, then settles with a small bounce
 
 ## 1.0.1458
