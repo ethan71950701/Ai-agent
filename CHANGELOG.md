@@ -7,6 +7,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 助理面板改成兩端半圓的膠囊、左右縮進去、去掉頂端橫條；聽的時候的聲波改成函數畫的連續波浪線｜The assistant panel is now a pill with semicircular ends, narrower, without the top handle; the listening sound wave is now smooth function-drawn waves
 
+## 1.0.1471
+
 - 助理面板改成像 Gemini 的底部深色面板：去掉光球，聽的時候中間是聲波條，右邊是麥克風／送出按鈕｜The assistant panel is now a Gemini-style dark bottom panel: the orb is gone, a sound-wave bar shows while listening, and the right button is a mic / send button
 
 ## 1.0.1470
