@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1542
+
 - 語音辨識時的聲波整條都會動（以前只有中間在動、兩邊很空），兩端用透明度淡出｜The listening wave now moves across its whole width (before, only the middle moved); the ends fade out with transparency
 
 ## 1.0.1541
