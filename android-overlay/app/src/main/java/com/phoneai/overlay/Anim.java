@@ -25,7 +25,9 @@ final class Anim {
      * 系統就把更新率降得很低，彈簧看起來一格一格的。這裡明確告訴系統「現在有動畫，請用高更新率」，ms 毫秒後恢復預設。
      */
     static void boostFrames(View v, long ms) {
-        if (v == null || android.os.Build.VERSION.SDK_INT < 35) return;
+        if (v == null) return;
+        monitorFrames(ms);
+        if (android.os.Build.VERSION.SDK_INT < 35) return;
         try {
             final View root = v.getRootView();
             root.setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH);
@@ -36,6 +38,45 @@ final class Anim {
             root.postDelayed(r, ms);
         } catch (Throwable ignored) { }
     }
+
+    // ---------- 診斷：動畫期間實際的畫面更新率 ----------
+    private static boolean monitoring;
+    private static long monUntil, monLast, monMax, monSum;
+    private static int monN, monSlow;
+    private static final java.util.ArrayDeque<String> FPS_LOG = new java.util.ArrayDeque<>();
+
+    /** 動畫期間記下每一幀的間隔：平均間隔就是實際更新率（8.3 毫秒≈120Hz、16.7≈60Hz、33≈30Hz），診斷頁看。 */
+    private static void monitorFrames(long ms) {
+        monUntil = Math.max(monUntil, android.os.SystemClock.uptimeMillis() + ms);
+        if (monitoring) return;
+        monitoring = true;
+        monLast = 0; monMax = 0; monSum = 0; monN = 0; monSlow = 0;
+        final android.view.Choreographer ch = android.view.Choreographer.getInstance();
+        ch.postFrameCallback(new android.view.Choreographer.FrameCallback() {
+            @Override
+            public void doFrame(long ns) {
+                long t = ns / 1_000_000L;
+                if (monLast != 0) {
+                    long g = t - monLast;
+                    monN++; monSum += g;
+                    if (g > monMax) monMax = g;
+                    if (g > 20) monSlow++;
+                }
+                monLast = t;
+                if (android.os.SystemClock.uptimeMillis() < monUntil) { ch.postFrameCallback(this); return; }
+                monitoring = false;
+                if (monN >= 6) {
+                    float avg = monSum / (float) monN;
+                    FPS_LOG.addFirst(String.format(java.util.Locale.US, "%d 幀，平均間隔 %.1f 毫秒（約 %d Hz），最長 %d 毫秒，超過 20 毫秒 %d 次",
+                            monN, avg, Math.round(1000f / avg), monMax, monSlow));
+                    while (FPS_LOG.size() > 5) FPS_LOG.removeLast();
+                }
+            }
+        });
+    }
+
+    /** 診斷頁用：最近幾次動畫期間的更新率。 */
+    static String frameInfo() { return android.text.TextUtils.join("\n　　", FPS_LOG); }
 
     static void spring(View v, DynamicAnimation.ViewProperty prop, float to, float stiffness, float damping) {
         boostFrames(v, 900);

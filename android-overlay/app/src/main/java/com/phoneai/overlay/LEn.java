@@ -934,6 +934,8 @@ final class LEn {
         m.put("目前：每天 %02d:%02d 整理", "Now: digest daily at %02d:%02d");
         m.put("目前：關閉", "Now: off");
         m.put("立即整理", "Digest now");
+        m.put("動畫期間的更新率：", "Refresh rate during animations: ");
+        m.put("（還沒量到：先按幾張卡片或開個子頁面）", "(Nothing measured yet: press a few cards or open a sub-page first)");
         m.put("便宜模型（聊天、路由、判斷）：", "Cheap model (chat, routing, decisions): ");
         m.put("看圖模型（自動操作、搜尋）：", "Vision model (auto operation, search): ");
         m.put("（內建）", " (built-in)");

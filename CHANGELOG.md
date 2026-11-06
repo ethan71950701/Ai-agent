@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 診斷頁新增「動畫期間的更新率」：量動畫與彈簧期間每一幀的實際間隔｜The diagnostics page now shows the refresh rate measured during animations and springs
+
 - 動畫與彈簧期間要求系統用高更新率（Android 15 以上），修正彈簧動畫幀數很低、看起來一格一格的｜Request a high refresh rate while animations and springs run (Android 15+), fixing springs that looked choppy because the screen dropped its refresh rate
 
 ## 1.0.1487
