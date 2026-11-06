@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 頂欄毛玻璃：標題列改成固定高度、不再收合（大標題往上收時會被切掉一半）；玻璃底色改成跟頁面背景同色，過渡不再有色差斷層｜Frosted top bar: the title bar is now a fixed height and no longer collapses (the large title used to be cut in half as it moved up), and the glass tint is the same color as the page background so the fade has no color seam
+
+## 1.0.1564
+
 - 頂欄毛玻璃：底色改成稍微提亮的淡色（不再偏暗、跟頁面色差大）；標題字往上收的時候不再被切掉一半｜Frosted top bar: the tint is now a slightly lightened soft color (no longer dark and mismatched with the page), and the title is no longer cut in half as it moves up
 
 ## 1.0.1563
