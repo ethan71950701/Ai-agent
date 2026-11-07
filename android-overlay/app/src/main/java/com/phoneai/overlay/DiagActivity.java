@@ -206,6 +206,7 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n")).append(LifeLog.read(this)).append("\n\n");
+        sb.append(L.t("更新檢查：")).append(Updater.info(this).isEmpty() ? L.t("（還沒檢查過）") : Updater.info(this)).append('\n');
         sb.append(L.t("聲紋：")).append(SpeakerId.statusText(this)).append('\n');
         sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');

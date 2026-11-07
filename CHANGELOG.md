@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 更新檢查改成列出最近的幾個版本、挑編號最大的（以前用 GitHub 的「最新」，順序可能不是編號最大）；打開 App 時每天最多檢查一次，有新版本在通知欄提醒（設定 → 更新，可關）；診斷頁新增「更新檢查」那一行｜The update check now lists recent releases and picks the highest build number (it used GitHub's "latest", which is not always the highest number); when you open the app it checks at most once a day and posts a notification for a new version (Settings → Updates, can be turned off); Diagnostics has a new "Update check" line
 - 聲紋可以選模型：CAM++（28 MB，預設）或 ERes2Net large（116 MB，較準較重）；各模型有自己的下載檔與聲紋，換模型要重新下載、重新登錄｜The voiceprint model is selectable: CAM++ (28 MB, default) or ERes2Net large (116 MB, more accurate but heavier); each has its own download and voiceprint, so switching means downloading and enrolling again
 
 ## 1.0.1574

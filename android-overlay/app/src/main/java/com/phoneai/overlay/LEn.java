@@ -282,6 +282,17 @@ final class LEn {
         m.put("先到「進階與診斷」登錄聲紋；聲音不像你時不自動送出，文字留在輸入框等你確認", "Enroll your voiceprint first under Advanced & Diagnostics; when the voice does not sound like you it is not sent automatically and the text waits in the box for you to confirm");
         m.put("聲紋門檻", "Voiceprint threshold");
         m.put("相似度低於這個值就不自動送出。你自己說話大約 0.7、刻意變聲約 0.3；調高比較嚴、調低比較鬆", "Below this similarity nothing is sent automatically. Your own voice is around 0.7 and a deliberately disguised one around 0.3; raise it to be stricter, lower it to be looser.");
+        m.put("更新", "Updates");
+        m.put("自動檢查新版本", "Check for new versions automatically");
+        m.put("有新版本時提醒我", "Notify me about new versions");
+        m.put("打開 App 時，每天最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝", "When you open the app it checks at most once a day; if there is a new version a notification appears and tapping it starts the update. Nothing is installed automatically.");
+        m.put("有新版本", "New version");
+        m.put("Vertex 有新版本", "New Vertex version");
+        m.put("最新是 1.0.", "Latest is 1.0.");
+        m.put("，目前是 1.0.", ", current is 1.0.");
+        m.put("。點一下更新", ". Tap to update");
+        m.put("更新檢查：", "Update check: ");
+        m.put("（還沒檢查過）", "(not checked yet)");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

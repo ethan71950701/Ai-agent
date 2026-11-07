@@ -229,6 +229,8 @@ public class MainActivity extends Activity {
         setContentView(root);
         root.getViewTreeObserver().addOnScrollChangedListener(this::kickGlass);   // 頁面捲動時，底欄的折射要跟著更新
         showTab(tab);
+        Updater.autoCheck(this);   // 每天最多一次，有新版本在通知欄提醒
+        if (getIntent().getBooleanExtra("do_update", false)) { getIntent().removeExtra("do_update"); Updater.start(this); }   // 點了「有新版本」通知進來：直接開始更新流程
         if (b == null && !cfg().getBoolean("onboarded", false)) startActivity(new Intent(this, OnboardingActivity.class));   // 第一次開啟：先看教學
     }
 
@@ -950,6 +952,13 @@ public class MainActivity extends Activity {
 
     private void buildFunctions() { for (Runnable r : functionSteps()) r.run(); }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent.getBooleanExtra("do_update", false)) { intent.removeExtra("do_update"); Updater.start(this); }
+    }
+
     private void startUpdate() {
         Updater.start(this);
     }
@@ -1039,6 +1048,11 @@ public class MainActivity extends Activity {
             buildLanguageGroup();
             buildReplyCardGroup();
 
+        });
+        steps.add(() -> {
+            LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("自動檢查新版本"), false);
+            Ui.switchRow(this, u, 0, 1, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每天最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
+                    cfg().getBoolean("upd_auto", true), (v, on) -> cfg().edit().putBoolean("upd_auto", on).apply());
         });
         steps.add(() -> {
             LinearLayout p = Ui.expandGroup(this, box, "shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);

@@ -49,6 +49,7 @@ final class Updater {
                 String shown = remote > 0 ? "1.0." + remote : sha.substring(0, Math.min(7, sha.length()));
                 boolean newer = remote > 0 ? remote > BuildConfig.VERSION_CODE
                         : !(installed != null && !installed.equals("dev") && !sha.isEmpty() && sha.startsWith(installed));
+                note(a, "手動檢查：最新 " + shown + "，目前 1.0." + BuildConfig.VERSION_CODE + (newer ? "，有新版本" : "，已是最新"));
                 if (!newer) {
                     done(a, L.t("已是最新版本（1.0.") + BuildConfig.VERSION_CODE + L.t("）"));
                     return;
@@ -76,9 +77,52 @@ final class Updater {
                         .setOnCancelListener(d -> busy = false)
                         .show());
             } catch (Exception e) {
+                note(a, "手動檢查失敗：" + e);
                 done(a, L.t("檢查失敗：") + e.getMessage());
             }
         }).start();
+    }
+
+    /** 診斷用：最近一次檢查更新的結果（診斷頁顯示）。 */
+    static void note(Context c, String s) {
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString("upd_info",
+                new java.text.SimpleDateFormat("MM/dd HH:mm", java.util.Locale.US).format(new java.util.Date()) + " " + s).apply();
+    }
+
+    static String info(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("upd_info", ""); }
+
+    /**
+     * 自動檢查（打開 App 時呼叫）：開關開著、距離上次檢查超過 20 小時，就在背景問一次；有新版本在通知欄提醒一則（點了就進 App 並開始更新流程）。
+     * 只提醒，不會自動安裝。
+     */
+    static void autoCheck(final Activity a) {
+        final android.content.SharedPreferences sp = a.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+        if (!sp.getBoolean("upd_auto", true)) return;
+        long now = System.currentTimeMillis();
+        if (now - sp.getLong("upd_last", 0) < 20L * 3600_000L) return;
+        sp.edit().putLong("upd_last", now).apply();
+        new Thread(() -> {
+            try {
+                JSONObject rel = latest();
+                long remote = rel == null ? 0 : runOf(rel.optString("tag_name"));
+                boolean newer = remote > BuildConfig.VERSION_CODE;
+                note(a, "自動檢查：最新 1.0." + remote + "，目前 1.0." + BuildConfig.VERSION_CODE + (newer ? "，有新版本" : "，已是最新"));
+                if (!newer || a.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+                NotificationManager nm = a.getSystemService(NotificationManager.class);
+                nm.createNotificationChannel(new NotificationChannel("update_notice", L.t("有新版本"), NotificationManager.IMPORTANCE_DEFAULT));
+                android.content.Intent it = new android.content.Intent(a, MainActivity.class).putExtra("do_update", true)
+                        .addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                nm.notify(9002, new Notification.Builder(a, "update_notice")
+                        .setSmallIcon(R.drawable.ic_stat)
+                        .setContentTitle(L.t("Vertex 有新版本"))
+                        .setContentText(L.t("最新是 1.0.") + remote + L.t("，目前是 1.0.") + BuildConfig.VERSION_CODE + L.t("。點一下更新"))
+                        .setContentIntent(android.app.PendingIntent.getActivity(a, 1, it, android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT))
+                        .setAutoCancel(true)
+                        .build());
+            } catch (Exception e) {
+                note(a, "自動檢查失敗：" + e);
+            }
+        }, "update-auto").start();
     }
 
     private static void download(Activity a, String url, long size, String name, String v) {
@@ -194,7 +238,8 @@ final class Updater {
 
     /** 最新的正式 Release；沒有就回傳 null。 */
     private static JSONObject latest() throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL("https://api.github.com/repos/" + BuildConfig.REPO + "/releases/latest").openConnection();
+        // 不用 /releases/latest：它是依「標籤那個提交的日期」排序，不一定是編號最大的；改成列出最近幾個，自己挑 build 編號最大的
+        HttpURLConnection c = (HttpURLConnection) new URL("https://api.github.com/repos/" + BuildConfig.REPO + "/releases?per_page=15").openConnection();
         c.setConnectTimeout(20000);
         c.setReadTimeout(20000);
         c.setRequestProperty("Accept", "application/vnd.github+json");
@@ -208,7 +253,16 @@ final class Updater {
         }
         if (c.getResponseCode() != 200) throw new java.io.IOException(L.t("GitHub 回應 ") + c.getResponseCode());
         try (InputStream in = c.getInputStream()) {
-            return new JSONObject(new String(in.readAllBytes(), "UTF-8"));
+            org.json.JSONArray all = new org.json.JSONArray(new String(in.readAllBytes(), "UTF-8"));
+            JSONObject best = null;
+            long bestRun = -1;
+            for (int i = 0; i < all.length(); i++) {
+                JSONObject r = all.getJSONObject(i);
+                if (r.optBoolean("draft") || r.optBoolean("prerelease")) continue;
+                long run = runOf(r.optString("tag_name"));
+                if (run > bestRun) { bestRun = run; best = r; }
+            }
+            return best;
         }
     }
 
