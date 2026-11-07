@@ -1170,6 +1170,24 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
+            {   // 任務一開始最多做幾步（不夠會問要不要再加 10 步）
+                LinearLayout innerS = Ui.card(this, g);
+                final int curS = Math.max(8, Math.min(40, cfg().getInt("max_steps", 20)));
+                final TextView ts = Ui.body(this, L.t("任務最多先做幾步") + "　" + curS);
+                ts.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                innerS.addView(ts);
+                innerS.addView(Ui.body(this, L.t("自動操作一開始最多做這麼多步；用完還沒完成，會跳出確認框問你要不要再加 10 步。步數越多越花錢，預設 20")));
+                com.google.android.material.slider.Slider slS = new com.google.android.material.slider.Slider(this);
+                slS.setValueFrom(8);
+                slS.setValueTo(40);
+                slS.setStepSize(1);
+                slS.setValue(curS);
+                slS.addOnChangeListener((sl, v, fromUser) -> {
+                    cfg().edit().putInt("max_steps", (int) v).apply();
+                    ts.setText(L.t("任務最多先做幾步") + "　" + (int) v);
+                });
+                innerS.addView(slS, new LinearLayout.LayoutParams(-1, -2));
+            }
             final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
             final int n = hasRoot ? 8 : 5;
             int k = 0;

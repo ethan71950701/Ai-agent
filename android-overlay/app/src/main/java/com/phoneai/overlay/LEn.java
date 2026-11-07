@@ -293,6 +293,9 @@ final class LEn {
         m.put("。點一下更新", ". Tap to update");
         m.put("更新檢查：", "Update check: ");
         m.put("（還沒檢查過）", "(not checked yet)");
+        m.put("已經做了 %d 步，還沒完成。要再給它 10 步繼續嗎？（每多一步會多花一點費用）", "%d steps done and the task is not finished yet. Give it 10 more steps? (Each extra step costs a little.)");
+        m.put("任務最多先做幾步", "Steps a task may take at first");
+        m.put("自動操作一開始最多做這麼多步；用完還沒完成，會跳出確認框問你要不要再加 10 步。步數越多越花錢，預設 20", "Automation may take this many steps at first; if it is not finished by then a dialog asks whether to give it 10 more. More steps cost more; the default is 20.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

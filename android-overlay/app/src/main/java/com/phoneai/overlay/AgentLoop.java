@@ -34,7 +34,10 @@ final class AgentLoop {
     static final String TREE_MODEL = "claude-haiku-5-5";   // 元件清單模式（省錢實驗）用：只看編號清單，不看截圖
     static final int WIDTH_LOOK = 720;            // look 之後那一步的截圖寬度（縮圖格子、小圖示要看清楚）
     static final int WIDTH = 432;                 // 截圖寬度（省 token，跟 agent2.py 預設一樣）
-    private static final int MAX_STEPS = 12;   // 傳訊息這種任務正常就要 8～10 步（開 App、進對話、輸入、確認、送出、檢查）
+    private static final int HARD_CAP = 60;   // 不管使用者同意加幾次，最多這麼多步（防止卡住一直跑、一直花錢）
+    /** 一開始給的步數（設定 → 執行任務時可調，預設 20）；不夠時會問使用者要不要再加 10 步。原本固定 12。 */
+    static int baseSteps(Context c) { return clamp(c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt("max_steps", 20), 8, 40); }
+    private static final int _UNUSED = 12;   // 傳訊息這種任務正常就要 8～10 步（開 App、進對話、輸入、確認、送出、檢查）
     private static final int MAX_MEASURES = 4, MAX_REMEMBER = 3, SEARCH_MAX = 2, BATCH_LIMIT = 10;
     private static final String[] TASK_BLOCK = {"付款", "轉帳", "匯款", "購買", "支付", "刪除", "密碼", "下單", "安裝", "訂閱",
             "pay", "payment", "transfer", "purchase", "buy", "delete", "password", "order", "checkout", "install", "subscribe"};   // 中文與英文的敏感詞
@@ -243,13 +246,19 @@ final class AgentLoop {
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
         int waits = 0;               // 連續 wait 的次數（相機取景這種本來就不會變的畫面，不能只看清單有沒有變）
+        int maxSteps = baseSteps(c);
         try {
-            for (int step = 1; step <= MAX_STEPS && finalSay == null; step++) {
+            for (int step = 1; step <= HARD_CAP && finalSay == null; step++) {
+                if (step > maxSteps) {   // 給的步數用完了還沒完成：問使用者要不要再加（不回應＝不同意）
+                    if (!ui.confirm(String.format(L.t("已經做了 %d 步，還沒完成。要再給它 10 步繼續嗎？（每多一步會多花一點費用）"), maxSteps))) break;
+                    maxSteps = Math.min(HARD_CAP, maxSteps + 10);
+                    if (step > maxSteps) break;
+                }
                 if (cancelled) return L.t("已停止。");
                 if (waitWhilePaused(ui)) history.add("（使用者剛暫停過、或親自操作過，畫面可能已經變了，請以最新的畫面為準）");
                 if (cancelled) return L.t("已停止。");
-                ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"));
-                OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步"), step, MAX_STEPS);
+                ui.status(L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步"));
+                OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步"), step, maxSteps);
                 // 銀行、支付類（或使用者標記保護的）App：沒問過就不把畫面送給 AI
                 String fgNow = ElementList.foregroundPackage();
                 if (fgNow != null && !st.approved.contains(fgNow) && ProtectedApps.isProtected(c, fgNow)) {
@@ -351,7 +360,7 @@ final class AgentLoop {
                 boolean noTree = tree == null;
                 if (isMessageTask(task) && st.lastTyped != null && !st.askedCats.contains("傳送訊息") && (noTree || stillInInput(tree, st.lastTyped))
                         && ("enter".equals(actName) || (("tap".equals(actName) || "batch".equals(actName)) && (noTree || !"輸入框".equals(pickKind(tree, action)))))) {
-                    OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
+                    OverlayService.showStep(c, L.t("等你確認"), step, maxSteps);
                     if (!ui.confirm(String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), st.lastTyped))) return L.t("已取消，訊息沒有送出。");
                     st.askedCats.add("傳送訊息");
                 }
@@ -391,7 +400,7 @@ final class AgentLoop {
                     case "ask_user": {
                         macroValid[0] = false;
                         String q = action.optString("question", L.t("請告訴我你要怎麼做。"));
-                        OverlayService.showStep(c, L.t("等你回答問題"), step, MAX_STEPS);
+                        OverlayService.showStep(c, L.t("等你回答問題"), step, maxSteps);
                         String ans = ui.ask(q);
                         if (ans == null) { finalSay = q; break; }   // 這個介面沒辦法問：把問題當成回答
                         if (ans.trim().isEmpty()) return L.t("已取消。");
@@ -404,7 +413,7 @@ final class AgentLoop {
                         String why = action.optString("why", L.t("這一步需要你確認"));
                         if (manual) {   // 要使用者自己動手（密碼、圖形、指紋…）：不跳會蓋住畫面的對話框，改暫停，讓他直接操作，做完按 Now Bar 的「繼續」
                             OverlayService.paused = true;
-                            OverlayService.showStep(c, L.t("等你接手"), step, MAX_STEPS);
+                            OverlayService.showStep(c, L.t("等你接手"), step, maxSteps);
                             if (!RippleAccessibilityService.showHandoff(why)) OverlayService.handoffAlert(c, why);   // 優先用懸浮窗；沒開無障礙才退回通知
                             OverlayService.refreshNotification();
                             try { c.getSystemService(android.os.Vibrator.class).vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)); } catch (Exception ignored) { }
@@ -422,7 +431,7 @@ final class AgentLoop {
                             history.add(step + ". 使用者已經同意過這一類操作（" + cat + "），不用再問，直接做");
                             break;
                         }
-                        OverlayService.showStep(c, L.t("等你確認"), step, MAX_STEPS);
+                        OverlayService.showStep(c, L.t("等你確認"), step, maxSteps);
                         if (!ui.confirm(manual ? why + L.t("\n請自己動手，完成後按確定。") : why + L.t("\n要繼續嗎？"))) return L.t("已取消。");
                         if (cat != null) st.askedCats.add(cat);
                         history.add(step + ". ask 使用者同意（" + why + "）");
@@ -436,7 +445,7 @@ final class AgentLoop {
                             break;
                         }
                         st.searches++;
-                        ui.status(L.t("第 ") + step + L.t("／") + MAX_STEPS + L.t(" 步 · 搜尋網路中"));
+                        ui.status(L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步 · 搜尋網路中"));
                         String ans = webSearch(key, q);
                         history.add(step + ". " + (ans != null ? "搜尋「" + q + "」得到：" + (ans.length() > 300 ? ans.substring(0, 300) : ans)
                                 : "搜尋「" + q + "」失敗，請改用畫面操作"));
@@ -513,7 +522,7 @@ final class AgentLoop {
         } else {
             cardNote = "任務沒有正常結束，沒有判斷卡片";
         }   // 搜尋結果或較長的回答才叫出回答卡片，免得「完成了」蓋住剛打開的畫面
-        return finalSay != null ? finalSay : L.t("已到最大步數（") + MAX_STEPS + L.t("），還沒完成。");
+        return finalSay != null ? finalSay : L.t("已到最大步數（") + maxSteps + L.t("），還沒完成。");
     }
 
     // ---------- 螢幕 ----------
