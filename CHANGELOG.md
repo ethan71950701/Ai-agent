@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1576
+
 - 更新檢查改成列出最近的幾個版本、挑編號最大的（以前用 GitHub 的「最新」，順序可能不是編號最大）；打開 App 時每天最多檢查一次，有新版本在通知欄提醒（設定 → 更新，可關）；診斷頁新增「更新檢查」那一行｜The update check now lists recent releases and picks the highest build number (it used GitHub's "latest", which is not always the highest number); when you open the app it checks at most once a day and posts a notification for a new version (Settings → Updates, can be turned off); Diagnostics has a new "Update check" line
 
 ## 1.0.1575
