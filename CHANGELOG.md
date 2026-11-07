@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1567
+
 - 頂欄毛玻璃：模糊更大、底色更濃，後面亮卡片和暗卡片造成的明暗落差變小｜Frosted top bar: stronger blur and tint so the brightness gap between a bright card and a dark card behind it is smaller
 
 ## 1.0.1566
