@@ -247,7 +247,11 @@ final class LEn {
         m.put("到了錄音上限，按麥克風接著說，或按送出", "Recording limit reached. Tap the mic to keep talking, or send.");
         m.put("到了錄音上限，字已放進輸入框，確認後按右邊的鈕送出", "Recording limit reached. The text is in the input box; check it and send.");
         m.put("聲紋（實驗）", "Voiceprint (experimental)");
-        m.put("下載聲紋模型（28MB）", "Download voiceprint model (28 MB)");
+        m.put("下載聲紋模型", "Download voiceprint model");
+        m.put("選擇聲紋模型", "Choose voiceprint model");
+        m.put("模型：", "Model: ");
+        m.put("CAM++（28 MB，小而快）", "CAM++ (28 MB, small and fast)");
+        m.put("ERes2Net large（116 MB，較準較重）", "ERes2Net large (116 MB, more accurate, heavier)");
         m.put("登錄我的聲音", "Enroll my voice");
         m.put("刪除聲紋", "Delete voiceprint");
         m.put("下載中…", "Downloading…");

@@ -24,11 +24,37 @@ import java.util.List;
  * 模型放在 filesDir/sherpa/speaker（按按鈕才下載，不進 repo）；聲紋向量存在設定檔，不離開手機。
  */
 final class SpeakerId {
-    static final String FILE = "campplus.onnx";
-    static final String URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/3dspeaker_speech_campplus_sv_zh-cn_16k-common.onnx";
-    static final long SIZE = 28281138L;
-    static final String SHA = "f682b514c05d947ee3fa91cd6ec6c5c7543479a128373fa29b1faedccd21fd11";
-    private static final String KEY = "spk_emb", KEY_N = "spk_n";
+    /** 可選的聲紋模型：不同模型的分數尺度不一樣，所以各自有自己的資料夾與聲紋（換模型要重新登錄、重新量門檻）。 */
+    static final class Model {
+        final String id, label, file, url, sha, dirName, keySuffix;
+        final long size;
+        Model(String id, String label, String file, String url, long size, String sha, String dirName, String keySuffix) {
+            this.id = id; this.label = label; this.file = file; this.url = url; this.size = size; this.sha = sha; this.dirName = dirName; this.keySuffix = keySuffix;
+        }
+    }
+    private static final String BASE = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/";
+    static final Model[] MODELS = {
+            // 第一個模型沿用舊的資料夾與設定鍵（dirName 為 "speaker"、keySuffix 為空），已經登錄的聲紋不會不見
+            new Model("campplus", "CAM++（28 MB，小而快）", "campplus.onnx", BASE + "3dspeaker_speech_campplus_sv_zh-cn_16k-common.onnx",
+                    28281138L, "f682b514c05d947ee3fa91cd6ec6c5c7543479a128373fa29b1faedccd21fd11", "speaker", ""),
+            new Model("eres2net_large", "ERes2Net large（116 MB，較準較重）", "eres2net_large.onnx", BASE + "3dspeaker_speech_eres2net_large_sv_zh-cn_3dspeaker_16k.onnx",
+                    116058710L, "19547e85b6c14ec44b8add4e7cb9ce353c7e995d4f1c9ffd408176ac3a2d6895", "speaker_eres2net_large", "_eres2net_large"),
+    };
+
+    static Model model(Context c) {
+        String id = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("spk_model", MODELS[0].id);
+        for (Model m : MODELS) if (m.id.equals(id)) return m;
+        return MODELS[0];
+    }
+
+    static void selectModel(Context c, String id) {
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString("spk_model", id).apply();
+        release();   // 換模型：舊的抽取器釋放掉
+        lastInfo = "";
+    }
+
+    private static String key(Context c) { return "spk_emb" + model(c).keySuffix; }
+    private static String keyN(Context c) { return "spk_n" + model(c).keySuffix; }
     private static final Object LOCK = new Object();
     private static final Handler UI = new Handler(Looper.getMainLooper());
     private static final long IDLE_MS = 2 * 60 * 1000L;
@@ -40,25 +66,26 @@ final class SpeakerId {
 
     private SpeakerId() { }
 
-    static File dir(Context c) { return new File(new File(c.getFilesDir(), "sherpa"), "speaker"); }
+    static File dir(Context c) { return new File(new File(c.getFilesDir(), "sherpa"), model(c).dirName); }
 
     static boolean ready(Context c) { return new File(dir(c), ".ok").exists(); }
 
-    static boolean enrolled(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString(KEY, "").length() > 0; }
+    static boolean enrolled(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString(key(c), "").length() > 0; }
 
     /** 下載並核對模型（可能在背景執行緒；進度文字交給 say）。 */
     static void download(Context c, java.util.function.Consumer<String> say) throws Exception {
+        final Model m = model(c);
         File d = dir(c);
         SherpaEngine.deleteRec(d);
         d.mkdirs();
-        File tmp = new File(d, FILE + ".part"), dest = new File(d, FILE);
+        File tmp = new File(d, m.file + ".part"), dest = new File(d, m.file);
         try {
-            ParallelDownloader.download(URL, tmp, 4, (got, total, bps, conns) ->
+            ParallelDownloader.download(m.url, tmp, 4, (got, total, bps, conns) ->
                     say.accept(String.format(java.util.Locale.US, L.t("下載聲紋模型：%d%%（%d／%d MB，%.1f MB/s）"),
                             total > 0 ? got * 100 / total : 0, got >> 20, total >> 20, bps / 1048576.0)));
-            if (tmp.length() != SIZE) throw new Exception(L.t("聲紋模型大小不對（") + tmp.length() + L.t("）"));
+            if (tmp.length() != m.size) throw new Exception(L.t("聲紋模型大小不對（") + tmp.length() + L.t("）"));
             say.accept(L.t("核對校驗碼…"));
-            if (!sha256(tmp).equalsIgnoreCase(SHA)) throw new Exception(L.t("聲紋模型校驗碼不符（不是預期的檔案，已丟棄）"));
+            if (!sha256(tmp).equalsIgnoreCase(m.sha)) throw new Exception(L.t("聲紋模型校驗碼不符（不是預期的檔案，已丟棄）"));
             if (!tmp.renameTo(dest)) throw new Exception(L.t("搬移檔案失敗"));
         } catch (Exception e) {
             tmp.delete();
@@ -92,7 +119,7 @@ final class SpeakerId {
             try {
                 if (ex == null) {
                     ex = new SpeakerEmbeddingExtractor(SpeakerEmbeddingExtractorConfig.builder()
-                            .setModel(new File(dir(c), FILE).getAbsolutePath()).setNumThreads(2).setDebug(false).build());
+                            .setModel(new File(dir(c), model(c).file).getAbsolutePath()).setNumThreads(2).setDebug(false).build());
                 }
                 OnlineStream s = ex.createStream();
                 try {
@@ -149,19 +176,19 @@ final class SpeakerId {
             n++;
         }
         if (sum == null) return 0;
-        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString(KEY, encode(normalize(sum))).putInt(KEY_N, n).apply();
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString(key(c), encode(normalize(sum))).putInt(keyN(c), n).apply();
         return n;
     }
 
     static void clear(Context c) {
-        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().remove(KEY).remove(KEY_N).apply();
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().remove(key(c)).remove(keyN(c)).apply();
         lastInfo = "";
     }
 
     /** 這段聲音跟登錄聲紋的餘弦相似度；沒登錄、模型沒下載或太短回 NaN。 */
     static double score(Context c, float[] samples) {
         SharedPreferences sp = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
-        String enc = sp.getString(KEY, "");
+        String enc = sp.getString(key(c), "");
         if (enc.isEmpty() || !ready(c) || samples.length < SpeechCapture.RATE * 3 / 2) return Double.NaN;
         float[] me = decode(enc);
         float[] e = embed(c, samples);
@@ -184,7 +211,7 @@ final class SpeakerId {
         String secs = String.format(java.util.Locale.US, "%.1f", samples.length / (float) SpeechCapture.RATE);
         lastInfo = Double.isNaN(s) ? L.t("上一句太短（") + secs + L.t(" 秒），沒有比對")
                 : String.format(java.util.Locale.US, L.t("上一句跟你的聲紋相似度 %.2f（%s 秒）"), s, secs);
-        LifeLog.add(c, "聲紋：" + (Double.isNaN(s) ? "太短" : String.format(java.util.Locale.US, "%.2f", s)) + "（" + secs + " 秒）");
+        LifeLog.add(c, "聲紋（" + model(c).id + "）：" + (Double.isNaN(s) ? "太短" : String.format(java.util.Locale.US, "%.2f", s)) + "（" + secs + " 秒）");
     }
 
     /** 在背景算相似度（只記錄，診斷用）。 */
@@ -205,7 +232,7 @@ final class SpeakerId {
 
     static String statusText(Context c) {
         String model = ready(c) ? L.t("模型已下載") : L.t("模型還沒下載");
-        String me = enrolled(c) ? L.t("已登錄（") + c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt(KEY_N, 0) + L.t(" 段）") : L.t("還沒登錄");
-        return model + "、" + me + (lastInfo.isEmpty() ? "" : "\n　" + lastInfo);
+        String me = enrolled(c) ? L.t("已登錄（") + c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt(keyN(c), 0) + L.t(" 段）") : L.t("還沒登錄");
+        return L.t("模型：") + L.t(model(c).label) + "\n　" + model + "、" + me + (lastInfo.isEmpty() ? "" : "\n　" + lastInfo);
     }
 }

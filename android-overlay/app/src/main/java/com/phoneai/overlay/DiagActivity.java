@@ -59,8 +59,9 @@ public class DiagActivity extends Activity {
         Ui.section(this, box, L.t("聲紋（實驗）"));
         spkStatus = Ui.body(this, SpeakerId.statusText(this));
         Ui.card(this, box).addView(spkStatus);
+        Ui.buttons(this, box, Ui.button(this, L.t("選擇聲紋模型"), v -> chooseSpeakerModel()));
         Ui.buttons(this, box,
-                Ui.button(this, L.t("下載聲紋模型（28MB）"), v -> downloadSpeaker()),
+                Ui.button(this, L.t("下載聲紋模型"), v -> downloadSpeaker()),
                 Ui.button(this, L.t("登錄我的聲音"), v -> enrollVoice()),
                 Ui.button(this, L.t("刪除聲紋"), v -> { SpeakerId.clear(this); spkStatus.setText(SpeakerId.statusText(this)); refresh(); }));
         Ui.buttons(this, box, Ui.button(this, L.t("重建玻璃（底欄變形時按）"), v ->
@@ -68,6 +69,23 @@ public class DiagActivity extends Activity {
     }
 
     private TextView spkStatus;
+
+    /** 選聲紋模型：每個模型各有自己的聲紋與下載檔，換了要重新下載、重新登錄。 */
+    private void chooseSpeakerModel() {
+        final String[] names = new String[SpeakerId.MODELS.length];
+        int cur = 0;
+        for (int i = 0; i < names.length; i++) {
+            names[i] = L.t(SpeakerId.MODELS[i].label);
+            if (SpeakerId.MODELS[i].id.equals(SpeakerId.model(this).id)) cur = i;
+        }
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("選擇聲紋模型"))
+                .setSingleChoiceItems(names, cur, (dlg, which) -> {
+                    SpeakerId.selectModel(this, SpeakerId.MODELS[which].id);
+                    spkStatus.setText(SpeakerId.statusText(this));
+                    refresh();
+                    dlg.dismiss();
+                }).setNegativeButton(L.t("取消"), null).show();
+    }
 
     private void downloadSpeaker() {
         spkStatus.setText(L.t("下載中…"));
