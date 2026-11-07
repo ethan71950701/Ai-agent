@@ -60,6 +60,7 @@ final class SpeechCapture {
     /** 最近一次錄音：前面分段已經辨識好的文字、以及最後一段有沒有人聲（給 {@link #recognizeFinal} 用）。 */
     private static volatile String lastCommitted = "";
     private static volatile boolean lastSegSpeech;
+    private static volatile short[] lastAll;   // 最近一次錄音的前 20 秒（聲紋比對用）
 
     private String committedNow() { synchronized (committed) { return committed.toString(); } }
 
@@ -95,6 +96,8 @@ final class SpeechCapture {
 
     /** 說完之後的最後辨識：前面分段辨識好的文字 ＋ 最後一段（沒有人聲就不辨識）。 */
     static String recognizeFinal(android.content.Context c, short[] pcm) {
+        short[] all = lastAll;
+        if (all != null && all.length > 0) SpeakerId.scoreAsync(c, toFloat(all));   // 聲紋（實驗）：背景算跟你登錄的聲紋像不像，只記錄、不影響辨識
         String head = lastCommitted;
         String tail = "";
         if (lastSegSpeech && pcm != null && pcm.length > RATE / 5) tail = SherpaEngine.recognize(c, toFloat(pcm), RATE);
@@ -190,6 +193,7 @@ final class SpeechCapture {
                 for (java.util.concurrent.Future<?> f : commitFutures) { try { f.get(40, java.util.concurrent.TimeUnit.SECONDS); } catch (Throwable ignored) { } }
             }
             lastCommitted = committedNow();
+            lastAll = join(chunks, 0, Math.min(total, RATE * 20));
             lastSegSpeech = segSpeech || (segStart == 0 && spoke);
             try {   // 診斷：為什麼停止錄音（語音被提早切掉、或自己送出時，看「最近事件」）
                 String why = cancel ? "被取消" : stop ? "手動停止" : !spoke ? "沒開口" : total > RATE * 180 ? "到了 3 分鐘上限" : "停頓超過 " + String.format(java.util.Locale.US, "%.1f", endChunks / 10f) + " 秒";

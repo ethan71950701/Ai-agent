@@ -55,8 +55,75 @@ public class DiagActivity extends Activity {
                 Ui.button(this, L.t("清除"), v -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("清除錯誤紀錄？"))
                         .setPositiveButton(L.t("清除"), (d, w) -> { CrashLog.clear(this); refresh(); })
                         .setNegativeButton(L.t("取消"), null).show()));
+        // 聲紋（實驗）：只量不攔。下載模型、登錄自己的聲音後，每次說話都會算「跟你的聲紋有多像」，在狀態裡看
+        Ui.section(this, box, L.t("聲紋（實驗）"));
+        spkStatus = Ui.body(this, SpeakerId.statusText(this));
+        Ui.card(this, box).addView(spkStatus);
+        Ui.buttons(this, box,
+                Ui.button(this, L.t("下載聲紋模型（28MB）"), v -> downloadSpeaker()),
+                Ui.button(this, L.t("登錄我的聲音"), v -> enrollVoice()),
+                Ui.button(this, L.t("刪除聲紋"), v -> { SpeakerId.clear(this); spkStatus.setText(SpeakerId.statusText(this)); refresh(); }));
         Ui.buttons(this, box, Ui.button(this, L.t("重建玻璃（底欄變形時按）"), v ->
                 android.widget.Toast.makeText(this, MainActivity.rebuildGlass() ? L.t("已重建，回到首頁看看有沒有恢復") : L.t("主畫面不在，沒有東西可以重建"), android.widget.Toast.LENGTH_LONG).show()));
+    }
+
+    private TextView spkStatus;
+
+    private void downloadSpeaker() {
+        spkStatus.setText(L.t("下載中…"));
+        new Thread(() -> {
+            try {
+                SpeakerId.download(this, m -> runOnUiThread(() -> spkStatus.setText(m)));
+                runOnUiThread(() -> spkStatus.setText(SpeakerId.statusText(this)));
+            } catch (Throwable t) {
+                CrashLog.w("聲紋模型下載", t);
+                runOnUiThread(() -> spkStatus.setText(L.t("下載失敗：") + t.getMessage()));
+            }
+        }, "speaker-download").start();
+    }
+
+    private static final String[] PHRASES = {"今天天氣很好，我想出去走走。", "請幫我設定一個明天早上的鬧鐘。", "打開設定，看看電池還剩多少。"};
+
+    private void enrollVoice() {
+        if (!SpeakerId.ready(this)) { android.widget.Toast.makeText(this, L.t("請先下載聲紋模型"), android.widget.Toast.LENGTH_LONG).show(); return; }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 41);
+            return;
+        }
+        enrollRound(0, new java.util.ArrayList<>());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] grants) {
+        super.onRequestPermissionsResult(code, perms, grants);
+        if (code == 41 && grants.length > 0 && grants[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) enrollVoice();
+    }
+
+    /** 登錄聲紋：連續錄 3 句（每句用正常的音量、速度念出來），算好平均存起來。 */
+    private void enrollRound(final int i, final java.util.List<float[]> got) {
+        if (i >= PHRASES.length) {
+            spkStatus.setText(L.t("計算聲紋…"));
+            new Thread(() -> {
+                int n = SpeakerId.enroll(this, got);
+                runOnUiThread(() -> { spkStatus.setText(n > 0 ? SpeakerId.statusText(this) : L.t("登錄失敗，請再試一次")); refresh(); });
+            }, "speaker-enroll").start();
+            return;
+        }
+        spkStatus.setText(L.t("第 ") + (i + 1) + L.t("／3 句，請用平常的聲音念：") + "\n　" + PHRASES[i]);
+        SpeechCapture.start(new SpeechCapture.Cb() {
+            @Override public void onListening() { }
+            @Override public void onLevel(float v) { }
+            @Override public void onDone(short[] pcm) {
+                if (pcm == null || pcm.length < SpeechCapture.RATE * 2) {   // 沒聽到或太短（少於 2 秒）：同一句重來
+                    android.widget.Toast.makeText(DiagActivity.this, L.t("太短或沒聽到，這一句再念一次"), android.widget.Toast.LENGTH_SHORT).show();
+                    enrollRound(i, got);
+                    return;
+                }
+                got.add(SpeechCapture.toFloat(pcm));
+                enrollRound(i + 1, got);
+            }
+            @Override public void onError(String msg) { spkStatus.setText(L.t("錄音失敗：") + msg); }
+        });
     }
 
     /** 一個欄位實際用的服務與模型；Claude 沒另外選模型時顯示內建名稱。 */
@@ -119,6 +186,7 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n")).append(LifeLog.read(this)).append("\n\n");
+        sb.append(L.t("聲紋：")).append(SpeakerId.statusText(this)).append('\n');
         sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');
         sb.append(L.t("底欄觸控：")).append(GlassBar.touchInfo).append('\n');
         sb.append(L.t("動畫期間的更新率：")).append(Anim.frameInfo().isEmpty() ? L.t("（還沒量到：先按幾張卡片或開個子頁面）") : Anim.frameInfo()).append('\n');
