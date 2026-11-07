@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 頂欄毛玻璃改成漸進式模糊：標題列後面最糊，往下模糊半徑慢慢變小直到清楚，不再用「淡出」，所以沒有明顯的邊與色差｜Frosted top bar now uses progressive blur: strongest behind the bar and shrinking smoothly to fully sharp below it, instead of a fade, so there is no visible edge or color step
 - 頂欄毛玻璃：模糊更大、底色更濃，後面亮卡片和暗卡片造成的明暗落差變小｜Frosted top bar: stronger blur and tint so the brightness gap between a bright card and a dark card behind it is smaller
 
 ## 1.0.1566

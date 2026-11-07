@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.RecordingCanvas;
 import android.graphics.RenderEffect;
 import android.graphics.RenderNode;
+import android.graphics.RuntimeShader;
 import android.graphics.Shader;
 import android.os.SystemClock;
 import android.view.View;
@@ -15,10 +16,32 @@ import android.view.View;
  * 不折射，只有模糊（比底欄的液態玻璃單純）。內容來源是捲動區；捲動時、版面變動時、換分頁後的一小段時間會重畫。
  */
 final class FrostView extends View {
+    /** 漸進式模糊：越靠上面越糊（最大半徑 maxR）、往下半徑慢慢變小到 0（清楚）；每個像素在它周圍的圓盤裡取樣平均。 */
+    private static final String AGSL = "uniform shader backdrop;\n"
+            + "uniform float height;\n"     // 這塊玻璃的高度（像素）
+            + "uniform float fade;\n"       // 從最下緣往上多少像素內，模糊半徑由 0 漸增到 maxR
+            + "uniform float maxR;\n"
+            + "half4 main(float2 xy) {\n"
+            + "    float t = clamp((height - xy.y) / fade, 0.0, 1.0);\n"
+            + "    t = t * t * (3.0 - 2.0 * t);\n"          // smoothstep：兩端平滑，沒有「邊」
+            + "    float r = maxR * t;\n"
+            + "    if (r < 0.75) return backdrop.eval(xy);\n"
+            + "    half4 acc = half4(0.0);\n"
+            + "    for (int i = 0; i < 20; i++) {\n"
+            + "        float a = float(i) * 2.39996323;\n"  // 黃金角：取樣點均勻散在圓盤裡
+            + "        float rr = sqrt((float(i) + 0.5) / 20.0) * r;\n"
+            + "        acc += backdrop.eval(xy + float2(cos(a), sin(a)) * rr);\n"
+            + "    }\n"
+            + "    return acc / 20.0;\n"
+            + "}\n";
+    private RuntimeShader progressive;
+    private boolean progressiveFailed;
     private View source;
     private RenderNode node = new RenderNode("frost");
     private final Paint tint = new Paint();
     private final Paint mask = new Paint();
+    private final Paint tintRamp = new Paint();
+    private static final float FADE_DP = 76f;   // 從清楚到最模糊的距離
     private final float d;
     private long until;
 
@@ -66,7 +89,22 @@ final class FrostView extends View {
             source.getLocationOnScreen(b);
             node.setPosition(0, 0, w, h);
             float r = 22f * d;   // 模糊更大一點：亮的卡片色塊往旁邊散開、被周圍的暗色拉平
-            node.setRenderEffect(RenderEffect.createBlurEffect(r, r, Shader.TileMode.MIRROR));
+            RenderEffect fx = null;
+            if (!progressiveFailed) {
+                try {   // 漸進式模糊：先做一層小模糊把取樣點之間的空隙抹平，再依高度決定每個像素再散開多少
+                    if (progressive == null) progressive = new RuntimeShader(AGSL);
+                    progressive.setFloatUniform("height", h);
+                    progressive.setFloatUniform("fade", Math.min(h, FADE_DP * d));
+                    progressive.setFloatUniform("maxR", r);
+                    fx = RenderEffect.createChainEffect(RenderEffect.createRuntimeShaderEffect(progressive, "backdrop"),
+                            RenderEffect.createBlurEffect(5f * d, 5f * d, Shader.TileMode.MIRROR));
+                } catch (Throwable t) {
+                    progressiveFailed = true;   // 著色器編譯不過：退回一般的均勻模糊
+                    CrashLog.w("頂欄毛玻璃（漸進式模糊）", t);
+                }
+            }
+            if (fx == null) fx = RenderEffect.createBlurEffect(r, r, Shader.TileMode.MIRROR);
+            node.setRenderEffect(fx);
             RecordingCanvas rc = node.beginRecording(w, h);
             rc.drawColor(Ui.attr(getContext(), com.google.android.material.R.attr.colorSurface));
             rc.translate(b[0] - a[0], b[1] - a[1]);   // 捲動區在這塊玻璃座標裡的位置
@@ -98,10 +136,15 @@ final class FrostView extends View {
         int sc = canvas.saveLayer(0, 0, w, h, null);
         try {
             canvas.drawRenderNode(node);
-            canvas.drawRect(0, 0, w, h, tint);
-            float fade = Math.min(h, 44f * d);
-            mask.setShader(new android.graphics.LinearGradient(0, h - fade, 0, h, 0xFF000000, 0x00000000, Shader.TileMode.CLAMP));
-            canvas.drawRect(0, h - fade, w, h, mask);
+            float fade = Math.min(h, FADE_DP * d);
+            // 底色的不透明度跟模糊一起由濃漸淡：最下面完全清楚的地方沒有底色
+            int base = tint.getColor() & 0x00FFFFFF, topAlpha = tint.getColor() >>> 24;
+            tintRamp.setShader(new android.graphics.LinearGradient(0, h - fade, 0, h - 6f * d, (topAlpha << 24) | base, base, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, 0, w, h, tintRamp);
+            // 最後一小段再用遮罩淡出，接上真正的內容，避免對位差一兩個像素時出現邊
+            float tail = Math.min(h, 16f * d);
+            mask.setShader(new android.graphics.LinearGradient(0, h - tail, 0, h, 0xFF000000, 0x00000000, Shader.TileMode.CLAMP));
+            canvas.drawRect(0, h - tail, w, h, mask);
         } finally {
             canvas.restoreToCount(sc);
         }

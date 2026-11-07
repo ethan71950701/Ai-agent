@@ -240,7 +240,7 @@ final class Ui {
 
         private static void place(View child, View dependency) {
             // 玻璃的底邊比標題列再往下多 20dp，最下面 44dp 漸漸變透明：模糊的玻璃慢慢過渡到清楚的內容，不要一條硬邊
-            child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight() + 20f * child.getResources().getDisplayMetrics().density);
+            child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight() + 52f * child.getResources().getDisplayMetrics().density);   // 玻璃往標題列下面再延伸 52dp，漸進式模糊在這一段由濃變到清楚
             child.invalidate();
         }
     }
