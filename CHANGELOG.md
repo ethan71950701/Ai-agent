@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 登錄聲紋改成 4 句話、每句念 2 次（共 8 段），聲紋比較穩｜Voiceprint enrollment is now 4 sentences read twice each (8 clips) for a steadier voiceprint
+
+## 1.0.1570
+
 - 聲紋實驗（診斷頁，只量不攔）：可下載聲紋模型（28MB）、念三句話登錄自己的聲音，之後每次說話都會算「跟你的聲紋有多像」，在診斷頁與最近事件看；不影響任何功能｜Voiceprint experiment (Diagnostics, measure only): download the voiceprint model (28 MB), read three sentences to enroll your voice; afterwards every utterance is scored for how much it resembles your voiceprint, shown in Diagnostics and Recent events; it changes no behavior
 
 ## 1.0.1569
