@@ -82,7 +82,8 @@ public class DiagActivity extends Activity {
         }, "speaker-download").start();
     }
 
-    private static final String[] PHRASES = {"今天天氣很好，我想出去走走。", "請幫我設定一個明天早上的鬧鐘。", "打開設定，看看電池還剩多少。"};
+    private static final String[] PHRASES = {"今天天氣很好，我想出去走走。", "請幫我設定一個明天早上的鬧鐘。", "打開設定，看看電池還剩多少。", "幫我查一下附近有什麼好吃的。"};
+    private static final int REPEAT = 2;   // 每一句念兩次（像小愛同學登錄聲紋那樣，同一句多念幾次，聲紋比較穩）
 
     private void enrollVoice() {
         if (!SpeakerId.ready(this)) { android.widget.Toast.makeText(this, L.t("請先下載聲紋模型"), android.widget.Toast.LENGTH_LONG).show(); return; }
@@ -99,9 +100,10 @@ public class DiagActivity extends Activity {
         if (code == 41 && grants.length > 0 && grants[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) enrollVoice();
     }
 
-    /** 登錄聲紋：連續錄 3 句（每句用正常的音量、速度念出來），算好平均存起來。 */
+    /** 登錄聲紋：4 句話、每句念 2 次（共 8 段），用正常的音量與速度念，算好平均存起來。 */
     private void enrollRound(final int i, final java.util.List<float[]> got) {
-        if (i >= PHRASES.length) {
+        final int total = PHRASES.length * REPEAT;
+        if (i >= total) {
             spkStatus.setText(L.t("計算聲紋…"));
             new Thread(() -> {
                 int n = SpeakerId.enroll(this, got);
@@ -109,7 +111,7 @@ public class DiagActivity extends Activity {
             }, "speaker-enroll").start();
             return;
         }
-        spkStatus.setText(L.t("第 ") + (i + 1) + L.t("／3 句，請用平常的聲音念：") + "\n　" + PHRASES[i]);
+        spkStatus.setText(L.t("第 ") + (i + 1) + "／" + total + L.t(" 次，請用平常的聲音念：") + "\n　" + PHRASES[i / REPEAT] + (i % REPEAT == 1 ? L.t("（再念一次）") : ""));
         SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { }
             @Override public void onLevel(float v) { }

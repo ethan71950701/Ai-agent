@@ -259,7 +259,8 @@ final class LEn {
         m.put("請先下載聲紋模型", "Download the voiceprint model first");
         m.put("計算聲紋…", "Computing voiceprint…");
         m.put("登錄失敗，請再試一次", "Enrollment failed, please try again");
-        m.put("／3 句，請用平常的聲音念：", " of 3, please read in your normal voice: ");
+        m.put(" 次，請用平常的聲音念：", ", please read in your normal voice: ");
+        m.put("（再念一次）", " (once more)");
         m.put("太短或沒聽到，這一句再念一次", "Too short or not heard, read this one again");
         m.put("錄音失敗：", "Recording failed: ");
         m.put("聲紋：", "Voiceprint: ");
