@@ -29,7 +29,7 @@ final class FrostView extends View {
         int surface = Ui.attr(c, com.google.android.material.R.attr.colorSurface);
         int onSurface = Ui.attr(c, com.google.android.material.R.attr.colorOnSurface);
         // 玻璃的底色：就是頁面的背景色（約 45% 不透明）。沒有內容透出來的地方，玻璃跟頁面一模一樣，漸層過渡就不會有色差、斷層
-        tint.setColor((surface & 0x00FFFFFF) | 0x73000000);
+        tint.setColor((surface & 0x00FFFFFF) | 0x9E000000);   // 62% 不透明：後面的亮卡片（例如青色那張）和暗卡片的色差被壓小，一整條比較均勻
         mask.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));   // 漸層遮罩：留下玻璃的程度 = 遮罩的不透明度
     }
 
@@ -65,7 +65,7 @@ final class FrostView extends View {
             getLocationOnScreen(a);
             source.getLocationOnScreen(b);
             node.setPosition(0, 0, w, h);
-            float r = 14f * d;
+            float r = 22f * d;   // 模糊更大一點：亮的卡片色塊往旁邊散開、被周圍的暗色拉平
             node.setRenderEffect(RenderEffect.createBlurEffect(r, r, Shader.TileMode.MIRROR));
             RecordingCanvas rc = node.beginRecording(w, h);
             rc.drawColor(Ui.attr(getContext(), com.google.android.material.R.attr.colorSurface));

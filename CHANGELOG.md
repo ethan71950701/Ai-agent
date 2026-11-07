@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 頂欄毛玻璃：模糊更大、底色更濃，後面亮卡片和暗卡片造成的明暗落差變小｜Frosted top bar: stronger blur and tint so the brightness gap between a bright card and a dark card behind it is smaller
 - 頂欄毛玻璃：修好玻璃位置錯（固定高度的標題列沒有後續通知，玻璃停在高度 0 時算的位置）與標題消失（改用工具列自己的標題）｜Frosted top bar: fixed the glass being misplaced (a fixed-height bar sends no further change notifications, so the glass stayed at the position computed while its height was still 0) and the missing title (it now uses the toolbar's own title)
 
 ## 1.0.1565
