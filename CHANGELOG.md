@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1575
+
 - 聲紋可以選模型：CAM++（28 MB，預設）或 ERes2Net large（116 MB，較準較重）；各模型有自己的下載檔與聲紋，換模型要重新下載、重新登錄｜The voiceprint model is selectable: CAM++ (28 MB, default) or ERes2Net large (116 MB, more accurate but heavier); each has its own download and voiceprint, so switching means downloading and enrolling again
 
 ## 1.0.1574
