@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1573
+
 - 新增「只回應我的聲音（實驗）」開關與「聲紋門檻」滑桿（設定 → 語音，預設關）：聲音跟登錄的聲紋不像時，不自動送出，文字留在輸入框等你確認｜New "Only respond to my voice (experimental)" switch and "Voiceprint threshold" slider (Settings → Voice, off by default): when the voice does not match your enrolled voiceprint nothing is sent automatically and the text waits in the box for you to confirm
 
 ## 1.0.1572
