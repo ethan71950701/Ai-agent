@@ -114,6 +114,17 @@ final class SystemIntents {
         return "已打開撥號畫面（" + n + "），要自己按撥出";
     }
 
+    /** 用 Google 地圖導航到某個地方（google.navigation: 意圖，直接開始導航，預設開車）；沒有 Google 地圖就退回在地圖上顯示。place 寫「關心路 麥當勞」這樣的搜尋字串就行，Google 地圖會挑離你最近的符合結果。 */
+    static String navigateTo(Context c, String place, String mode) {
+        String p = place == null ? "" : place.trim();
+        if (p.isEmpty()) return "錯誤：沒有地點";
+        String m = "walk".equals(mode) ? "w" : "bike".equals(mode) ? "b" : "transit".equals(mode) ? "r" : "d";   // d 開車、w 走路、b 騎車、r 大眾運輸
+        String uri = "google.navigation:q=" + Uri.encode(p) + "&mode=" + m;
+        Intent it = new Intent(Intent.ACTION_VIEW, Uri.parse(uri)).setPackage("com.google.android.apps.maps");
+        if (start(c, "-a android.intent.action.VIEW -d " + q(uri) + " com.google.android.apps.maps", it)) return "已用 Google 地圖開始導航到「" + p + "」";
+        return showOnMap(c, p) + "（這支手機沒有 Google 地圖，只能顯示地點，不能導航）";
+    }
+
     /** 在地圖上搜尋或導航到某個地方（geo: 意圖，顯示地點，不會自動開始導航）。 */
     static String showOnMap(Context c, String place) {
         String p = place == null ? "" : place.trim();
