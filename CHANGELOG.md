@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1570
+
 - 聲紋實驗（診斷頁，只量不攔）：可下載聲紋模型（28MB）、念三句話登錄自己的聲音，之後每次說話都會算「跟你的聲紋有多像」，在診斷頁與最近事件看；不影響任何功能｜Voiceprint experiment (Diagnostics, measure only): download the voiceprint model (28 MB), read three sentences to enroll your voice; afterwards every utterance is scored for how much it resembles your voiceprint, shown in Diagnostics and Recent events; it changes no behavior
 
 ## 1.0.1569
