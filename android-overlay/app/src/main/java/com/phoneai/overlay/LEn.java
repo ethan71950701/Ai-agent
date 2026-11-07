@@ -248,8 +248,6 @@ final class LEn {
         m.put("說話中途停頓超過這個時間，就當作說完。常被切掉就調長，覺得等太久就調短", "A pause longer than this ends your sentence. Raise it if you get cut off, lower it if the wait feels long.");
         m.put("到了錄音上限，按麥克風接著說，或按送出", "Recording limit reached. Tap the mic to keep talking, or send.");
         m.put("到了錄音上限，字已放進輸入框，確認後按右邊的鈕送出", "Recording limit reached. The text is in the input box; check it and send.");
-        m.put("頂欄毛玻璃（實驗）", "Frosted top bar (experimental)");
-        m.put("功能、設定頁的標題列改成模糊的玻璃，內容捲到它後面會透出來；有問題就關掉", "The title bar on Features and Settings becomes frosted glass: content scrolling behind it shows through blurred. Turn it off if anything looks wrong.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

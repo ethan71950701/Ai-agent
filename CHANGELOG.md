@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 拿掉實驗功能「頂欄毛玻璃」，標題列回到原本的樣子（漸層淡出）｜Removed the experimental "Frosted top bar"; the title bar is back to the fade version
 - 頂欄毛玻璃改成漸進式模糊：標題列後面最糊，往下模糊半徑慢慢變小直到清楚，不再用「淡出」，所以沒有明顯的邊與色差｜Frosted top bar now uses progressive blur: strongest behind the bar and shrinking smoothly to fully sharp below it, instead of a fade, so there is no visible edge or color step
 
 ## 1.0.1567

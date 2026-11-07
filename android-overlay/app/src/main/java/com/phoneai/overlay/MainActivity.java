@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
         return super.dispatchTouchEvent(e);
     }
 
-    private void kickGlass() { FrostView fv = frostView(); if (fv != null) fv.kick(1500); if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
+    private void kickGlass() { if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
     private View bar;
     private int barItemW, barPad;
     private int shown = -1;
@@ -220,8 +220,7 @@ public class MainActivity extends Activity {
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
         LinearLayout[] c = new LinearLayout[1];
-        frostTop = cfg().getBoolean("frost_top", false);   // 頂欄毛玻璃（實驗）
-        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c, frostTop);
+        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c);
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
@@ -528,22 +527,15 @@ public class MainActivity extends Activity {
      * 換字後新的字從切換方向那一邊（畫面外）橫向滑進來，排在所有元件前面（第一個）。
      * 動畫用整個 CollapsingToolbarLayout 的位移與透明度（它自己畫標題，改標題顏色或邊距在長距離位移時文字會被擠壞）。
      */
-    /** 毛玻璃模式的標題畫在工具列上（不是 CollapsingToolbar 的大標題）。 */
-    private void setToolbarTitle(com.google.android.material.appbar.CollapsingToolbarLayout ctl, String text) {
-        for (int i = 0; i < ctl.getChildCount(); i++)
-            if (ctl.getChildAt(i) instanceof androidx.appcompat.widget.Toolbar) ((androidx.appcompat.widget.Toolbar) ctl.getChildAt(i)).setTitle(frostTop ? text : null);
-    }
-
     private void animateTitle(final String text, final int dir) {
         final com.google.android.material.appbar.CollapsingToolbarLayout ctl = (com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0];
         ctl.animate().cancel();
-        if (dir == 0) { ctl.setTitle(text); setToolbarTitle(ctl, text); ctl.setAlpha(1f); ctl.setTranslationX(0f); return; }
+        if (dir == 0) { ctl.setTitle(text); ctl.setAlpha(1f); ctl.setTranslationX(0f); return; }
         final float screenW = getResources().getDisplayMetrics().widthPixels;
         ctl.animate().alpha(0f).translationX(-dir * Ui.dp(this, 32)).setDuration(110)
                 .setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f))
                 .withEndAction(() -> {
                     ctl.setTitle(text);
-                    setToolbarTitle(ctl, text);
                     ctl.setAlpha(1f);
                     ctl.setTranslationX(dir * screenW);
                     ctl.animate().translationX(0f).setDuration(420)
@@ -561,31 +553,16 @@ public class MainActivity extends Activity {
     private SpeechCapture homeCapture;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
-    private boolean frostTop;
-
-    private View findAppBar() {
-        android.view.ViewGroup g = (android.view.ViewGroup) root;
-        for (int i = 0; i < g.getChildCount(); i++) if (g.getChildAt(i) instanceof com.google.android.material.appbar.AppBarLayout) return g.getChildAt(i);
-        return null;
-    }
-
-    private FrostView frostView() {
-        Object t = root == null ? null : root.getTag(Ui.R_FROST);
-        return t instanceof FrostView ? (FrostView) t : null;
-    }
-
     private void setHomeScroll(boolean on) {
         if (root == null) return;
-        View bar = findAppBar();
-        FrostView fv = frostView();
-        if (fv != null) { fv.setVisibility(on ? View.VISIBLE : View.GONE); fv.kick(1200); }   // 首頁不捲動、沒有標題，不需要毛玻璃
+        View bar = ((android.view.ViewGroup) root).getChildAt(0);
         if (bar instanceof com.google.android.material.appbar.AppBarLayout)
             for (int i = 0; i < ((com.google.android.material.appbar.AppBarLayout) bar).getChildCount(); i++) {
                 View c = ((com.google.android.material.appbar.AppBarLayout) bar).getChildAt(i);
                 if (c.getLayoutParams() instanceof com.google.android.material.appbar.AppBarLayout.LayoutParams) {
-                    c.getLayoutParams().height = Ui.dp(this, on && !frostTop ? 116 : 56);   // 功能／設定頁的標題區縮小，首頁維持原樣；毛玻璃模式固定 56dp（不收合）
+                    c.getLayoutParams().height = Ui.dp(this, on ? 116 : 56);   // 功能／設定頁的標題區縮小，首頁維持原樣；毛玻璃模式固定 56dp（不收合）
                     ((com.google.android.material.appbar.AppBarLayout.LayoutParams) c.getLayoutParams()).setScrollFlags(
-                            on && !frostTop ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
+                            on ? com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
                                | com.google.android.material.appbar.AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED : 0);
                     c.requestLayout();
                 }
@@ -593,7 +570,6 @@ public class MainActivity extends Activity {
         if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
             androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
             sv.setNestedScrollingEnabled(on);
-            if (fv != null) sv.setPadding(0, Ui.dp(this, on ? 56 : 0), 0, 0);   // 毛玻璃模式：內容延伸到標題列後面，上面留出標題列的高度（56dp）
             sv.setOverScrollMode(on ? View.OVER_SCROLL_IF_CONTENT_SCROLLS : View.OVER_SCROLL_NEVER);
         }
     }
@@ -1051,8 +1027,6 @@ public class MainActivity extends Activity {
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
             Ui.themePicker(this, g);
-            Ui.switchRow(this, g, 0, 1, "layers", L.t("頂欄毛玻璃（實驗）"), L.t("功能、設定頁的標題列改成模糊的玻璃，內容捲到它後面會透出來；有問題就關掉"), frostTop,
-                    (v, on) -> { cfg().edit().putBoolean("frost_top", on).apply(); recreate(); });
             buildLanguageGroup();
             buildReplyCardGroup();
 
@@ -1238,7 +1212,6 @@ public class MainActivity extends Activity {
             if (glass != null) glass.resetGpu();   // 回到 App：玻璃的繪圖暫存全部重錄（見 GlassBar.resetGpu）
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
             if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
-            { FrostView fv0 = frostView(); if (fv0 != null) fv0.reset(); }
         }
         kickGlass();
     }
@@ -1282,7 +1255,6 @@ public class MainActivity extends Activity {
             if (glass != null) glass.resetGpu();
             if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
             if (homeBar instanceof GlassBar) ((GlassBar) homeBar).resetGpu();   // 首頁的玻璃輸入列也一樣
-            { FrostView fv0 = frostView(); if (fv0 != null) fv0.reset(); }
         }
     }
 
