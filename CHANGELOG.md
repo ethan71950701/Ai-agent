@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1569
+
 - 拿掉實驗功能「頂欄毛玻璃」，標題列回到原本的樣子（漸層淡出）｜Removed the experimental "Frosted top bar"; the title bar is back to the fade version
 
 ## 1.0.1568
