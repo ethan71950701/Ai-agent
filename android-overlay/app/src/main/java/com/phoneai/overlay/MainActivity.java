@@ -528,15 +528,22 @@ public class MainActivity extends Activity {
      * 換字後新的字從切換方向那一邊（畫面外）橫向滑進來，排在所有元件前面（第一個）。
      * 動畫用整個 CollapsingToolbarLayout 的位移與透明度（它自己畫標題，改標題顏色或邊距在長距離位移時文字會被擠壞）。
      */
+    /** 毛玻璃模式的標題畫在工具列上（不是 CollapsingToolbar 的大標題）。 */
+    private void setToolbarTitle(com.google.android.material.appbar.CollapsingToolbarLayout ctl, String text) {
+        for (int i = 0; i < ctl.getChildCount(); i++)
+            if (ctl.getChildAt(i) instanceof androidx.appcompat.widget.Toolbar) ((androidx.appcompat.widget.Toolbar) ctl.getChildAt(i)).setTitle(frostTop ? text : null);
+    }
+
     private void animateTitle(final String text, final int dir) {
         final com.google.android.material.appbar.CollapsingToolbarLayout ctl = (com.google.android.material.appbar.CollapsingToolbarLayout) ((Object[]) root.getTag())[0];
         ctl.animate().cancel();
-        if (dir == 0) { ctl.setTitle(text); ctl.setAlpha(1f); ctl.setTranslationX(0f); return; }
+        if (dir == 0) { ctl.setTitle(text); setToolbarTitle(ctl, text); ctl.setAlpha(1f); ctl.setTranslationX(0f); return; }
         final float screenW = getResources().getDisplayMetrics().widthPixels;
         ctl.animate().alpha(0f).translationX(-dir * Ui.dp(this, 32)).setDuration(110)
                 .setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f))
                 .withEndAction(() -> {
                     ctl.setTitle(text);
+                    setToolbarTitle(ctl, text);
                     ctl.setAlpha(1f);
                     ctl.setTranslationX(dir * screenW);
                     ctl.animate().translationX(0f).setDuration(420)

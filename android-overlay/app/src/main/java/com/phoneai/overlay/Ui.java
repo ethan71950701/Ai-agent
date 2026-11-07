@@ -149,10 +149,20 @@ final class Ui {
         ctl.setExpandedTitleColor(attr(a, com.google.android.material.R.attr.colorPrimary));   // 大標題用主題的強調色
         ctl.setCollapsedTitleTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
         ctl.setContentScrimColor(frost ? android.graphics.Color.TRANSPARENT : attr(a, com.google.android.material.R.attr.colorSurface));
-        if (frost) { ctl.setStatusBarScrimColor(android.graphics.Color.TRANSPARENT); ctl.setClipChildren(false); }
+        if (frost) {
+            ctl.setStatusBarScrimColor(android.graphics.Color.TRANSPARENT);
+            ctl.setClipChildren(false);
+            ctl.setTitleEnabled(false);   // 標題列固定高度、不收合：不用 CollapsingToolbar 的展開／收合標題（固定高度時它只會畫展開的大標題，被切掉），改用工具列自己的標題
+        }
         ctl.setExpandedTitleMarginStart(dp(a, 24));
         ctl.setExpandedTitleMarginBottom(dp(a, 20));
         com.google.android.material.appbar.MaterialToolbar tb = new com.google.android.material.appbar.MaterialToolbar(a);
+        if (frost) {
+            tb.setTitle(title);
+            tb.setTitleTextAppearance(a, com.google.android.material.R.style.TextAppearance_Material3_TitleLarge);
+            tb.setTitleTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
+            tb.setTitleMarginStart(dp(a, 8));
+        }
         if (back) {
             tb.setNavigationIcon(R.drawable.ic_back);
             tb.setNavigationOnClickListener(v -> closeToTap(a));
@@ -216,11 +226,22 @@ final class Ui {
         }
 
         @Override
+        public boolean onLayoutChild(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, int layoutDirection) {
+            parent.onLayoutChild(child, layoutDirection);   // 先排好版（有了高度），再算位置；標題列固定不動時不會再有「依賴的 View 改變」的通知，只靠那個通知會停在高度 0 時算的錯位置
+            for (View d : parent.getDependencies(child)) if (d instanceof com.google.android.material.appbar.AppBarLayout) place(child, d);
+            return true;
+        }
+
+        @Override
         public boolean onDependentViewChanged(androidx.coordinatorlayout.widget.CoordinatorLayout parent, View child, View dependency) {
+            place(child, dependency);
+            return true;
+        }
+
+        private static void place(View child, View dependency) {
             // 玻璃的底邊比標題列再往下多 20dp，最下面 44dp 漸漸變透明：模糊的玻璃慢慢過渡到清楚的內容，不要一條硬邊
             child.setTranslationY(dependency.getBottom() - child.getTop() - child.getHeight() + 20f * child.getResources().getDisplayMetrics().density);
             child.invalidate();
-            return true;
         }
     }
 
