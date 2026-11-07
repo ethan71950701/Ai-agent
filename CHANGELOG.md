@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1577
+
 - 自動操作的步數不再固定 12 步：一開始給 20 步（設定 → 執行任務時可調 8～40），用完還沒完成就跳確認框問要不要再加 10 步（最多 60 步）｜Automation is no longer capped at a fixed 12 steps: it starts with 20 (adjustable 8-40 in Settings → While running tasks), and when they run out a dialog asks whether to give it 10 more (60 at most)
 
 ## 1.0.1576
