@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 思考中的聲波改成「一個波包由左掃到右」，跟聽的時候整條隨聲音起伏明顯不同｜The thinking wave is now a single bump sweeping from left to right, clearly different from the listening wave that rises and falls with your voice across its whole width
 - 登錄聲紋改成 4 句話、每句念 2 次（共 8 段），聲紋比較穩｜Voiceprint enrollment is now 4 sentences read twice each (8 clips) for a steadier voiceprint
 
 ## 1.0.1570

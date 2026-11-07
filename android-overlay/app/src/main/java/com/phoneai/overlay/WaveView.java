@@ -67,9 +67,9 @@ public class WaveView extends View {
         long now = SystemClock.uptimeMillis();
         float dt = last == 0 ? 0.016f : Math.min(0.05f, (now - last) / 1000f);
         last = now;
-        float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.65f : idleGoal);
+        float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.8f : idleGoal);
         amp += (goal - amp) * Math.min(1f, dt * 10f);
-        phase += dt * (state == THINKING ? 1.9f : 1f);
+        phase += dt * (state == THINKING ? 1.5f : 1f);
         float t = now / 1000f;
 
         float w = getWidth(), h = getHeight(), cy = h / 2f, maxA = h * 0.5f;
@@ -83,7 +83,13 @@ public class WaveView extends View {
                 float env = 0.2f + 0.8f * (float) Math.pow(Math.sin(Math.PI * u), 0.6);   // 兩端還是會動、中間最大（以前兩端是 0，只有中間在動，整條很空）；兩端的淡出交給漸層的透明度
                 double a = Math.sin(2 * Math.PI * wv[0] * u + phase * wv[1]);
                 double b = Math.sin(2 * Math.PI * wv[2] * u + phase * wv[3]);
-                float y = cy + maxA * amp * wv[4] * breathe * env * (float) (0.65 * a + 0.35 * b);
+                float shape = env;
+                if (state == THINKING) {   // 思考：整條幾乎是平的，只有一個鼓起來的波包由左掃到右、再重來（跟聽的時候「整條隨你的聲音起伏」一眼就分得出來）
+                    float centre = (t * 0.55f) % 1.5f - 0.25f;
+                    float gdist = (u - centre) / 0.13f;
+                    shape = 0.07f + 0.93f * (float) Math.exp(-0.5f * gdist * gdist);
+                }
+                float y = cy + maxA * amp * wv[4] * breathe * shape * (float) (0.65 * a + 0.35 * b);
                 float x = u * w;
                 if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
             }
