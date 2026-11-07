@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1571
+
 - 登錄聲紋改成 4 句話、每句念 2 次（共 8 段），聲紋比較穩｜Voiceprint enrollment is now 4 sentences read twice each (8 clips) for a steadier voiceprint
 
 ## 1.0.1570
