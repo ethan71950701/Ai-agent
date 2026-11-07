@@ -172,16 +172,35 @@ final class SpeakerId {
         return dot;
     }
 
-    /** 在背景算相似度，結果寫進 lastInfo 與「最近事件」。 */
+    /** 最近一句話的相似度（NaN＝沒比對：沒登錄、模型沒下載、太短）。 */
+    static volatile double lastScore = Double.NaN;
+
+    /** 現在就算（呼叫端要在背景執行緒），結果寫進 lastScore、lastInfo 與「最近事件」。 */
+    static void scoreNow(final Context c, final float[] samples) {
+        lastScore = Double.NaN;
+        if (!enrolled(c) || !ready(c)) return;
+        double s = score(c, samples);
+        lastScore = s;
+        String secs = String.format(java.util.Locale.US, "%.1f", samples.length / (float) SpeechCapture.RATE);
+        lastInfo = Double.isNaN(s) ? L.t("上一句太短（") + secs + L.t(" 秒），沒有比對")
+                : String.format(java.util.Locale.US, L.t("上一句跟你的聲紋相似度 %.2f（%s 秒）"), s, secs);
+        LifeLog.add(c, "聲紋：" + (Double.isNaN(s) ? "太短" : String.format(java.util.Locale.US, "%.2f", s)) + "（" + secs + " 秒）");
+    }
+
+    /** 在背景算相似度（只記錄，診斷用）。 */
     static void scoreAsync(final Context c, final float[] samples) {
         if (!enrolled(c) || !ready(c)) return;
-        new Thread(() -> {
-            double s = score(c, samples);
-            String secs = String.format(java.util.Locale.US, "%.1f", samples.length / (float) SpeechCapture.RATE);
-            lastInfo = Double.isNaN(s) ? L.t("上一句太短（") + secs + L.t(" 秒），沒有比對")
-                    : String.format(java.util.Locale.US, L.t("上一句跟你的聲紋相似度 %.2f（%s 秒）"), s, secs);
-            LifeLog.add(c, "聲紋：" + (Double.isNaN(s) ? "太短" : String.format(java.util.Locale.US, "%.2f", s)) + "（" + secs + " 秒）");
-        }, "speaker-score").start();
+        new Thread(() -> scoreNow(c, samples), "speaker-score").start();
+    }
+
+    /** 「只回應我的聲音」開著、已登錄、而且最近一句有比對到、分數低於門檻：不要自動送出。比不出來（太短）就放行。 */
+    static boolean gateOn(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("spk_gate", false); }
+
+    static float threshold(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getFloat("spk_thr", 0.5f); }
+
+    static boolean rejects(Context c) {
+        double s = lastScore;
+        return gateOn(c) && enrolled(c) && ready(c) && !Double.isNaN(s) && s < threshold(c);
     }
 
     static String statusText(Context c) {

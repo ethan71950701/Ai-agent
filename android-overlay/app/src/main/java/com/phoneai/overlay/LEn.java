@@ -272,6 +272,12 @@ final class LEn {
         m.put("上一句太短（", "Last sentence too short (");
         m.put(" 秒），沒有比對", " s), not compared");
         m.put("上一句跟你的聲紋相似度 %.2f（%s 秒）", "Last sentence similarity to your voiceprint: %.2f (%s s)");
+        m.put("聲音不太像你，確認後按右邊送出", "That does not sound like you. Check it and tap send on the right.");
+        m.put("聲音不太像你，確認後按右邊的鈕送出", "That does not sound like you. Check it and tap the button on the right to send.");
+        m.put("只回應我的聲音（實驗）", "Only respond to my voice (experimental)");
+        m.put("先到「進階與診斷」登錄聲紋；聲音不像你時不自動送出，文字留在輸入框等你確認", "Enroll your voiceprint first under Advanced & Diagnostics; when the voice does not sound like you it is not sent automatically and the text waits in the box for you to confirm");
+        m.put("聲紋門檻", "Voiceprint threshold");
+        m.put("相似度低於這個值就不自動送出。你自己說話大約 0.7、刻意變聲約 0.3；調高比較嚴、調低比較鬆", "Below this similarity nothing is sent automatically. Your own voice is around 0.7 and a deliberately disguised one around 0.3; raise it to be stricter, lower it to be looser.");
         m.put("早安", "Good morning");
         m.put("午安", "Good afternoon");
         m.put("晚安", "Good evening");

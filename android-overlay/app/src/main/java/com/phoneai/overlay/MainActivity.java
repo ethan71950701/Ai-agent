@@ -714,6 +714,15 @@ public class MainActivity extends Activity {
     private void homeStage(final String t) {
         setWaves(WaveView.IDLE);
         if (homeEt == null) { homeAsk(t); return; }
+        if (SpeakerId.rejects(this)) {   // 「只回應我的聲音」：聲音不像你，不自動送出，字放進輸入框讓你確認
+            LifeLog.add(this, "首頁：聲紋 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.lastScore) + " 低於門檻 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.threshold(this)) + "，不自動送出");
+            homeProg = true;
+            homeEt.setText(t);
+            homeEt.setSelection(homeEt.getText().length());
+            homeProg = false;
+            showAnswer(L.t("聲音不太像你，確認後按右邊的鈕送出"));
+            return;
+        }
         if (SpeechCapture.lastHitCap) {   // 撞到錄音上限：話多半還沒說完，字放進輸入框，不自動送出，按右邊的鈕送出
             LifeLog.add(this, "首頁辨識完成 " + t.length() + " 字，但到了錄音上限，不自動送出");
             homeProg = true;
@@ -1105,6 +1114,26 @@ public class MainActivity extends Activity {
                     (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
             Ui.switchRow(this, g, 2, 3, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
                     (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
+            {   // 只回應我的聲音（實驗）：聲紋跟登錄的不像，就不自動送出
+                Ui.switchRow(this, g, 0, 1, "wave", L.t("只回應我的聲音（實驗）"), L.t("先到「進階與診斷」登錄聲紋；聲音不像你時不自動送出，文字留在輸入框等你確認"),
+                        SpeakerId.gateOn(this), (v, on) -> cfg().edit().putBoolean("spk_gate", on).apply());
+                LinearLayout inner2 = Ui.card(this, g);
+                final float cur2 = Math.max(0.2f, Math.min(0.9f, SpeakerId.threshold(this)));
+                final TextView pt2 = Ui.body(this, L.t("聲紋門檻") + "　" + String.format(java.util.Locale.US, "%.2f", cur2));
+                pt2.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                inner2.addView(pt2);
+                inner2.addView(Ui.body(this, L.t("相似度低於這個值就不自動送出。你自己說話大約 0.7、刻意變聲約 0.3；調高比較嚴、調低比較鬆")));
+                com.google.android.material.slider.Slider sl2 = new com.google.android.material.slider.Slider(this);
+                sl2.setValueFrom(0.2f);
+                sl2.setValueTo(0.9f);
+                sl2.setStepSize(0.05f);
+                sl2.setValue(cur2);
+                sl2.addOnChangeListener((s, v, fromUser) -> {
+                    cfg().edit().putFloat("spk_thr", v).apply();
+                    pt2.setText(L.t("聲紋門檻") + "　" + String.format(java.util.Locale.US, "%.2f", v));
+                });
+                inner2.addView(sl2, new LinearLayout.LayoutParams(-1, -2));
+            }
             {   // 說話停頓多久才算說完（離線辨識錄音用）
                 LinearLayout inner = Ui.card(this, g);
                 final float cur = Math.max(0.8f, Math.min(4f, cfg().getFloat("voice_pause_s", 1.6f)));

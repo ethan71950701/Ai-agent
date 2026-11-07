@@ -776,6 +776,14 @@ public class AssistantSheet {
     private String carryText = "";
 
     private void gotText(String t) {
+        if (SpeakerId.rejects(act)) {   // 「只回應我的聲音」：聲音不像你，不自動送出，文字放進輸入框讓你確認
+            LifeLog.add(act, "面板：聲紋 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.lastScore) + " 低於門檻 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.threshold(act)) + "，不自動送出");
+            setText(t);
+            setWaveState(WaveView.IDLE);
+            aurora.setEnergy(0.3f);
+            idleMessage(L.t("聲音不太像你，確認後按右邊送出"));
+            return;
+        }
         if (continueMode) t = carryText + t;
         continueMode = SpeechCapture.lastHitCap;
         if (continueMode) {   // 撞到 30 秒上限：話多半還沒說完，不要自動送出；字留在輸入框，按麥克風接著說、或按送出

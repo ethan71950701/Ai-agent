@@ -97,7 +97,10 @@ final class SpeechCapture {
     /** 說完之後的最後辨識：前面分段辨識好的文字 ＋ 最後一段（沒有人聲就不辨識）。 */
     static String recognizeFinal(android.content.Context c, short[] pcm) {
         short[] all = lastAll;
-        if (all != null && all.length > 0) SpeakerId.scoreAsync(c, toFloat(all));   // 聲紋（實驗）：背景算跟你登錄的聲紋像不像，只記錄、不影響辨識
+        SpeakerId.lastScore = Double.NaN;
+        if (all != null && all.length > 0) {   // 聲紋（實驗）：算跟你登錄的聲紋像不像。「只回應我的聲音」開著就等算完（呼叫端要依結果決定送不送出），沒開就只在背景記錄
+            if (SpeakerId.gateOn(c)) SpeakerId.scoreNow(c, toFloat(all)); else SpeakerId.scoreAsync(c, toFloat(all));
+        }
         String head = lastCommitted;
         String tail = "";
         if (lastSegSpeech && pcm != null && pcm.length > RATE / 5) tail = SherpaEngine.recognize(c, toFloat(pcm), RATE);
