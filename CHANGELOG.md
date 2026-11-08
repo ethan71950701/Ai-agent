@@ -8,6 +8,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## 1.0.1579
 
 - 助理面板上傳圖片後，訊息跟一般聊天完全一樣（記憶、行事曆、鬧鐘等工具都能用），只是這一輪改用看圖模型多看一次圖｜In the assistant panel, a message with uploaded images is now handled exactly like a normal chat (memory, calendar, alarms and other tools all work); the vision model just gets one extra look at the images for that turn
+- 輸入列右邊的麥克風、紙飛機和左邊的「＋」改成同一套規格（高度 22dp、線寬 1.9dp、同一個白色）；正在聽時不再是實心藍圓，改成麥克風外面一圈主色圓環｜The microphone and send icons on the right and the "+" on the left now share one spec (22dp tall, 1.9dp stroke, same white); while listening it is no longer a solid blue disc but a mic inside an accent-colored ring
 - 首頁輸入列左邊也有「＋」了：可以上傳圖片、切換在這個畫面或背景螢幕操作，跟助理面板一樣｜The home page input row now has the "+" too: upload images and switch between operating on this screen or the background screen, same as the assistant panel
 
 ## 1.0.1578

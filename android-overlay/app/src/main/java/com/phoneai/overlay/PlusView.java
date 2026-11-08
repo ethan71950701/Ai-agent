@@ -40,8 +40,8 @@ public class PlusView extends View {
     @Override
     protected void onDraw(Canvas c) {
         float box = Math.min(getWidth(), getHeight());
-        float cx = getWidth() / 2f, cy = getHeight() / 2f, h = box * 0.20f;
-        line.setStrokeWidth(Math.max(1.8f * d, box * 0.045f));
+        float cx = getWidth() / 2f, cy = getHeight() / 2f, h = 11f * d;   // 全長 22dp，跟麥克風、紙飛機同高
+        line.setStrokeWidth(1.9f * d);   // 跟麥克風、紙飛機同線寬
         c.drawLine(cx - h, cy, cx + h, cy, line);
         c.drawLine(cx, cy - h, cx, cy + h, line);
         if (badge) {
