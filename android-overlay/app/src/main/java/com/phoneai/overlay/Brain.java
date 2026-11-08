@@ -18,7 +18,10 @@ final class Brain {
         return ConfirmActivity.ask(act, msg);   // 不再用 MaterialAlertDialogBuilder(act)：助理面板的主題不是 Material，會直接閃退
     }
 
-    static String answer(Activity act, String t, AgentLoop.Ui ui) {
+    static String answer(Activity act, String t, AgentLoop.Ui ui) { return answer(act, t, ui, null); }
+
+    /** images：使用者附的圖片。有圖片就直接走聊天（跟一般聊天一樣，只是多看一次圖），不經過路由。 */
+    static String answer(Activity act, String t, AgentLoop.Ui ui, java.util.List<String> images) {
         Root.recheckIfStale();   // 使用者可能剛撤銷或允許 root：每個任務開始前重新確認
         AgentLoop.showCard = false;
         AgentLoop.cardNote = "";
@@ -28,7 +31,7 @@ final class Brain {
         Usage.beginTally();
         String reply = null;
         try {
-            reply = run(act, t, ui);
+            reply = images != null && !images.isEmpty() ? runWithImages(act, t, ui, images) : run(act, t, ui);
         } finally {
             double cost = Usage.tallyCost();
             long tokens = Usage.endTally();
@@ -39,6 +42,13 @@ final class Brain {
             if (!ChatEngine.searchNote.isEmpty()) TaskLog.noteLatest(act, "search", ChatEngine.searchNote);   // 首頁與問問看面板共用這裡，所以兩邊的任務都會進歷史
         }
         return reply;
+    }
+
+    private static String runWithImages(Activity act, String t, AgentLoop.Ui ui, java.util.List<String> images) {
+        String over = Usage.overLimit(act);
+        if (over != null) return over;
+        String reply = ChatEngine.ask(act, t, images, msg -> confirm(act, msg));
+        return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
     }
 
     private static String run(Activity act, String t, AgentLoop.Ui ui) {

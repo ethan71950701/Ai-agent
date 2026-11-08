@@ -4,7 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
-- 助理面板左邊的背景模式鈕換成「＋」：點開可選「在這個畫面操作／在背景螢幕操作」，也能「上傳圖片」（從相簿選最多 4 張，輸入列上方有縮圖可移除），圖片連同問題一起交給看圖的模型回答，之後可接著問｜The assistant panel's background-mode button is now a "+": tap it to choose "Operate on this screen / on the background screen" or "Upload images" (up to 4 from the gallery, shown as removable thumbnails above the input row); images are sent with your question to the vision model and you can keep asking
+- 助理面板左邊的背景模式鈕換成「＋」：點開可選「在這個畫面操作／在背景螢幕操作」，也能「上傳圖片」（從相簿選最多 4 張，輸入列上方有縮圖可移除）；帶圖片的訊息跟一般聊天完全一樣（記憶、行事曆、鬧鐘等工具都能用），只是這一輪改用看圖模型多看一次圖｜The assistant panel's background-mode button is now a "+": tap it to choose "Operate on this screen / on the background screen" or "Upload images" (up to 4 from the gallery, shown as removable thumbnails above the input row); a message with images is handled exactly like a normal chat (memory, calendar, alarms and other tools all work), the vision model just gets one extra look at the images for that turn
 
 ## 1.0.1577
 

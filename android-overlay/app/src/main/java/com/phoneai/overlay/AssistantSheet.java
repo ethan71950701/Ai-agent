@@ -492,24 +492,6 @@ public class AssistantSheet {
         }
     }
 
-    /** 有上傳圖片：圖片加問題（空白就請它描述圖片）成為一則使用者訊息，接在同一段看圖對話後面，之後可以接著問。 */
-    private void askImages(final String q) {
-        try {
-            JSONArray c = new JSONArray();
-            for (String b : imgs) c.put(CircleShot.img(b));
-            c.put(new JSONObject().put("type", "text").put("text", q.isEmpty()
-                    ? (L.en() ? "Describe what is in the image(s) and point out anything important or useful." : "請描述圖片的內容，並指出重點或有用的資訊。")
-                    : q));
-            circleConvo.put(new JSONObject().put("role", "user").put("content", c));
-        } catch (Exception e) {
-            return;
-        }
-        imgs.clear();
-        thumbs.clear();
-        renderThumbs();
-        runVision();
-    }
-
     public View view() { return root; }
 
     /** 進入「回答問題」模式：顯示 AI 的問題，藏起左邊的背景模式鈕（回答問題用不到），語音／打字都可以。面板已經開著時也能呼叫（重新開始）。 */
@@ -986,12 +968,21 @@ public class AssistantSheet {
         String t = input.getText().toString().trim();
         if (t.isEmpty() && circleBox == null && imgs.isEmpty()) return;
         if (questionMode) { answerQuestion(t); return; }
-        if (!imgs.isEmpty()) { askImages(t); return; }   // 有上傳圖片：連同問題一起交給看圖的模型
-        if (circleBox != null && shot != null) { askCircle(t, false); return; }   // 有選取：這次問的是選起來的地方
-        if (circleConvo.length() > 0 && !t.isEmpty()) { askCircle(t, true); return; }   // 剛問完圈選：接著問就是同一段對話
+        // 有上傳圖片：跟一般聊天一樣處理（記憶、工具都能用），只是這一輪多附上圖片讓看圖模型看
+        final ArrayList<String> sendImgs = new ArrayList<>(imgs);
+        if (!sendImgs.isEmpty()) {
+            imgs.clear();
+            thumbs.clear();
+            renderThumbs();
+            circleConvo = new JSONArray();   // 不要停在舊的圈選看圖對話裡，後續照一般聊天走
+            if (t.isEmpty()) t = L.en() ? "Describe what is in the image(s) and point out anything important or useful." : "請描述圖片的內容，並指出重點或有用的資訊。";
+        }
+        final String ft = t;
+        if (sendImgs.isEmpty() && circleBox != null && shot != null) { askCircle(t, false); return; }   // 有選取：這次問的是選起來的地方
+        if (sendImgs.isEmpty() && circleConvo.length() > 0 && !t.isEmpty()) { askCircle(t, true); return; }   // 剛問完圈選：接著問就是同一段對話
         // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）
         Assist.Route route = Assist.route(t);
-        root.post(() -> runLocal(route, t));
+        root.post(() -> runLocal(route, ft, sendImgs));
         stopRecognizer();
         hideKeyboard();
         root.performHapticFeedback(HapticFeedbackConstants.CONFIRM);        // 送出時再震一下
@@ -1021,7 +1012,7 @@ public class AssistantSheet {
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
-    private void runLocal(Assist.Route r, String t) {
+    private void runLocal(Assist.Route r, String t, final List<String> images) {
         new Thread(() -> {
             TransferNotify.onStart = () -> act.runOnUiThread(AssistantSheet.this::dismiss);   // 傳檔案開始：面板收起來，進度看通知
             String reply;
@@ -1031,7 +1022,7 @@ public class AssistantSheet {
                 @Override public void status(String s) { }   // 進度由 Now Bar 顯示（OverlayService.showStep）；不要再發同編號的一般通知把它蓋掉
                 @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
                 @Override public String ask(String q) { return askUser(act.getApplicationContext(), q); }
-            });
+            }, images);
             } finally {
                 TransferNotify.onStart = null;
             }
