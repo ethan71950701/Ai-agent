@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 助理面板左邊的背景模式鈕換成「＋」：點開可選「在這個畫面操作／在背景螢幕操作」，也能「上傳圖片」（從相簿選最多 4 張，輸入列上方有縮圖可移除），圖片連同問題一起交給看圖的模型回答，之後可接著問｜The assistant panel's background-mode button is now a "+": tap it to choose "Operate on this screen / on the background screen" or "Upload images" (up to 4 from the gallery, shown as removable thumbnails above the input row); images are sent with your question to the vision model and you can keep asking
 - 自動操作的步數不再固定 12 步：一開始給 20 步（設定 → 執行任務時可調 8～40），用完還沒完成就跳確認框問要不要再加 10 步（最多 60 步）｜Automation is no longer capped at a fixed 12 steps: it starts with 20 (adjustable 8-40 in Settings → While running tasks), and when they run out a dialog asks whether to give it 10 more (60 at most)
 
 ## 1.0.1576

@@ -72,6 +72,12 @@ public class AssistantSheet {
     private boolean questionMode;
     private TextView questionView;
     private View bgBtnView;
+    private PlusView plusBtn;
+    private HorizontalScrollView thumbsScroll;
+    private LinearLayout thumbsBox;
+    private final ArrayList<String> imgs = new ArrayList<>();      // 已上傳、等著一起送出的圖片（縮到長邊 1280 的 JPEG，base64）
+    private final ArrayList<Bitmap> thumbs = new ArrayList<>();     // 對應的小縮圖（只用來顯示）
+    static final int REQ_PICK = 4714, MAX_IMGS = 4;
     private TextView partialView;
     private SpeechCapture capture;     // 目前正在錄的這一句（SenseVoice 用）
     private int voiceGen;              // 每次開始聽加一；辨識結果回來時對不上就丟掉（使用者已取消或重說）
@@ -213,21 +219,26 @@ public class AssistantSheet {
                 refreshAction();
             }
         });
-        // 背景模式開關：圖示鈕放在輸入列最左邊（跟右邊的送出鈕對稱，不再佔一整排）。開著 = 任務在第二螢幕執行，不動目前的畫面
+        // 「＋」鈕放在輸入列最左邊（跟右邊的送出鈕對稱）：點開選單，選任務要在目前畫面還是背景螢幕（要 root）做，或上傳圖片
         final android.content.SharedPreferences cfg = a.getSharedPreferences("cfg", Activity.MODE_PRIVATE);
-        final BgIconView bgBtn = new BgIconView(a);
-        bgBtn.setOn(cfg.getBoolean("bg_on", false));
-        bgBtn.setVisibility(Root.knownRoot() && cfg.getBoolean("bg_feature", true) ? android.view.View.VISIBLE : android.view.View.GONE);   // 背景模式要 root：沒 root 不顯示；設定裡可以關掉這個按鈕
-        bgBtn.setOnClickListener(v -> {
-            boolean on = !cfg.getBoolean("bg_on", false);
-            cfg.edit().putBoolean("bg_on", on).apply();
-            bgBtn.setOn(on);
-            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);  // 不跳提示文字，只靠圖示變化
+        final PlusView plus = new PlusView(a);
+        plusBtn = plus;
+        final boolean bgAvail = Root.knownRoot() && cfg.getBoolean("bg_feature", true);   // 背景模式要 root；設定裡可以關掉這個選項
+        plus.setBadge(bgAvail && cfg.getBoolean("bg_on", false), accent);
+        plus.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+            hideKeyboard();
+            plus.setOpen(true);
+            PlusMenu.show(act, plus, bgAvail, cfg.getBoolean("bg_on", false),
+                    () -> { cfg.edit().putBoolean("bg_on", false).apply(); plus.setBadge(false, accent); },
+                    () -> { cfg.edit().putBoolean("bg_on", true).apply(); plus.setBadge(true, accent); },
+                    this::pickImages,
+                    () -> plus.setOpen(false));
         });
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
         blp.rightMargin = (int) (2 * d);
-        bar.addView(bgBtn, blp);
-        bgBtnView = bgBtn;
+        bar.addView(plus, blp);
+        bgBtnView = plus;
         FrameLayout center = new FrameLayout(a);
         center.addView(input, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER_VERTICAL));
         center.addView(wave, new FrameLayout.LayoutParams(-1, (int) (40 * d), Gravity.CENTER));
@@ -236,13 +247,24 @@ public class AssistantSheet {
         send = new ActionButtonView(a);
         send.setAccent(accent);
         send.setOnClickListener(v -> {   // 有字＝送出；沒字＝開始／停止聽
-            if (input.getText().length() > 0 || circleBox != null) submit();
+            if (input.getText().length() > 0 || circleBox != null || !imgs.isEmpty()) submit();
             else if (listening) stopListening();
             else startVoice();
         });
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams((int) (48 * d), (int) (48 * d));
         slp.leftMargin = (int) (2 * d);
         bar.addView(send, slp);
+        thumbsScroll = new HorizontalScrollView(a);   // 上傳的圖片縮圖列（在輸入列上方；沒有圖片時不顯示）
+        thumbsScroll.setHorizontalScrollBarEnabled(false);
+        thumbsScroll.setVisibility(View.GONE);
+        thumbsScroll.setClipChildren(false);
+        thumbsBox = new LinearLayout(a);
+        thumbsBox.setOrientation(LinearLayout.HORIZONTAL);
+        thumbsBox.setPadding((int) (8 * d), 0, (int) (8 * d), 0);
+        thumbsScroll.addView(thumbsBox, new ViewGroup.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
+        tlp.bottomMargin = (int) (8 * d);
+        content.addView(thumbsScroll, tlp);
         content.addView(row, new LinearLayout.LayoutParams(-1, -2));
 
         root.addView(content, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
@@ -338,6 +360,11 @@ public class AssistantSheet {
         } catch (Exception e) {
             return;
         }
+        runVision();
+    }
+
+    /** 把 circleConvo 這段對話（最後一則是使用者剛問的）交給看圖的模型，回答用回答卡片顯示。圈選和上傳圖片共用。 */
+    private void runVision() {
         circleBox = null;
         if (canvas != null) canvas.clearSel();
         stopRecognizer();
@@ -361,6 +388,126 @@ public class AssistantSheet {
                 }
             });
         }, "circle-ask-panel").start();
+    }
+
+    // ---------- 上傳圖片：「＋」選單 → 系統相簿選圖（不需要權限）→ 縮圖列 → 連同問題一起問 ----------
+
+    /** 開系統的相片選擇器（Android 13+ 內建，不用讀取相簿的權限）；沒有的話退回一般的選檔案。 */
+    private void pickImages() {
+        int room = MAX_IMGS - imgs.size();
+        if (room <= 0) { setStatus(L.t("最多 4 張圖片")); return; }
+        enterTyping();   // 先停掉語音
+        setStatus(L.t("選好圖片後回到這裡"));
+        try {
+            Intent i = new Intent(android.provider.MediaStore.ACTION_PICK_IMAGES);
+            if (room > 1) i.putExtra(android.provider.MediaStore.EXTRA_PICK_IMAGES_MAX, Math.min(room, android.provider.MediaStore.getPickImagesMaxLimit()));
+            act.startActivityForResult(i, REQ_PICK);
+        } catch (Exception e) {
+            try {
+                Intent i = new Intent(Intent.ACTION_GET_CONTENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_ALLOW_MULTIPLE, room > 1);
+                act.startActivityForResult(Intent.createChooser(i, null), REQ_PICK);
+            } catch (Exception e2) {
+                setStatus(L.t("這支手機打不開相簿"));
+            }
+        }
+    }
+
+    private void onPicked(Intent data) {
+        final ArrayList<android.net.Uri> uris = new ArrayList<>();
+        if (data.getClipData() != null) {
+            for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+        } else if (data.getData() != null) {
+            uris.add(data.getData());
+        }
+        if (uris.isEmpty()) return;
+        setStatus(L.t("讀取圖片中…"));
+        final Context app = act.getApplicationContext();
+        new Thread(() -> {
+            final ArrayList<String> ok = new ArrayList<>();
+            final ArrayList<Bitmap> small = new ArrayList<>();
+            for (android.net.Uri u : uris) {
+                if (imgs.size() + ok.size() >= MAX_IMGS) break;
+                try {
+                    Bitmap b = android.graphics.ImageDecoder.decodeBitmap(android.graphics.ImageDecoder.createSource(app.getContentResolver(), u), (dec, info, src) -> {
+                        dec.setAllocator(android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE);
+                        int m = Math.max(info.getSize().getWidth(), info.getSize().getHeight());
+                        if (m > 1280) { float f = 1280f / m; dec.setTargetSize(Math.max(1, Math.round(info.getSize().getWidth() * f)), Math.max(1, Math.round(info.getSize().getHeight() * f))); }
+                    });
+                    ok.add(CircleShot.jpeg64(b, 1280, 85));
+                    float s = 160f / Math.max(b.getWidth(), b.getHeight());
+                    small.add(Bitmap.createScaledBitmap(b, Math.max(1, Math.round(b.getWidth() * s)), Math.max(1, Math.round(b.getHeight() * s)), true));
+                } catch (Throwable t) {
+                    CrashLog.w("讀取上傳的圖片", t);
+                }
+            }
+            act.runOnUiThread(() -> {
+                if (dismissing) return;
+                if (ok.isEmpty()) { setStatus(L.t("讀不到這張圖片")); return; }
+                imgs.addAll(ok);
+                thumbs.addAll(small);
+                circleBox = null;                     // 有上傳圖片就不用畫面上的圈選了
+                if (canvas != null) canvas.clearSel();
+                renderThumbs();
+                setStatus(L.t("已加入圖片，說出或打字問題（空白也可以）"));
+                refreshAction();
+            });
+        }, "pick-images").start();
+    }
+
+    /** 縮圖列：每張右上角有 ✕ 可以移除。 */
+    private void renderThumbs() {
+        thumbsBox.removeAllViews();
+        thumbsScroll.setVisibility(imgs.isEmpty() ? View.GONE : View.VISIBLE);
+        final int size = (int) (64 * d);
+        for (int i = 0; i < thumbs.size(); i++) {
+            final int idx = i;
+            FrameLayout cell = new FrameLayout(act);
+            android.widget.ImageView iv = new android.widget.ImageView(act);
+            iv.setImageBitmap(thumbs.get(i));
+            iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            iv.setClipToOutline(true);
+            iv.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 14 * d); }
+            });
+            cell.addView(iv, new FrameLayout.LayoutParams(size, size));
+            TextView x = new TextView(act);
+            x.setText("✕");
+            x.setTextColor(Color.WHITE);
+            x.setTextSize(11);
+            x.setGravity(Gravity.CENTER);
+            GradientDrawable xb = new GradientDrawable();
+            xb.setShape(GradientDrawable.OVAL);
+            xb.setColor(0xCC000000);
+            x.setBackground(xb);
+            x.setContentDescription(L.t("移除圖片"));
+            x.setOnClickListener(v -> {
+                if (idx < imgs.size()) { imgs.remove(idx); thumbs.remove(idx); }
+                renderThumbs();
+                refreshAction();
+            });
+            cell.addView(x, new FrameLayout.LayoutParams((int) (22 * d), (int) (22 * d), Gravity.TOP | Gravity.END));
+            LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(size, size);
+            cp.rightMargin = (int) (8 * d);
+            thumbsBox.addView(cell, cp);
+        }
+    }
+
+    /** 有上傳圖片：圖片加問題（空白就請它描述圖片）成為一則使用者訊息，接在同一段看圖對話後面，之後可以接著問。 */
+    private void askImages(final String q) {
+        try {
+            JSONArray c = new JSONArray();
+            for (String b : imgs) c.put(CircleShot.img(b));
+            c.put(new JSONObject().put("type", "text").put("text", q.isEmpty()
+                    ? (L.en() ? "Describe what is in the image(s) and point out anything important or useful." : "請描述圖片的內容，並指出重點或有用的資訊。")
+                    : q));
+            circleConvo.put(new JSONObject().put("role", "user").put("content", c));
+        } catch (Exception e) {
+            return;
+        }
+        imgs.clear();
+        thumbs.clear();
+        renderThumbs();
+        runVision();
     }
 
     public View view() { return root; }
@@ -673,6 +820,11 @@ public class AssistantSheet {
     }
 
     public void onActivityResult(int req, int res, Intent data) {
+        if (req == REQ_PICK) {
+            if (res == Activity.RESULT_OK && data != null) onPicked(data);
+            else setStatus(L.t("直接說話，或在這裡打字"));
+            return;
+        }
         if (req != REQ_FALLBACK) return;
         if (res == Activity.RESULT_OK && data != null) {
             ArrayList<String> r = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
@@ -832,8 +984,9 @@ public class AssistantSheet {
         Notify.stopSpeaking();
         cancelCountdown();
         String t = input.getText().toString().trim();
-        if (t.isEmpty() && circleBox == null) return;
+        if (t.isEmpty() && circleBox == null && imgs.isEmpty()) return;
         if (questionMode) { answerQuestion(t); return; }
+        if (!imgs.isEmpty()) { askImages(t); return; }   // 有上傳圖片：連同問題一起交給看圖的模型
         if (circleBox != null && shot != null) { askCircle(t, false); return; }   // 有選取：這次問的是選起來的地方
         if (circleConvo.length() > 0 && !t.isEmpty()) { askCircle(t, true); return; }   // 剛問完圈選：接著問就是同一段對話
         // 先用關鍵字找固定指令；沒命中交給 Haiku 路由（在背景做，等送出的畫面狀態排完再開始）
@@ -947,7 +1100,7 @@ public class AssistantSheet {
     }
 
     private void refreshAction() {
-        boolean hasText = (input != null && input.getText().length() > 0) || circleBox != null;   // 有選取時空白也能送出
+        boolean hasText = (input != null && input.getText().length() > 0) || circleBox != null || !imgs.isEmpty();   // 有選取或有圖片時空白也能送出
         send.setMode(hasText ? ActionButtonView.SEND : listening ? ActionButtonView.LISTENING : ActionButtonView.MIC);
         send.setEnabled(!waiting);
         send.setAlpha(waiting ? 0.35f : 1f);   // 思考中不能按
