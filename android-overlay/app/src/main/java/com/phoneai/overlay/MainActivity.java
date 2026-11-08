@@ -552,6 +552,8 @@ public class MainActivity extends Activity {
     private WaveView barWave;
     private android.widget.EditText homeEt;
     private ActionButtonView homeAction;
+    private final ImagePicker.Set homePicked = new ImagePicker.Set();   // 首頁「＋」上傳、等著一起送出的圖片
+    private android.widget.HorizontalScrollView homeThumbs;
     private SpeechCapture homeCapture;
 
     /** 首頁不可捲動：關掉捲動區與標題列的收合（其他分頁照常）。 */
@@ -588,8 +590,28 @@ public class MainActivity extends Activity {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        bar.setPadding(Ui.dp(this, 20), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));   // Material 3 搜尋列：高 56dp＝4＋48＋4，尾端是 48dp 的圖示按鈕
+        bar.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));   // Material 3 搜尋列：高 56dp＝4＋48＋4，尾端是 48dp 的圖示按鈕
         glassRow.addView(bar, new android.widget.FrameLayout.LayoutParams(-1, -2));
+        // 「＋」：跟助理面板同一個選單（在這個畫面／背景螢幕操作、上傳圖片）
+        final android.content.SharedPreferences hcfg = cfg();
+        final PlusView plus = new PlusView(this);
+        final int plusAccent = Ui.attr(this, com.google.android.material.R.attr.colorPrimary);
+        final boolean bgAvail = Root.knownRoot() && hcfg.getBoolean("bg_feature", true);
+        plus.setBadge(bgAvail && hcfg.getBoolean("bg_on", false), plusAccent);
+        plus.setOnClickListener(v -> {
+            v.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
+            plus.setOpen(true);
+            PlusMenu.show(this, plus, bgAvail, hcfg.getBoolean("bg_on", false),
+                    () -> { hcfg.edit().putBoolean("bg_on", false).apply(); plus.setBadge(false, plusAccent); },
+                    () -> { hcfg.edit().putBoolean("bg_on", true).apply(); plus.setBadge(true, plusAccent); },
+                    () -> {
+                        int room = ImagePicker.MAX - homePicked.b64.size();
+                        if (room <= 0) { android.widget.Toast.makeText(this, L.t("最多 4 張圖片"), android.widget.Toast.LENGTH_SHORT).show(); return; }
+                        if (!ImagePicker.launch(this, room)) android.widget.Toast.makeText(this, L.t("這支手機打不開相簿"), android.widget.Toast.LENGTH_SHORT).show();
+                    },
+                    () -> plus.setOpen(false));
+        });
+        bar.addView(plus, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
         final android.widget.EditText et = new android.widget.EditText(this);
         homeEt = et;
         et.setHint(L.t("輸入或按右邊說話"));
@@ -603,7 +625,7 @@ public class MainActivity extends Activity {
         action.setAccent(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         Runnable send = () -> {
             String t = et.getText().toString().trim();
-            if (t.isEmpty()) return;
+            if (t.isEmpty() && homePicked.isEmpty()) return;   // 有圖片時空白也能送出
             et.setText("");
             et.clearFocus();
             homeAsk(t);
@@ -614,7 +636,7 @@ public class MainActivity extends Activity {
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void afterTextChanged(android.text.Editable e) {
                 if (!homeProg) cancelHomePending();   // 使用者動了輸入框：取消自動送出
-                action.setMode(e.toString().trim().isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND);
+                action.setMode(e.toString().trim().isEmpty() && homePicked.isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND);
             }
         });
         final android.widget.FrameLayout holder = new android.widget.FrameLayout(this);
@@ -626,7 +648,7 @@ public class MainActivity extends Activity {
         bar.addView(holder, new LinearLayout.LayoutParams(0, Ui.dp(this, 48), 1f));
         action.setOnClickListener(v -> {
             if (homeCapture != null) { homeCapture.stop(); return; }   // 正在聽：再按一下結束
-            if (et.getText().toString().trim().isEmpty()) homeVoice(); else send.run();
+            if (et.getText().toString().trim().isEmpty() && homePicked.isEmpty()) homeVoice(); else send.run();
         });
         homeAction = action;
         bar.addView(action, new LinearLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48)));
@@ -652,11 +674,21 @@ public class MainActivity extends Activity {
         lp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 96));   // 留在底部導覽列上方
         ((android.view.ViewGroup) root).addView(glassRow, lp);
         homeBar = glassRow;
+        homeThumbs = ImagePicker.strip(this);   // 上傳的圖片縮圖列：在輸入列正上方
+        androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams tp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2);
+        tp.gravity = android.view.Gravity.BOTTOM;
+        tp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 96 + 56 + 8));
+        ((android.view.ViewGroup) root).addView(homeThumbs, tp);
     }
 
     /** 首頁直接回答：在問候語下面顯示回答（不開面板）。 */
-    private void homeAsk(String t) {
+    private void homeAsk(String t0) {
         if (answerView == null) return;
+        final java.util.ArrayList<String> imgs = new java.util.ArrayList<>(homePicked.b64);   // 附的圖片只送這一次
+        homePicked.clear();
+        if (homeThumbs != null) ImagePicker.render(this, homeThumbs, homePicked, null);
+        final String t = t0.isEmpty() && !imgs.isEmpty()
+                ? (L.en() ? "Describe what is in the image(s) and point out anything important or useful." : "請描述圖片的內容，並指出重點或有用的資訊。") : t0;
         answerView.setVisibility(View.VISIBLE);
         answerView.setText(L.t("思考中…"));
         new Thread(() -> {
@@ -665,7 +697,7 @@ public class MainActivity extends Activity {
                 @Override public void status(String s) { }   // 進度由 Now Bar 顯示
                 @Override public boolean confirm(String msg) { return Brain.confirm(MainActivity.this, msg); }
                 @Override public String ask(String q) { return AssistantSheet.askUser(getApplicationContext(), q); }
-            });
+            }, imgs);
             final String fr = r == null ? "" : r;
             runOnUiThread(() -> {
                 setWaves(WaveView.IDLE);
@@ -678,6 +710,19 @@ public class MainActivity extends Activity {
     }
 
     private TextView answerView;
+
+    @Override
+    protected void onActivityResult(int req, int res, android.content.Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != ImagePicker.REQ || res != RESULT_OK || data == null) return;
+        ImagePicker.load(this, data, ImagePicker.MAX - homePicked.b64.size(), got -> {
+            if (got.isEmpty()) { android.widget.Toast.makeText(this, L.t("讀不到這張圖片"), android.widget.Toast.LENGTH_SHORT).show(); return; }
+            homePicked.b64.addAll(got.b64);
+            homePicked.thumbs.addAll(got.thumbs);
+            if (homeThumbs != null) ImagePicker.render(this, homeThumbs, homePicked, () -> { if (homeAction != null && homeEt != null) homeAction.setMode(homeEt.getText().toString().trim().isEmpty() && homePicked.isEmpty() ? ActionButtonView.MIC : ActionButtonView.SEND); });
+            if (homeAction != null) homeAction.setMode(ActionButtonView.SEND);
+        });
+    }
 
     /** 首頁麥克風：在頁面上錄音（離線辨識），辨識出的文字直接回答。 */
     private void homeVoice() {
