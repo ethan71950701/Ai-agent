@@ -367,6 +367,15 @@ public class LogicTest {
     }
 
     @Test
+    public void stripWorkHidesReasoning() {
+        assertEquals("下一節是體育。", ChatEngine.stripWork("<work>現在 9:56 = 第2節；下一節第3節 = 體育</work>下一節是體育。"));
+        assertEquals("你好", ChatEngine.stripWork("你好"));
+        assertEquals("", ChatEngine.stripWork("<work>被截斷的推算"));
+        assertEquals("前面的字", ChatEngine.stripWork("前面的字<work>被截斷"));
+        assertEquals("答案", ChatEngine.stripWork("<work>a</work>\n<work>b</work>答案"));
+    }
+
+    @Test
     public void lessonInjectionFilter() {
         assertFalse(Memory.looksLikeInjection("三星設定：藍牙在「連接」頁裡"));
         assertFalse(Memory.looksLikeInjection("傳訊息：Instagram 的聊天室，傳送鈕只有圖示，直接用座標 tap 送出"));
