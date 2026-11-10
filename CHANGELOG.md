@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1595
+
 - 「請你接手」恢復成預設顯示懸浮卡片；只有登入頁、銀行類、Google 登入這類會因為卡片而點不到的畫面，才自動改跳通知（有「繼續」）｜The "please take over" card is back by default; only on screens where it would block taps (login pages, banking apps, Google sign-in) does it automatically switch to a notification (with "Continue")
 
 ## 1.0.1594
