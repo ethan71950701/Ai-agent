@@ -353,6 +353,7 @@ public class AssistantSheet {
             return;
         }
         final String[] sens = followUp || circleApproved ? null : CircleShot.sensitive(act);
+        LifeLog.add(act, "圈選送出：前景 " + CircleShot.lastPkg + "，密碼欄 " + CircleShot.lastPassword + "，" + (followUp ? "追問" : circleApproved ? "已同意過" : sens != null ? "要問" : "不用問"));
         if (sens == null) { runVision(); return; }
         // 金融／支付／密碼管理類，或畫面有密碼輸入框：沒問過就不把截圖送給 AI
         setStatus(L.t("等你確認…"));

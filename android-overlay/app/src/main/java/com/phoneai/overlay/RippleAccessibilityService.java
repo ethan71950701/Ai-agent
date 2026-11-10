@@ -183,8 +183,27 @@ public class RippleAccessibilityService extends AccessibilityService {
         new android.os.Handler(android.os.Looper.getMainLooper()).post(s::removeHandoff);
     }
 
+    /** 診斷用：接手卡出現時，把螢幕上所有視窗（圖層、類型、套件、範圍、是否活動中）記進事件紀錄，查「卡片出現後點不到畫面」是哪個視窗擋住。 */
+    private void logWindows(String tag) {
+        try {
+            StringBuilder sb = new StringBuilder(tag);
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = getWindows();
+            if (wins != null) {
+                android.graphics.Rect b = new android.graphics.Rect();
+                for (android.view.accessibility.AccessibilityWindowInfo w : wins) {
+                    w.getBoundsInScreen(b);
+                    android.view.accessibility.AccessibilityNodeInfo r = w.getRoot();
+                    sb.append(" | L").append(w.getLayer()).append(" T").append(w.getType()).append(w.isActive() ? "*" : "").append(' ')
+                            .append(r == null ? "?" : String.valueOf(r.getPackageName())).append(' ').append(b.width()).append('x').append(b.height());
+                }
+            }
+            LifeLog.add(this, sb.toString());
+        } catch (Throwable ignored) { }
+    }
+
     private boolean addHandoff(String why) {
         removeHandoff();
+        logWindows("接手卡出現，視窗");
         try {
             float d = getResources().getDisplayMetrics().density;
             android.widget.LinearLayout box = new android.widget.LinearLayout(this);
@@ -214,8 +233,8 @@ public class RippleAccessibilityService extends AccessibilityService {
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                     (int) (getResources().getDisplayMetrics().widthPixels * 0.92f), WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                    PixelFormat.TRANSLUCENT);
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT);   // 卡片以外的觸控要穿透到底下的畫面（使用者要在畫面上輸入密碼）
             lp.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
             lp.y = (int) (48 * d);
             final int[] st = new int[4];   // 按下時的 x、y（視窗位置）與手指的 rawX、rawY
@@ -243,6 +262,7 @@ public class RippleAccessibilityService extends AccessibilityService {
 
     private void removeHandoff() {
         if (handoffView == null) return;
+        logWindows("接手卡關閉，視窗");
         try { wm.removeView(handoffView); } catch (Exception ignored) { }
         handoffView = null;
     }

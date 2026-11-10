@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 「請你接手」卡片明確設成卡片以外的觸控穿透到底下的畫面；卡片出現與關閉時，把螢幕上所有視窗記進診斷頁的事件紀錄，畫圈提問送出時也記下判斷結果，方便查「點不到畫面」與「沒有先問」｜The "please take over" card is now explicitly non-modal so touches outside the card reach the screen below; when it appears and closes, every window on screen is logged to the diagnostics events, and circle-to-ask logs its sensitivity decision, to help debug "cannot tap the screen" and "did not ask first"
 - 敏感畫面先問你再傳給 AI：①畫圈提問以前完全不檢查，現在在金融／支付／密碼管理類 App 會先跳確認框 ②自動判斷多了密碼管理器與驗證器（Authenticator、Bitwarden、1Password…）③不是這些 App，但畫面有密碼輸入框（登入頁）也會先問；自動操作與畫圈都適用，同一個任務同意過就不再問｜Sensitive screens now ask before they are sent to the AI: (1) circle-to-ask used to skip the check and now asks in finance/payment/password-manager apps; (2) automatic detection now includes password managers and authenticators (Authenticator, Bitwarden, 1Password…); (3) any other app whose screen has a password field (a login page) also asks first; this applies to automation and circle-to-ask, and is asked once per task
 
 ## 1.0.1590
