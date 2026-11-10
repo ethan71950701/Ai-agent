@@ -32,7 +32,7 @@ final class CircleShot {
     static void prefetch(final Context app, final java.util.function.Consumer<Bitmap> onReady) {
         new Thread(() -> {
             try {
-                lastPkg = ElementList.foregroundPackage();
+                lastPkg = ElementList.foregroundPackage();   // null＝面板下面是 Vertex 自己的畫面，或讀不到別的 App 的視窗（無障礙沒開）
                 lastPassword = ElementList.hasPasswordField();
                 final Bitmap b = AgentLoop.screenshotBitmap();
                 if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));   // 截不到時 b 是 null

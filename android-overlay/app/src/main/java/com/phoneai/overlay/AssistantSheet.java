@@ -322,28 +322,36 @@ public class AssistantSheet {
         root.addView(canvas, root.indexOfChild(aurora), new FrameLayout.LayoutParams(-1, -1));
     }
 
-    private String circleCrop() {
-        int pad = (int) (12 * d);
-        int l = Math.max(0, (int) circleBox.left - pad), t = Math.max(0, (int) circleBox.top - pad);
-        int rr = Math.min(shot.getWidth(), (int) circleBox.right + pad), bb = Math.min(shot.getHeight(), (int) circleBox.bottom + pad);
-        Bitmap crop = (rr - l < 8 || bb - t < 8) ? shot : Bitmap.createBitmap(shot, l, t, rr - l, bb - t);
-        return CircleShot.jpeg64(crop, 1280, 85);
+    /** 整個畫面，並在使用者選取的範圍畫一個框（白邊紅框，在深淺背景都看得到）；只送這一張圖，不另外裁一塊出去。 */
+    private String circleMarked() {
+        Bitmap m = shot.copy(Bitmap.Config.ARGB_8888, true);
+        android.graphics.Canvas cv = new android.graphics.Canvas(m);
+        float w = Math.max(5f, m.getWidth() / 150f);
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        p.setStyle(android.graphics.Paint.Style.STROKE);
+        p.setStrokeWidth(w * 1.9f);
+        p.setColor(0xFFFFFFFF);
+        float r = w * 2f;
+        cv.drawRoundRect(circleBox, r, r, p);
+        p.setStrokeWidth(w);
+        p.setColor(0xFFE53935);
+        cv.drawRoundRect(circleBox, r, r, p);
+        return CircleShot.jpeg64(m, 1400, 80);
     }
 
     private boolean circleApproved;   // 這張截圖已經問過、使用者同意傳給 AI
     private JSONArray circleConvo = new JSONArray();   // 這一個選取區域的整段對話（第一輪有圖，之後接著問都帶著，才有上下文）
 
-    /** 有選取：把選取的區域（加一張縮小的整個畫面當上下文）和問題一起交給聊天模型；之後不用再選，直接接著問（同一段對話）。 */
+    /** 有選取：整個畫面（選取的地方畫一個框）和問題一起交給聊天模型；之後不用再選，直接接著問（同一段對話）。 */
     private void askCircle(final String q, final boolean followUp) {
         try {
             JSONArray content = new JSONArray();
             if (!followUp) {
                 circleConvo = new JSONArray();
-                content.put(CircleShot.img(circleCrop()));
-                content.put(CircleShot.img(CircleShot.jpeg64(shot, 800, 70)));
+                content.put(CircleShot.img(circleMarked()));
                 content.put(new JSONObject().put("type", "text").put("text", (L.en()
-                        ? "The first image is the region the user selected; the second is the whole screen for context. The user's question: "
-                        : "第一張圖是使用者選取的區域，第二張是整個畫面（給你看上下文）。使用者的問題：")
+                        ? "The image is the whole screen; the user marked the area they are asking about with a red rectangle (white outline). The user's question: "
+                        : "圖片是整個畫面，使用者用紅色框框（白邊）標出了想問的地方。使用者的問題：")
                         + (q.isEmpty() ? (L.en() ? "What is this? Explain briefly and add useful related information." : "這是什麼？請簡短說明，並補充有用的相關資訊。") : q)));
             } else {
                 content.put(new JSONObject().put("type", "text").put("text", q));
