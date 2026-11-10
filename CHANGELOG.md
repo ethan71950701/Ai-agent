@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1592
+
 - 「請你接手」卡片明確設成卡片以外的觸控穿透到底下的畫面；卡片出現與關閉時，把螢幕上所有視窗記進診斷頁的事件紀錄，畫圈提問送出時也記下判斷結果，方便查「點不到畫面」與「沒有先問」｜The "please take over" card is now explicitly non-modal so touches outside the card reach the screen below; when it appears and closes, every window on screen is logged to the diagnostics events, and circle-to-ask logs its sensitivity decision, to help debug "cannot tap the screen" and "did not ask first"
 
 ## 1.0.1591
