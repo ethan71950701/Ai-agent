@@ -1239,7 +1239,7 @@ public class MainActivity extends Activity {
             int k = 0;
             Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                     (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
-            Ui.switchRow(this, g, k++, n, "bell", L.t("接手時顯示懸浮卡片"), L.t("要你自己動手時，在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）；登入頁、銀行類、Google 登入這類會因為卡片而點不到的畫面，自動改跳通知。關掉就一律用通知"),
+            Ui.switchRow(this, g, k++, n, "bell", L.t("接手時顯示懸浮卡片"), L.t("要你自己動手時（輸入密碼、解鎖…），在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）。關掉就只跳通知"),
                     cfg().getBoolean("handoff_card", true), (v, on) -> cfg().edit().putBoolean("handoff_card", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式選項（實驗）"), L.t("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作"),
                     cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());

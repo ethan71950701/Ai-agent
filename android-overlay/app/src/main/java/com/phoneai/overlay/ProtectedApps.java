@@ -53,15 +53,6 @@ final class ProtectedApps {
         return null;
     }
 
-    /**
-     * 目前前景畫面放懸浮卡片會不會讓它點不到：金融／支付／密碼管理類、Google 登入（gms）、畫面有密碼輸入框的登入頁，
-     * 這些畫面常有「上面有別的視窗就不接受點擊」的防護（使用者實測 Google 登入頁真的點不到）。回 true = 接手提示改用通知，不放卡片。
-     */
-    static boolean overlayUnsafe(Context c, String fgPkg) {
-        if (fgPkg == null || fgPkg.isEmpty()) return false;
-        return isProtected(c, fgPkg) || fgPkg.startsWith("com.google.android.gms") || fgPkg.startsWith("com.google.android.gsf") || ElementList.hasPasswordField();
-    }
-
     static boolean isProtected(Context c, String pkg) {
         if (pkg == null || pkg.isEmpty()) return false;
         return userSet(c).contains(pkg) || autoMatch(label(c, pkg), pkg);

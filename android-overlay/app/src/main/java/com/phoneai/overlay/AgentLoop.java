@@ -414,11 +414,9 @@ final class AgentLoop {
                         if (manual) {   // 要使用者自己動手（密碼、圖形、指紋…）：不跳會蓋住畫面的對話框，改暫停，讓他直接操作，做完按 Now Bar 的「繼續」
                             OverlayService.paused = true;
                             OverlayService.showStep(c, L.t("等你接手"), step, maxSteps);
-                            // 平常放一張可拖動的懸浮卡片；但登入頁、銀行類、Google 登入這類畫面會因為卡片而點不到，這時改跳通知（有「繼續」）
-                            String fgHand = ElementList.foregroundPackage();
-                            boolean unsafe = ProtectedApps.overlayUnsafe(c, fgHand);
-                            LifeLog.add(c, "接手提示：前景 " + fgHand + (unsafe ? "，敏感畫面→用通知" : "，用卡片"));
-                            if (!(c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("handoff_card", true) && !unsafe && RippleAccessibilityService.showHandoff(why))) OverlayService.handoffAlert(c, why);
+                            // 放一張可拖動的懸浮卡片（設定可關，關了或沒開無障礙就只跳通知，上面有「繼續」）。
+                            // 以前登入頁點不到是任務進行中多放的那層不受信任的懸浮層造成的（已移除），不是這張卡片，所以登入頁也用卡片。
+                            if (!(c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("handoff_card", true) && RippleAccessibilityService.showHandoff(why))) OverlayService.handoffAlert(c, why);
                             OverlayService.refreshNotification();
                             try { c.getSystemService(android.os.Vibrator.class).vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)); } catch (Exception ignored) { }
                             waitWhilePaused(ui);

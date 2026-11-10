@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 登入頁、銀行類畫面要你接手時也恢復用懸浮卡片（以前點不到的原因是多餘的懸浮層，已經修好，不是卡片）｜Handoff on login pages and banking screens uses the floating card again (the taps were blocked by the extra overlay, which is fixed, not by the card)
 
 ## 1.0.1596
 
