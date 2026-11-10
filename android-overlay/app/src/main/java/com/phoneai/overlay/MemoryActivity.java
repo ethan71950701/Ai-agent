@@ -339,7 +339,30 @@ public class MemoryActivity extends Activity {
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = (int) (20 * d);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(til);
+        // 長筆記（超過 60 字）：內容上面多兩格「標題」「摘要」，列表上顯示的就是這兩個；舊筆記沒有的就先帶前面的字，可以自己改
+        final boolean longNote = it != null && "note".equals(kind) && it.optString("text").length() > 60;
+        final com.google.android.material.textfield.TextInputEditText titleEt = new com.google.android.material.textfield.TextInputEditText(this), briefEt = new com.google.android.material.textfield.TextInputEditText(this);
+        final String title0 = longNote ? Memory.displayTitle(it) : "", brief0 = longNote ? Memory.displayBrief(it) : "";
+        if (longNote) {
+            com.google.android.material.textfield.TextInputLayout tl = new com.google.android.material.textfield.TextInputLayout(this);
+            tl.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
+            tl.setHint(L.t("標題"));
+            titleEt.setSingleLine(true);
+            titleEt.setText(title0);
+            tl.addView(titleEt);
+            form.addView(tl);
+            com.google.android.material.textfield.TextInputLayout bl = new com.google.android.material.textfield.TextInputLayout(this);
+            bl.setBoxBackgroundMode(com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE);
+            bl.setHint(L.t("摘要（一行）"));
+            briefEt.setText(brief0);
+            bl.addView(briefEt);
+            LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(-1, -2);
+            blp.topMargin = (int) (8 * d);
+            form.addView(bl, blp);
+        }
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
+        tlp.topMargin = longNote ? (int) (8 * d) : 0;
+        form.addView(til, tlp);
         com.google.android.material.dialog.MaterialAlertDialogBuilder b = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(it == null ? L.t("新增") : L.t("編輯")).setView(form)
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> {
                     String t = et.getText().toString().trim();
@@ -352,7 +375,19 @@ public class MemoryActivity extends Activity {
                                     .put("created", new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US).format(new java.util.Date()))
                                     .put("done", false).put("done_at", JSONObject.NULL).put("deleted", false).put("pinned", false));
                         } else {
+                            boolean textChanged = !t.equals(it.optString("text"));
                             it.put("text", t);
+                            if (longNote) {
+                                String nt = titleEt.getText().toString().trim(), nb = briefEt.getText().toString().trim();
+                                boolean edited = !nt.equals(title0) || !nb.equals(brief0);
+                                if (edited) {   // 自己改了標題或摘要：照填的存（空的就退回用前面的字）
+                                    if (nt.isEmpty()) it.remove("title"); else it.put("title", nt.length() > 20 ? nt.substring(0, 20) : nt);
+                                    if (nb.isEmpty()) it.remove("brief"); else it.put("brief", nb.length() > 60 ? nb.substring(0, 60) : nb);
+                                } else if (textChanged) {   // 只改了內容：舊標題與摘要作廢（跟 AI 改內容時一樣）
+                                    it.remove("title");
+                                    it.remove("brief");
+                                }
+                            }
                         }
                     } catch (Exception ignored) { }
                     saveThen(this::render);
