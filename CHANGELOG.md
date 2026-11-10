@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1586
+
 - 更新後第一次打開，會跳視窗列出跳過的這幾版的更新內容（先列 8 版，更早的點「顯示更早的 N 版」展開）；也可以從「功能 → 更新 → 更新內容」隨時看｜After an update, the first launch shows what changed in every version you skipped (8 at first; tap "Show N older versions" for the rest); you can also open it any time from Features → Update → What's new
 
 ## 1.0.1584
