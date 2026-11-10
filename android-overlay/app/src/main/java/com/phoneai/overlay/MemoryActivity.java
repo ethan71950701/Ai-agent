@@ -154,7 +154,7 @@ public class MemoryActivity extends Activity {
                 for (JSONObject x : Memory.items(fresh)) {
                     if (x.optInt("id") == id) { x.put("pinned", pinned); found = true; break; }
                 }
-                if (found) Memory.save(this, fresh); else err = L.t("找不到這一項，已重新整理");
+                if (found) { Memory.save(this, fresh); ChatEngine.clearHistory(this); } else err = L.t("找不到這一項，已重新整理");   // 清掉對話紀錄：之前說過「這則是永久記憶」的話已經過時
                 LifeLog.add(this, "記憶頁：#" + id + " 星星 → " + (pinned ? "釘選" : "取消") + (found ? "（已存檔）" : "（找不到）"));
             } catch (Exception e) {
                 err = L.t("寫入失敗：") + e.getMessage();

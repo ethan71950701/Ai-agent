@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正「我已經取消永久記憶，AI 還說是永久記憶」：AI 會沿用先前對話裡過時的說法，現在只看當下的記憶清單、要改要刪一律先呼叫工具；在記憶頁改星星時也會清掉對話紀錄｜Fixed the AI still calling a note permanent after you un-starred it: it carried over an outdated statement from earlier in the chat; it now trusts only the current memory list, always calls the tool instead of refusing on its own, and the chat history is cleared when you change a star on the memory page
 - 診斷頁新增「記憶筆記（AI 看到的）」：列出每則筆記的編號、有沒有 📌、字數和標題，方便查「AI 說是永久記憶」這類問題｜The diagnostics page now lists "Memory notes (what the AI sees)": each note's id, whether it is pinned, its length and title, to help debug cases like the AI claiming a note is permanent
 
 ## 1.0.1588

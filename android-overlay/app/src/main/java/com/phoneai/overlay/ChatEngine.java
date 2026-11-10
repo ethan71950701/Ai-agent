@@ -329,6 +329,15 @@ final class ChatEngine {
     static String ask(Context c, String text, Memory.Confirm confirm) { return ask(c, text, null, confirm); }
 
     /** 要查資料表（課表、行程、清單）再算（現在第幾節、下一個是什麼、還剩多久）的問題：先在 <work> 裡逐項寫出對應再給答案，程式會拿掉 <work>，使用者只看到最後的答案。 */
+    /** 某則筆記是不是永久記憶，只看「現在」的記憶清單；先前對話裡說過的可能已經過時（使用者在記憶頁改過星星），也不要自己先拒絕，交給工具判斷。 */
+    private static final String PIN_RULE_ZH = "\n14. 某則筆記是不是📌永久記憶，只看下面「現在」的記憶清單有沒有📌；先前對話裡你或使用者說過「是永久記憶」可能已經過時（使用者可以隨時在記憶頁改），不要沿用。使用者要改或刪時，一律直接呼叫工具，不要自己先判斷拒絕，工具拒絕了再照實轉告。";
+    private static final String PIN_RULE_EN = "\n14. Whether a note is a 📌 permanent memory is decided only by the memory list below as it is now; anything said earlier in the conversation (by you or the user) that it is permanent may be outdated because the user can change it on the memory page at any time, so do not carry it over. When the user wants to change or delete something, always call the tool instead of refusing on your own; if the tool refuses, report that honestly.";
+
+    /** 清掉對話紀錄（使用者在記憶頁改了星星：之前對話裡「這則是永久記憶」之類的說法已經過時，不能再讓模型看到）。 */
+    static void clearHistory(Context c) {
+        try { history(c).delete(); } catch (Exception ignored) { }
+    }
+
     private static final String WORK_RULE_ZH = "\n13. 回答要「從記憶裡的表格或清單查資料，再配合現在時間或數量推算」的問題（例如現在上第幾節、下一節是什麼課、還有幾天）時，先在 <work>…</work> 裡簡短逐項寫出：現在時間、對應到第幾項、下一項是什麼、依據的原文，確認沒有差一格，再在 </work> 後面寫給使用者的答案。<work> 的內容不會顯示給使用者；一般的簡單問題不要寫 <work>。";
     private static final String WORK_RULE_EN = "\n13. For questions that need looking something up in a table or list from memory and then working it out from the current time or a count (for example which period it is now, what the next class is, how many days are left), first write a short step-by-step in <work>…</work>: the current time, which item it matches, what the next item is, and the source text, and check you are not off by one; then write the answer for the user after </work>. The content of <work> is never shown to the user; do not write <work> for ordinary simple questions.";
 
@@ -361,7 +370,7 @@ final class ChatEngine {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
             String nowTime = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date());
-            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN : SYSTEM + WORK_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
+            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN + PIN_RULE_EN : SYSTEM + WORK_RULE_ZH + PIN_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
                     + (L.en() ? ", the current time is " : "，現在時間 ") + nowTime + (L.en() ? ".\nTo-dos (not done): " : "。\n待辦（未完成）：")
                     + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.noteIndex(mem);
             JSONArray msgs = loadHistory(c);
