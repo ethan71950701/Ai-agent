@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1594
+
 - 要你自己輸入密碼、解鎖時，預設改成只跳一則通知（有「繼續」），不再放懸浮卡片（部分 App 例如 Google 登入頁，卡片出現時畫面點不到）；想要卡片可在設定「接手時顯示懸浮卡片」打開｜When you need to type a password or unlock yourself, only a notification (with "Continue") is shown by default and the floating card is gone (some apps, such as the Google sign-in page, ignored taps while the card was up); turn on "Show a floating card for handoff" in Settings to get the card back
 
 ## 1.0.1593
