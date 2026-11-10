@@ -174,6 +174,22 @@ final class Memory {
         return null;
     }
 
+    /** 長筆記（超過 60 字）在記憶頁的標題；短的就是全文。沒有標題的舊筆記用前面 12 個字。 */
+    static String displayTitle(JSONObject it) {
+        String text = it.optString("text");
+        if (!"note".equals(it.optString("kind")) || text.length() <= 60) return text;
+        String title = it.optString("title").trim();
+        return title.isEmpty() ? text.substring(0, 12) + "…" : title;
+    }
+
+    /** 長筆記在記憶頁標題下面的一行摘要；短筆記沒有（回空字串）。沒有摘要的舊筆記用前面 40 個字。 */
+    static String displayBrief(JSONObject it) {
+        String text = it.optString("text");
+        if (!"note".equals(it.optString("kind")) || text.length() <= 60) return "";
+        String brief = it.optString("brief").trim();
+        return brief.isEmpty() ? text.substring(0, 40) + "…" : brief;
+    }
+
     /** 筆記在提示裡的「索引」寫法：短的（60 字內）直接給全文；長的只給「標題：摘要」，要看全文用 memory_read。沒有標題的舊筆記，用前面的字當標題與摘要。 */
     static String indexLine(JSONObject it) {
         String text = it.optString("text");

@@ -186,7 +186,7 @@ public class MemoryActivity extends Activity {
             JSONObject it = items.optJSONObject(i);
             if (it == null || it.optBoolean("deleted") || !kind.equals(it.optString("kind"))) continue;
             if (it.optBoolean("done") != doneOnes) continue;
-            if (!query.isEmpty() && !it.optString("text").toLowerCase(Locale.ROOT).contains(query)) continue;
+            if (!query.isEmpty() && !(it.optString("text") + " " + it.optString("title") + " " + it.optString("brief")).toLowerCase(Locale.ROOT).contains(query)) continue;
             hit.add(it);
         }
         Ui.section(this, list, name + L.t("（") + hit.size() + L.t("）"));
@@ -212,7 +212,9 @@ public class MemoryActivity extends Activity {
                 });
                 pin = star;
             }
-            Ui.row(this, list, i, hit.size(), icon, it.optString("text"), created.length() >= 10 ? created.substring(5, 10).replace('-', '/') : null, pin, v -> edit(it, kind));
+            String date = created.length() >= 10 ? created.substring(5, 10).replace('-', '/') : null;
+            String brief = Memory.displayBrief(it);   // 長筆記：標題＋一行摘要（點開才是全文）；短筆記、待辦、經驗照舊顯示全文
+            Ui.row(this, list, i, hit.size(), icon, Memory.displayTitle(it), brief.isEmpty() ? date : date == null ? brief : brief + " · " + date, pin, v -> edit(it, kind));
         }
         return hit.size();
     }

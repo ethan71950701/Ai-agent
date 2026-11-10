@@ -376,6 +376,22 @@ public class LogicTest {
     }
 
     @Test
+    public void memoryPageTitles() throws Exception {
+        String longText = "新竹高中205班115上課表(導師蔡信忠)。節次:1 8:00,2 9:10,3 10:10,4 11:10。一:國文/英文/體育/選修生物/數學A/選修物理/選修物理。";
+        JSONObject withTitle = new JSONObject().put("kind", "note").put("text", longText).put("title", "高中課表").put("brief", "週一到週五每節課與上課時間");
+        assertEquals("高中課表", Memory.displayTitle(withTitle));
+        assertEquals("週一到週五每節課與上課時間", Memory.displayBrief(withTitle));
+        JSONObject old = new JSONObject().put("kind", "note").put("text", longText);   // 舊筆記沒有標題：用前面的字
+        assertEquals(longText.substring(0, 12) + "…", Memory.displayTitle(old));
+        assertEquals(longText.substring(0, 40) + "…", Memory.displayBrief(old));
+        JSONObject shortNote = new JSONObject().put("kind", "note").put("text", "車停在 B2");   // 短的：全文，沒有摘要
+        assertEquals("車停在 B2", Memory.displayTitle(shortNote));
+        assertEquals("", Memory.displayBrief(shortNote));
+        JSONObject todo = new JSONObject().put("kind", "todo").put("text", longText);   // 待辦不縮
+        assertEquals(longText, Memory.displayTitle(todo));
+    }
+
+    @Test
     public void lessonInjectionFilter() {
         assertFalse(Memory.looksLikeInjection("三星設定：藍牙在「連接」頁裡"));
         assertFalse(Memory.looksLikeInjection("傳訊息：Instagram 的聊天室，傳送鈕只有圖示，直接用座標 tap 送出"));
