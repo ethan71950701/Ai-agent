@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1584
+
 - 點開長筆記時，內容上面多了「標題」「摘要」兩格，可以自己改｜Opening a long note now shows editable "Title" and "Summary" fields above the content
 
 ## 1.0.1583
