@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 更新後第一次打開，會跳視窗列出跳過的這幾版的更新內容（最多 8 版）；也可以從「功能 → 更新 → 更新內容」隨時看最近幾版｜After an update, the first launch shows what changed in every version you skipped (up to 8); you can also open the latest few from Features → Update → What's new
 - 點開長筆記時，內容上面多了「標題」「摘要」兩格，可以自己改｜Opening a long note now shows editable "Title" and "Summary" fields above the content
 
 ## 1.0.1583

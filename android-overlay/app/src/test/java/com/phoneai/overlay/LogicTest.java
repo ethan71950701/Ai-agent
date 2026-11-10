@@ -392,6 +392,21 @@ public class LogicTest {
     }
 
     @Test
+    public void whatsNewParseAndRender() {
+        String md = "# 更新說明\n\n說明文字裡提到 Unreleased 也不算\n\n## Unreleased\n- 新功能甲｜Feature A\n- 電腦版的東西｜Windows app thing\n\n## 1.0.1583\n\n- 乙｜B\n- 丙｜C\n\n## 1.0.1579\n\n- 丁｜D\n\n## 1.0.1500\n\n- 舊的｜Old\n";
+        List<WhatsNew.Version> v = WhatsNew.parse(md, 1590);
+        assertEquals(4, v.size());
+        assertEquals(1590, v.get(0).build);   // Unreleased = 這次編譯的版本
+        assertEquals(1, v.get(0).lines.size());   // 電腦版的條目被濾掉
+        String zh = WhatsNew.render(v, 1579, false);
+        assertTrue(zh.startsWith("1.0.1590"));
+        assertTrue(zh.contains("• 乙") && zh.contains("• 新功能甲"));
+        assertFalse(zh.contains("丁") || zh.contains("Feature"));   // 1579 以前（含）的不列，另一種語言也不出現
+        assertTrue(WhatsNew.render(v, 1579, true).contains("• B"));
+        assertEquals("", WhatsNew.render(v, 1590, false));
+    }
+
+    @Test
     public void lessonInjectionFilter() {
         assertFalse(Memory.looksLikeInjection("三星設定：藍牙在「連接」頁裡"));
         assertFalse(Memory.looksLikeInjection("傳訊息：Instagram 的聊天室，傳送鈕只有圖示，直接用座標 tap 送出"));

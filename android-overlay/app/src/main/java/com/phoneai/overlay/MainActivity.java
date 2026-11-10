@@ -1096,7 +1096,8 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("自動檢查新版本"), false);
-            Ui.switchRow(this, u, 0, 1, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每天最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
+            Ui.row(this, u, 0, 2, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
+            Ui.switchRow(this, u, 1, 2, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每天最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
                     cfg().getBoolean("upd_auto", true), (v, on) -> cfg().edit().putBoolean("upd_auto", on).apply());
         });
         steps.add(() -> {
@@ -1300,6 +1301,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         AbTestUi.showUnseen(this);
+        WhatsNew.maybeShow(this);   // 更新後第一次打開：列出這幾版的更新內容
         if (!myTheme.equals(App.themeKey(this))) {   // 在教學或設定換了主題色：這一頁要跟著換（功能頁以前不會更新）
             recreate();
             return;

@@ -63,6 +63,13 @@ android {
         ndk { abiFilters "arm64-v8a" }
     }
 
+    // 把 repo 根目錄的 CHANGELOG.md 複製進 APK 的 assets：App 更新後第一次打開要列出這幾版的更新內容（WhatsNew），不需要網路
+    sourceSets {
+        main {
+            assets.srcDirs += "$buildDir/generated/changelogAssets"
+        }
+    }
+
     testOptions {
         unitTests.returnDefaultValues = true   // 測試時 Android 的類別（Handler、Looper…）回預設值，不要丟例外
     }
@@ -84,3 +91,9 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.json:json:20231013"
 }
+
+tasks.register("copyChangelog", Copy) {
+    from "$rootDir/../CHANGELOG.md"
+    into "$buildDir/generated/changelogAssets"
+}
+tasks.matching { it.name == "preBuild" }.configureEach { dependsOn "copyChangelog" }

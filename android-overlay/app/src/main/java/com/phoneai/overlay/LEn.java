@@ -632,6 +632,9 @@ final class LEn {
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
         m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
+        m.put("更新內容", "What's new");
+        m.put("看最近幾版改了什麼", "See what changed in the last few versions");
+        m.put("沒有更新內容", "No release notes");
         m.put("摘要（一行）", "Summary (one line)");
         m.put("在這個畫面操作", "Operate on this screen");
         m.put("目前正在用的螢幕", "The screen you are using now");
