@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正 AI 做任務時，Google 登入頁這類 App 整頁點不到：任務進行中不再多放一層不受信任的全螢幕懸浮層（無障礙服務已經有受信任的那一層）｜Fixed apps such as the Google sign-in page ignoring all taps while the AI runs a task: an extra untrusted full-screen overlay is no longer added during tasks (the accessibility service already provides a trusted one)
 
 ## 1.0.1595
 

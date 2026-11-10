@@ -254,6 +254,10 @@ public class OverlayService extends Service {
 
     private void addOverlay() {
         if (view != null || !Settings.canDrawOverlays(this)) return;
+        // 無障礙服務已經有一層「受信任」的全螢幕漣漪層（fx() 優先用它）：不要再放這一層一般懸浮層。
+        // 一般懸浮層是不受信任的視窗，有些 App（Google 登入頁、銀行類）設了「被別的視窗蓋住就不接受點擊」，任務一跑它就整頁點不到
+        //（使用者實測：只叫出面板或下拉通知欄都能點，AI 任務進行中才點不到；這一層只在任務進行時存在，而且是 NOT_TOUCHABLE，不會出現在無障礙視窗清單）。
+        if (RippleAccessibilityService.view() != null) { LifeLog.add(this, "懸浮層：無障礙層已存在，不放一般懸浮層"); return; }
         WindowManager.LayoutParams p = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
