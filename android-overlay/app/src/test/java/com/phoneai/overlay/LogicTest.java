@@ -227,6 +227,12 @@ public class LogicTest {
         assertTrue(ProtectedApps.autoMatch("Samsung Pay", "com.samsung.android.spay"));
         assertTrue(ProtectedApps.autoMatch("Google Wallet", "com.google.android.apps.walletnfc"));
         assertTrue(ProtectedApps.autoMatch("街口支付", "com.jkos.app"));
+        assertTrue(ProtectedApps.autoMatch("PayPal", "com.paypal.android.p2pmobile"));
+        assertTrue(ProtectedApps.autoMatch("Microsoft Authenticator", "com.azure.authenticator"));   // 驗證器、密碼管理器也要先問
+        assertTrue(ProtectedApps.autoMatch("Bitwarden", "com.x8bit.bitwarden"));
+        assertTrue(ProtectedApps.autoMatch("密碼管理員", "com.example.vault"));
+        assertFalse(ProtectedApps.autoMatch("Hotpot", "com.example.hotpot"));   // otp 要整個字才算
+        assertFalse(ProtectedApps.autoMatch("Timekeeper", "com.example.timekeeper"));
         assertFalse(ProtectedApps.autoMatch("LINE", "jp.naver.line.android"));
         assertFalse(ProtectedApps.autoMatch("設定", "com.android.settings"));
         assertFalse(ProtectedApps.autoMatch("Display", "com.example.display"));

@@ -330,6 +330,7 @@ public class AssistantSheet {
         return CircleShot.jpeg64(crop, 1280, 85);
     }
 
+    private boolean circleApproved;   // 這張截圖已經問過、使用者同意傳給 AI
     private JSONArray circleConvo = new JSONArray();   // 這一個選取區域的整段對話（第一輪有圖，之後接著問都帶著，才有上下文）
 
     /** 有選取：把選取的區域（加一張縮小的整個畫面當上下文）和問題一起交給聊天模型；之後不用再選，直接接著問（同一段對話）。 */
@@ -351,7 +352,23 @@ public class AssistantSheet {
         } catch (Exception e) {
             return;
         }
-        runVision();
+        final String[] sens = followUp || circleApproved ? null : CircleShot.sensitive(act);
+        if (sens == null) { runVision(); return; }
+        // 金融／支付／密碼管理類，或畫面有密碼輸入框：沒問過就不把截圖送給 AI
+        setStatus(L.t("等你確認…"));
+        new Thread(() -> {
+            final boolean ok = ConfirmActivity.ask(act, sens[1]);
+            act.runOnUiThread(() -> {
+                if (dismissing) return;
+                if (ok) { circleApproved = true; runVision(); return; }
+                circleConvo = new JSONArray();   // 不同意：這一輪作廢，圖不送出
+                circleBox = null;
+                if (canvas != null) canvas.clearSel();
+                setText("");
+                setStatus(L.t("已取消，沒有把畫面傳給 AI。"));
+                refreshAction();
+            });
+        }, "circle-confirm").start();
     }
 
     /** 把 circleConvo 這段對話（最後一則是使用者剛問的）交給看圖的模型，回答用回答卡片顯示。圈選和上傳圖片共用。 */

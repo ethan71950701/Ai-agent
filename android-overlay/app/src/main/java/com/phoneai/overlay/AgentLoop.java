@@ -261,10 +261,10 @@ final class AgentLoop {
                 OverlayService.showStep(c, L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步"), step, maxSteps);
                 // 銀行、支付類（或使用者標記保護的）App：沒問過就不把畫面送給 AI
                 String fgNow = ElementList.foregroundPackage();
-                if (fgNow != null && !st.approved.contains(fgNow) && ProtectedApps.isProtected(c, fgNow)) {
-                    if (!ui.confirm(String.format(L.t("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？"), ProtectedApps.label(c, fgNow))))
-                        return L.t("已取消，沒有讓 AI 操作這個 App。");
-                    st.approved.add(fgNow);
+                String[] sens = ProtectedApps.sensitive(c, fgNow, st.approved);   // 金融／支付／密碼管理類，或畫面有密碼輸入框（登入頁）
+                if (sens != null) {
+                    if (!ui.confirm(sens[1])) return L.t("已取消，沒有讓 AI 操作這個 App。");
+                    st.approved.add(sens[0]);
                 }
                 // 元件清單模式：不截圖，改給 Haiku 看元件編號清單；編號點不到時這一步改回截圖＋Sonnet。
                 boolean wasForced = forceShot;
@@ -1386,9 +1386,10 @@ final class AgentLoop {
             OverlayService.showStep(c, L.t("重播記住的步驟 ") + (i + 1) + L.t("／") + n, i + 1, n);
             hideBeforeOperate(ui, panelHidden, "tap");
             String fg = ElementList.foregroundPackage();
-            if (fg != null && !st.approved.contains(fg) && ProtectedApps.isProtected(c, fg)) {
-                if (!ui.confirm(String.format(L.t("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？"), ProtectedApps.label(c, fg)))) return "__cancel__";
-                st.approved.add(fg);
+            String[] sens = ProtectedApps.sensitive(c, fg, st.approved);
+            if (sens != null) {
+                if (!ui.confirm(sens[1])) return "__cancel__";
+                st.approved.add(sens[0]);
             }
             String a = s.optString("a");
             String result;

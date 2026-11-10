@@ -55,6 +55,29 @@ final class ElementList {
         return roots;
     }
 
+    /** 目前前景畫面有沒有看得到的「密碼輸入框」（登入頁）。讀不到回 false。最多看 400 個元件，很快。 */
+    static boolean hasPasswordField() {
+        RippleAccessibilityService svc = RippleAccessibilityService.instance;
+        if (svc == null) return false;
+        try {
+            AccessibilityNodeInfo r = targetRoot(svc);
+            if (r == null) return false;
+            java.util.ArrayDeque<AccessibilityNodeInfo> q = new java.util.ArrayDeque<>();
+            q.add(r);
+            int seen = 0;
+            while (!q.isEmpty() && seen < 400) {
+                AccessibilityNodeInfo n = q.poll();
+                seen++;
+                if (n.isPassword() && n.isVisibleToUser()) return true;
+                for (int i = 0; i < n.getChildCount(); i++) {
+                    AccessibilityNodeInfo c = n.getChild(i);
+                    if (c != null) q.add(c);
+                }
+            }
+        } catch (Throwable ignored) { }
+        return false;
+    }
+
     /** 目前前景（目標）App 的套件名稱；讀不到回 null。經驗要記在哪個 App、要帶哪個 App 的經驗，都用它。 */
     static String foregroundPackage() {
         RippleAccessibilityService svc = RippleAccessibilityService.instance;

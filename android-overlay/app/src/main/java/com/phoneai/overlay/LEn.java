@@ -632,6 +632,11 @@ final class LEn {
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
         m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
+        m.put("已取消，沒有把畫面傳給 AI。", "Cancelled; the screen was not sent to the AI.");
+        m.put("等你確認…", "Waiting for your confirmation…");
+        m.put("你圈選的畫面是「%s」（金融／支付類，或你標記保護的 App）。要把選取的畫面傳給 AI 嗎？", "The screen you circled is \"%s\" (a finance/payment app, or one you marked as protected). Send the selected area to the AI?");
+        m.put("你圈選的畫面（「%s」）有密碼輸入框，可能是登入頁。要把選取的畫面傳給 AI 嗎？", "The screen you circled (\"%s\") has a password field and may be a login page. Send the selected area to the AI?");
+        m.put("目前畫面（「%s」）有密碼輸入框，可能是登入頁。要讓 AI 看畫面並操作嗎？", "The current screen (\"%s\") has a password field and may be a login page. Let the AI see it and operate?");
         m.put("【記憶筆記（AI 看到的）】\n", "[Memory notes (what the AI sees)]\n");
         m.put(" 字　", " chars  ");
         m.put("（沒有）\n", "(none)\n");

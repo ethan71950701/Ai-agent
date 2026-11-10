@@ -13,9 +13,27 @@ final class CircleShot {
     private CircleShot() { }
 
     /** 面板打開時在背景截一張畫面，好了在主執行緒回呼（截不到回 null）。 */
+    /** 截圖當下的前景 App 與畫面有沒有密碼輸入框（面板之後會蓋在上面，要在截圖的同時記下來）。 */
+    static volatile String lastPkg;
+    static volatile boolean lastPassword;
+
+    /** 這張截圖要不要先問使用者才能送給 AI：回 {記號, 問的話}，沒事回 null。 */
+    static String[] sensitive(Context c) {
+        String pkg = lastPkg;
+        if (pkg == null || pkg.isEmpty()) return null;
+        String name = ProtectedApps.label(c, pkg);
+        if (ProtectedApps.isProtected(c, pkg))
+            return new String[]{pkg, String.format(L.t("你圈選的畫面是「%s」（金融／支付類，或你標記保護的 App）。要把選取的畫面傳給 AI 嗎？"), name)};
+        if (lastPassword)
+            return new String[]{pkg + "#pw", String.format(L.t("你圈選的畫面（「%s」）有密碼輸入框，可能是登入頁。要把選取的畫面傳給 AI 嗎？"), name)};
+        return null;
+    }
+
     static void prefetch(final Context app, final java.util.function.Consumer<Bitmap> onReady) {
         new Thread(() -> {
             try {
+                lastPkg = ElementList.foregroundPackage();
+                lastPassword = ElementList.hasPasswordField();
                 final Bitmap b = AgentLoop.screenshotBitmap();
                 if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));   // 截不到時 b 是 null
             } catch (Throwable t) {

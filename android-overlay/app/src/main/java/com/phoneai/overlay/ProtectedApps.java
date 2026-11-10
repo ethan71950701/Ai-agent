@@ -15,8 +15,8 @@ final class ProtectedApps {
     private ProtectedApps() { }
 
     private static final Pattern LABEL = Pattern.compile(
-            "銀行|银行|證券|证券|保險|保险|信用卡|支付|錢包|钱包|街口|悠遊|(?<![a-z])(pay|bank|wallet)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern PACKAGE = Pattern.compile("bank|wallet|paypal|spay|\\.pay", Pattern.CASE_INSENSITIVE);
+            "銀行|银行|證券|证券|保險|保险|信用卡|支付|錢包|钱包|街口|悠遊|密碼|密码|驗證器|验证器|(?<![a-z])(pay|bank|wallet|password|authenticator)|(?<![a-z])otp(?![a-z])", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PACKAGE = Pattern.compile("bank|wallet|paypal|spay|\\.pay|authenticator|(?<![a-z])otp(?![a-z])|1password|bitwarden|lastpass|keepass|keepersecurity|passwords?(?![a-z])", Pattern.CASE_INSENSITIVE);
 
     /** 依顯示名稱與套件名稱自動判斷是不是金融／支付類（純文字比對，不碰手機）。 */
     static boolean autoMatch(String label, String pkg) {
@@ -36,6 +36,21 @@ final class ProtectedApps {
         } catch (Exception e) {
             return pkg;
         }
+    }
+
+    /**
+     * 這個畫面要不要先問使用者才送給 AI：回 {已同意的記號, 要問的話}；沒事回 null。
+     * 金融／支付／密碼管理類（或你標記保護的 App）→ 記號是套件名稱；其他 App 但畫面有密碼輸入框（登入頁）→ 記號是「套件名稱#pw」。
+     * approved 是這個任務已經同意過的記號，同意過就不再問（也不再掃描畫面）。
+     */
+    static String[] sensitive(Context c, String pkg, Set<String> approved) {
+        if (pkg == null || pkg.isEmpty() || approved.contains(pkg)) return null;
+        if (isProtected(c, pkg))
+            return new String[]{pkg, String.format(L.t("目前畫面是「%s」（金融／支付類，或你標記保護的 App）。要讓 AI 看畫面並操作嗎？"), label(c, pkg))};
+        if (approved.contains(pkg + "#pw")) return null;
+        if (ElementList.hasPasswordField())
+            return new String[]{pkg + "#pw", String.format(L.t("目前畫面（「%s」）有密碼輸入框，可能是登入頁。要讓 AI 看畫面並操作嗎？"), label(c, pkg))};
+        return null;
     }
 
     static boolean isProtected(Context c, String pkg) {
