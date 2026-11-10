@@ -261,6 +261,13 @@ final class Memory {
                         return "已更新 #" + it.optInt("id") + " 的標題／摘要：" + it.optString("title") + "：" + it.optString("brief");
                     }
                     if (!text.isEmpty()) {
+                        String old = it.optString("text");
+                        if ("note".equals(it.optString("kind")) && old.length() >= 60 && text.length() < old.length() / 3) {
+                            // 長筆記被改成很短的字：常是小模型把「標題」當成內容寫進去，整則筆記就被洗掉了。先問使用者
+                            String q = String.format(L.t("AI 要把筆記 #%d 從 %d 字改成只剩 %d 字（可能是把標題當成內容寫進去了），要改嗎？"), it.optInt("id"), old.length(), text.length());
+                            if (confirm == null || !confirm.ask(q)) return "使用者沒有同意，沒有修改（如果只是要改標題或摘要，請用 title／brief 參數，不要改 text）";
+                        }
+                        if (!old.equals(text)) it.put("prev_text", old);   // 留上一版，萬一被改壞還找得回來
                         it.put("text", text.length() > 300 ? text.substring(0, 300) : text);
                         String nt = args.optString("title").trim(), nb = args.optString("brief").trim();
                         it.put("title", nt.length() > 20 ? nt.substring(0, 20) : nt);   // 內容改了，舊標題與摘要作廢（沒給新的就退回用前面的字）

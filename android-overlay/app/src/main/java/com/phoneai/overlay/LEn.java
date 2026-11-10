@@ -632,6 +632,7 @@ final class LEn {
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
         m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
+        m.put("AI 要把筆記 #%d 從 %d 字改成只剩 %d 字（可能是把標題當成內容寫進去了），要改嗎？", "The AI wants to change note #%d from %d characters to only %d (it may have written a title as the content). Change it?");
         m.put("找不到這一項，已重新整理", "That item was not found; refreshed");
         m.put("更新內容", "What's new");
         m.put("看最近幾版改了什麼", "See what changed in the last few versions");
