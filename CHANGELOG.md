@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1587
+
 - AI 現在可以只改某則筆記的標題或摘要（不用重寫全文）；記憶頁切換星星（永久記憶）改成每次重新讀檔、只改那一項再存，避免資料過時沒存進去｜The AI can now change just a note's title or summary without rewriting the whole text; toggling the star (permanent memory) on the memory page now re-reads the file and changes only that item, so a stale copy can no longer swallow the change
 
 ## 1.0.1586
