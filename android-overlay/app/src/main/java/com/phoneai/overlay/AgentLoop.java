@@ -414,7 +414,8 @@ final class AgentLoop {
                         if (manual) {   // 要使用者自己動手（密碼、圖形、指紋…）：不跳會蓋住畫面的對話框，改暫停，讓他直接操作，做完按 Now Bar 的「繼續」
                             OverlayService.paused = true;
                             OverlayService.showStep(c, L.t("等你接手"), step, maxSteps);
-                            if (!RippleAccessibilityService.showHandoff(why)) OverlayService.handoffAlert(c, why);   // 優先用懸浮窗；沒開無障礙才退回通知
+                            // 預設只跳通知（有「繼續」）：懸浮卡片會讓部分 App（Google 登入頁）點不到，要在設定打開才用卡片
+                            if (!(c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("handoff_card", false) && RippleAccessibilityService.showHandoff(why))) OverlayService.handoffAlert(c, why);
                             OverlayService.refreshNotification();
                             try { c.getSystemService(android.os.Vibrator.class).vibrate(android.os.VibrationEffect.createPredefined(android.os.VibrationEffect.EFFECT_HEAVY_CLICK)); } catch (Exception ignored) { }
                             waitWhilePaused(ui);
