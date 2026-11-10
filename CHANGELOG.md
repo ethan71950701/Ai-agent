@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1593
+
 - 畫圈提問改成只送一張圖：整個畫面，選取的地方畫一個紅框（白邊），不再另外裁一塊、也不再多送一張縮小圖｜Circle-to-ask now sends a single image: the whole screen with a red rectangle (white outline) around your selection, instead of a separate crop plus a shrunken full screenshot
 
 ## 1.0.1592
