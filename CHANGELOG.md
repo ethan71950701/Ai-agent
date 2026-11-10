@@ -4,7 +4,11 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
-- 助理的記憶頁：超過 60 字的長筆記改成顯示「標題＋一行摘要」，點開才是全文；搜尋也會找標題和摘要。短筆記、待辦、經驗照舊｜Assistant memory page: notes longer than 60 characters now show a title and a one-line summary (tap to open the full text); search also matches titles and summaries. Short notes, to-dos and lessons are unchanged；點開長筆記，內容上面也有「標題」「摘要」兩格可以自己改｜Opening a long note now also shows editable "Title" and "Summary" fields above the content
+- 點開長筆記時，內容上面多了「標題」「摘要」兩格，可以自己改｜Opening a long note now shows editable "Title" and "Summary" fields above the content
+
+## 1.0.1583
+
+- 助理的記憶頁：超過 60 字的長筆記改成顯示「標題＋一行摘要」，點開才是全文；搜尋也會找標題和摘要。短筆記、待辦、經驗照舊｜Assistant memory page: notes longer than 60 characters now show a title and a one-line summary (tap to open the full text); search also matches titles and summaries. Short notes, to-dos and lessons are unchanged
 
 ## 1.0.1579
 
