@@ -248,8 +248,18 @@ final class Memory {
                 case "memory_update": {
                     JSONObject it = byId(d, args.optInt("id", -1));
                     if (it == null) return "錯誤：找不到 #" + args.optInt("id");
-                    if (it.optBoolean("pinned")) return "錯誤：#" + it.optInt("id") + " 這是永久記憶，只能在 App 的「助理的記憶」頁手動刪除或修改";
+                    if (it.optBoolean("pinned")) {
+                        LifeLog.add(c, "記憶工具：#" + it.optInt("id") + " 檔案裡是釘選（pinned=true），拒絕修改");   // 診斷用：使用者說已經取消星星時，看檔案當下的狀態
+                        return "錯誤：#" + it.optInt("id") + " 這是永久記憶，只能在 App 的「助理的記憶」頁手動刪除或修改";
+                    }
                     String text = args.optString("text").trim();
+                    if (text.isEmpty() && "note".equals(it.optString("kind")) && (!args.optString("title").trim().isEmpty() || !args.optString("brief").trim().isEmpty())) {
+                        String nt = args.optString("title").trim(), nb = args.optString("brief").trim();   // 只改標題或摘要：內容不動
+                        if (!nt.isEmpty()) it.put("title", nt.length() > 20 ? nt.substring(0, 20) : nt);
+                        if (!nb.isEmpty()) it.put("brief", nb.length() > 60 ? nb.substring(0, 60) : nb);
+                        save(c, d);
+                        return "已更新 #" + it.optInt("id") + " 的標題／摘要：" + it.optString("title") + "：" + it.optString("brief");
+                    }
                     if (!text.isEmpty()) {
                         it.put("text", text.length() > 300 ? text.substring(0, 300) : text);
                         String nt = args.optString("title").trim(), nb = args.optString("brief").trim();

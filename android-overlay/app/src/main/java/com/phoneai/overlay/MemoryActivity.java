@@ -143,6 +143,32 @@ public class MemoryActivity extends Activity {
         }).start();
     }
 
+    /** 切換星星（永久記憶）：每次都重新讀檔、只改這一項、馬上存回去，避免手上這份資料已經過時（AI 剛好改過記憶）而把別的變動蓋掉，或沒存進去。 */
+    private void setPinned(final int id, final boolean pinned) {
+        new Thread(() -> {
+            String err = null;
+            JSONObject fresh = null;
+            try {
+                fresh = Memory.load(this);
+                boolean found = false;
+                for (JSONObject x : Memory.items(fresh)) {
+                    if (x.optInt("id") == id) { x.put("pinned", pinned); found = true; break; }
+                }
+                if (found) Memory.save(this, fresh); else err = L.t("找不到這一項，已重新整理");
+                LifeLog.add(this, "記憶頁：#" + id + " 星星 → " + (pinned ? "釘選" : "取消") + (found ? "（已存檔）" : "（找不到）"));
+            } catch (Exception e) {
+                err = L.t("寫入失敗：") + e.getMessage();
+            }
+            final String e = err;
+            final JSONObject f = fresh;
+            runOnUiThread(() -> {
+                if (f != null) { data = f; cache = f; }
+                if (e != null) status.setText(e);
+                render();
+            });
+        }, "memory-pin").start();
+    }
+
     private void saveThen(Runnable after) {
         new Thread(() -> {
             String err = null;
@@ -203,12 +229,10 @@ public class MemoryActivity extends Activity {
                 final StarView star = new StarView(this, Ui.attr(this, com.google.android.material.R.attr.colorPrimary),
                         Ui.attr(this, com.google.android.material.R.attr.colorOnSurfaceVariant));
                 star.setOn(on, false);
+                final int itemId = it.optInt("id");
                 star.setOnClickListener(v -> {
                     star.setOn(!on, true);   // 先彈一下，再存檔重畫
-                    star.postDelayed(() -> {
-                        try { it.put("pinned", !on); } catch (Exception ignored) { }
-                        saveThen(this::render);
-                    }, 320);
+                    star.postDelayed(() -> setPinned(itemId, !on), 320);
                 });
                 pin = star;
             }
