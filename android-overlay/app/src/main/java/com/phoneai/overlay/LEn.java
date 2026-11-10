@@ -632,8 +632,8 @@ final class LEn {
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
         m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
-        m.put("接手時顯示懸浮卡片（實驗）", "Show a floating card for handoff (experimental)");
-        m.put("要你自己輸入密碼、解鎖時，預設只跳一則通知（上面有「繼續」）；打開這個才會在畫面上方放一張可拖動的卡片。部分 App（例如 Google 登入頁）可能在卡片出現時不接受點擊", "When you need to type a password or unlock yourself, by default only a notification (with \"Continue\") is shown; turn this on to also put a draggable card at the top of the screen. Some apps (for example the Google sign-in page) may ignore taps while the card is shown");
+        m.put("接手時顯示懸浮卡片", "Show a floating card for handoff");
+        m.put("要你自己動手時，在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）；登入頁、銀行類、Google 登入這類會因為卡片而點不到的畫面，自動改跳通知。關掉就一律用通知", "When you need to do something yourself, a draggable card (with \"I'm done, continue\") is shown at the top; on screens where the card would block taps (login pages, banking apps, Google sign-in) a notification is used instead. Turn it off to always use the notification");
         m.put("已取消，沒有把畫面傳給 AI。", "Cancelled; the screen was not sent to the AI.");
         m.put("等你確認…", "Waiting for your confirmation…");
         m.put("你圈選的畫面是「%s」（金融／支付類，或你標記保護的 App）。要把選取的畫面傳給 AI 嗎？", "The screen you circled is \"%s\" (a finance/payment app, or one you marked as protected). Send the selected area to the AI?");
