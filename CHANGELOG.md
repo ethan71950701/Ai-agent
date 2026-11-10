@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - AI 現在可以只改某則筆記的標題或摘要（不用重寫全文）；記憶頁切換星星（永久記憶）改成每次重新讀檔、只改那一項再存，避免資料過時沒存進去｜The AI can now change just a note's title or summary without rewriting the whole text; toggling the star (permanent memory) on the memory page now re-reads the file and changes only that item, so a stale copy can no longer swallow the change
+
+## 1.0.1586
+
 - 更新後第一次打開，會跳視窗列出跳過的這幾版的更新內容（先列 8 版，更早的點「顯示更早的 N 版」展開）；也可以從「功能 → 更新 → 更新內容」隨時看｜After an update, the first launch shows what changed in every version you skipped (8 at first; tap "Show N older versions" for the rest); you can also open it any time from Features → Update → What's new
 
 ## 1.0.1584
