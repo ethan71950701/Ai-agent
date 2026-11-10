@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 診斷頁新增「記憶筆記（AI 看到的）」：列出每則筆記的編號、有沒有 📌、字數和標題，方便查「AI 說是永久記憶」這類問題｜The diagnostics page now lists "Memory notes (what the AI sees)": each note's id, whether it is pinned, its length and title, to help debug cases like the AI claiming a note is permanent
 - 長筆記被 AI 改成很短的字（例如把標題當成內容寫進去）時，會先跳確認框問你；每次改內容也會留一份上一版｜When the AI tries to shrink a long note to a few words (for example writing a title as the content), a confirmation dialog now asks first; the previous text is also kept on every content change
 
 ## 1.0.1587

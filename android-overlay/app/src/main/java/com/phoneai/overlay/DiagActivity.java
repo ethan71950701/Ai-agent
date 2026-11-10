@@ -206,6 +206,16 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n")).append(LifeLog.read(this)).append("\n\n");
+        try {   // 送給 AI 的筆記索引：每一則的編號、有沒有 📌、字數、標題（診斷「AI 說是永久記憶」「找不到那則筆記」用）
+            sb.append(L.t("【記憶筆記（AI 看到的）】\n"));
+            boolean any = false;
+            for (org.json.JSONObject it : Memory.live(Memory.load(this), "note")) {
+                any = true;
+                sb.append("#").append(it.optInt("id")).append(it.optBoolean("pinned") ? " 📌 " : " — ").append(it.optString("text").length()).append(L.t(" 字　")).append(Memory.displayTitle(it).replace('\n', ' ')).append('\n');
+            }
+            if (!any) sb.append(L.t("（沒有）\n"));
+            sb.append('\n');
+        } catch (Exception ignored) { }
         sb.append(L.t("更新檢查：")).append(Updater.info(this).isEmpty() ? L.t("（還沒檢查過）") : Updater.info(this)).append('\n');
         sb.append(L.t("聲紋：")).append(SpeakerId.statusText(this)).append('\n');
         sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');
