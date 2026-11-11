@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1610
+
 - 水波按壓效果：拿掉怪怪的網狀亮紋，改成幾塊寬而柔的水面反光（由水面起伏算出來，慢慢飄）｜Water press effect: the odd net-like light lines are gone, replaced by a few wide, soft highlights on the water surface (computed from the surface slope, drifting slowly)
 
 ## 1.0.1609
