@@ -9,7 +9,7 @@ import android.view.animation.LinearInterpolator;
 
 /**
  * 水波：手指按下去，一灘水從手指的位置擴散開來，蓋住整張卡片。水不只是把字扭曲而已，它看得到：
- *  - 水面微微染一層水色，上面有緩慢飄動的亮紋（像光穿過水面在底下形成的網狀光影），
+ *  - 水面微微染一層水色，上面有幾塊寬而柔的水面反光慢慢飄（由水面起伏的斜率算出來，不是細線），
  *  - 水的邊緣有一圈亮邊，波前那一圈折射最強（內容被推擠、邊緣有一點色散），
  *  - 蓋住的地方內容像隔著水微微放大，水面像池水一樣緩慢、不規則地流動。
  * 放開手指，水不是縮回去，而是「滲進卡片裡」：水面先靜下來，波前的環淡掉，然後水一塊一塊地被吸收——靠邊緣的先乾，一塊塊水漬縮小（邊緣有亮邊），手指按的地方最後才乾。
@@ -35,6 +35,11 @@ final class WaterRipple {
             + "uniform float ring;\n"                                   // 波前那一圈的強度（放開時先淡掉）
             + "uniform float time;\n"                                   // 水面流動的時間（放開後會變慢）
             + "uniform float soak;\n"                                   // 滲進去的程度 0（全濕）～1.25（全乾）
+            + "float surf(float2 p, float t) {\n"                       // 水面的高度（光滑的起伏）：用它的斜率算水面反光
+            + "  float2 q = p / 110.0;\n"
+            + "  q += 0.35 * sin(q.yx * 1.3 + t * 0.5);\n"
+            + "  return sin(q.y * 1.7 + t * 1.1) + sin(q.x * 1.3 - t * 0.8 + 1.7) + 0.5 * sin((q.x + q.y) * 2.1 + t * 0.6);\n"
+            + "}\n"
             + "half4 main(float2 fc) {\n"
             + "  float2 d = fc - center;\n"
             + "  float dist = length(d);\n"
@@ -64,11 +69,14 @@ final class WaterRipple {
             + "  half4 cb = content.eval(clamp(uv - spread, float2(0.0), hi));\n"
             + "  half4 c = half4(cr.r, cg.g, cb.b, cg.a);\n"
             // 水的樣子：水色、飄動的亮紋、水漬邊緣的亮邊、波前的反光
-            + "  float caus = abs(sin(q.x * 3.1 + w.x)) * abs(sin(q.y * 2.7 + w.y));\n"
-            + "  float light = smoothstep(0.55, 1.0, caus) * 0.13;\n"
+            // 水面反光：從水面起伏的斜率算出「這一小塊水面剛好把光反射到眼睛」的程度（Blinn 高光），所以是幾塊寬而柔的亮斑慢慢飄，不是細線
+            + "  float hx = surf(fc + float2(10.0, 0.0), time) - surf(fc - float2(10.0, 0.0), time);\n"
+            + "  float hy = surf(fc + float2(0.0, 10.0), time) - surf(fc - float2(0.0, 10.0), time);\n"
+            + "  float3 nrm = normalize(float3(-hx * 0.9, -hy * 0.9, 1.0));\n"
+            + "  float spec = pow(max(dot(nrm, normalize(float3(-0.215, -0.323, 0.917))), 0.0), 36.0);\n"
             + "  float rim = 4.0 * mask * (1.0 - mask) * inFront;\n"      // 水漬的邊緣（mask 在 0 與 1 之間）
             + "  float shine = max(slope, 0.0) * ring * 0.38;\n"
-            + "  float3 add = (float3(0.50, 0.72, 0.95) * 0.11 + float3(light)) * (amp * wet) + float3(rim * 0.32 * amp + shine);\n"
+            + "  float3 add = (float3(0.50, 0.72, 0.95) * 0.11 + float3(spec * 0.45)) * (amp * wet) + float3(rim * 0.32 * amp + shine);\n"
             + "  c.rgb += half3(add) * c.a;\n"
             + "  return c;\n"
             + "}\n";
