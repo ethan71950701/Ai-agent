@@ -164,14 +164,15 @@ final class Anim {
         final float start = show ? (body.getHeight() > 0 && body.getHeight() < to ? body.getHeight() : 0f) : body.getHeight();
         final float end = show ? to : 0f;
         final float fadeBase = Math.max(1f, Math.abs(end - start));
-        // 彈簧（非線性、有慣性）：展開稍微有一點點衝過頭再回穩，收合臨界阻尼（不回彈）。
-        // 彈簧的穩定時間只跟剛性有關、跟距離無關，所以依要動的高度調剛性：越高越軟、越久，很高的群組（底欄玻璃那組）才看得到過程。
+        // 彈簧（非線性、有慣性），數值取 Material 3 Expressive 的「空間（spatial）」彈簧（改變大小、位置用的）：
+        //   預設 stiffness 380、阻尼 0.8（約 0.26 秒穩定、過衝約 1.5%）；慢 stiffness 200、阻尼 0.8（約 0.35 秒）。
+        //   很高的內容（> 800dp，例如底欄玻璃那組）用慢的，才看得到展開的過程；收合用臨界阻尼（不回彈）、剛性 600。
+        // 這些數值是從第三方整理的 Material 文件查到的（各家對阻尼寫 0.73 或 0.8 不一致），不是官方原文。
         float dist = fadeBase / body.getResources().getDisplayMetrics().density;   // dp
-        float zeta = show ? 0.82f : 1f;
-        float settle = show ? Math.max(0.38f, Math.min(0.9f, 0.34f + dist * 0.0004f)) : Math.max(0.3f, Math.min(0.6f, 0.26f + dist * 0.0003f));   // 秒
-        float omega = 4f / (zeta * settle);
+        float zeta = show ? 0.8f : 1f;
+        float stiffness = show ? (dist > 800f ? 200f : 380f) : 600f;
         final androidx.dynamicanimation.animation.SpringAnimation sa = new androidx.dynamicanimation.animation.SpringAnimation(new androidx.dynamicanimation.animation.FloatValueHolder(start));
-        sa.setSpring(new androidx.dynamicanimation.animation.SpringForce(end).setDampingRatio(zeta).setStiffness(omega * omega));
+        sa.setSpring(new androidx.dynamicanimation.animation.SpringForce(end).setDampingRatio(zeta).setStiffness(stiffness));
         sa.setStartVelocity(prevVel);
         sa.setMinimumVisibleChange(0.5f);
         sa.addUpdateListener((anim, h, vel) -> {
