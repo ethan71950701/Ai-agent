@@ -278,7 +278,7 @@ final class Ui {
      * 這裡改成前景色 20%，擴散的圓看得清楚。呼叫後再呼叫 Anim.pressable（輕微縮放）。
      */
     static void stateLayer(MaterialCardView card, int color) {
-        if (!WaterRipple.broken) {
+        if (!GlassPress.broken) {
             // 水波紋：用著色器做的水面波紋（折射、色散、波峰反光），取代系統的 RippleDrawable（使用者：系統的擴散太僵硬）
             card.setRippleColor(android.content.res.ColorStateList.valueOf(0x00000000));
             card.setTag(Anim.R_WATER, Boolean.TRUE);

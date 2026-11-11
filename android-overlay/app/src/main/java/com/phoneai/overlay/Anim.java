@@ -120,10 +120,11 @@ final class Anim {
     /** 按下縮小、放開彈回；不攔截點擊。 */
     static void pressable(View v, float pressed) {
         v.setOnTouchListener((x, e) -> {
-            if (x.getTag(R_WATER) != null && !WaterRipple.broken) {   // 水波紋（折射）：按下從手指位置擴散；被取消（開始捲動）就收掉
-                if (e.getActionMasked() == MotionEvent.ACTION_DOWN) WaterRipple.start(x, e.getX(), e.getY());
-                else if (e.getActionMasked() == MotionEvent.ACTION_UP) WaterRipple.release(x);   // 放開：水收回去
-                else if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) WaterRipple.stop(x);   // 開始捲動：直接收掉
+            if (x.getTag(R_WATER) != null && !GlassPress.broken) {   // 水波紋（折射）：按下從手指位置擴散；被取消（開始捲動）就收掉
+                if (e.getActionMasked() == MotionEvent.ACTION_DOWN) GlassPress.start(x, e.getX(), e.getY());
+                else if (e.getActionMasked() == MotionEvent.ACTION_MOVE) GlassPress.move(x, e.getX(), e.getY());   // 透鏡跟著手指
+                else if (e.getActionMasked() == MotionEvent.ACTION_UP) GlassPress.release(x);   // 放開：透鏡縮小、融回去
+                else if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) GlassPress.stop(x);   // 開始捲動：直接收掉
             }
             Object layer = x.getTag(R_STATE_LAYER);   // 有狀態層（按下時整張蓋一層淡色）的話一起動
             if (layer instanceof View) {
@@ -210,7 +211,7 @@ final class Anim {
         sa.start();
     }
 
-    static final int R_WATER = 0x7f0a0e5b;   // View.setTag 用的鍵：這張卡片按下時放水波紋（WaterRipple）
+    static final int R_WATER = 0x7f0a0e5b;   // View.setTag 用的鍵：這張卡片按下時放水波紋（GlassPress）
     static final int R_STATE_LAYER = 0x7f0a0e59;   // View.setTag 用的鍵：卡片的「按下狀態層」
 
     private static final int R_EXPAND_V = 0x7f0a0e58;   // 彈簧目前的速度（連點時接續用）
