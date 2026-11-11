@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1616
+
 - 水波按壓效果改乾淨：按住時內容保持清楚（不模糊、不染色、不抖），只有一圈波從手指擴散一次（經過時折射、帶彩色邊），手指底下一團很淡的光；放開時那團光一塊塊滲進卡片裡｜Cleaner water press effect: content stays crisp while held (no blur, tint or wobble); a single wave spreads from your finger once (refracting with a color edge as it passes) and a faint light sits under your finger; on release the light soaks into the card patch by patch
 
 ## 1.0.1615
