@@ -30,18 +30,18 @@ final class WaterRipple {
             + "  float dist = length(d);\n"
             + "  float2 dir = d / max(dist, 1.0);\n"
             + "  float x = dist - radius;\n"                          // 離波前的距離（波前＝radius）
-            + "  float env = exp(-(x * x) / 2400.0);\n"               // 波的包絡：只有波前附近有波（寬約 40px）
-            + "  float phase = x / 11.0;\n"                           // 波長約 70px，包絡內大約兩圈
+            + "  float env = exp(-(x * x) / 4800.0);\n"               // 波的包絡：只有波前附近有波（寬約 55px）
+            + "  float phase = x / 14.0;\n"                           // 波長約 88px，包絡內大約兩圈
             + "  float slope = cos(phase) * env;\n"                   // 水面的斜率：決定折射往哪邊推
-            + "  float off = 10.0 * amp * slope;\n"                   // 折射的位移（像素）
+            + "  float off = 24.0 * amp * slope;\n"                   // 折射的位移（像素）
             + "  float2 hi = size - float2(1.0);\n"
             + "  float2 uv = clamp(fc - dir * off, float2(0.0), hi);\n"
-            + "  float2 spread = dir * (1.8 * amp * env);\n"          // 色散：紅藍通道多偏一點
+            + "  float2 spread = dir * (4.5 * amp * env);\n"          // 色散：紅藍通道多偏一點
             + "  half4 cr = content.eval(clamp(uv + spread, float2(0.0), hi));\n"
             + "  half4 cg = content.eval(uv);\n"
             + "  half4 cb = content.eval(clamp(uv - spread, float2(0.0), hi));\n"
             + "  half4 c = half4(cr.r, cg.g, cb.b, cg.a);\n"
-            + "  float shine = max(slope, 0.0) * amp * 0.18;\n"       // 波峰的水面反光
+            + "  float shine = max(slope, 0.0) * amp * 0.38;\n"       // 波峰的水面反光
             + "  c.rgb += half3(shine) * c.a;\n"
             + "  return c;\n"
             + "}\n";
@@ -57,14 +57,14 @@ final class WaterRipple {
             sh.setFloatUniform("size", w, h);
             final float maxR = (float) Math.hypot(Math.max(x, w - x), Math.max(y, h - y)) + 70f * v.getResources().getDisplayMetrics().density;
             final ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
-            va.setDuration(900);
+            va.setDuration(1100);
             va.setInterpolator(new LinearInterpolator());
             va.addUpdateListener(an -> {
               try {
                 float t = (float) an.getAnimatedValue();
                 float radius = maxR * (1f - (float) Math.pow(1f - t, 2.4));   // 先快後慢地擴散出去
                 float ramp = Math.min(1f, t / 0.07f);                        // 剛按下去先淡入一下（捲動時被取消的瞬間才不會閃）
-                float amp = ramp * (float) Math.pow(1f - t, 1.3);            // 越擴散越淡
+                float amp = ramp * (float) Math.pow(1f - t, 1.0);            // 越擴散越淡
                 sh.setFloatUniform("radius", radius);
                 sh.setFloatUniform("amp", amp);
                 v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(sh, "content"));
