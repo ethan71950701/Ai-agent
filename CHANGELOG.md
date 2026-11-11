@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 設定群組的展開、收合改用彈簧動畫（非線性、有慣性）：展開會輕輕衝過頭再回穩，收合不回彈；越高的群組越軟、越久，連點會接著當下的速度動｜Settings groups now expand and collapse with spring physics (non-linear, with inertia): a gentle overshoot when opening, none when closing; taller groups are softer and slower, and tapping again continues from the current velocity
 
 ## 1.0.1598
 

@@ -144,8 +144,13 @@ final class Anim {
         boostFrames(body, 700, "群組展開");
         final ViewGroup.LayoutParams lp = body.getLayoutParams();
         Object old = body.getTag(R_EXPAND);
-        if (old instanceof android.animation.ValueAnimator) ((android.animation.ValueAnimator) old).cancel();
-        final float from, to;
+        float prevVel = 0f;
+        if (old instanceof androidx.dynamicanimation.animation.SpringAnimation) {   // 連點：從目前的高度與速度接著動，不會跳
+            ((androidx.dynamicanimation.animation.SpringAnimation) old).cancel();
+            Object v = body.getTag(R_EXPAND_V);
+            if (v instanceof Float) prevVel = (Float) v;
+        }
+        final float to;
         if (show) {
             View parent = (View) body.getParent();
             int w = parent.getWidth() > 0 ? parent.getWidth() : body.getResources().getDisplayMetrics().widthPixels;
@@ -153,43 +158,42 @@ final class Anim {
             lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             body.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
             to = body.getMeasuredHeight();
-            from = body.getVisibility() == View.VISIBLE && body.getHeight() > 0 && lp.height != ViewGroup.LayoutParams.WRAP_CONTENT ? body.getHeight() : 0f;
         } else {
-            from = body.getHeight();
             to = 0f;
         }
-        final float start = show ? (body.getHeight() > 0 && body.getHeight() < to ? body.getHeight() : 0f) : from;
+        final float start = show ? (body.getHeight() > 0 && body.getHeight() < to ? body.getHeight() : 0f) : body.getHeight();
         final float end = show ? to : 0f;
-        android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(start, end);
-        // 時間跟著要動的距離走：以前固定 380 ms＋「先衝很快」的曲線，內容很高（例如底欄玻璃有十幾條滑桿）時一瞬間就開完，看起來像沒有動畫、很硬。
-        // 現在越高越久（約 320～720 ms），曲線改成起步柔一點、尾巴慢慢收；收合稍快，同樣柔和進出。
-        float dist = Math.abs(end - start) / body.getResources().getDisplayMetrics().density;   // dp
-        long dur = (long) Math.max(320f, Math.min(720f, 240f + dist * 0.18f));
-        va.setDuration(show ? dur : Math.round(dur * 0.8f));
-        va.setInterpolator(show ? new android.view.animation.PathInterpolator(0.22f, 0.08f, 0.12f, 1f) : new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f));
         final float fadeBase = Math.max(1f, Math.abs(end - start));
-        va.addUpdateListener(an -> {
-            float h = (float) an.getAnimatedValue();
+        // 彈簧（非線性、有慣性）：展開稍微有一點點衝過頭再回穩，收合臨界阻尼（不回彈）。
+        // 彈簧的穩定時間只跟剛性有關、跟距離無關，所以依要動的高度調剛性：越高越軟、越久，很高的群組（底欄玻璃那組）才看得到過程。
+        float dist = fadeBase / body.getResources().getDisplayMetrics().density;   // dp
+        float zeta = show ? 0.82f : 1f;
+        float settle = show ? Math.max(0.38f, Math.min(0.9f, 0.34f + dist * 0.0004f)) : Math.max(0.3f, Math.min(0.6f, 0.26f + dist * 0.0003f));   // 秒
+        float omega = 4f / (zeta * settle);
+        final androidx.dynamicanimation.animation.SpringAnimation sa = new androidx.dynamicanimation.animation.SpringAnimation(new androidx.dynamicanimation.animation.FloatValueHolder(start));
+        sa.setSpring(new androidx.dynamicanimation.animation.SpringForce(end).setDampingRatio(zeta).setStiffness(omega * omega));
+        sa.setStartVelocity(prevVel);
+        sa.setMinimumVisibleChange(0.5f);
+        sa.addUpdateListener((anim, h, vel) -> {
+            body.setTag(R_EXPAND_V, vel);
             lp.height = Math.max(0, Math.round(h));
             body.setLayoutParams(lp);
             // 內容淡入淡出跟著「走了多少」，不是跟著絕對高度：很高的內容才不會一開始就全亮
             float prog = Math.abs(h - start) / fadeBase;
             body.setAlpha(show ? Math.min(1f, 0.25f + prog * 1.1f) : Math.max(0f, 1f - prog * 1.15f));
         });
-        va.addListener(new android.animation.AnimatorListenerAdapter() {
-            private boolean cancelled;
-            @Override public void onAnimationCancel(android.animation.Animator an) { cancelled = true; }
-            @Override public void onAnimationEnd(android.animation.Animator an) {
-                if (cancelled) return;
-                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                body.setAlpha(1f);
-                if (!show) body.setVisibility(View.GONE);
-                body.setLayoutParams(lp);
-            }
+        sa.addEndListener((anim, canceled, value, velocity) -> {
+            if (canceled) return;
+            body.setTag(R_EXPAND_V, 0f);
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            body.setAlpha(1f);
+            if (!show) body.setVisibility(View.GONE);
+            body.setLayoutParams(lp);
         });
-        body.setTag(R_EXPAND, va);
-        va.start();
+        body.setTag(R_EXPAND, sa);
+        sa.start();
     }
 
+    private static final int R_EXPAND_V = 0x7f0a0e58;   // 彈簧目前的速度（連點時接續用）
     private static final int R_EXPAND = 0x7f0a0e57;   // View.setTag 用的鍵（只要不跟系統的衝突）
 }
