@@ -263,6 +263,14 @@ final class Ui {
         if (click != null) {
             card.setClickable(true);
             card.setOnClickListener(v -> { rememberTap(v); click.onClick(v); });
+            // 按下去的回饋：不用會從手指位置擴散的水波紋（在大小圓角混在一起的卡片上看起來怪），
+            // 改成 Material 3 的「狀態層」：整張卡片蓋上一層 10% 的前景色，按下淡入、放開淡出；再加上很輕的縮放
+            card.setRippleColor(android.content.res.ColorStateList.valueOf(0x00000000));
+            View layer = new View(c);
+            layer.setBackgroundColor(attr(c, com.google.android.material.R.attr.colorOnSurface));
+            layer.setAlpha(0f);
+            card.addView(layer, new android.widget.FrameLayout.LayoutParams(-1, -1));   // MaterialCardView 會把子畫面裁成卡片的圓角形狀
+            card.setTag(Anim.R_STATE_LAYER, layer);
             Anim.pressable(card, 0.98f);
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);

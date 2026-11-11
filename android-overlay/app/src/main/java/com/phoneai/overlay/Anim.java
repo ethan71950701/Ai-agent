@@ -120,6 +120,15 @@ final class Anim {
     /** 按下縮小、放開彈回；不攔截點擊。 */
     static void pressable(View v, float pressed) {
         v.setOnTouchListener((x, e) -> {
+            Object layer = x.getTag(R_STATE_LAYER);   // 有狀態層（按下時整張蓋一層淡色）的話一起動
+            if (layer instanceof View) {
+                switch (e.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN: ((View) layer).animate().alpha(0.10f).setDuration(80).start(); break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL: ((View) layer).animate().alpha(0f).setDuration(220).start(); break;
+                    default:
+                }
+            }
             switch (e.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     spring(x, DynamicAnimation.SCALE_X, pressed, PRESS_IN_K, PRESS_IN_D);
@@ -195,6 +204,8 @@ final class Anim {
         body.setTag(R_EXPAND, sa);
         sa.start();
     }
+
+    static final int R_STATE_LAYER = 0x7f0a0e59;   // View.setTag 用的鍵：卡片的「按下狀態層」
 
     private static final int R_EXPAND_V = 0x7f0a0e58;   // 彈簧目前的速度（連點時接續用）
     private static final int R_EXPAND = 0x7f0a0e57;   // View.setTag 用的鍵（只要不跟系統的衝突）
