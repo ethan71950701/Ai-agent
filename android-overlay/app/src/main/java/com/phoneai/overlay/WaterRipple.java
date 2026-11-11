@@ -72,11 +72,11 @@ final class WaterRipple {
             // 水面反光：從水面起伏的斜率算出「這一小塊水面剛好把光反射到眼睛」的程度（Blinn 高光），所以是幾塊寬而柔的亮斑慢慢飄，不是細線
             + "  float hx = surf(fc + float2(10.0, 0.0), time) - surf(fc - float2(10.0, 0.0), time);\n"
             + "  float hy = surf(fc + float2(0.0, 10.0), time) - surf(fc - float2(0.0, 10.0), time);\n"
-            + "  float3 nrm = normalize(float3(-hx * 0.9, -hy * 0.9, 1.0));\n"
+            + "  float3 nrm = normalize(float3(-hx * 0.4, -hy * 0.4, 1.0));\n"
             + "  float spec = pow(max(dot(nrm, normalize(float3(-0.215, -0.323, 0.917))), 0.0), 36.0);\n"
             + "  float rim = 4.0 * mask * (1.0 - mask) * inFront;\n"      // 水漬的邊緣（mask 在 0 與 1 之間）
             + "  float shine = max(slope, 0.0) * ring * 0.38;\n"
-            + "  float3 add = (float3(0.50, 0.72, 0.95) * 0.11 + float3(spec * 0.45)) * (amp * wet) + float3(rim * 0.32 * amp + shine);\n"
+            + "  float3 add = (float3(0.50, 0.72, 0.95) * 0.11 + float3(spec * 0.14)) * (amp * wet) + float3(rim * 0.32 * amp + shine);\n"
             + "  c.rgb += half3(add) * c.a;\n"
             + "  return c;\n"
             + "}\n";

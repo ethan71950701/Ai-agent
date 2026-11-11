@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 水波按壓效果：按住時的水面反光大幅變淡、變小，不再像一大片煙霧；放開滲進去的動畫不變｜Water press effect: the surface highlights while holding are much fainter and smaller, no longer like a big patch of smoke; the soak-in on release is unchanged
 
 ## 1.0.1610
 
