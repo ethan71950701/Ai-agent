@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 設定裡群組展開、收合的動畫改柔和：時間跟著內容高度走（越高越久），不再一瞬間開完（底欄玻璃那一組以前看起來像沒有動畫）｜Settings groups now expand and collapse more softly: the duration follows the content height, so tall groups no longer snap open (the glass group used to look like it had no animation)
 
 ## 1.0.1597
 

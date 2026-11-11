@@ -161,13 +161,20 @@ final class Anim {
         final float start = show ? (body.getHeight() > 0 && body.getHeight() < to ? body.getHeight() : 0f) : from;
         final float end = show ? to : 0f;
         android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(start, end);
-        va.setDuration(show ? 380 : 260);
-        va.setInterpolator(show ? new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f) : new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f));
+        // 時間跟著要動的距離走：以前固定 380 ms＋「先衝很快」的曲線，內容很高（例如底欄玻璃有十幾條滑桿）時一瞬間就開完，看起來像沒有動畫、很硬。
+        // 現在越高越久（約 320～720 ms），曲線改成起步柔一點、尾巴慢慢收；收合稍快，同樣柔和進出。
+        float dist = Math.abs(end - start) / body.getResources().getDisplayMetrics().density;   // dp
+        long dur = (long) Math.max(320f, Math.min(720f, 240f + dist * 0.18f));
+        va.setDuration(show ? dur : Math.round(dur * 0.8f));
+        va.setInterpolator(show ? new android.view.animation.PathInterpolator(0.22f, 0.08f, 0.12f, 1f) : new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f));
+        final float fadeBase = Math.max(1f, Math.abs(end - start));
         va.addUpdateListener(an -> {
             float h = (float) an.getAnimatedValue();
             lp.height = Math.max(0, Math.round(h));
             body.setLayoutParams(lp);
-            body.setAlpha(end > 0f ? Math.min(1f, h / (end * 0.7f)) : Math.min(1f, h / Math.max(1f, start * 0.7f)));
+            // 內容淡入淡出跟著「走了多少」，不是跟著絕對高度：很高的內容才不會一開始就全亮
+            float prog = Math.abs(h - start) / fadeBase;
+            body.setAlpha(show ? Math.min(1f, 0.25f + prog * 1.1f) : Math.max(0f, 1f - prog * 1.15f));
         });
         va.addListener(new android.animation.AnimatorListenerAdapter() {
             private boolean cancelled;
