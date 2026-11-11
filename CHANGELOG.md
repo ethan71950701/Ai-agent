@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 設定列與功能磚塊按下去改回水波紋（從手指位置擴散），但顏色加深到 20%，在深色卡片上看得清楚｜Rows and tiles are back to the radial press ripple (spreading from your finger), now at 20% opacity so it is clearly visible on dark cards
 
 ## 1.0.1603
 

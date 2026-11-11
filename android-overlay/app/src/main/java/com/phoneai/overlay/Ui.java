@@ -273,16 +273,12 @@ final class Ui {
     }
 
     /**
-     * 按下去的回饋：不用會從手指位置擴散的水波紋（在大小圓角混在一起的卡片上看起來怪），
-     * 改成 Material 3 的「狀態層」：整張卡片蓋上一層 10% 的前景色，按下淡入、放開淡出（淡入淡出由 Anim.pressable 驅動）。呼叫後再呼叫 Anim.pressable。
+     * 按下去的回饋：Material 的水波紋（從手指位置擴散、被卡片的圓角形狀裁住），但顏色加深。
+     * 預設的水波紋只有約 10% 不透明度，在深色卡片上幾乎看不到，只剩下縮放，感覺像「只是動畫去掉」；
+     * 這裡改成前景色 20%，擴散的圓看得清楚。呼叫後再呼叫 Anim.pressable（輕微縮放）。
      */
     static void stateLayer(MaterialCardView card, int color) {
-        card.setRippleColor(android.content.res.ColorStateList.valueOf(0x00000000));
-        View layer = new View(card.getContext());
-        layer.setBackgroundColor(color);
-        layer.setAlpha(0f);
-        card.addView(layer, new android.widget.FrameLayout.LayoutParams(-1, -1));   // MaterialCardView 會把子畫面裁成卡片的圓角形狀
-        card.setTag(Anim.R_STATE_LAYER, layer);
+        card.setRippleColor(android.content.res.ColorStateList.valueOf((color & 0x00FFFFFF) | 0x33000000));
     }
 
     /** 在 row() 回傳的卡片下方加額外內容（例如色塊），縮排到跟文字對齊。 */
