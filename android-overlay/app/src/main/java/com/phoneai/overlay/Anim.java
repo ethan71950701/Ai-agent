@@ -122,7 +122,8 @@ final class Anim {
         v.setOnTouchListener((x, e) -> {
             if (x.getTag(R_WATER) != null && !WaterRipple.broken) {   // 水波紋（折射）：按下從手指位置擴散；被取消（開始捲動）就收掉
                 if (e.getActionMasked() == MotionEvent.ACTION_DOWN) WaterRipple.start(x, e.getX(), e.getY());
-                else if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) WaterRipple.stop(x);
+                else if (e.getActionMasked() == MotionEvent.ACTION_UP) WaterRipple.release(x);   // 放開：水收回去
+                else if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) WaterRipple.stop(x);   // 開始捲動：直接收掉
             }
             Object layer = x.getTag(R_STATE_LAYER);   // 有狀態層（按下時整張蓋一層淡色）的話一起動
             if (layer instanceof View) {

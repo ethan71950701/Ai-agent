@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 水波按壓效果：水蓋住的整片範圍都有折射（水面上有行進中的小波、內容像隔著水微微放大），手指不放水就一直蓋著，放開時水收回手指的位置｜Water press effect: everything the water covers now refracts (small waves travelling across the surface, content slightly magnified as if seen through water); the water stays while you hold and retracts to your fingertip when you let go
 - 水波按壓效果加強：折射更明顯（位移 10→24 px）、色散與波峰反光加大、波更寬、持續更久｜Stronger water press effect: more visible refraction (displacement 10→24 px), more color fringing and crest highlight, wider waves, longer duration
 
 ## 1.0.1605
