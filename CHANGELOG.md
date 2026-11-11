@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1614
+
 - 按壓效果改回水波：按住時拿掉水面亮斑，水色更淡（靠手指稍濃）、流動更輕，畫面更乾淨；放開時「滲進卡片裡」的動畫不變｜The press effect is back to water: while holding, the surface highlights are gone, the tint is fainter (a bit stronger near the finger) and the flow is gentler for a cleaner look; the soak-in on release is unchanged
 
 ## 1.0.1613
