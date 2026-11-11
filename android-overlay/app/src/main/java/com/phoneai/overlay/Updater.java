@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONObject;
@@ -72,7 +73,10 @@ final class Updater {
                         .setTitle(L.t("有新版本 ") + v)
                         .setMessage(L.t("目前是 1.0.") + BuildConfig.VERSION_CODE + L.t("，最新是 ") + v + L.t("。\n\n") + notesOf(rel)
                                 + L.t("\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。"))
-                        .setPositiveButton(L.t("更新"), (d, w) -> new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start())
+                        .setPositiveButton(L.t("更新"), (d, w) -> {
+                            showProg(a, v);   // App 裡也顯示下載進度（通知列與 Now Bar 照舊）
+                            new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start();
+                        })
                         .setNegativeButton(L.t("稍後"), (d, w) -> busy = false)
                         .setOnCancelListener(d -> busy = false)
                         .show());
@@ -149,15 +153,18 @@ final class Updater {
                     if (pct != lastPct) {
                         lastPct = pct;
                         nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
+                        setProg(a, L.t("下載 ") + v + "：" + pct + "%" + (total > 0 ? String.format(java.util.Locale.US, "（%.1f / %.1f MB）", got / 1048576f, total / 1048576f) : ""), pct, false);
                     }
                 }
             }
             if (!Root.isRoot()) {   // 沒有 root：交給系統安裝程式，使用者按一下「安裝」
                 nm.cancel(NOTE);
+                closeProg(a);
                 installWithoutRoot(a, out, v);
                 return;
             }
             nm.notify(NOTE, progress(a, L.t("安裝 ") + v + L.t(" 中…"), 100, true));
+            setProg(a, L.t("安裝 ") + v + L.t(" 中…"), 100, true);
             String r = Maintenance.suOnce("cp '" + out.getAbsolutePath() + "' /data/local/tmp/phoneai_update.apk && chmod 644 /data/local/tmp/phoneai_update.apk\n"
                     + "pm install -r --user 0 -i com.google.android.packageinstaller /data/local/tmp/phoneai_update.apk 2>&1\n"
                     + "rm -f /data/local/tmp/phoneai_update.apk");
@@ -229,7 +236,58 @@ final class Updater {
 
     private static void done(Activity a, String msg) {
         busy = false;
+        closeProg(a);
         a.runOnUiThread(() -> toast(a, msg));
+    }
+
+    // ---------- App 裡的下載進度視窗（通知列的進度照舊） ----------
+    private static android.app.Dialog progDlg;
+    private static TextView progTv;
+    private static com.google.android.material.progressindicator.LinearProgressIndicator progBar;
+
+    private static void showProg(final Activity a, final String v) {
+        a.runOnUiThread(() -> {
+            try {
+                float d = a.getResources().getDisplayMetrics().density;
+                android.widget.LinearLayout box = new android.widget.LinearLayout(a);
+                box.setOrientation(android.widget.LinearLayout.VERTICAL);
+                box.setPadding((int) (24 * d), (int) (12 * d), (int) (24 * d), (int) (4 * d));
+                progTv = new TextView(a);
+                progTv.setText(L.t("準備下載 ") + v + "…");
+                progTv.setTextSize(15);
+                progTv.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorOnSurface));
+                box.addView(progTv);
+                progBar = new com.google.android.material.progressindicator.LinearProgressIndicator(a);
+                progBar.setMax(100);
+                progBar.setIndeterminate(true);   // 還沒收到第一筆資料前先轉圈
+                android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+                bp.topMargin = (int) (14 * d);
+                box.addView(progBar, bp);
+                progDlg = new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(L.t("更新 Vertex")).setView(box)
+                        .setCancelable(false).setNegativeButton(L.t("背景進行"), null).show();   // 關掉視窗不會中斷，進度還在通知列
+            } catch (Throwable t) {
+                progDlg = null;
+            }
+        });
+    }
+
+    private static void setProg(final Activity a, final String text, final int pct, final boolean indeterminate) {
+        a.runOnUiThread(() -> {
+            if (progTv == null || progBar == null) return;
+            progTv.setText(text);
+            if (indeterminate) { progBar.setIndeterminate(true); return; }
+            if (progBar.isIndeterminate()) { progBar.setVisibility(android.view.View.INVISIBLE); progBar.setIndeterminate(false); progBar.setVisibility(android.view.View.VISIBLE); }
+            progBar.setProgressCompat(pct, true);
+        });
+    }
+
+    private static void closeProg(final Activity a) {
+        a.runOnUiThread(() -> {
+            try { if (progDlg != null) progDlg.dismiss(); } catch (Throwable ignored) { }
+            progDlg = null;
+            progTv = null;
+            progBar = null;
+        });
     }
 
     private static void toast(Activity a, String msg) {

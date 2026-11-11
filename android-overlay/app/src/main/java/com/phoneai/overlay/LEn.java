@@ -632,6 +632,9 @@ final class LEn {
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
         m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
+        m.put("準備下載 ", "Preparing to download ");
+        m.put("更新 Vertex", "Update Vertex");
+        m.put("背景進行", "Continue in background");
         m.put("接手時顯示懸浮卡片", "Show a floating card for handoff");
         m.put("要你自己動手時（輸入密碼、解鎖…），在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）。關掉就只跳通知", "When you need to do something yourself (type a password, unlock…), a draggable card (with \"I'm done, continue\") is shown at the top. Turn it off to get only a notification");
         m.put("已取消，沒有把畫面傳給 AI。", "Cancelled; the screen was not sent to the AI.");

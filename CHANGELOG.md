@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 更新時 App 裡也會顯示下載進度視窗（進度條、百分比、MB；可選「背景進行」，通知列與 Now Bar 的進度照舊）；底欄玻璃那組展開再放慢一點｜Updating now shows a download progress dialog inside the app (progress bar, percentage, MB; you can choose "Continue in background", and the notification and Now Bar progress stay); the glass group opens a little slower
 
 ## 1.0.1600
 
