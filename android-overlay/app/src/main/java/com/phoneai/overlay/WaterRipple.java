@@ -8,8 +8,8 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 
 /**
- * 水波：手指按下去，像水面被點了一下，水從手指的位置擴散開來；手指不放，水就一直蓋著這一片，水面上有行進中的小波；
- * 放開，水收回手指的位置。水蓋住的範圍（波前以內）整片都有折射（內容被推擠、像隔著水看，邊緣有一點色散，波峰有水面反光），波前最強。
+ * 水波：手指按下去，像水面被點了一下，水從手指的位置擴散開來（波前最強，內容被推擠、邊緣有一點色散、波峰有水面反光）；
+ * 手指不放，水就蓋著這一片，水面像池水一樣緩慢、不規則地流動（不是一圈一圈往外的波）；放開，波前的環先淡掉，水再平順地收回手指的位置。
  * 用 AGSL 著色器（RuntimeShader）＋ View.setRenderEffect，直接扭曲卡片自己畫出來的內容；不用 RippleDrawable。
  * 著色器若在這支手機上編譯失敗，{@link #broken} 變成 true，呼叫端改用系統水波紋。
  */
@@ -21,14 +21,15 @@ final class WaterRipple {
 
     private static final long EXPAND_MS = 750;     // 擴散到蓋滿整張卡片
     private static final long MIN_HOLD_MS = 220;   // 快速點一下也至少讓水擴散這麼久才開始收
-    private static final long RETRACT_MS = 480;    // 放開後收回去
+    private static final long RETRACT_MS = 560;    // 放開後收回去
 
     private static final String SRC = ""
             + "uniform shader content;\n"
             + "uniform float2 center;\n"
             + "uniform float2 size;\n"
             + "uniform float radius;\n"
-            + "uniform float amp;\n"
+            + "uniform float amp;\n"                                    // 水蓋住的範圍（波前以內）的強度
+            + "uniform float ring;\n"                                   // 波前那一圈的強度（放開收回時先淡掉，免得看起來像一圈波往回縮）
             + "uniform float time;\n"
             + "half4 main(float2 fc) {\n"
             + "  float2 d = fc - center;\n"
@@ -38,18 +39,21 @@ final class WaterRipple {
             + "  float env = exp(-(x * x) / 4800.0);\n"                   // 波前的包絡（寬約 55px）
             + "  float slope = cos(x / 14.0) * env;\n"                    // 波前的水面斜率：決定折射往哪邊推
             + "  float inside = 1.0 - smoothstep(-20.0, 50.0, x);\n"      // 被水蓋住的範圍（波前以內）＝1
-            + "  float fall = exp(-dist / 900.0);\n"                      // 離手指越遠，水面的小波越小
-            + "  float slope2 = cos(dist / 30.0 - time * 8.0) * inside * fall;\n"   // 水面上往外行進的小波
-            + "  float off = 24.0 * amp * slope + 9.0 * amp * slope2;\n"  // 折射的位移（像素）
+            + "  float2 q = fc / 110.0;\n"                                // 水面的自然流動：幾個慢慢飄的正弦疊起來，沒有方向、不是同心圓
+            + "  q += 0.35 * sin(q.yx * 1.3 + time * 0.5);\n"
+            + "  float2 w = float2(sin(q.y * 1.7 + time * 1.1) + sin(q.x * 1.3 - time * 0.8 + 1.7),\n"
+            + "                    cos(q.x * 1.5 - time * 0.9) + sin(q.y * 1.1 + time * 0.7 + 0.6));\n"
+            + "  float2 flow = w * 2.6 * amp * inside;\n"                 // 流動造成的位移（約 ±5px）
+            + "  float off = 24.0 * ring * slope;\n"                      // 波前的折射位移（像素）
             + "  float2 base = center + d * (1.0 - 0.05 * amp * inside);\n"   // 水透鏡：被水蓋住的地方內容微微放大
             + "  float2 hi = size - float2(1.0);\n"
-            + "  float2 uv = clamp(base - dir * off, float2(0.0), hi);\n"
-            + "  float2 spread = dir * (4.5 * amp * env + 2.0 * amp * abs(slope2));\n"   // 色散：紅藍通道多偏一點
+            + "  float2 uv = clamp(base - dir * off + flow, float2(0.0), hi);\n"
+            + "  float2 spread = dir * (4.5 * ring * env) + flow * 0.25;\n"   // 色散：紅藍通道多偏一點
             + "  half4 cr = content.eval(clamp(uv + spread, float2(0.0), hi));\n"
             + "  half4 cg = content.eval(uv);\n"
             + "  half4 cb = content.eval(clamp(uv - spread, float2(0.0), hi));\n"
             + "  half4 c = half4(cr.r, cg.g, cb.b, cg.a);\n"
-            + "  float shine = max(slope, 0.0) * amp * 0.38 + max(slope2, 0.0) * amp * 0.10;\n"   // 水面反光
+            + "  float shine = max(slope, 0.0) * ring * 0.38 + max(w.x + w.y, 0.0) * 0.012 * amp * inside;\n"   // 水面反光
             + "  c.rgb += half3(shine) * c.a;\n"
             + "  return c;\n"
             + "}\n";
@@ -89,17 +93,21 @@ final class WaterRipple {
                     if (!v.isAttachedToWindow()) { an.cancel(); return; }   // 點下去已經換頁了
                     long now = SystemClock.uptimeMillis();
                     float p = expandAt(now - st.t0);
+                    float ringK = 1f;   // 波前那一圈的強度倍率
                     if (st.rel >= 0) {
                         long start = Math.max(st.rel, st.t0 + MIN_HOLD_MS);
                         if (now >= start) {
                             float q = Math.min(1f, (now - start) / (float) RETRACT_MS);
-                            float s = q * q * (3f - 2f * q);                    // 先慢後快再慢的收回
+                            float s = q < 0.5f ? 4f * q * q * q : 1f - (float) Math.pow(-2f * q + 2f, 3) / 2f;   // 先慢、中間快、最後慢地收
                             p = expandAt(start - st.t0) * (1f - s);
+                            ringK = Math.max(0f, 1f - q / 0.3f);   // 開頭 30% 先把波前的環淡掉，之後只剩水面平順地縮回去
                             if (q >= 1f) { an.cancel(); return; }
                         }
                     }
+                    float a = Math.min(1f, p / 0.10f) * 0.9f;   // 剛開始與收到尾巴時淡入淡出
                     st.sh.setFloatUniform("radius", p * st.maxR);
-                    st.sh.setFloatUniform("amp", Math.min(1f, p / 0.10f) * 0.9f);   // 剛開始與收到尾巴時淡入淡出
+                    st.sh.setFloatUniform("amp", a);
+                    st.sh.setFloatUniform("ring", a * ringK);
                     st.sh.setFloatUniform("time", (now - st.t0) / 1000f);
                     v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(st.sh, "content"));
                 } catch (Throwable t) {   // 著色器在這支手機上跑不起來：收掉、之後改用系統水波紋

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 水波按壓效果：按著不放時，水面改成像池水一樣緩慢、不規則地流動（不再一圈圈往外冒小波）；放開時波前的環先淡掉，水再平順地縮回手指的位置（收回的節奏也改成先慢、中間快、最後慢）｜Water press effect: while you hold, the surface now flows slowly and irregularly like a pool instead of emitting rings; on release the front ring fades first and the water then recedes smoothly to your fingertip (slow–fast–slow timing)
 
 ## 1.0.1607
 
