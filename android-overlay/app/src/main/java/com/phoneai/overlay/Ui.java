@@ -278,12 +278,42 @@ final class Ui {
      * 這裡改成前景色 20%，擴散的圓看得清楚。呼叫後再呼叫 Anim.pressable（輕微縮放）。
      */
     static void stateLayer(MaterialCardView card, int color) {
-        if (!WaterRipple.broken) {
-            // 水波紋：用著色器做的水面波紋（折射、色散、波峰反光），取代系統的 RippleDrawable（使用者：系統的擴散太僵硬）
-            card.setRippleColor(android.content.res.ColorStateList.valueOf(0x00000000));
-            card.setTag(Anim.R_WATER, Boolean.TRUE);
-        } else {
-            card.setRippleColor(android.content.res.ColorStateList.valueOf((color & 0x00FFFFFF) | 0x33000000));
+        // Material 3 Expressive 的「形狀變化」：按下去圓角變大、底色微亮，放開用彈簧彈回；不扭曲內容、沒有水波紋
+        //（使用者試過水波、液態玻璃、毛玻璃都覺得怪：平面卡片底下沒有東西可以折射，扭曲只會像字壞掉）
+        card.setRippleColor(android.content.res.ColorStateList.valueOf(0x00000000));
+        card.setTag(Anim.R_MORPH, color);
+    }
+
+    /** 形狀變化的進度 k（0＝平常，1＝按下）：圓角從原本的大小變大（最多 +16dp、不超過半個高度），底色往前景色混 8%。第一次呼叫時記下原本的圓角與底色。 */
+    static void morphPress(MaterialCardView card, float k) {
+        Object base = card.getTag(Anim.R_MORPH_BASE);
+        float[] b;
+        if (base instanceof float[]) b = (float[]) base;
+        else {
+            android.graphics.RectF r = new android.graphics.RectF(0, 0, card.getWidth(), card.getHeight());
+            com.google.android.material.shape.ShapeAppearanceModel m = card.getShapeAppearanceModel();
+            b = new float[]{m.getTopLeftCornerSize().getCornerSize(r), m.getTopRightCornerSize().getCornerSize(r),
+                    m.getBottomRightCornerSize().getCornerSize(r), m.getBottomLeftCornerSize().getCornerSize(r),
+                    card.getCardBackgroundColor().getDefaultColor()};
+            card.setTag(Anim.R_MORPH_BASE, b);
+        }
+        float max = Math.max(0f, card.getHeight() / 2f), add = dp(card.getContext(), 16);
+        float[] c = new float[4];
+        for (int i = 0; i < 4; i++) {
+            float target = Math.max(b[i], Math.min(max, b[i] + add));
+            c[i] = Math.max(0f, b[i] + (target - b[i]) * k);   // 放開回彈時 k 會稍微小於 0：圓角比原本小一點點再回來
+        }
+        card.setShapeAppearanceModel(card.getShapeAppearanceModel().toBuilder()
+                .setTopLeftCornerSize(c[0]).setTopRightCornerSize(c[1]).setBottomRightCornerSize(c[2]).setBottomLeftCornerSize(c[3]).build());
+        Object fg = card.getTag(Anim.R_MORPH);
+        int bg = (int) b[4];
+        if (fg instanceof Integer) {
+            float t = Math.max(0f, Math.min(1f, k)) * 0.08f;
+            int f = (Integer) fg;
+            int r = Math.round(((bg >> 16) & 255) * (1 - t) + ((f >> 16) & 255) * t);
+            int g = Math.round(((bg >> 8) & 255) * (1 - t) + ((f >> 8) & 255) * t);
+            int bl = Math.round((bg & 255) * (1 - t) + (f & 255) * t);
+            card.setCardBackgroundColor((bg & 0xFF000000) | (r << 16) | (g << 8) | bl);
         }
     }
 

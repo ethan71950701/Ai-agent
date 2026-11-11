@@ -27,7 +27,7 @@ public class AuroraView extends View {
     private float radius, energy, target = 0.3f, glowY = -1;
     private long last;
 
-    // 開場動畫：從螢幕最上方放出一圈圈光波往下擴散 + 細碎光點往下灑（像小愛同學喚醒）
+    // 開場動畫：從螢幕最上方放出一圈圈白色光波往下擴散 + 細碎白色光點往下灑；有截圖時 IntroWave 同時把畫面折射一下（玻璃波）
     private static final float INTRO_S = 1.25f;
     private static final int INTRO_PARTS = 140;
     private final float[] ix = new float[INTRO_PARTS], idelay = new float[INTRO_PARTS], ivx = new float[INTRO_PARTS],
@@ -134,7 +134,7 @@ public class AuroraView extends View {
                 ivy[i] = (180 + rnd.nextFloat() * 520) * d;
                 isize[i] = 0.35f + rnd.nextFloat() * rnd.nextFloat() * 1.1f;
                 ilife[i] = 0.9f + rnd.nextFloat() * 0.55f;
-                icolor[i] = rnd.nextInt(10) < 6 ? 0xFFFFFF : (PALETTE[rnd.nextInt(PALETTE.length)] & 0x00FFFFFF);
+                icolor[i] = 0xFFFFFF;   // 開場光點全白（像水花、玻璃碎光），不再彩色
             }
         }
         if (introStart == 0) return;
@@ -151,8 +151,8 @@ public class AuroraView extends View {
             float band = (96 - 52 * p) * d;                             // 光環寬度由粗變細
             float outer = rad + band * 0.5f;
             float inner = Math.max(0f, rad - band * 0.5f);
-            int col = PALETTE[k % PALETTE.length] & 0x00FFFFFF;
-            float a = (float) Math.pow(1f - p, 1.3f);
+            int col = 0x00FFFFFF;   // 白色（玻璃波的反光），不再用彩色
+            float a = (float) Math.pow(1f - p, 1.3f) * (k == 0 ? 0.45f : 0.22f);
             // 兩端是 alpha 0 的同色（col 沒有 alpha），中間才是亮的光環
             wave.setShader(new RadialGradient(cx, cy, outer,
                     new int[]{col, col | ((int) (255 * 0.85f * a) << 24), col},

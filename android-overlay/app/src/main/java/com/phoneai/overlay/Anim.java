@@ -120,6 +120,10 @@ final class Anim {
     /** 按下縮小、放開彈回；不攔截點擊。 */
     static void pressable(View v, float pressed) {
         v.setOnTouchListener((x, e) -> {
+            if (x.getTag(R_MORPH) != null && x instanceof com.google.android.material.card.MaterialCardView) {   // 形狀變化：按下圓角變大，放開彈回
+                if (e.getActionMasked() == MotionEvent.ACTION_DOWN) morph((com.google.android.material.card.MaterialCardView) x, true);
+                else if (e.getActionMasked() == MotionEvent.ACTION_UP || e.getActionMasked() == MotionEvent.ACTION_CANCEL) morph((com.google.android.material.card.MaterialCardView) x, false);
+            }
             if (x.getTag(R_WATER) != null && !WaterRipple.broken) {   // 水波紋（折射）：按下從手指位置擴散；被取消（開始捲動）就收掉
                 if (e.getActionMasked() == MotionEvent.ACTION_DOWN) WaterRipple.start(x, e.getX(), e.getY());
                 else if (e.getActionMasked() == MotionEvent.ACTION_UP) WaterRipple.release(x);   // 放開：水滲進卡片裡
@@ -208,6 +212,26 @@ final class Anim {
         });
         body.setTag(R_EXPAND, sa);
         sa.start();
+    }
+
+    static final int R_MORPH = 0x7f0a0e5c;        // View.setTag 用的鍵：這張卡片按下時做形狀變化（值＝前景色）
+    static final int R_MORPH_BASE = 0x7f0a0e5d;   // 原本的四個圓角與底色
+    static final int R_MORPH_ANIM = 0x7f0a0e5e;   // 正在跑的彈簧
+
+    /** 形狀變化的彈簧：按下快而穩（剛性 900、阻尼 0.85），放開比較軟、會稍微彈一下（380、0.55）。連按會接著目前的進度與速度。 */
+    private static void morph(final com.google.android.material.card.MaterialCardView card, boolean down) {
+        Object o = card.getTag(R_MORPH_ANIM);
+        androidx.dynamicanimation.animation.SpringAnimation sa;
+        if (o instanceof androidx.dynamicanimation.animation.SpringAnimation) sa = (androidx.dynamicanimation.animation.SpringAnimation) o;
+        else {
+            sa = new androidx.dynamicanimation.animation.SpringAnimation(new androidx.dynamicanimation.animation.FloatValueHolder(0f));
+            sa.setMinimumVisibleChange(0.002f);
+            sa.addUpdateListener((an, v, vel) -> Ui.morphPress(card, v));
+            card.setTag(R_MORPH_ANIM, sa);
+        }
+        if (sa.getSpring() == null) sa.setSpring(new androidx.dynamicanimation.animation.SpringForce(0f));
+        sa.getSpring().setStiffness(down ? 900f : 380f).setDampingRatio(down ? 0.85f : 0.55f);
+        sa.animateToFinalPosition(down ? 1f : 0f);   // 跑到一半也能直接換目標，速度接著用
     }
 
     static final int R_WATER = 0x7f0a0e5b;   // View.setTag 用的鍵：這張卡片按下時放水波紋（WaterRipple）

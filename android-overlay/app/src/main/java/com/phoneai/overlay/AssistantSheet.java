@@ -511,6 +511,7 @@ public class AssistantSheet {
 
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下
         aurora.playIntro();
+        if (canvas != null) canvas.post(() -> IntroWave.play(canvas));   // 有截圖（目前的畫面）：玻璃波把它折射一下
         scrim.animate().alpha(1f).setDuration(450).start();
         content.setAlpha(0f);
         ValueAnimator in = ValueAnimator.ofFloat(0f, 1f);
