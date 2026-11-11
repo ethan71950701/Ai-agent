@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 液態玻璃按壓效果改成整張卡片：卡片整圈邊緣（跟著卡片自己的圓角）變成玻璃邊（折射、色散、亮線），手指底下柔和地鼓起並帶一點高光，放開淡出；不再是一顆圓球｜The liquid-glass press effect now treats the whole card as the glass: the card's entire border (following its own corner shape) becomes a glass edge (refraction, color fringing, a bright line), with a soft bulge and highlight under your finger that fades on release — no longer just a round ball
 
 ## 1.0.1612
 
