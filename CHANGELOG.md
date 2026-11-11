@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 功能頁的大磚塊按下去也改用狀態層（跟設定列一致），不再有水波紋｜The big tiles on the Features page now also use the press state layer (same as the settings rows) instead of a ripple
 
 ## 1.0.1602
 
