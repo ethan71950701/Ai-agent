@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1612
+
 - 設定列與功能磚塊的按壓效果由「水」改成「液態玻璃」：手指底下浮出一顆玻璃透鏡（中間微放大、邊緣折射與色散、左上亮邊與高光、底下有影子），手指滑動時透鏡帶一點延遲跟著走，放開縮小融回卡片；跟底欄同一種質感｜The press effect on rows and tiles changed from water to liquid glass: a glass lens appears under your finger (slightly magnified in the middle, refraction and color fringing at the edge, a bright upper-left rim and highlight, a soft shadow), follows your finger with a little lag, and shrinks back into the card on release, matching the bottom bar
 
 ## 1.0.1611
