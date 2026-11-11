@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1617
+
 - 設定列與功能磚塊的按壓改成 Material 3 Expressive 的「形狀變化」：按下去圓角變大、底色微亮，放開用彈簧彈回；不再有水波｜Rows and tiles now use Material 3 Expressive shape morphing on press: corners grow rounder and the color lifts slightly, then spring back on release; the water effect is gone
 - 長按電源鍵叫出助理面板的開場動畫改成玻璃波：一道透明的波從螢幕上方往下擴散，把目前的畫面折射一下（邊緣有一點彩色光邊、白色反光），光環與光點改成白色，不再彩色｜The assistant panel's opening animation (long-press power) is now a glass wave: a clear wave spreads down from the top and refracts the current screen (slight color fringe, white highlight); the rings and sparkles are white instead of colorful
 
