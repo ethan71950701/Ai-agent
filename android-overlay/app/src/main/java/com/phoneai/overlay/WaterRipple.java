@@ -8,11 +8,8 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 
 /**
- * 水波：手指按下去，一灘水從手指的位置擴散開來，蓋住整張卡片。水不只是把字扭曲而已，它看得到：
- *  - 水面微微染一層淡淡的水色（靠手指的地方稍濃），沒有亮斑，
- *  - 水的邊緣有一圈亮邊，波前那一圈折射最強（內容被推擠、邊緣有一點色散），
- *  - 蓋住的地方內容像隔著水微微放大，水面像池水一樣緩慢、不規則地流動。
- * 放開手指，水不是縮回去，而是「滲進卡片裡」：水面先靜下來，波前的環淡掉，然後水一塊一塊地被吸收——靠邊緣的先乾，一塊塊水漬縮小（邊緣有亮邊），手指按的地方最後才乾。
+ * 水波按壓：手指按下去，一圈乾淨的波從手指擴散出去，經過的地方內容被折射一下、帶一點彩色邊，波過了就恢復清楚；
+ * 按住時只剩手指底下一團很淡的光（內容不模糊、不染色、不抖）；放開，那團光與水漬邊的亮線一塊塊「滲進」卡片裡消失，手指的地方最後消失。
  * 用 AGSL 著色器（RuntimeShader）＋ View.setRenderEffect，直接處理卡片自己畫出來的內容；不用 RippleDrawable。
  * 著色器若在這支手機上編譯失敗，{@link #broken} 變成 true，呼叫端改用系統水波紋。
  */
@@ -26,61 +23,48 @@ final class WaterRipple {
     private static final long MIN_HOLD_MS = 220;   // 快速點一下也至少讓水擴散這麼久才開始滲進去
     private static final long SOAK_MS = 950;       // 放開後水滲進去、乾掉
 
+    // 原則（使用者覺得「整個霧霧的不好看」之後重想）：
+    //  1. 按住時內容保持清楚：不模糊、不染色、不抖。整張卡片持續變樣子就會像髒了、起霧。
+    //  2. 「水」的感覺只靠一圈乾淨的波前：從手指擴散一次，經過的地方折射＋彩色邊，過了就恢復清楚。
+    //  3. 用「光」不用「霧」：手指底下一團很淡的光（只加亮、不蓋顏色），按住時就只剩這個。
+    //  4. 放開時保留使用者喜歡的「滲進去」：那團光與水漬邊的亮線一塊塊被吸收，手指的地方最後消失。
     private static final String SRC = ""
             + "uniform shader content;\n"
             + "uniform float2 center;\n"
             + "uniform float2 size;\n"
-            + "uniform float radius;\n"
-            + "uniform float amp;\n"                                    // 水的強度（淡入用）
+            + "uniform float radius;\n"                                 // 波前的位置（px）
+            + "uniform float amp;\n"                                    // 整體強度（淡入）
             + "uniform float ring;\n"                                   // 波前那一圈的強度（放開時先淡掉）
-            + "uniform float time;\n"                                   // 水面流動的時間（放開後會變慢）
             + "uniform float soak;\n"                                   // 滲進去的程度 0（全濕）～1.25（全乾）
             + "half4 main(float2 fc) {\n"
             + "  float2 d = fc - center;\n"
             + "  float dist = length(d);\n"
             + "  float2 dir = d / max(dist, 1.0);\n"
-            + "  float x = dist - radius;\n"                              // 離波前的距離（負的＝被水蓋住）
-            + "  float env = exp(-(x * x) / 4800.0);\n"                   // 波前的包絡（寬約 55px）
-            + "  float slope = cos(x / 14.0) * env;\n"                    // 波前的水面斜率：決定折射往哪邊推
-            + "  float inFront = 1.0 - smoothstep(-20.0, 50.0, x);\n"     // 波前以內＝1
-            + "  float2 q = fc / 110.0;\n"                                // 水面的自然流動：幾個慢慢飄的正弦疊起來
-            + "  q += 0.35 * sin(q.yx * 1.3 + time * 0.5);\n"
-            + "  float2 w = float2(sin(q.y * 1.7 + time * 1.1) + sin(q.x * 1.3 - time * 0.8 + 1.7),\n"
-            + "                    cos(q.x * 1.5 - time * 0.9) + sin(q.y * 1.1 + time * 0.7 + 0.6));\n"
-            // 滲進去：用一張固定的不規則圖（n）加上「離手指越遠越先乾」決定每個點什麼時候乾，所以水是一塊一塊縮小的，手指按的地方最後才乾
+            + "  float x = dist - radius;\n"                              // 離波前的距離（負的＝波已經經過）
+            + "  float env = exp(-(x * x) / 2600.0);\n"                   // 只有波前附近（寬約 40px）
+            + "  float slope = cos(x / 13.0) * env;\n"
+            + "  float inFront = 1.0 - smoothstep(-20.0, 50.0, x);\n"
+            // 滲進去的遮罩：固定的不規則圖＋離手指越遠越先乾
             + "  float n = 0.5 + 0.125 * (sin(fc.x / 55.0 + 1.3) + sin(fc.y / 47.0 - 0.7) + sin((fc.x + fc.y) / 38.0 + 2.1) + sin((fc.x - fc.y) / 63.0));\n"
             + "  float edgeK = smoothstep(0.0, max(radius, 1.0), dist);\n"
             + "  float th = 1.0 - mix(n, edgeK, 0.55);\n"
-            + "  float mask = 1.0 - smoothstep(th - 0.12, th + 0.12, soak);\n"   // 1＝這裡還濕著
+            + "  float mask = 1.0 - smoothstep(th - 0.12, th + 0.12, soak);\n"
             + "  float wet = inFront * mask;\n"
-            + "  float2 flow = w * 0.6 * amp * wet;\n"                    // 流動造成的位移（約 ±4px）
-            + "  float off = 18.0 * ring * slope;\n"                      // 波前的折射位移（像素）
-            + "  float2 base = center + d * (1.0 - 0.05 * amp * wet);\n"  // 水透鏡：濕的地方內容微微放大
+            // 只有波前會折射：內容被推一下＋彩色邊；波過了就是原本清楚的內容
+            + "  float off = 16.0 * ring * slope;\n"
             + "  float2 hi = size - float2(1.0);\n"
-            + "  float2 uv = clamp(base - dir * off + flow, float2(0.0), hi);\n"
-            + "  float2 spread = dir * (7.0 * ring * env) + flow * 0.25;\n"   // 色散：紅藍通道多偏一點
+            + "  float2 uv = clamp(fc - dir * off, float2(0.0), hi);\n"
+            + "  float2 spread = dir * (6.0 * ring * env);\n"
             + "  half4 cr = content.eval(clamp(uv + spread, float2(0.0), hi));\n"
             + "  half4 cg = content.eval(uv);\n"
             + "  half4 cb = content.eval(clamp(uv - spread, float2(0.0), hi));\n"
             + "  half4 c = half4(cr.r, cg.g, cb.b, cg.a);\n"
-            // 毛玻璃：水蓋住的地方內容變模糊（像小米澎湃 2 的水波：玻璃從模糊中浮現），再微微泛白；放開時一塊塊變清楚
-            + "  float fr = amp * wet;\n"
-            + "  float br = 6.0 * fr;\n"                                 // 模糊半徑（px）
-            + "  half4 acc = cg * 2.0;\n"
-            + "  acc += content.eval(clamp(uv + float2(br, 0.0), float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv - float2(br, 0.0), float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv + float2(0.0, br), float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv - float2(0.0, br), float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv + float2(br, br) * 0.7, float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv - float2(br, br) * 0.7, float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv + float2(br, -br) * 0.7, float2(0.0), hi));\n"
-            + "  acc += content.eval(clamp(uv - float2(br, -br) * 0.7, float2(0.0), hi));\n"
-            + "  half4 bl = acc / 10.0;\n"
-            + "  c = c + (bl - c) * half(min(1.0, fr * 1.25));\n"
-            + "  float rim = 4.0 * mask * (1.0 - mask) * inFront;\n"      // 水漬的邊緣（mask 在 0 與 1 之間）
-            + "  float shine = max(slope, 0.0) * ring * 0.30;\n"
-            + "  float add = 0.05 * fr + rim * 0.22 * amp + shine;\n"    // 微微泛白＋水漬邊的亮邊＋波前的反光
-            + "  c.rgb += half3(add) * c.a;\n"
+            // 光：手指底下一團很淡的光（只加亮）、波峰反光、放開時水漬邊的亮線
+            + "  float sigma = 0.35 * max(radius, 1.0) + 40.0;\n"
+            + "  float glow = 0.07 * exp(-dot(d, d) / (2.0 * sigma * sigma)) * amp * wet;\n"
+            + "  float shine = max(slope, 0.0) * ring * 0.28;\n"
+            + "  float rim = 4.0 * mask * (1.0 - mask) * inFront * 0.20 * amp;\n"
+            + "  c.rgb += half3(glow + shine + rim) * c.a;\n"
             + "  return c;\n"
             + "}\n";
 
@@ -142,7 +126,6 @@ final class WaterRipple {
                     st.sh.setFloatUniform("radius", p * st.maxR);
                     st.sh.setFloatUniform("amp", a);
                     st.sh.setFloatUniform("ring", a * ringK);
-                    st.sh.setFloatUniform("time", st.tAcc);
                     st.sh.setFloatUniform("soak", soak);
                     v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(st.sh, "content"));
                 } catch (Throwable t) {   // 著色器在這支手機上跑不起來：收掉、之後改用系統水波紋
