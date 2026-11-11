@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 水波按壓效果參考小米澎湃 2 的水波改成「毛玻璃」：水蓋住的地方內容變模糊、微微泛白，按住時幾乎不抖，波前有較明顯的彩色邊；放開時毛玻璃一塊塊變清楚｜The water press effect now follows Xiaomi HyperOS 2's ripple: the covered area turns frosted (blurred, slightly milky) and barely moves while held, the wave front has a clearer rainbow edge, and on release the frost clears patch by patch
 
 ## 1.0.1614
 
