@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1602
+
 - 設定與功能頁的列、卡片，按下去的回饋由「從手指擴散的水波紋」改成 Material 3 的狀態層：整張蓋一層淡色，按下淡入、放開淡出｜Rows and cards on the settings and features pages now use a Material 3 state layer instead of the radial ripple on press: a faint tint that fades in on press and out on release
 
 ## 1.0.1601
