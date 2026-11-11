@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 設定列與功能磚塊按下去改成「水波」：從手指的位置一圈圈擴散，波經過的地方內容會折射（被推擠、邊緣有一點色散），波峰有水面反光，越擴散越淡；捲動時不會誤觸發。如果這支手機的著色器跑不起來，會自動退回系統水波紋｜Rows and tiles now react to a press like water: rings spread from your finger, the content refracts as the wave passes (pushed around, with a little color fringing), crests catch a bit of light, and it fades as it spreads; scrolling does not trigger it. If the shader cannot run on this phone it falls back to the system ripple
 
 ## 1.0.1604
 
