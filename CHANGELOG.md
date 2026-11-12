@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正「檢查並更新」查到新版本卻沒有跳出對話框、之後再按都沒反應：檢查完就不再卡在「忙碌中」，對話框顯示不了時改跳通知，卡住超過 3 分鐘也能重來｜Fixed "Check and update" finding a new version but showing no dialog and then ignoring further taps: it no longer stays busy after the check, falls back to a notification if the dialog cannot be shown, and recovers after 3 minutes if stuck
+
+## 1.0.1623
+
 - 自動檢查新版本改成打開 App 時最多每小時一次（以前一天一次，常常看不到新版提醒）｜Automatic update checks now run at most once an hour when you open the app (previously once a day, so new versions were often missed)
 
 ## 1.0.1622
