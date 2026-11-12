@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1623
+
 - 自動檢查新版本改成打開 App 時最多每小時一次（以前一天一次，常常看不到新版提醒）｜Automatic update checks now run at most once an hour when you open the app (previously once a day, so new versions were often missed)
 
 ## 1.0.1622
