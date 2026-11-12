@@ -267,7 +267,7 @@ public class MainActivity extends Activity {
                 0x44FFFFFF, Ui.dp(this, 29), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
-        card.setLive(tab == 0);
+        card.setLive(false);   // 底欄後面在首頁也鋪了一層同色的底（cover），玻璃底下只有純色，不需要每幀重畫；有變化時 kick 就好（每幀重畫三塊玻璃會讓首頁的聲波卡）
         card.setGlowColor(0xFFFFFFFF);   // 玻璃的光用中性白，不跟主題色
         bar = card;
         final LensClip fl = new LensClip(this);
@@ -409,8 +409,8 @@ public class MainActivity extends Activity {
         final int prev = shown;
         shown = i;
         tab = i;
-        if (glass != null) glass.setLive(i == 0);
-        if (indicator instanceof GlassBar) ((GlassBar) indicator).setLive(i == 0);
+        if (glass != null) glass.setLive(false);   // 見 floatingBar：首頁底欄玻璃底下是純色，不用每幀重畫
+        if (indicator instanceof GlassBar) ((GlassBar) indicator).setLive(false);
         if (barItemW > 0) {   // 圓底滑到新位置：位移帶一點回彈，滑動中橫向拉長再縮回
             float x = barPad + i * barItemW + Ui.dp(this, 12);
             if (prev < 0) indicator.setTranslationX(x);
@@ -736,7 +736,7 @@ public class MainActivity extends Activity {
         }
         if (answerView != null) { answerView.setVisibility(View.VISIBLE); answerView.setText(L.t("我在聽…")); }
         homeCapture = SpeechCapture.start(this, new SpeechCapture.Cb() {
-            @Override public void onListening() { setWaves(WaveView.LISTENING); }
+            @Override public void onListening() { setWaves(WaveView.LISTENING); Anim.boostFrames(root, 6000, "首頁聲波"); }
             @Override public void onLevel(float v) { if (barWave != null) barWave.setLevel(v); }
             @Override public void onDone(short[] pcm) {
                 homeCapture = null;

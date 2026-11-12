@@ -16,6 +16,8 @@ final class CircleShot {
     /** 截圖當下的前景 App 與畫面有沒有密碼輸入框（面板之後會蓋在上面，要在截圖的同時記下來）。 */
     static volatile String lastPkg;
     static volatile boolean lastPassword;
+    /** 同一張截圖的「硬體點陣圖」版本（已經在背景執行緒上傳到 GPU）：面板顯示它，第一幀才不用把 18MB 的圖現場上傳而頓一下。截圖給 AI 用的還是一般版本。 */
+    static volatile Bitmap lastHw;
 
     /** 這張截圖要不要先問使用者才能送給 AI：回 {記號, 問的話}，沒事回 null。 */
     static String[] sensitive(Context c) {
@@ -35,6 +37,8 @@ final class CircleShot {
                 lastPkg = ElementList.foregroundPackage();   // null＝面板下面是 Vertex 自己的畫面，或讀不到別的 App 的視窗（無障礙沒開）
                 lastPassword = ElementList.hasPasswordField();
                 final Bitmap b = AgentLoop.screenshotBitmap();
+                lastHw = null;
+                if (b != null) try { lastHw = b.copy(Bitmap.Config.HARDWARE, false); } catch (Throwable ignored) { }
                 if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));   // 截不到時 b 是 null
             } catch (Throwable t) {
                 CrashLog.w("圈選預先截圖", t);

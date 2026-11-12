@@ -301,9 +301,11 @@ public class AssistantSheet {
 
     private void attachShot(Bitmap b) {
         if (dismissing || b == null || questionMode) return;
-        shot = b;
-        if (canvas != null) { canvas.setShot(b); return; }
-        canvas = new CircleCanvas(act, b, new CircleCanvas.Listener() {
+        shot = b;   // 給 AI 的（一般點陣圖，可以裁切、壓縮）
+        Bitmap hw = CircleShot.lastHw;
+        final Bitmap disp = hw != null && hw.getWidth() == b.getWidth() && hw.getHeight() == b.getHeight() ? hw : b;   // 顯示用：已經在 GPU 上的版本，打開面板才不會頓一下
+        if (canvas != null) { canvas.setShot(disp); return; }
+        canvas = new CircleCanvas(act, disp, new CircleCanvas.Listener() {
             @Override public void onSelected(RectF box) {
                 circleBox = box;
                 circleConvo = new JSONArray();   // 選了新的區域：對話重來
@@ -510,6 +512,7 @@ public class AssistantSheet {
         current = this;
 
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下
+        Anim.boostFrames(root, 1600, "面板開場");   // 高更新率＋記錄掉幀（診斷頁看得到）
         // 開場（照小米澎湃 2 的水波）：有截圖時，一道放大鏡帶從輸入列出現的地方往外掃過目前的畫面，面板同時從模糊中浮現；
         // 沒有截圖時照舊播極光的白色光環
         if (canvas != null) {
