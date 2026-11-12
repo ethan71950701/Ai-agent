@@ -210,7 +210,17 @@ final class GlassBar extends FrameLayout {
     // 折射就會停在舊的畫面上殘留。這裡監聽整個視窗的繪製：不是我們自己造成的繪製（上一次自己畫完已經超過約 20 毫秒），
     // 就代表底下有東西變了，叫底欄再更新一小段時間。
     private long lastOwnDraw;
+    private boolean followContent = true;
+
+    /**
+     * false＝頁面其他地方重畫時不要跟著重錄（只在 kick／live 時更新）。首頁的底欄與指示器後面是一層純色（cover），
+     * 首頁標誌的波與極光每一幀都在重畫，以前會讓這兩塊玻璃也每一幀把整頁重錄一次＋跑著色器，三塊玻璃一起算，GPU 跟不上，
+     * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
+     */
+    void setFollowContent(boolean on) { followContent = on; }
+
     private final android.view.ViewTreeObserver.OnPreDrawListener contentWatcher = () -> {
+        if (!followContent) return true;
         long now = SystemClock.uptimeMillis();
         if (GlassPrefs.gpu) { if (!capturing && now - lastOwnDraw > 8) kick(120); }   // GPU 版：頁面每更新一幀，底欄也跟著重錄，才不會停在舊的一幀
         else if (now - lastOwnDraw > 20 && now >= until) kick(220);

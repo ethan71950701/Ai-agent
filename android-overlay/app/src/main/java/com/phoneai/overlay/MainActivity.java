@@ -267,6 +267,7 @@ public class MainActivity extends Activity {
                 0x44FFFFFF, Ui.dp(this, 29), false);
         card.setSource(root);   // 保留玻璃的折射與形變（底下的畫面經過玻璃折射）
         glass = card;
+        card.setFollowContent(tab != 0);   // 首頁：標誌與極光一直在重畫，底欄不要跟著每幀重錄（後面是純色）
         card.setLive(false);   // 底欄後面在首頁也鋪了一層同色的底（cover），玻璃底下只有純色，不需要每幀重畫；有變化時 kick 就好（每幀重畫三塊玻璃會讓首頁的聲波卡）
         card.setGlowColor(0xFFFFFFFF);   // 玻璃的光用中性白，不跟主題色
         bar = card;
@@ -277,6 +278,7 @@ public class MainActivity extends Activity {
         lens.setSource(root);   // 透鏡保留折射與形變
         lens.setGlowColor(Ui.attr(this, com.google.android.material.R.attr.colorPrimary));
         lens.setParentBar(card);   // 透鏡下面用底欄的模糊背景
+        lens.setFollowContent(tab != 0);   // 首頁不要跟著標誌的波每幀重錄（同底欄）
         lens.setClipChildren(false);
         indicator = lens;
         card.setClipChildren(false);
@@ -409,8 +411,8 @@ public class MainActivity extends Activity {
         final int prev = shown;
         shown = i;
         tab = i;
-        if (glass != null) glass.setLive(false);   // 見 floatingBar：首頁底欄玻璃底下是純色，不用每幀重畫
-        if (indicator instanceof GlassBar) ((GlassBar) indicator).setLive(false);
+        if (glass != null) { glass.setLive(false); glass.setFollowContent(i != 0); }   // 見 floatingBar：首頁底欄玻璃底下是純色，不用每幀重畫，也不要跟著標誌的波每幀重錄
+        if (indicator instanceof GlassBar) { ((GlassBar) indicator).setLive(false); ((GlassBar) indicator).setFollowContent(i != 0); }
         if (barItemW > 0) {   // 圓底滑到新位置：位移帶一點回彈，滑動中橫向拉長再縮回
             float x = barPad + i * barItemW + Ui.dp(this, 12);
             if (prev < 0) indicator.setTranslationX(x);

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正首頁標誌的波卡卡的：首頁的底欄玻璃與選取圓底不再跟著標誌的波每一幀重算（它們後面是純色），顯示晶片不再被拖住，波可以每一格都更新｜Fixed the choppy home logo wave: the home bottom-bar glass and its indicator no longer recompute on every frame of the logo animation (they sit on a solid color), so the GPU is no longer held back and the wave updates every frame
 
 ## 1.0.1629
 
