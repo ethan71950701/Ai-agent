@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1618
+
 - 叫出面板的開場改成玻璃漣漪：波前後面拖著幾圈越來越弱的波，把目前的畫面折射、形變得更明顯，速度稍慢（1.4 秒）；也修正面板剛出現時這一層還沒量好大小、玻璃波沒有播的問題｜The panel's opening is now a glass ripple: a few fading rings trail the wave front and refract and deform the current screen more visibly, a little slower (1.4 s); also fixed the wave sometimes not playing because the layer had not been measured yet
 
 ## 1.0.1617
