@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1622
+
 - 叫出面板的開場：放大鏡帶放慢到約 1.1 秒、面板浮現放慢一點；開始前先讓畫面準備好效果，減少剛開始卡一下｜Panel opening: the magnifying band slows to about 1.1 s and the panel emerges a bit slower; the effects are prepared before they start to reduce the initial stutter
 
 ## 1.0.1621
