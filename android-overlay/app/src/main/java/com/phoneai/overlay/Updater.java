@@ -174,6 +174,7 @@ final class Updater {
             long total = size > 0 ? size : c.getContentLengthLong();
             long got = 0;
             int lastPct = -1;
+            long lastNoteAt = 0;
             if (!cached) try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(out)) {
                 byte[] buf = new byte[65536];
                 int n;
@@ -183,7 +184,13 @@ final class Updater {
                     int pct = total > 0 ? (int) (got * 100 / total) : 0;
                     if (pct != lastPct) {
                         lastPct = pct;
-                        nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
+                        long nowMs = android.os.SystemClock.uptimeMillis();
+                        // 通知（Now Bar）最多每 0.4 秒更新一次：系統對同一個 App 每秒超過約 5 次的通知更新會直接丟掉，
+                        // 以前每 1% 就更新一次，下載快的時候後面的更新被丟光，Now Bar 就停在 50 幾 %，然後直接跳到安裝
+                        if (pct >= 100 || nowMs - lastNoteAt >= 400) {
+                            lastNoteAt = nowMs;
+                            nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
+                        }
                         setProg(a, L.t("下載 ") + v + "：" + pct + "%" + (total > 0 ? String.format(java.util.Locale.US, "（%.1f / %.1f MB）", got / 1048576f, total / 1048576f) : ""), pct, false);
                     }
                 }

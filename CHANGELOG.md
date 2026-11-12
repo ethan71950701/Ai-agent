@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正更新時 Now Bar 的下載進度停在 50 幾 % 然後直接跳到安裝：通知改成最多每 0.4 秒更新一次，不會再被系統丟掉｜Fixed the Now Bar download progress freezing in the 50s and then jumping to install: the notification now updates at most every 0.4 s so the system no longer drops updates
 
 ## 1.0.1627
 
