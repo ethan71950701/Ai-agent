@@ -70,7 +70,7 @@ public class WaveView extends View {
         float goal = state == LISTENING ? 0.28f + 0.72f * ampTarget : (state == THINKING ? 0.8f : idleGoal);
         amp += (goal - amp) * Math.min(1f, dt * 10f);
         phase += dt * (state == THINKING ? 1.5f : 1f);
-        float t = now / 1000f;
+        float t = Anim.animSeconds();   // 見 Anim.animSeconds
 
         float w = getWidth(), h = getHeight(), cy = h / 2f, maxA = h * 0.5f;
         int steps = Math.max(32, (int) (w / (2.5f * d)));

@@ -116,7 +116,7 @@ public class EdgeGlowView extends View {
     @Override
     protected void onDraw(Canvas c) {
         if (sweep == null || perimeter <= 0) return;
-        float t = SystemClock.uptimeMillis() / 1000f;
+        float t = Anim.animSeconds();   // 見 Anim.animSeconds：避免開機久了 float 精度不夠、動畫一格一格跳
         m.setRotate(t / LAP_SECONDS * 360f, getWidth() / 2f, getHeight() / 2f);  // 角度增加 = 順時針
         sweep.setLocalMatrix(m);
         p.setShader(sweep);

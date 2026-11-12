@@ -79,7 +79,7 @@ public class AuroraView extends View {
         float dt = last == 0 ? 0.016f : Math.min(0.05f, (now - last) / 1000f);
         last = now;
         energy += (target - energy) * Math.min(1f, dt * 5f);
-        float t = now / 1000f, w = getWidth(), h = getHeight();
+        float t = Anim.animSeconds(), w = getWidth(), h = getHeight();   // 見 Anim.animSeconds
         float gy = glowY > 0 ? glowY : h * 0.75f;
 
         // 左右兩邊各固定一團淡淡的底光：流動的光擠到一邊時，另一邊也不會變全黑

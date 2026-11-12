@@ -37,7 +37,7 @@ public class MarkView extends View {
 
     @Override
     protected void onDraw(Canvas c) {
-        float t = SystemClock.uptimeMillis() / 1000f;
+        float t = Anim.animSeconds();   // 不能直接 uptimeMillis()/1000f：開機幾天後數字太大，float 只剩約 0.06 秒的精度，波就每 7～8 格才動一次（使用者錄影：120Hz 螢幕上約 15 fps）
         float w = getWidth(), h = getHeight(), cy = h / 2f;
         int steps = 60;
         for (int k = 0; k < 3; k++) {
