@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1625
+
 - 減少卡頓：叫出面板時，畫面截圖先在背景傳到 GPU，打開時不再頓一下；首頁的底欄玻璃不再每一幀重畫（底下本來就是純色），首頁說話時的聲波比較順｜Less stutter: the screenshot shown when the panel opens is uploaded to the GPU in the background, so opening no longer hitches; the home bottom-bar glass no longer redraws every frame (it sits on a solid color), making the home voice wave smoother
 
 ## 1.0.1624
