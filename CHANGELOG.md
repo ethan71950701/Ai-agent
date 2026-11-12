@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1619
+
 - 叫出面板的玻璃漣漪收斂：只剩一圈主波加一圈很淡的尾波，形變減半，1.1 秒、很快變淡，不再晃得頭暈｜The panel's glass ripple is toned down: one main ring plus one faint trailing ring, half the distortion, 1.1 s and fading quickly, so it no longer feels dizzying
 
 ## 1.0.1618
