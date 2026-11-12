@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1624
+
 - 修正「檢查並更新」查到新版本卻沒有跳出對話框、之後再按都沒反應：檢查完就不再卡在「忙碌中」，對話框顯示不了時改跳通知，卡住超過 3 分鐘也能重來｜Fixed "Check and update" finding a new version but showing no dialog and then ignoring further taps: it no longer stays busy after the check, falls back to a notification if the dialog cannot be shown, and recovers after 3 minutes if stuck
 
 ## 1.0.1623
