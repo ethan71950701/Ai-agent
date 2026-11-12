@@ -28,10 +28,10 @@ final class IntroWave {
             + "  float2 dir = d / max(dist, 1.0);\n"
             + "  float x = dist - radius;\n"
             // 漣漪：波前後面拖著幾圈越來越弱的波（像石頭丟進水裡），波前前面很快就平了
-            + "  float w = x > 0.0 ? 60.0 : 260.0;\n"
+            + "  float w = x > 0.0 ? 55.0 : 110.0;\n"
             + "  float env = exp(-(x * x) / (2.0 * w * w));\n"
             + "  float slope = cos(x / 24.0) * env;\n"                   // 一圈約 150px
-            + "  float off = 46.0 * amp * slope;\n"                      // 折射：內容被推擠、形變
+            + "  float off = 22.0 * amp * slope;\n"                      // 折射：內容被推擠、形變
             + "  float2 hi = size - float2(1.0);\n"
             + "  float2 uv = clamp(fc - dir * off, float2(0.0), hi);\n"
             + "  float2 spread = dir * (7.0 * amp * abs(slope));\n"             // 波邊緣的彩色光邊（色散）
@@ -60,13 +60,13 @@ final class IntroWave {
             sh.setFloatUniform("size", w, h);
             sh.setFloatUniform("center", w / 2f, -0.04f * h);
             ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
-            va.setDuration(1400);
+            va.setDuration(1100);
             va.setInterpolator(new LinearInterpolator());
             va.addUpdateListener(an -> {
                 try {
                     float t = (float) an.getAnimatedValue();
                     float e = 1f - (1f - t) * (1f - t) * (1f - t);   // easeOutCubic，跟光環一樣
-                    float amp = Math.min(1f, t / 0.06f) * (float) Math.pow(1f - t, 1.2);
+                    float amp = Math.min(1f, t / 0.06f) * (float) Math.pow(1f - t, 1.8);   // 很快變淡，不要一直在眼前晃
                     sh.setFloatUniform("radius", e * h * 1.35f);
                     sh.setFloatUniform("amp", amp);
                     v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(sh, "content"));
