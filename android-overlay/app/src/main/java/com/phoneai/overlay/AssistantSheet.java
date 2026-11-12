@@ -519,10 +519,12 @@ public class AssistantSheet {
             aurora.playIntro();
         }
         scrim.animate().alpha(1f).setDuration(450).start();
-        content.setAlpha(0f);
+        // 幾乎看不見（不是 0：完全透明系統會跳過不畫）＋先套上模糊：等待的 0.38 秒裡 GPU 先把模糊準備好，浮現的第一幀才不會卡
+        content.setAlpha(0.01f);
+        content.setRenderEffect(android.graphics.RenderEffect.createBlurEffect(22 * d, 22 * d, android.graphics.Shader.TileMode.DECAL));
         ValueAnimator in = ValueAnimator.ofFloat(0f, 1f);
         in.setStartDelay(380);
-        in.setDuration(560);
+        in.setDuration(720);
         in.setInterpolator(new DecelerateInterpolator(2f));
         in.addUpdateListener(an -> {  // 每一幀都用「當下」的鍵盤/導覽列高度，不怕 insets 比動畫晚到
             float p = (float) an.getAnimatedValue();

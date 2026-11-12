@@ -10,7 +10,7 @@ import android.view.animation.LinearInterpolator;
  * 助理面板開場的「水波」，照使用者給的小米澎湃 2 影片逐格看出來的做法：
  *  - 只有一道柔和的「放大鏡帶」，從面板（輸入列）出現的地方往外掃過整個畫面（面板打開時先截的那張圖）；
  *    帶子經過的地方內容被微微放大、推擠一下，過了就恢復；沒有一圈圈的波、沒有光環、沒有明暗、沒有彩色。
- *  - 掃過整個畫面大約 0.65 秒，一開始快、後面慢。
+ *  - 掃過整個畫面大約 1.1 秒，一開始快、後面慢（0.65 秒使用者覺得太快）。
  *  - 面板本身同時從模糊中浮現（AssistantSheet.enter 裡做），像玻璃凝結出來。
  * 用 AGSL 著色器（RuntimeShader）＋ View.setRenderEffect 套在畫面截圖那一層上；跑不起來就什麼都不做。
  */
@@ -55,13 +55,14 @@ final class IntroWave {
             sh.setFloatUniform("size", w, h);
             sh.setFloatUniform("center", cx, cy);
             sh.setFloatUniform("bw", band);
+            // 不用 setStartDelay：等待的那段時間也先把效果（強度 0）套上去，讓 GPU 先把著色器準備好，真正開始掃的時候才不會卡一下
+            final long dur = 1100;
             ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
-            va.setStartDelay(delay);
-            va.setDuration(650);
+            va.setDuration(delay + dur);
             va.setInterpolator(new LinearInterpolator());
             va.addUpdateListener(an -> {
                 try {
-                    float t = (float) an.getAnimatedValue();
+                    float t = Math.max(0f, (an.getAnimatedFraction() * (delay + dur) - delay) / dur);
                     float e = 1f - (1f - t) * (1f - t);                  // 先快後慢
                     float amp = Math.min(1f, t / 0.08f) * (1f - t * t);  // 一路都看得到，最後才淡掉
                     sh.setFloatUniform("radius", e * maxR);
