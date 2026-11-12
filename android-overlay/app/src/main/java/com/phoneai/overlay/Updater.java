@@ -96,14 +96,14 @@ final class Updater {
     static String info(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("upd_info", ""); }
 
     /**
-     * 自動檢查（打開 App 時呼叫）：開關開著、距離上次檢查超過 20 小時，就在背景問一次；有新版本在通知欄提醒一則（點了就進 App 並開始更新流程）。
+     * 自動檢查（打開 App 時呼叫）：開關開著、距離上次檢查超過 1 小時，就在背景問一次；有新版本在通知欄提醒一則（點了就進 App 並開始更新流程）。
      * 只提醒，不會自動安裝。
      */
     static void autoCheck(final Activity a) {
         final android.content.SharedPreferences sp = a.getSharedPreferences("cfg", Context.MODE_PRIVATE);
         if (!sp.getBoolean("upd_auto", true)) return;
         long now = System.currentTimeMillis();
-        if (now - sp.getLong("upd_last", 0) < 20L * 3600_000L) return;
+        if (now - sp.getLong("upd_last", 0) < 3600_000L) return;   // 最多每小時一次（以前 20 小時：開發期間一天出好幾版，使用者看不到提醒；GitHub 未登入每小時 60 次，夠用）
         sp.edit().putLong("upd_last", now).apply();
         new Thread(() -> {
             try {

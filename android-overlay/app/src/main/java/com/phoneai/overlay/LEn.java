@@ -285,7 +285,7 @@ final class LEn {
         m.put("更新", "Updates");
         m.put("自動檢查新版本", "Check for new versions automatically");
         m.put("有新版本時提醒我", "Notify me about new versions");
-        m.put("打開 App 時，每天最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝", "When you open the app it checks at most once a day; if there is a new version a notification appears and tapping it starts the update. Nothing is installed automatically.");
+        m.put("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝", "When you open the app it checks at most once an hour; if there is a new version a notification appears, and tapping it starts the update (nothing installs automatically)");
         m.put("有新版本", "New version");
         m.put("Vertex 有新版本", "New Vertex version");
         m.put("最新是 1.0.", "Latest is 1.0.");
