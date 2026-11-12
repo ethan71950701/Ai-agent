@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正打開「進階與診斷」會卡一下：診斷內容改在背景整理好再顯示｜Fixed a hitch when opening Advanced & diagnostics: the report is now built in the background
 
 ## 1.0.1628
 

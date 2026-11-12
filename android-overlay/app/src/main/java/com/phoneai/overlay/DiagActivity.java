@@ -178,7 +178,30 @@ public class DiagActivity extends Activity {
         }
     }
 
+    private int refreshGen;
+
+    /** 整份診斷在背景執行緒組好再一次放上去：裡面有 root 指令（列出電源鍵設定）、讀檔，以前在主執行緒做，打開這頁會卡一下。 */
     private void refresh() {
+        final int gen = ++refreshGen;
+        if (info.getText().length() == 0) info.setText(L.t("讀取中…"));
+        new Thread(() -> {
+            final CharSequence text;
+            final String errs;
+            CharSequence t;
+            try { t = build(); } catch (Throwable e) { t = L.t("（讀取失敗）") + e; }
+            text = t;
+            errs = CrashLog.read(this);
+            runOnUiThread(() -> {
+                if (gen != refreshGen || isFinishing() || isDestroyed()) return;   // 已經有更新的一次、或頁面關了
+                info.setText(text);
+                errView.setText(errs.trim().isEmpty()
+                        ? L.t("目前沒有錯誤紀錄。App 當機或出錯時，會自動記在這裡；分享給開發者就能查原因。不含 API Key。")
+                        : L.t("最新的在最下面。長按可以選取文字；分享或存檔前請自己看過。") + "\n\n" + errs);
+            });
+        }, "diag-refresh").start();
+    }
+
+    private CharSequence build() {
         NotificationManager nm = getSystemService(NotificationManager.class);
         StringBuilder sb = new StringBuilder();
         sb.append(L.t("App 版本：1.0.")).append(BuildConfig.VERSION_CODE).append("\n");
@@ -239,10 +262,6 @@ public class DiagActivity extends Activity {
             for (int k = 0; k < vt.length(); k++) sb.append(vt.getString(k)).append("\n");
         } catch (Exception e) { sb.append(L.t("（讀取失敗）\n")); }
         sb.append(L.t("\n最近一次通知診斷：\n")).append(OverlayService.lastDiag).append('\n');
-        info.setText(sb);
-        String errs = CrashLog.read(this);
-        errView.setText(errs.trim().isEmpty()
-                ? L.t("目前沒有錯誤紀錄。App 當機或出錯時，會自動記在這裡；分享給開發者就能查原因。不含 API Key。")
-                : L.t("最新的在最下面。長按可以選取文字；分享或存檔前請自己看過。") + "\n\n" + errs);
+        return sb;
     }
 }
