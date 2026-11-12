@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 叫出面板的水波改慢、改得更像水：像一滴水滴在面板出現的地方，一圈圈往上散開（2 秒、越走越慢、越散越淡），波峰亮波谷暗有立體感，彩邊變淡｜The panel's opening ripple is slower and more water-like: like a drop falling where the panel appears, rings spread upward (2 s, slowing and fading as they go), with lighter crests and darker troughs for depth and a fainter color fringe
 
 ## 1.0.1619
 

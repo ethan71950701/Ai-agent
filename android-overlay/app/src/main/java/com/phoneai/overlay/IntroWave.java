@@ -31,16 +31,17 @@ final class IntroWave {
             + "  float w = x > 0.0 ? 55.0 : 110.0;\n"
             + "  float env = exp(-(x * x) / (2.0 * w * w));\n"
             + "  float slope = cos(x / 24.0) * env;\n"                   // 一圈約 150px
-            + "  float off = 22.0 * amp * slope;\n"                      // 折射：內容被推擠、形變
+            + "  float off = 26.0 * amp * slope;\n"                      // 折射：內容被推擠、形變
             + "  float2 hi = size - float2(1.0);\n"
             + "  float2 uv = clamp(fc - dir * off, float2(0.0), hi);\n"
-            + "  float2 spread = dir * (7.0 * amp * abs(slope));\n"             // 波邊緣的彩色光邊（色散）
+            + "  float2 spread = dir * (3.0 * amp * abs(slope));\n"             // 一點點色散（水的彩邊很淡）
             + "  half4 cr = content.eval(clamp(uv + spread, float2(0.0), hi));\n"
             + "  half4 cg = content.eval(uv);\n"
             + "  half4 cb = content.eval(clamp(uv - spread, float2(0.0), hi));\n"
             + "  half4 c = half4(cr.r, cg.g, cb.b, cg.a);\n"
-            + "  float shine = max(slope, 0.0) * amp * 0.30;\n"          // 波峰的白色反光
-            + "  c.rgb += half3(shine) * c.a;\n"
+            // 水的立體感：波峰亮、波谷暗（光照在起伏的水面上），再加一點波峰的白色反光
+            + "  float shade = slope * amp * 0.10 + max(slope, 0.0) * amp * 0.16;\n"
+            + "  c.rgb = max(c.rgb + half3(shade) * c.a, half3(0.0));\n"
             + "  return c;\n"
             + "}\n";
 
@@ -58,16 +59,16 @@ final class IntroWave {
             final RuntimeShader sh = new RuntimeShader(SRC);
             final float w = v.getWidth(), h = v.getHeight();
             sh.setFloatUniform("size", w, h);
-            sh.setFloatUniform("center", w / 2f, -0.04f * h);
+            sh.setFloatUniform("center", w / 2f, 0.80f * h);   // 像一滴水滴在面板出現的地方，一圈圈往上散開（整個圓看得到才有水的感覺）
             ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
-            va.setDuration(1100);
+            va.setDuration(2000);
             va.setInterpolator(new LinearInterpolator());
             va.addUpdateListener(an -> {
                 try {
                     float t = (float) an.getAnimatedValue();
-                    float e = 1f - (1f - t) * (1f - t) * (1f - t);   // easeOutCubic，跟光環一樣
-                    float amp = Math.min(1f, t / 0.06f) * (float) Math.pow(1f - t, 1.8);   // 很快變淡，不要一直在眼前晃
-                    sh.setFloatUniform("radius", e * h * 1.35f);
+                    float e = 1f - (1f - t) * (1f - t);   // 先快後慢，像水波越走越慢
+                    float amp = Math.min(1f, t / 0.05f) * (float) Math.pow(1f - t, 1.4);   // 越散越淡
+                    sh.setFloatUniform("radius", e * h * 0.95f);
                     sh.setFloatUniform("amp", amp);
                     v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(sh, "content"));
                 } catch (Throwable t) {

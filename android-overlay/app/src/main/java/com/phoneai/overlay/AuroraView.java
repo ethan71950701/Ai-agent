@@ -28,7 +28,7 @@ public class AuroraView extends View {
     private long last;
 
     // 開場動畫：從螢幕最上方放出一圈圈白色光波往下擴散 + 細碎白色光點往下灑；有截圖時 IntroWave 同時把畫面折射一下（玻璃波）
-    private static final float INTRO_S = 1.35f;
+    private static final float INTRO_S = 2.4f;
     private static final int INTRO_PARTS = 140;
     private final float[] ix = new float[INTRO_PARTS], idelay = new float[INTRO_PARTS], ivx = new float[INTRO_PARTS],
             ivy = new float[INTRO_PARTS], isize = new float[INTRO_PARTS], ilife = new float[INTRO_PARTS];
@@ -142,12 +142,12 @@ public class AuroraView extends View {
         if (t > INTRO_S + 0.3f) { introStart = 0; return; }
 
         // 光波：圓心在螢幕最上方中間，三圈依序往外、往下擴散，邊緣柔和、逐漸變細變淡
-        float cx = w / 2f, cy = -0.04f * h;
+        float cx = w / 2f, cy = 0.80f * h;   // 跟 IntroWave 同一個中心（面板出現的地方）
         for (int k = 0; k < 3; k++) {
-            float p = Math.max(0f, Math.min(1f, (t - k * 0.13f) / 1.1f));   // 跟 IntroWave 的玻璃漣漪同步（1.1 秒）
+            float p = Math.max(0f, Math.min(1f, (t - k * 0.18f) / 2.0f));   // 跟 IntroWave 的水波同步（2 秒）
             if (p <= 0f || p >= 1f) continue;
-            float e = 1f - (1f - p) * (1f - p) * (1f - p);             // easeOutCubic
-            float rad = e * h * 1.35f + 8 * d;
+            float e = 1f - (1f - p) * (1f - p);                         // 先快後慢（跟 IntroWave 一樣）
+            float rad = e * h * 0.95f + 8 * d;
             float band = (96 - 52 * p) * d;                             // 光環寬度由粗變細
             float outer = rad + band * 0.5f;
             float inner = Math.max(0f, rad - band * 0.5f);
