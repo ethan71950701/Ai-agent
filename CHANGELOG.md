@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1631
+
 - 修正首頁標誌、聲波、極光、光暈的動畫在手機開機幾天後變得一格一格跳：動畫時間的精度不夠，現在改用不會失準的算法｜Fixed the home logo, voice wave, aurora and edge glow animations becoming choppy after the phone has been on for several days: the animation clock lost precision and now uses a calculation that stays accurate
 
 ## 1.0.1630
