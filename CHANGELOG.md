@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 首頁標誌的波改成要求穩定的更新率，不再忽快忽慢；叫出面板的放大鏡帶形變減弱、移動改成接近等速，開頭不再像跳一下｜The home logo wave now requests a steady refresh rate so it no longer stutters; the panel's magnifying band is gentler and moves at a near-constant speed so the start no longer jumps
 
 ## 1.0.1625
 

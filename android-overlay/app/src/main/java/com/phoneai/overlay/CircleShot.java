@@ -36,7 +36,9 @@ final class CircleShot {
             try {
                 lastPkg = ElementList.foregroundPackage();   // null＝面板下面是 Vertex 自己的畫面，或讀不到別的 App 的視窗（無障礙沒開）
                 lastPassword = ElementList.hasPasswordField();
+                long t0 = android.os.SystemClock.uptimeMillis();
                 final Bitmap b = AgentLoop.screenshotBitmap();
+                LifeLog.add(app, "面板截圖：" + (android.os.SystemClock.uptimeMillis() - t0) + " ms" + (b == null ? "（失敗）" : ""));   // 面板要等截圖好了才出現：看這段花多久
                 lastHw = null;
                 if (b != null) try { lastHw = b.copy(Bitmap.Config.HARDWARE, false); } catch (Throwable ignored) { }
                 if (onReady != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> onReady.accept(b));   // 截不到時 b 是 null

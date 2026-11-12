@@ -32,7 +32,7 @@ final class IntroWave {
             + "  float2 dir = d / max(dist, 1.0);\n"
             + "  float x = dist - radius;\n"
             + "  float g = exp(-(x * x) / (2.0 * bw * bw));\n"
-            + "  float shift = 0.30 * x * g * amp;\n"                  // 帶子裡的取樣點往中心線收＝放大
+            + "  float shift = 0.18 * x * g * amp;\n"                  // 帶子裡的取樣點往中心線收＝放大
             + "  return content.eval(clamp(fc - dir * shift, float2(0.0), size - float2(1.0)));\n"
             + "}\n";
 
@@ -63,7 +63,7 @@ final class IntroWave {
             va.addUpdateListener(an -> {
                 try {
                     float t = Math.max(0f, (an.getAnimatedFraction() * (delay + dur) - delay) / dur);
-                    float e = 1f - (1f - t) * (1f - t);                  // 先快後慢
+                    float e = 1f - (float) Math.pow(1f - t, 1.3);        // 接近等速、最後稍慢（先快後慢太猛，畫面一開始像跳一下）
                     float amp = Math.min(1f, t / 0.08f) * (1f - t * t);  // 一路都看得到，最後才淡掉
                     sh.setFloatUniform("radius", e * maxR);
                     sh.setFloatUniform("amp", amp);
