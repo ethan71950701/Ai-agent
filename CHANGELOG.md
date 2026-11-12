@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 叫出面板的開場照小米澎湃 2 的水波重做：一道柔和的「放大鏡帶」從輸入列出現的地方往外掃過目前的畫面（內容被微微放大、推擠，過了就恢復，約 0.65 秒，沒有光環、沒有彩色），面板同時從模糊中浮現、微微放大｜The panel's opening is redone after Xiaomi HyperOS 2's ripple: a soft magnifying band sweeps outward from where the input row appears across the current screen (content briefly magnified and pushed, about 0.65 s, no rings, no colors), while the panel emerges from a blur and grows slightly
 
 ## 1.0.1620
 

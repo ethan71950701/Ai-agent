@@ -510,8 +510,14 @@ public class AssistantSheet {
         current = this;
 
         root.performHapticFeedback(HapticFeedbackConstants.GESTURE_START);  // 開啟時輕輕震一下
-        aurora.playIntro();
-        if (canvas != null) canvas.post(() -> IntroWave.play(canvas));   // 有截圖（目前的畫面）：玻璃波把它折射一下
+        // 開場（照小米澎湃 2 的水波）：有截圖時，一道放大鏡帶從輸入列出現的地方往外掃過目前的畫面，面板同時從模糊中浮現；
+        // 沒有截圖時照舊播極光的白色光環
+        if (canvas != null) {
+            final float ox = root.getWidth() / 2f, oy = root.getHeight() - bottomInset - 46 * d;
+            canvas.post(() -> IntroWave.play(canvas, ox > 0 ? ox : canvas.getWidth() / 2f, oy > 0 ? oy : canvas.getHeight() * 0.9f, 300));
+        } else {
+            aurora.playIntro();
+        }
         scrim.animate().alpha(1f).setDuration(450).start();
         content.setAlpha(0f);
         ValueAnimator in = ValueAnimator.ofFloat(0f, 1f);
@@ -522,6 +528,13 @@ public class AssistantSheet {
             float p = (float) an.getAnimatedValue();
             content.setAlpha(p);
             content.setTranslationY((1f - p) * 110 * d - bottomInset);
+            content.setScaleX(0.94f + 0.06f * p);   // 微微放大浮現
+            content.setScaleY(0.94f + 0.06f * p);
+            float blur = (1f - p) * 22 * d;           // 從模糊中浮現（像玻璃凝結出來）
+            content.setRenderEffect(blur > 0.5f ? android.graphics.RenderEffect.createBlurEffect(blur, blur, android.graphics.Shader.TileMode.DECAL) : null);
+        });
+        in.addListener(new AnimatorListenerAdapter() {
+            @Override public void onAnimationEnd(Animator an) { content.setRenderEffect(null); content.setScaleX(1f); content.setScaleY(1f); }
         });
         in.start();
     }
