@@ -30,11 +30,13 @@ final class Updater {
     private static final String CH = "update";
     static final int NOTE = 9001;
     private static volatile boolean busy;
+    private static volatile long busySince;   // busy 開始的時間：超過 3 分鐘還沒結束（例如對話框沒能顯示）就當作卡住，允許重來
 
     /** 按一次「檢查並更新」：檢查 → 有新版本才問 → 下載（通知列顯示進度）→ 安裝。 */
     static void start(final Activity a) {
-        if (busy) { toast(a, L.t("正在檢查或更新中")); return; }
+        if (busy && System.currentTimeMillis() - busySince < 180_000L) { toast(a, L.t("正在檢查或更新中")); return; }
         busy = true;
+        busySince = System.currentTimeMillis();
         toast(a, L.t("檢查更新中…"));
         new Thread(() -> {
             try {
@@ -69,22 +71,51 @@ final class Updater {
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
                 final String v = shown;
                 final String apkUrl = url; final long apkSize = size; final String apkName = name;
-                a.runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
+                busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）
+                if (a.isFinishing() || a.isDestroyed()) { notifyNew(a, v); return; }   // 這個畫面已經關了（例如剛重建）：改用通知
+                a.runOnUiThread(() -> {
+                  try {
+                    if (a.isFinishing() || a.isDestroyed()) { notifyNew(a, v); return; }
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
                         .setTitle(L.t("有新版本 ") + v)
                         .setMessage(L.t("目前是 1.0.") + BuildConfig.VERSION_CODE + L.t("，最新是 ") + v + L.t("。\n\n") + notesOf(rel)
                                 + L.t("\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。"))
                         .setPositiveButton(L.t("更新"), (d, w) -> {
+                            if (busy && System.currentTimeMillis() - busySince < 180_000L) { toast(a, L.t("正在檢查或更新中")); return; }
+                            busy = true;
+                            busySince = System.currentTimeMillis();
                             showProg(a, v);   // App 裡也顯示下載進度（通知列與 Now Bar 照舊）
                             new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start();
                         })
-                        .setNegativeButton(L.t("稍後"), (d, w) -> busy = false)
-                        .setOnCancelListener(d -> busy = false)
-                        .show());
+                        .setNegativeButton(L.t("稍後"), null)
+                        .show();
+                  } catch (Throwable t) {   // 對話框顯示失敗：改用通知，不要讓按鈕從此沒反應
+                    CrashLog.w("更新對話框", t);
+                    notifyNew(a, v);
+                  }
+                });
             } catch (Exception e) {
                 note(a, "手動檢查失敗：" + e);
                 done(a, L.t("檢查失敗：") + e.getMessage());
             }
         }).start();
+    }
+
+    /** 有新版本、但對話框沒辦法顯示時：在通知欄跳一則，點了進 App 開始更新（跟自動檢查同一則）。 */
+    private static void notifyNew(Context c, String v) {
+        try {
+            NotificationManager nm = c.getSystemService(NotificationManager.class);
+            nm.createNotificationChannel(new NotificationChannel("update_notice", L.t("有新版本"), NotificationManager.IMPORTANCE_DEFAULT));
+            android.content.Intent it = new android.content.Intent(c, MainActivity.class).putExtra("do_update", true)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            nm.notify(9002, new Notification.Builder(c, "update_notice")
+                    .setSmallIcon(R.drawable.ic_stat)
+                    .setContentTitle(L.t("Vertex 有新版本"))
+                    .setContentText(L.t("最新是 ") + v + L.t("。點一下更新"))
+                    .setContentIntent(android.app.PendingIntent.getActivity(c, 1, it, android.app.PendingIntent.FLAG_IMMUTABLE | android.app.PendingIntent.FLAG_UPDATE_CURRENT))
+                    .setAutoCancel(true)
+                    .build());
+        } catch (Exception ignored) { }
     }
 
     /** 診斷用：最近一次檢查更新的結果（診斷頁顯示）。 */
