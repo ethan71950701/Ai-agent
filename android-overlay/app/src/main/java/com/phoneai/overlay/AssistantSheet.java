@@ -517,7 +517,7 @@ public class AssistantSheet {
         // 沒有截圖時照舊播極光的白色光環
         if (canvas != null) {
             final float ox = root.getWidth() / 2f, oy = root.getHeight() - bottomInset - 46 * d;
-            canvas.post(() -> IntroWave.play(canvas, ox > 0 ? ox : canvas.getWidth() / 2f, oy > 0 ? oy : canvas.getHeight() * 0.9f, 300));
+            canvas.post(() -> IntroWave.play(canvas, ox > 0 ? ox : canvas.getWidth() / 2f, oy > 0 ? oy : canvas.getHeight() * 0.9f, 60));   // 跟面板浮現幾乎同時開始（以前等 0.3 秒，輸入列都出來了波才出現）
         } else {
             aurora.playIntro();
         }

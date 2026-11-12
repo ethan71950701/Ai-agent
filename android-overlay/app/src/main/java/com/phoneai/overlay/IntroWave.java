@@ -65,7 +65,7 @@ final class IntroWave {
                     float t = Math.max(0f, (an.getAnimatedFraction() * (delay + dur) - delay) / dur);
                     float e = 1f - (float) Math.pow(1f - t, 1.3);        // 接近等速、最後稍慢（先快後慢太猛，畫面一開始像跳一下）
                     float amp = Math.min(1f, t / 0.08f) * (1f - t * t);  // 一路都看得到，最後才淡掉
-                    sh.setFloatUniform("radius", e * maxR);
+                    sh.setFloatUniform("radius", band * 1.6f + e * (maxR - band * 1.6f));   // 一開始就在輸入列上方看得到，不用等它從輸入列後面走出來
                     sh.setFloatUniform("amp", amp);
                     v.setRenderEffect(RenderEffect.createRuntimeShaderEffect(sh, "content"));
                 } catch (Throwable t) {

@@ -26,6 +26,12 @@ final class Anim {
      */
     static void boostFrames(View v, long ms) { boostFrames(v, ms, null); }
 
+    /** 只量掉幀、不要求高更新率（量「平常的樣子」用，例如首頁標誌的波）。 */
+    static void measureFrames(String tag, long ms) {
+        monTags.add(tag);
+        monitorFrames(ms);
+    }
+
     /** tag：這段動畫是什麼（診斷頁會寫出來，才知道哪個動作掉幀）。 */
     static void boostFrames(View v, long ms, String tag) {
         if (v == null) return;

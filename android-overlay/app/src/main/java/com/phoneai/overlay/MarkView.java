@@ -25,7 +25,14 @@ public class MarkView extends View {
         p.setColor(Ui.attr(c, com.google.android.material.R.attr.colorPrimary));
         // Android 15 起有「自適應更新率」：小小一塊一直在動的畫面，系統可能把更新率降到很低又忽高忽低，看起來就卡卡的
         //（量測：其他動畫都穩定 120Hz，只有這個標誌的波覺得卡）。明確要求穩定的一般更新率（約 60Hz）
-        if (android.os.Build.VERSION.SDK_INT >= 35) setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_NORMAL);
+        //（上一版用 NORMAL 使用者說還是卡：改 HIGH，跟其他動畫一樣 120Hz，驗證是不是更新率的問題）
+        if (android.os.Build.VERSION.SDK_INT >= 35) setRequestedFrameRate(View.REQUESTED_FRAME_RATE_CATEGORY_HIGH);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Anim.measureFrames("首頁標誌", 4000);   // 診斷頁「動畫期間的更新率」會多一行：看首頁平常是不是真的掉幀
     }
 
     @Override

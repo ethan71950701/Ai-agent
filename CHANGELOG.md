@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 叫出面板時放大鏡帶跟面板幾乎同時出現，不再等輸入列出來後才有；首頁標誌的波改用跟其他動畫一樣的高更新率｜The panel's magnifying band now starts almost together with the panel instead of after the input row appears; the home logo wave uses the same high refresh rate as other animations
 
 ## 1.0.1626
 
