@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1634
+
 - AI 請求遇到偶發的網路問題（連不上、逾時、伺服器暫時忙）會自動重試，不再「有時候連不上」；連線逾時由 20 秒縮短到 10 秒，失敗與重試都記在診斷頁的事件紀錄（按停止不會重試）｜AI requests now retry automatically on transient network problems (cannot connect, timeouts, temporary server errors) instead of sometimes failing; the connect timeout drops from 20 s to 10 s, every failure and retry is logged in the diagnostics events (pressing stop does not retry)
 
 ## 1.0.1633
