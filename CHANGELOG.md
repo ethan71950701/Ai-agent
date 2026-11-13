@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1633
+
 - 聊天變快：便宜模型把一句話判成「聊天」時，就算它沒把握也直接聊，不再多問一次較強的模型來重新判斷（聊天真的需要操作手機時，本來就會自動改走自動操作）；任務過程的路由那行會顯示判斷花了幾毫秒｜Chat is faster: when the cheap model routes a message to chat, even with low confidence, it just chats instead of asking a stronger model to re-route (if chat really needs to operate the phone it already falls back to automation); the routing line in the task log now shows how many milliseconds it took
 - 帶圖片的訊息不再逾時：面板等回答的時間由 30 秒延長到 2 分鐘，網路讀取逾時由 60 秒延長到 2 分鐘；診斷頁事件紀錄會記錄每次帶圖片聊天用了多久、成功或失敗的原因｜Messages with images no longer time out: the panel now waits up to 2 minutes instead of 30 seconds and the network read timeout is 2 minutes instead of 60 seconds; the diagnostics events log how long each image chat took and why it failed
 
