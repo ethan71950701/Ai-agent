@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1638
+
 - 續問時新的回答出現：舊卡像水一樣一塊一塊滲掉、新卡在同一處浮現（不再變半透明）｜Follow-up answers: the old card soaks away like water while the new one surfaces in place (no more see-through card)
 
 ## 1.0.1637
