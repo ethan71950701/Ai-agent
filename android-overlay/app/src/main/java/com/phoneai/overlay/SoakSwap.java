@@ -61,6 +61,9 @@ final class SoakSwap {
             final float cx = old.getWidth() / 2f;
             final float cy = Math.min(old.getHeight(), Math.max(neu.getHeight(), (int) (60 * d))) / 2f;
             final float R = Math.max(old.getWidth(), 1) * 0.6f + 40 * d;
+            final int h0 = old.getHeight(), h1 = neu.getHeight();   // 兩張卡各自的高度：外框一起從舊的高度長（縮）到新的高度，不要一下子跳
+            setH(old, h0);
+            setH(neu, h0);
             final RuntimeShader a = make(old, cx, cy, R, d / 2f, 0f);
             final RuntimeShader b = make(neu, cx, cy, R, d / 2f, 1f);
             ValueAnimator va = ValueAnimator.ofFloat(0f, 1f);
@@ -71,6 +74,11 @@ final class SoakSwap {
                     float q = (float) an.getAnimatedValue();
                     float s = q * q * (3f - 2f * q);
                     float soak = -0.15f + 1.4f * s;
+                    float g = Math.min(1f, q / 0.55f);
+                    g = 1f - (1f - g) * (1f - g) * (1f - g);   // 先快後慢
+                    int hh = Math.round(h0 + (h1 - h0) * g);
+                    setH(old, hh);
+                    setH(neu, hh);
                     a.setFloatUniform("soak", soak);
                     b.setFloatUniform("soak", soak);
                     old.setRenderEffect(RenderEffect.createRuntimeShaderEffect(a, "content"));
@@ -93,7 +101,13 @@ final class SoakSwap {
         }
     }
 
+    private static void setH(View v, int h) {
+        android.view.ViewGroup.LayoutParams lp = v.getLayoutParams();
+        if (lp != null && lp.height != h) { lp.height = h; v.setLayoutParams(lp); }
+    }
+
     private static void finish(View old, View neu, Runnable done) {
+        setH(neu, -2);   // 恢復依內容自動算高度
         try { old.setRenderEffect(null); neu.setRenderEffect(null); } catch (Throwable ignored) { }
         done.run();
     }
