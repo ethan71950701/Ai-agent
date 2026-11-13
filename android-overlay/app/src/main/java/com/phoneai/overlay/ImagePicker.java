@@ -23,7 +23,42 @@ import java.util.List;
 
 /** 上傳圖片的共用零件（助理面板與首頁都用）：開系統相片選擇器、把選到的圖縮小成 JPEG、縮圖列（可移除）。 */
 final class ImagePicker {
-    static final int REQ = 4714, MAX = 4;
+    static final int REQ = 4714, REQ_CAMERA = 4715, MAX = 4;
+    private static volatile java.io.File cameraFile;   // 這次拍照要存的檔（相機 App 寫進去；Activity 重建了也還在）
+
+    /** 開系統相機拍一張（不需要相機權限，由系統相機 App 拍好交回）。回 false = 打不開。 */
+    static boolean launchCamera(Activity act) {
+        try {
+            java.io.File dir = new java.io.File(act.getCacheDir(), "camera");
+            dir.mkdirs();
+            java.io.File f = new java.io.File(dir, "shot_" + System.currentTimeMillis() + ".jpg");
+            cameraFile = f;
+            Uri u = androidx.core.content.FileProvider.getUriForFile(act, act.getPackageName() + ".update", f);
+            Intent i = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(android.provider.MediaStore.EXTRA_OUTPUT, u)
+                    .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            act.startActivityForResult(i, REQ_CAMERA);
+            return true;
+        } catch (Throwable t) {
+            CrashLog.w("開相機", t);
+            return false;
+        }
+    }
+
+    /** 拍照回來：回一個帶著照片 Uri 的 Intent，交給 load；沒拍到回 null。 */
+    static Intent cameraResult(Activity act) {
+        java.io.File f = cameraFile;
+        if (f == null || !f.exists() || f.length() < 100) return null;
+        return new Intent().setData(androidx.core.content.FileProvider.getUriForFile(act, act.getPackageName() + ".update", f));
+    }
+
+    /** 清掉拍照留下的暫存檔（已經讀進記憶體了）。 */
+    static void cleanCamera(Context c) {
+        try {
+            java.io.File[] fs = new java.io.File(c.getCacheDir(), "camera").listFiles();
+            if (fs != null) for (java.io.File f : fs) f.delete();
+        } catch (Throwable ignored) { }
+        cameraFile = null;
+    }
 
     private ImagePicker() { }
 
@@ -79,6 +114,7 @@ final class ImagePicker {
                     CrashLog.w("讀取上傳的圖片", t);
                 }
             }
+            cleanCamera(app);
             act.runOnUiThread(() -> done.accept(out));
         }, "pick-images").start();
     }

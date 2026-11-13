@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 助理面板與首頁的「＋」選單新增「拍照」：用系統相機拍一張，跟上傳圖片一樣加到輸入列上方的縮圖，連同問題一起問（不需要相機權限）｜The "+" menu on the assistant panel and the home page now has "Take a photo": snap one with the system camera and it is added as a thumbnail above the input row just like an uploaded image, sent with your question (no camera permission needed)
 
 ## 1.0.1631
 

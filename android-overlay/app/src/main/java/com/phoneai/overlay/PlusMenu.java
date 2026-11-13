@@ -17,7 +17,7 @@ final class PlusMenu {
     private PlusMenu() { }
 
     static PopupWindow show(Activity act, View anchor, boolean showBg, boolean bgOn,
-                            Runnable onMain, Runnable onBg, Runnable onPick, Runnable onDismiss) {
+                            Runnable onMain, Runnable onBg, Runnable onPick, Runnable onCamera, Runnable onDismiss) {
         final float d = act.getResources().getDisplayMetrics().density;
         LinearLayout box = new LinearLayout(act);
         box.setOrientation(LinearLayout.VERTICAL);
@@ -38,6 +38,7 @@ final class PlusMenu {
             dp.setMargins((int) (12 * d), (int) (4 * d), (int) (12 * d), (int) (4 * d));
             box.addView(div, dp);
         }
+        box.addView(item(act, L.t("拍照"), L.t("用相機拍一張，連同問題一起問"), false, () -> { pw.dismiss(); onCamera.run(); }));
         box.addView(item(act, L.t("上傳圖片"), L.t("從相簿選，最多 4 張"), false, () -> { pw.dismiss(); onPick.run(); }));
 
         pw.setOutsideTouchable(true);

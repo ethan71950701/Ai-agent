@@ -231,6 +231,7 @@ public class AssistantSheet {
                     () -> { cfg.edit().putBoolean("bg_on", false).apply(); plus.setBadge(false, accent); },
                     () -> { cfg.edit().putBoolean("bg_on", true).apply(); plus.setBadge(true, accent); },
                     this::pickImages,
+                    this::takePhoto,
                     () -> plus.setOpen(false));
         });
         LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams((int) (44 * d), (int) (44 * d));
@@ -410,6 +411,13 @@ public class AssistantSheet {
     }
 
     // ---------- 上傳圖片：「＋」選單 → 系統相簿選圖（不需要權限）→ 縮圖列 → 連同問題一起問 ----------
+
+    private void takePhoto() {
+        if (ImagePicker.MAX - picked.b64.size() <= 0) { setStatus(L.t("最多 4 張圖片")); return; }
+        enterTyping();   // 先停掉語音
+        setStatus(L.t("拍好後回到這裡"));
+        if (!ImagePicker.launchCamera(act)) setStatus(L.t("這支手機打不開相機"));
+    }
 
     private void pickImages() {
         int room = ImagePicker.MAX - picked.b64.size();
@@ -764,6 +772,12 @@ public class AssistantSheet {
         if (req == REQ_PICK) {
             if (res == Activity.RESULT_OK && data != null) onPicked(data);
             else setStatus(L.t("直接說話，或在這裡打字"));
+            return;
+        }
+        if (req == ImagePicker.REQ_CAMERA) {
+            Intent shot = res == Activity.RESULT_OK ? ImagePicker.cameraResult(act) : null;
+            if (shot != null) onPicked(shot);
+            else { ImagePicker.cleanCamera(act); setStatus(L.t("直接說話，或在這裡打字")); }
             return;
         }
         if (req != REQ_FALLBACK) return;

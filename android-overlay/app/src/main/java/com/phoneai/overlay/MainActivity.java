@@ -611,6 +611,10 @@ public class MainActivity extends Activity {
                         if (room <= 0) { android.widget.Toast.makeText(this, L.t("最多 4 張圖片"), android.widget.Toast.LENGTH_SHORT).show(); return; }
                         if (!ImagePicker.launch(this, room)) android.widget.Toast.makeText(this, L.t("這支手機打不開相簿"), android.widget.Toast.LENGTH_SHORT).show();
                     },
+                    () -> {
+                        if (ImagePicker.MAX - homePicked.b64.size() <= 0) { android.widget.Toast.makeText(this, L.t("最多 4 張圖片"), android.widget.Toast.LENGTH_SHORT).show(); return; }
+                        if (!ImagePicker.launchCamera(this)) android.widget.Toast.makeText(this, L.t("這支手機打不開相機"), android.widget.Toast.LENGTH_SHORT).show();
+                    },
                     () -> plus.setOpen(false));
         });
         bar.addView(plus, new LinearLayout.LayoutParams(Ui.dp(this, 44), Ui.dp(this, 44)));
@@ -716,8 +720,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, android.content.Intent data) {
         super.onActivityResult(req, res, data);
-        if (req != ImagePicker.REQ || res != RESULT_OK || data == null) return;
-        ImagePicker.load(this, data, ImagePicker.MAX - homePicked.b64.size(), got -> {
+        android.content.Intent src = data;
+        if (req == ImagePicker.REQ_CAMERA) {
+            src = res == RESULT_OK ? ImagePicker.cameraResult(this) : null;
+            if (src == null) { ImagePicker.cleanCamera(this); return; }
+        } else if (req != ImagePicker.REQ || res != RESULT_OK || data == null) return;
+        ImagePicker.load(this, src, ImagePicker.MAX - homePicked.b64.size(), got -> {
             if (got.isEmpty()) { android.widget.Toast.makeText(this, L.t("讀不到這張圖片"), android.widget.Toast.LENGTH_SHORT).show(); return; }
             homePicked.b64.addAll(got.b64);
             homePicked.thumbs.addAll(got.thumbs);
