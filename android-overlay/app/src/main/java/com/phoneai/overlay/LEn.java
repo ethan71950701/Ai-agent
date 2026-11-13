@@ -37,6 +37,10 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("已經有這個服務的 Key", "This service already has a key");
+        m.put("要沿用目前的 Key，還是換成新的？（新的會取代舊的）", "Keep the current key or replace it with a new one? (The new one overwrites the old.)");
+        m.put("沿用", "Keep");
+        m.put("換新的", "Replace");
         m.put("背景模式", "Background mode");
         m.put("需要你確認", "Needs your confirmation");
         m.put("是", "Yes");

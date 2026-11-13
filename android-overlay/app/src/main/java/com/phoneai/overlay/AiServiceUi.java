@@ -56,7 +56,8 @@ final class AiServiceUi {
                 .setItems(names, (d, which) -> {
                     if (which == 0) {
                         for (String s : slots(scope)) LlmConfig.set(a, s, LlmConfig.ANTHROPIC, "", "");
-                        offerClaudeModels(a, scope, done);
+                        LlmConfig.Slot cs = LlmConfig.VISION.equals(scope) ? LlmConfig.vision(a) : LlmConfig.cheap(a);
+                        keyStep(a, cs, "Claude API Key", () -> offerClaudeModels(a, scope, done));
                     } else guide(a, scope, LlmPresets.ALL[which - 1], done);
                 })
                 .setNegativeButton(L.t("取消"), null).show();
@@ -79,7 +80,7 @@ final class AiServiceUi {
     }
 
     private static void guide(Activity a, String scope, LlmPresets.Preset ps, Runnable done) {
-        if (!ps.base.isEmpty() && LlmConfig.hasOwnKey(a, new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ""))) {   // 這個服務的 Key 已經有了：不用再看申請教學
+        if (!ps.base.isEmpty() && LlmConfig.hasOwnKey(a, new LlmConfig.Slot(LlmConfig.OPENAI, ps.base, ""))) {   // 這個服務的 Key 已經有了：不用再看申請教學（saveAndAskKey 會問沿用或換新）
             saveAndAskKey(a, scope, ps.base, ps.cheap, ps.vision, done);
             return;
         }
@@ -131,12 +132,18 @@ final class AiServiceUi {
         if (!LlmConfig.VISION.equals(scope)) LlmConfig.set(a, LlmConfig.CHEAP, LlmConfig.OPENAI, b, cheapModel);
         if (!LlmConfig.CHEAP.equals(scope)) LlmConfig.set(a, LlmConfig.VISION, LlmConfig.OPENAI, b, visionModel);
         LlmConfig.Slot s = LlmConfig.VISION.equals(scope) ? LlmConfig.vision(a) : LlmConfig.cheap(a);
-        if (LlmConfig.hasOwnKey(a, s)) {   // 這個服務的 Key 以前輸入過：直接沿用，不用每次重打
-            android.widget.Toast.makeText(a, L.t("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）"), android.widget.Toast.LENGTH_LONG).show();
-            offerModelList(a, scope, done);
-            return;
-        }
-        Maintenance.askKeyFor(a, LlmConfig.keyFile(s), L.t("API Key：") + LlmConfig.host(b), () -> offerModelList(a, scope, done));
+        keyStep(a, s, L.t("API Key：") + LlmConfig.host(b), () -> offerModelList(a, scope, done));
+    }
+
+    /** Key 這一步：還沒有就直接輸入；已經有了就問「沿用」或「換新的」（以前只能沿用，Key 過期或貼錯就沒辦法換）。 */
+    private static void keyStep(Activity a, LlmConfig.Slot s, String title, Runnable next) {
+        final String file = LlmConfig.keyFile(s);
+        if (!LlmConfig.hasOwnKey(a, s)) { Maintenance.askKeyFor(a, file, title, next); return; }
+        new MaterialAlertDialogBuilder(a).setTitle(L.t("已經有這個服務的 Key"))
+                .setMessage(L.t("要沿用目前的 Key，還是換成新的？（新的會取代舊的）"))
+                .setPositiveButton(L.t("沿用"), (d, w) -> next.run())
+                .setNegativeButton(L.t("換新的"), (d, w) -> Maintenance.askKeyFor(a, file, title, next))
+                .setNeutralButton(L.t("取消"), null).show();
     }
 
     /** Key 存好後：問要不要查這個服務現有的模型（模型常改名，查了比猜準）。 */

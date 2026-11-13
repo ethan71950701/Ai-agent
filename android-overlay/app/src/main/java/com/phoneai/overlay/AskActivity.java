@@ -22,7 +22,7 @@ public class AskActivity extends Activity {
                 && in0.getStringExtra("question") == null && in0.getStringExtra("reply_text") == null;
         if (plain0) {   // 單純打開：面板先藏起來、先截一張畫面（才不會拍到開場動畫），截好再出現，就能直接在畫面上圈選提問
             sheet.view().setVisibility(android.view.View.INVISIBLE);
-            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); });
+            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); sheet.restoreLastReply(); });
         } else {
             sheet.enter();
         }
@@ -65,6 +65,10 @@ public class AskActivity extends Activity {
         setIntent(intent);
         boolean plain = intent.getStringExtra("question") == null && intent.getStringExtra("reply_text") == null
                 && intent.getStringExtra("fill") == null && intent.getStringExtra("text") == null;
+        if (plain && sheet.inReply()) {   // 回答卡還在：不要開新的，接著上一輪繼續（只重新開始聽）
+            if (autoVoice(intent)) sheet.startVoice();
+            return;
+        }
         if (plain) {   // 單純重新叫出面板：清掉上一輪的回答卡片與狀態，當成全新的一次（recreate 會重建面板並自動開始聽）
             recreate();
             return;

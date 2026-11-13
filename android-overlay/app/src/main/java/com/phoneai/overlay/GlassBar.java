@@ -218,6 +218,10 @@ final class GlassBar extends FrameLayout {
      * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
      */
     void setFollowContent(boolean on) { followContent = on; }
+    private float darkScale = 1f;
+    /** 這一條自己的暗度倍率（0.6＝比設定的底欄暗度再淡 4 成）；助理面板的輸入列用，看起來比較透。 */
+    void setDarkScale(float k) { darkScale = k; invalidate(); }
+    float dark() { return GlassPrefs.barDark * darkScale; }
 
     private final android.view.ViewTreeObserver.OnPreDrawListener contentWatcher = () -> {
         if (!followContent) return true;
@@ -253,7 +257,7 @@ final class GlassBar extends FrameLayout {
     /** 底欄的暗色層：每次畫之前都用目前的「底欄暗度」重設，滑桿拖動才會立即生效。 */
     private void refreshTint() {
         if (lens) return;   // 透鏡不畫底色
-        int a = Math.round(GlassPrefs.barDark * 255);
+        int a = Math.round(dark() * 255);
         int h = Math.max(1, getHeight());
         tint.setShader(new LinearGradient(0, 0, 0, h, new int[]{(tintColor & 0xFFFFFF) | (a << 24), (tintColor & 0xFFFFFF) | (a << 24)},
                 null, Shader.TileMode.CLAMP));
@@ -445,7 +449,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("viewScale", lp[1], lp[2]);                        // 這個玻璃目前被放大的倍數（含上層容器）
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
-        sh.setFloatUniform("shade", GlassPrefs.barDark * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
+        sh.setFloatUniform("shade", dark() * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
@@ -521,7 +525,7 @@ final class GlassBar extends FrameLayout {
         refreshTint();
         if (!lens) {
             Paint solid = new Paint(Paint.ANTI_ALIAS_FLAG);
-            solid.setColor((bgColor & 0xFFFFFF) | (Math.round(GlassPrefs.barDark * 255) << 24));   // 底欄暗度
+            solid.setColor((bgColor & 0xFFFFFF) | (Math.round(dark() * 255) << 24));   // 底欄暗度
             canvas.drawPath(clip, solid);
         }
         canvas.drawPath(clip, tint);
@@ -691,7 +695,7 @@ final class GlassBar extends FrameLayout {
             underNode.setRenderEffect(currentEffect());
             android.graphics.RecordingCanvas grc = underNode.beginRecording(gw, gh);
             grc.translate(-getX(), -getY());
-            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor, Math.round(GlassPrefs.barDark * 255 * (1f - Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))))));
+            parentBar.paintBackdrop(grc, parentBar.source, parentBar.getWidth(), parentBar.getHeight(), parentBar.bgColor, Math.round(parentBar.dark() * 255 * (1f - Math.max(0f, Math.min(1f, (amount - REST) / (1f - REST))))));
             underNode.endRecording();
             canvas.save();
             canvas.clipPath(clip);

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 回答後再長按電源鍵：接著上一輪繼續對話（回答卡還在、10 分鐘內），不是開新的；輸入列比較透明有玻璃感；已經設定過 Key 的服務可以選「換新的」（Claude 也能在這裡換 Key）｜Long-press power after an answer now continues the same conversation (answer card kept, within 10 min); the input bar is more see-through; services that already have a key can now be set to a new key (Claude too)
 
 ## 1.0.1638
 
