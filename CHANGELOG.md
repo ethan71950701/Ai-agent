@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 從模型清單選模型時，會先送一則極短的請求測試這個模型你的帳號能不能用（免費方案清單裡常有一堆不能用的）；不能用就顯示原因、不儲存，回到清單重選｜When you pick a model from the list, a tiny test request now checks whether your account can actually use it (free plans often list many unusable models); if not, the reason is shown, nothing is saved, and you can pick again
 
 ## 1.0.1634
 

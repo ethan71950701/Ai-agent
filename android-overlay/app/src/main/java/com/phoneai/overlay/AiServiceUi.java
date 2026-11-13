@@ -171,8 +171,29 @@ final class AiServiceUi {
                 String title = LlmConfig.CHEAP.equals(name) ? L.t("選便宜模型（判斷、讀元件清單）") : L.t("選看圖模型（要能看圖）");
                 MaterialAlertDialogBuilder mb = new MaterialAlertDialogBuilder(a).setTitle(title)
                         .setItems(models.toArray(new String[0]), (d, which) -> {
-                            LlmConfig.set(a, name, slot.openai() ? LlmConfig.OPENAI : LlmConfig.ANTHROPIC, slot.base, models.get(which));
-                            pickModels(a, order, idx + 1, done);
+                            final String chosen = models.get(which);
+                            if (!slot.openai()) {   // Claude：不用試
+                                LlmConfig.set(a, name, LlmConfig.ANTHROPIC, slot.base, chosen);
+                                pickModels(a, order, idx + 1, done);
+                                return;
+                            }
+                            // 先送一則很短的請求試試：清單列的是這個服務「所有」的模型，免費方案常常有一堆不能用（額度為 0、要付費、還沒開放）。試不過就不存，回到清單重選
+                            android.widget.Toast.makeText(a, L.t("測試這個模型…"), android.widget.Toast.LENGTH_SHORT).show();
+                            new Thread(() -> {
+                                final String bad = testModel(slot.base, LlmConfig.readKey(a, slot), chosen);
+                                a.runOnUiThread(() -> {
+                                    if (bad == null) {
+                                        LlmConfig.set(a, name, LlmConfig.OPENAI, slot.base, chosen);
+                                        android.widget.Toast.makeText(a, L.t("已選：") + chosen, android.widget.Toast.LENGTH_SHORT).show();
+                                        pickModels(a, order, idx + 1, done);
+                                    } else {
+                                        new MaterialAlertDialogBuilder(a).setTitle(L.t("這個模型不能用"))
+                                                .setMessage(chosen + "\n\n" + bad + "\n\n" + L.t("沒有儲存，保留原本的設定。要重新選一個嗎？"))
+                                                .setPositiveButton(L.t("重新選"), (d2, w2) -> pickModels(a, order, idx, done))
+                                                .setNegativeButton(L.t("保留目前的"), (d2, w2) -> pickModels(a, order, idx + 1, done)).show();
+                                    }
+                                });
+                            }, "model-test").start();
                         })
                         .setNegativeButton(L.t("保留目前的"), (d, w) -> pickModels(a, order, idx + 1, done));
                 if (!slot.openai()) mb.setNeutralButton(L.t("用預設"), (d, w) -> {   // Claude：清掉自己選的，回到內建模型
@@ -182,6 +203,29 @@ final class AiServiceUi {
                 mb.show();
             });
         }).start();
+    }
+
+    /** 對這個模型送一則極短的請求，看你的帳號能不能用。能用回 null，不能用回原因（含狀態碼）。 */
+    static String testModel(String base, String key, String model) {
+        try {
+            HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
+            con.setRequestMethod("POST");
+            con.setConnectTimeout(10000);
+            con.setReadTimeout(25000);
+            con.setDoOutput(true);
+            con.setRequestProperty("content-type", "application/json");
+            if (key != null) con.setRequestProperty("Authorization", "Bearer " + key);
+            String body = new org.json.JSONObject().put("model", model).put("max_tokens", 8)
+                    .put("messages", new org.json.JSONArray().put(new org.json.JSONObject().put("role", "user").put("content", "hi"))).toString();
+            try (java.io.OutputStream o = con.getOutputStream()) { o.write(body.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+            int code = con.getResponseCode();
+            if (code < 400) return null;
+            java.io.InputStream in = con.getErrorStream();
+            String text = in == null ? "" : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            return LlmErrors.explain(code, text, model);
+        } catch (Exception e) {
+            return L.t("連不上：") + e.getMessage();
+        }
     }
 
     /** GET {網址}/models（OpenAI 相容服務都有）；Gemini 回的名稱前面有 models/，去掉。 */
