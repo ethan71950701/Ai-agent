@@ -208,6 +208,11 @@ final class ChatEngine {
     /** 圈選提問：msgs 是含圖片的 Claude 格式對話。先用便宜模型，連不上或回空再換看圖模型。Claude 服務會多給網頁搜尋（需要即時資訊才搜，最多 2 次）。失敗回 null（原因在 lastError）。 */
     static String visionChat(Context c, JSONArray msgs) { return visionChat(c, msgs, true); }
 
+    /** 允許用 Claude 內建的網頁搜尋（比 Tavily 貴很多，預設關）。關著時所有搜尋都走 Tavily。 */
+    static boolean claudeSearchOn(Context c) {
+        return c != null && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("claude_web_search", false);
+    }
+
     /** builtinSearch = false：呼叫端已經自己搜尋過（Tavily），不要再開 Claude 內建搜尋。 */
     static String visionChat(Context c, JSONArray msgs, boolean builtinSearch) {
         lastError = "";
@@ -215,7 +220,7 @@ final class ChatEngine {
         if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
         for (String model : new String[]{MODEL, AgentLoop.MODEL}) {
             try {
-                boolean claude = builtinSearch && !(MODEL.equals(model) ? LlmConfig.cheap(c) : LlmConfig.vision(c)).openai();   // 網頁搜尋是 Claude 的伺服器工具，別家沒有
+                boolean claude = builtinSearch && claudeSearchOn(c) && !(MODEL.equals(model) ? LlmConfig.cheap(c) : LlmConfig.vision(c)).openai();   // 網頁搜尋是 Claude 的伺服器工具，別家沒有
                 String system = (L.en() ? VISION_SYSTEM_EN : VISION_SYSTEM) + (claude
                         ? (L.en() ? " You may use web_search only when the question needs current information (news, prices, hours, recent events); otherwise answer directly."
                                 : "需要即時資訊（新聞、價格、營業時間、最近的事）時才用 web_search 搜尋，其他情況直接回答。")
@@ -443,7 +448,7 @@ final class ChatEngine {
                 system += L.en() ? "\nThe user asked you to look something up and web search results are attached to the question: answer from them briefly and say the information comes from a web search. This overrides rule 2 about having no internet."
                         : "\n這次使用者要你查資料，搜尋結果已經附在問題後面：根據它簡短回答，並說明資料來自網路搜尋。這一條優先於第 2 條「沒有網路」。";
             }
-            final boolean search = asked && !viaTavily && !cheapSlot.openai();   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
+            final boolean search = asked && !viaTavily && !cheapSlot.openai() && claudeSearchOn(c);   // 網頁搜尋是 Claude 的伺服器工具，別家服務沒有
             searchNote = !asked ? "" : viaTavily ? (L.en() ? "Web search: Tavily" + (TavilySearch.hasKey(c) ? "" : " keyless mode") + " (results attached; no tools for this turn)" : "網頁搜尋：Tavily" + (TavilySearch.hasKey(c) ? "" : "（免 Key 模式）") + "（結果已附上；這一輪不給 AI 工具）") + (L.en() ? "; keywords \"" : "；關鍵字「") + TavilySearch.lastQuery + (L.en() ? "\"" : "」")
                             + (TavilySearch.lastDomains.isEmpty() ? "" : (L.en() ? "; only " : "；只查 ") + TavilySearch.lastDomains) + (L.en() ? "; " + TavilySearch.lastSources.size() + " pages" : "；" + TavilySearch.lastSources.size() + " 個網頁")
                     : search ? (L.en() ? "Web search: Claude's built-in search on" + (tavilyFail.isEmpty() ? "" : " (Tavily failed: " + tavilyFail + ")") : "網頁搜尋：Claude 內建搜尋已開啟" + (tavilyFail.isEmpty() ? "" : "（Tavily 失敗：" + tavilyFail + "）"))

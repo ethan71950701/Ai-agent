@@ -395,7 +395,34 @@ public class AssistantSheet {
         final Context app = act.getApplicationContext();
         final JSONArray convo = circleConvo;
         new Thread(() -> {
-            String r = ChatEngine.visionChat(app, convo, true);
+            // 圈選／帶圖的看圖問答：使用者明說「幫我查…」才搜尋，而且用 Tavily（不再讓 Claude 自己決定要不要用貴的內建搜尋）
+            String sourcesMark = "";
+            try {
+                if (convo.length() > 0) {
+                    JSONObject last = convo.getJSONObject(convo.length() - 1);
+                    Object cc = last.opt("content");
+                    String qtext = "";
+                    if (cc instanceof JSONArray) {
+                        JSONArray arr = (JSONArray) cc;
+                        for (int i = arr.length() - 1; i >= 0; i--) if ("text".equals(arr.getJSONObject(i).optString("type"))) { qtext = arr.getJSONObject(i).optString("text"); break; }
+                    } else if (cc instanceof String) qtext = (String) cc;
+                    if (!qtext.isEmpty() && ChatEngine.wantsSearch(qtext)) {
+                        String block = TavilySearch.search(app, qtext, "");
+                        if (block != null) {
+                            if (cc instanceof JSONArray) {
+                                JSONArray arr = (JSONArray) cc;
+                                for (int i = arr.length() - 1; i >= 0; i--) if ("text".equals(arr.getJSONObject(i).optString("type"))) {
+                                    arr.getJSONObject(i).put("text", arr.getJSONObject(i).optString("text") + TavilySearch.block(block));
+                                    break;
+                                }
+                            } else last.put("content", qtext + TavilySearch.block(block));
+                            sourcesMark = TavilySearch.sourcesBlock();
+                        }
+                    }
+                }
+            } catch (Exception ignored) { }
+            final String srcBlock = sourcesMark;
+            String r = ChatEngine.visionChat(app, convo, false);
             act.runOnUiThread(() -> {
                 if (dismissing) return;
                 setWaveState(WaveView.IDLE);
@@ -404,7 +431,7 @@ public class AssistantSheet {
                     showReply("", L.t("連不上 AI：") + ChatEngine.lastError);
                 } else {
                     try { convo.put(new JSONObject().put("role", "assistant").put("content", r)); } catch (Exception ignored) { }
-                    showReply("", r);
+                    showReply("", r + srcBlock);
                 }
             });
         }, "circle-ask-panel").start();

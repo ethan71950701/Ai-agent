@@ -1245,10 +1245,12 @@ public class MainActivity extends Activity {
                 innerS.addView(slS, new LinearLayout.LayoutParams(-1, -2));
             }
             final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
-            final int n = hasRoot ? 9 : 6;
+            final int n = hasRoot ? 10 : 7;
             int k = 0;
             Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                     (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
+            Ui.switchRow(this, g, k++, n, "search", L.t("允許 Claude 內建網頁搜尋（較貴）"), L.t("預設關：搜尋一律用 Tavily（便宜）。打開後，Tavily 失敗時聊天會改用 Claude 內建搜尋、自動操作的搜尋也用它，Claude 每次搜尋另外計費"),
+                    cfg().getBoolean("claude_web_search", false), (v, on) -> cfg().edit().putBoolean("claude_web_search", on).apply());
             Ui.switchRow(this, g, k++, n, "bell", L.t("接手時顯示懸浮卡片"), L.t("要你自己動手時（輸入密碼、解鎖…），在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）。關掉就只跳通知"),
                     cfg().getBoolean("handoff_card", true), (v, on) -> cfg().edit().putBoolean("handoff_card", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式選項（實驗）"), L.t("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作"),

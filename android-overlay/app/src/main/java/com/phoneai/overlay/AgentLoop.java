@@ -448,7 +448,7 @@ final class AgentLoop {
                         }
                         st.searches++;
                         ui.status(L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步 · 搜尋網路中"));
-                        String ans = webSearch(key, q);
+                        String ans = webSearch(c, key, q);
                         history.add(step + ". " + (ans != null ? "搜尋「" + q + "」得到：" + (ans.length() > 300 ? ans.substring(0, 300) : ans)
                                 : "搜尋「" + q + "」失敗，請改用畫面操作"));
                         break;
@@ -771,6 +771,13 @@ final class AgentLoop {
             i = end + 1;
         }
         return found;
+    }
+
+    /** 自動操作的「搜尋」動作：預設用 Tavily（便宜）；設定裡打開「Claude 內建搜尋」才用 Claude 的。失敗回 null。 */
+    static String webSearch(Context c, String key, String query) {
+        if (ChatEngine.claudeSearchOn(c)) return webSearch(key, query);
+        String d = TavilySearch.search(c, query, "");
+        return d == null || d.trim().isEmpty() ? null : (d.length() > 900 ? d.substring(0, 900) : d);
     }
 
     /** Claude 的網頁搜尋（server tool），回傳繁體中文摘要；失敗回 null。 */
