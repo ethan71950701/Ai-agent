@@ -970,7 +970,7 @@ public class AssistantSheet {
             setStatus(L.t("思考中…"));
             setWaveState(WaveView.THINKING);
             refreshAction();
-            root.postDelayed(waitTimeout, 30000);
+            root.postDelayed(waitTimeout, sendImgs.isEmpty() ? 30000 : 120000);   // 帶圖片的請求上傳大、看圖慢，等久一點（以前一律 30 秒，面板會在回答前自己關掉）
             return;
         }
         // 送出後面板不關：輸入換成思考中的聲波、按鈕停用。助理如果是用文字回答，會出現回答卡片；
@@ -979,7 +979,7 @@ public class AssistantSheet {
         input.setEnabled(false);
         setWaveState(WaveView.THINKING);
         row.setEnabled(false);
-        root.postDelayed(waitTimeout, 30000);
+        root.postDelayed(waitTimeout, sendImgs.isEmpty() ? 30000 : 120000);
     }
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */

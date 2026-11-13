@@ -47,7 +47,12 @@ final class Brain {
     private static String runWithImages(Activity act, String t, AgentLoop.Ui ui, java.util.List<String> images) {
         String over = Usage.overLimit(act);
         if (over != null) return over;
+        long t0 = android.os.SystemClock.uptimeMillis();
         String reply = ChatEngine.ask(act, t, images, msg -> confirm(act, msg));
+        long ms = android.os.SystemClock.uptimeMillis() - t0;
+        int kb = 0;
+        for (String b : images) kb += b.length() / 1024;
+        LifeLog.add(act, "帶圖片的聊天：" + images.size() + " 張（約 " + kb + " KB）用了 " + ms + " ms，" + (reply != null ? "成功" : "失敗：" + ChatEngine.lastError) + "，模型 " + ChatEngine.lastModel);   // 診斷：圖片一直逾時時看是上傳大、模型慢、還是被拒絕
         return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
     }
 

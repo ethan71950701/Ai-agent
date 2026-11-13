@@ -293,7 +293,7 @@ final class ChatEngine {
         inflight = con;
         con.setRequestMethod("POST");
         con.setConnectTimeout(20000);
-        con.setReadTimeout(60000);
+        con.setReadTimeout(120000);   // 帶圖片時別家服務（Gemini 等）看圖可能超過 60 秒
         con.setDoOutput(true);
         con.setRequestProperty("Authorization", "Bearer " + key);
         con.setRequestProperty("content-type", "application/json");

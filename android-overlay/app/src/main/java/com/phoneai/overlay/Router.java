@@ -158,15 +158,20 @@ final class Router {
             prompt = prompt + ms;
         }
         try {
+            long t0 = android.os.SystemClock.uptimeMillis();
             String last = askRoute(MODEL, prompt, key);
+            long routeMs = android.os.SystemClock.uptimeMillis() - t0;
             if (last == null) { lastNote = L.t("路由：看不懂便宜模型的回答，當成聊天"); return null; }
             JSONObject d = new JSONObject(last);
             String note = "";
-            if ("low".equals(d.optString("conf"))) {   // 便宜模型自己說沒把握：換較強的模型再判斷一次（只有沒把握才多花一次）
+            // 便宜模型自己說沒把握：換較強的模型再判斷一次（只有沒把握才多花一次）。
+            // 但它判成「聊天」就不再問：聊天助理什麼都能先試（工具、記憶），真的需要操作畫面時聊天回答「我不能操作」會自動補救改走自動操作（Brain），
+            // 多問一次較強的模型要多等好幾秒（使用者回報聊天太慢）
+            if ("low".equals(d.optString("conf")) && !CHAT.equals(d.optString("route"))) {
                 String l2 = askRoute(AgentLoop.MODEL, prompt, key);
                 if (l2 != null) { last = l2; d = new JSONObject(l2); note = L.t("（便宜模型沒把握，改問較強的模型）"); }
             }
-            lastNote = L.t("路由：") + last + note;
+            lastNote = L.t("路由：") + last + note + " " + routeMs + " ms";
             switch (d.optString("route")) {
                 case CMD: {
                     int i = d.optInt("i", -1);
