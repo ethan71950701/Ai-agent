@@ -1043,10 +1043,8 @@ public class AssistantSheet {
 
     public void showReply(String title, String text) {
         if (dismissing) return;
-        if (replyCard != null) {  // 已經有回答卡（接續對話的下一則、彩蛋的第二張）：換掉舊的
-            root.removeView(replyCard);
-            replyCard = null;
-        }
+        final View oldCard = replyCard;   // 已經有回答卡（接續對話的下一則、彩蛋的第二張）：舊的滲掉、換成新的
+        replyCard = null;
         replyShown = true;
         replyMode = true;
         waiting = false;
@@ -1073,6 +1071,12 @@ public class AssistantSheet {
         final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
         cp.setMargins((int) (14 * d), topPad, (int) (14 * d), botPad);
         card.setLayoutParams(cp);
+        if (oldCard != null && oldCard.getParent() == root && !SoakSwap.broken && android.os.Build.VERSION.SDK_INT >= 33) {
+            root.addView(card, cp);   // 新卡在舊卡上面、同位置；兩張各被同一個水漬遮罩遮一半
+            card.post(() -> SoakSwap.run(oldCard, card, () -> root.removeView(oldCard)));
+            return;
+        }
+        if (oldCard != null) root.removeView(oldCard);
         card.setAlpha(0f);
         card.setTranslationY(36 * d);
         card.setScaleX(0.97f);

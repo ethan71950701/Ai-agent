@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 續問時新的回答出現：舊卡像水一樣一塊一塊滲掉、新卡在同一處浮現（不再變半透明）｜Follow-up answers: the old card soaks away like water while the new one surfaces in place (no more see-through card)
 - 修正接著說第二句話時，面板上一輪的回答卡和底下的輸入列變半透明、看起來怪怪的：等新回答時它們保持原樣｜Fixed the previous answer card and the input row turning half-transparent while waiting for the next reply in a follow-up; they now stay as they are
 - 網頁搜尋一律改用 Tavily（便宜）：聊天、畫圈／帶圖問答、自動操作的「搜尋」動作都是；Claude 內建的網頁搜尋（另外計費、比較貴）預設關閉，設定裡可以打開｜All web searches now use Tavily (cheaper): chat, circle-to-ask and image questions, and the automation "search" action; Claude's built-in web search (billed separately and more expensive) is off by default and can be turned on in Settings
 
