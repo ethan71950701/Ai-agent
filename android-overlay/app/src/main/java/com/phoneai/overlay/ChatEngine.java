@@ -184,7 +184,10 @@ final class ChatEngine {
     private static volatile HttpURLConnection inflight;
 
     /** 立刻中斷正在等的請求（使用者按了停止）。要在別的執行緒做，主執行緒不能碰網路。 */
+    private static volatile long abortedAt;   // 使用者按停止的時間：這之後失敗的請求不要自動重試
+
     static void abortInflight() {
+        abortedAt = android.os.SystemClock.uptimeMillis();
         final HttpURLConnection con = inflight;
         if (con == null) return;
         new Thread(() -> {
@@ -243,7 +246,46 @@ final class ChatEngine {
         return null;
     }
 
+    /** 伺服器回了錯誤碼（為了判斷要不要重試，帶著狀態碼）。 */
+    static final class HttpStatus extends Exception {
+        final int code;
+        HttpStatus(int code, String msg) { super(msg); this.code = code; }
+    }
+
+    /** 偶發的網路問題值得重試：連不上、逾時、連線被重設、伺服器暫時錯誤（500/502/503/504/529）。金鑰錯、額度用完、請求被拒絕這類重試沒用。 */
+    private static boolean transientFailure(Exception e) {
+        if (e instanceof HttpStatus) { int c = ((HttpStatus) e).code; return c == 500 || c == 502 || c == 503 || c == 504 || c == 529; }
+        return e instanceof java.io.IOException;
+    }
+
+    /**
+     * 送出一則請求；偶發的網路失敗自動重試（使用者回報 Gemini 與 Claude 都「有時候連不上」：手機網路切換、連線閒置被斷、伺服器暫時忙都會這樣，重試一次通常就好）。
+     * 連線階段失敗最多試 3 次，其他（例如等回答逾時）多試 1 次；每次失敗都記進診斷頁的事件紀錄。按了停止就不重試。這個請求只是問模型，重送不會重複執行任何動作。
+     */
     static JSONObject post(JSONObject body, String key) throws Exception {
+        String snapshot = body.toString();
+        Exception last = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            long started = android.os.SystemClock.uptimeMillis();
+            try {
+                return postOnce(attempt == 1 ? body : new JSONObject(snapshot), key);   // 重試用原本的請求內容（postOnce 會改 body 裡的模型名）
+            } catch (Exception e) {
+                last = e;
+                inflight = null;
+                String m = String.valueOf(e.getMessage());
+                boolean connectPhase = e instanceof java.net.UnknownHostException || e instanceof java.net.ConnectException || e instanceof javax.net.ssl.SSLException
+                        || m.toLowerCase(java.util.Locale.ROOT).contains("connect");
+                int limit = connectPhase ? 3 : 2;
+                boolean again = transientFailure(e) && attempt < limit && abortedAt < started;
+                if (App.ctx != null) LifeLog.add(App.ctx, "網路：第 " + attempt + " 次失敗（" + e.getClass().getSimpleName() + "：" + (m.length() > 80 ? m.substring(0, 80) : m) + "）" + (again ? "，重試" : "，不再重試"));
+                if (!again) break;
+                try { Thread.sleep(500L * attempt); } catch (InterruptedException ie) { break; }
+            }
+        }
+        throw last;
+    }
+
+    private static JSONObject postOnce(JSONObject body, String key) throws Exception {
         lastModel = body.optString("model");
         Context app = App.ctx;
         if (app != null) {
@@ -262,7 +304,7 @@ final class ChatEngine {
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;
         con.setRequestMethod("POST");
-        con.setConnectTimeout(20000);
+        con.setConnectTimeout(10000);   // 連不上 10 秒就換下一次重試（以前 20 秒才放棄）
         con.setReadTimeout(40000);
         con.setDoOutput(true);
         con.setRequestProperty("x-api-key", key);
@@ -273,7 +315,7 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         inflight = null;
-        if (code >= 400) throw new Exception(LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
+        if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
         JSONObject r = new JSONObject(text);
         JSONObject u = r.optJSONObject("usage");
         if (app != null && u != null) {
@@ -292,7 +334,7 @@ final class ChatEngine {
         HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
         inflight = con;
         con.setRequestMethod("POST");
-        con.setConnectTimeout(20000);
+        con.setConnectTimeout(10000);   // 連不上 10 秒就換下一次重試（以前 20 秒才放棄）
         con.setReadTimeout(120000);   // 帶圖片時別家服務（Gemini 等）看圖可能超過 60 秒
         con.setDoOutput(true);
         con.setRequestProperty("Authorization", "Bearer " + key);
@@ -302,7 +344,7 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         inflight = null;
-        if (code >= 400) throw new Exception(LlmErrors.explain(code, text, slot.label()));
+        if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot.label()));
         JSONObject r = LlmAdapter.fromOpenAi(new JSONObject(text));
         JSONObject u = r.optJSONObject("usage");
         if (u != null) {
