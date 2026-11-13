@@ -990,10 +990,10 @@ public class AssistantSheet {
         if (replyMode) {   // 接續對話：舊的回答卡淡掉等新的；輸入列留著但先停用；新的回答到了（showReply）會換掉卡片、恢復輸入列
             replyShown = false;
             waiting = true;
-            if (replyCard != null) replyCard.animate().alpha(0.3f).setDuration(240).start();
+            // 等新回答的時候舊的回答卡與輸入列保持原樣（以前把它們淡成 30%／50% 透明，使用者覺得整個面板像壞掉、怪怪的）；
+            // 「思考中」靠輸入列裡的聲波表示
             row.setEnabled(false);
             input.setEnabled(false);
-            row.animate().alpha(0.5f).setDuration(200).start();
             setStatus(L.t("思考中…"));
             setWaveState(WaveView.THINKING);
             refreshAction();
@@ -1093,7 +1093,7 @@ public class AssistantSheet {
         boolean hasText = (input != null && input.getText().length() > 0) || circleBox != null || !picked.isEmpty();   // 有選取或有圖片時空白也能送出
         send.setMode(hasText ? ActionButtonView.SEND : listening ? ActionButtonView.LISTENING : ActionButtonView.MIC);
         send.setEnabled(!waiting);
-        send.setAlpha(waiting ? 0.35f : 1f);   // 思考中不能按
+        send.setAlpha(waiting ? 0.7f : 1f);   // 思考中不能按
         updateWidth();
     }
 
