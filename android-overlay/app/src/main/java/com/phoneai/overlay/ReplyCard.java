@@ -42,13 +42,21 @@ final class ReplyCard {
         final boolean glass = source != null;
         FrameLayout card;
         if (glass) {
-            GlassBar g = new GlassBar(act, 0xFF23262A, 0x00000000, 0x44FFFFFF, 30 * d, false);
+            int ac = App.accentColor(act, 0xFF6EA8FF);   // 玻璃染上主題色（深一點）：跟大多數背景的顏色都不同，邊界才看得出來
+            int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * 0.62f) << 16) | (Math.round(((ac >> 8) & 255) * 0.62f) << 8) | Math.round((ac & 255) * 0.62f);
+            GlassBar g = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
             g.setSource(source);
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
             g.setBlurDp(14f);       // 後面的畫面（桌面截圖）模糊：卡片裡模糊、卡片外清楚，邊界就出來了
             g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
+            g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
+            g.setOutlineProvider(new android.view.ViewOutlineProvider() {
+                @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 30 * d); o.setAlpha(0.9f); }
+            });
+            g.setOutlineSpotShadowColor(0xFF000000);
+            g.setOutlineAmbientShadowColor(0x99000000);
             g.setLift(1f);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
             // 白色邊框已拿掉（使用者覺得很突兀）；邊界靠後面畫面的模糊與亮度落差
             card = g;
