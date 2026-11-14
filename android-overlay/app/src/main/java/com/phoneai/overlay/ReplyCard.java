@@ -47,6 +47,7 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
+            g.setBlurDp(14f);       // 後面的畫面（桌面截圖）模糊：卡片裡模糊、卡片外清楚，邊界就出來了
             g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             GradientDrawable rim = new GradientDrawable();   // 邊緣亮線（玻璃版沒有自己的邊線）：上亮下稍暗，整圈都看得到邊界
             rim.setColor(0);

@@ -225,6 +225,10 @@ final class GlassBar extends FrameLayout {
      * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
      */
     void setFollowContent(boolean on) { followContent = on; }
+    private float blurOverride = -1f;
+    /** 這一條自己的模糊半徑（dp）；不設就用設定頁的「模糊程度」。回答卡用：後面的畫面要模糊，邊界才看得出來。 */
+    void setBlurDp(float dp) { blurOverride = dp; invalidate(); }
+    private float blurDp() { return blurOverride >= 0f ? blurOverride : GlassPrefs.blur; }
     private float darkScale = 1f;
     /** 這一條自己的暗度倍率（0.6＝比設定的底欄暗度再淡 4 成）；助理面板的輸入列用，看起來比較透。 */
     void setDarkScale(float k) { darkScale = k; invalidate(); }
@@ -648,7 +652,7 @@ final class GlassBar extends FrameLayout {
         } else {
             // 抓背景的解析度跟著模糊程度走：模糊很少（預設 0）時底下的字看得清楚，縮小抓會一眼看出鋸齒，要用原始解析度；
             // 模糊夠大時縮小也看不出來，才縮小抓省繪製（大量縮小抓是之前為了避免掉幀）。透鏡維持 1/2。
-            float blurPx = GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor;
+            float blurPx = blurDp() * getResources().getDisplayMetrics().density * blurFactor;
             int scale = lens ? 2 : blurPx < 3f ? 1 : blurPx < 10f ? 2 : 4;
             int sw = Math.max(1, w / scale), sh = Math.max(1, h / scale);
             if (bmp == null || bmp.getWidth() != sw || bmp.getHeight() != sh) {
@@ -768,7 +772,7 @@ final class GlassBar extends FrameLayout {
     private RenderEffect currentEffect() {
         RenderEffect fx = RenderEffect.createRuntimeShaderEffect(shader, "backdrop");
         // 按住時模糊降到很小（但不為 0）：永遠走同一條 chain 效果，避免只剩著色器時折射消失
-        float blur = Math.max(0.5f, GlassPrefs.blur * getResources().getDisplayMetrics().density * blurFactor);
+        float blur = Math.max(0.5f, blurDp() * getResources().getDisplayMetrics().density * blurFactor);
         return RenderEffect.createChainEffect(fx, RenderEffect.createBlurEffect(blur, blur, Shader.TileMode.CLAMP));
     }
 }
