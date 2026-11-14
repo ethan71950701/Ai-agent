@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1644
+
 - 功能頁新增「定時任務」清單：點一項可「立刻試跑一次」或刪除；也可以說「試跑定時 1」｜New "Scheduled tasks" list in Features: tap one to test-run it now or delete it
 - 定時網路查詢：對助理說「每天早上 8 點幫我查某某商品的價格」「每 3 天查一次…」，到時間自動用網路搜尋查、整理後用通知告訴你（只查公開網頁；「我的定時」「取消定時 1」可看與取消）｜Scheduled web lookups: tell the assistant "every day at 8 look up the price of …" or "every 3 days …"; at that time it searches the web and sends a summary notification (public web only; say "my scheduled tasks" / "cancel schedule 1" to view or cancel)
 
