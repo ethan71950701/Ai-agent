@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 玻璃回答框在任何背景都看得出來：邊線改成黑白兩圈，並自動跟背景拉開亮度落差（很暗的背景提亮、其他壓暗）｜The glass answer card is visible on any background: a black-and-white double edge line, and it automatically separates its brightness from the background (brighter over very dark backgrounds, darker otherwise)
+
+## 1.0.1650
+
 - 玻璃回答框後面的畫面加模糊（卡片裡模糊、外面清楚），邊界更明顯｜The glass answer card now blurs what is behind it (blurred inside, sharp outside) so its boundary is clearer
 
 ## 1.0.1649
