@@ -47,7 +47,12 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            g.setDarkScale(0.6f);
+            g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
+            GradientDrawable rim = new GradientDrawable();   // 邊緣亮線（玻璃版沒有自己的邊線）：上亮下稍暗，整圈都看得到邊界
+            rim.setColor(0);
+            rim.setCornerRadius(30 * d);
+            rim.setStroke((int) Math.max(2, 1.5f * d), 0xB0FFFFFF);
+            g.setForeground(rim);
             card = g;
         } else card = new FrameLayout(act);
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});
