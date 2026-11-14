@@ -180,6 +180,7 @@ public class AssistantSheet {
         GlassBar glassRow = new GlassBar(a, 0xFF23262A, 0x00000000, 0x44FFFFFF, 32 * d, false);   // 圓角 32 = 一半高度（64dp）
         glassRow.setSource(root);   // 玻璃折射的是面板後面的畫面：暗幕與極光（別的 App 的畫面抓不到）
         glassRow.setGlowColor(0xFFFFFFFF);
+        glassRow.setBlurDp(10f);       // 輸入列後面（底欄、桌面圖示）模糊：不模糊時圖示被折射成一個個怪怪的圓形
         glassRow.setDarkScale(0.6f);   // 輸入列比底欄更透一點，比較有玻璃的感覺（使用者覺得太黑）
         glassRow.setClipChildren(false);
         glassRow.setLive(true);     // 極光一直在動，玻璃要每幀更新
@@ -1048,17 +1049,9 @@ public class AssistantSheet {
     private FrameLayout streamCard;    // 串流中的回答卡（邊收邊換文字）；最後一次 showReply 只把文字換成完整版
     private static String lastReply;      // 最近一則回答：面板關掉後又叫出來（長按電源鍵）時，接著上一輪繼續對話
     private static long lastReplyAt;
-    private boolean restoring;
 
     /** 面板正顯示回答卡、可以接續對話。 */
     public boolean inReply() { return replyMode && !dismissing; }
-
-    /** 剛問完不久（10 分鐘內）又叫出面板：把上一則回答卡放回來，接著問就是同一段對話，而不是開新的。 */
-    public void restoreLastReply() {
-        if (replyMode || dismissing || lastReply == null || System.currentTimeMillis() - lastReplyAt > 10 * 60_000L) return;
-        restoring = true;
-        try { showReply("", lastReply); } finally { restoring = false; }
-    }
 
     /** 聊天回答邊收邊到（在主執行緒）：第一段文字出現就把回答卡叫出來，之後只換文字。 */
     private void onPartial(String t) {
@@ -1078,7 +1071,7 @@ public class AssistantSheet {
             return;
         }
         streamCard = null;
-        if (!restoring && text != null && !text.isEmpty()) { lastReply = text; lastReplyAt = System.currentTimeMillis(); }
+        if (text != null && !text.isEmpty()) { lastReply = text; lastReplyAt = System.currentTimeMillis(); }
         final View oldCard = replyCard;   // 已經有回答卡（接續對話的下一則、彩蛋的第二張）：舊的滲掉、換成新的
         replyCard = null;
         replyShown = true;

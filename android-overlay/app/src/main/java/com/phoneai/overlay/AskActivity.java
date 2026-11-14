@@ -22,7 +22,7 @@ public class AskActivity extends Activity {
                 && in0.getStringExtra("question") == null && in0.getStringExtra("reply_text") == null;
         if (plain0) {   // 單純打開：面板先藏起來、先截一張畫面（才不會拍到開場動畫），截好再出現，就能直接在畫面上圈選提問
             sheet.view().setVisibility(android.view.View.INVISIBLE);
-            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); sheet.restoreLastReply(); });
+            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); });
         } else {
             sheet.enter();
         }
