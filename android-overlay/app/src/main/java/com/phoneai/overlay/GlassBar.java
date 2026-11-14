@@ -227,6 +227,9 @@ final class GlassBar extends FrameLayout {
      * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
      */
     void setFollowContent(boolean on) { followContent = on; }
+    private float satBoost = 1.6f;
+    /** 這一條自己的飽和度倍率（預設 1.6）。回答卡用較低的值，免得後面的圖示被染成一團團鮮豔的色塊。 */
+    void setSatBoost(float k) { satBoost = k; invalidate(); }
     private float liftAmount;
     /** 跟背景拉開亮度落差的強度（0 = 不拉；回答卡用 1）。 */
     void setLift(float k) { liftAmount = k; invalidate(); }
@@ -468,7 +471,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("shade", dark() * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
-        sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? 1.6f : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
+        sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? satBoost : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
         sh.setFloatUniform("vividBr", 1.18f);
         sh.setFloatUniform("vividLift", liftAmount);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
