@@ -1013,8 +1013,10 @@ public class AssistantSheet {
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
     private void runLocal(Assist.Route r, String t, final List<String> images) {
+        streamCard = null;
         new Thread(() -> {
             TransferNotify.onStart = () -> act.runOnUiThread(AssistantSheet.this::dismiss);   // 傳檔案開始：面板收起來，進度看通知
+            ChatEngine.onPartial = s -> act.runOnUiThread(() -> onPartial(s));   // 聊天回答邊收邊顯示
             String reply;
             try {
                 reply = Brain.answer(act, t, new AgentLoop.Ui() {
@@ -1025,6 +1027,7 @@ public class AssistantSheet {
             }, images);
             } finally {
                 TransferNotify.onStart = null;
+                ChatEngine.onPartial = null;
             }
             if (reply == null) return;   // 沒有回覆（不該發生）
             final String fr = reply;
@@ -1042,6 +1045,7 @@ public class AssistantSheet {
         return ConfirmActivity.ask(act, msg);
     }
 
+    private FrameLayout streamCard;    // 串流中的回答卡（邊收邊換文字）；最後一次 showReply 只把文字換成完整版
     private static String lastReply;      // 最近一則回答：面板關掉後又叫出來（長按電源鍵）時，接著上一輪繼續對話
     private static long lastReplyAt;
     private boolean restoring;
@@ -1056,8 +1060,24 @@ public class AssistantSheet {
         try { showReply("", lastReply); } finally { restoring = false; }
     }
 
+    /** 聊天回答邊收邊到（在主執行緒）：第一段文字出現就把回答卡叫出來，之後只換文字。 */
+    private void onPartial(String t) {
+        if (dismissing) return;
+        if (streamCard != null) { ReplyCard.setText(streamCard, t); return; }
+        if (!waiting) return;
+        showReply("", t);
+        if (replyCard instanceof FrameLayout) streamCard = (FrameLayout) replyCard;
+    }
+
     public void showReply(String title, String text) {
         if (dismissing) return;
+        if (streamCard != null && streamCard == replyCard) {   // 串流已經把卡片叫出來了：只把文字換成最後完整的版本
+            ReplyCard.setText(streamCard, text);
+            streamCard = null;
+            if (text != null && !text.isEmpty()) { lastReply = text; lastReplyAt = System.currentTimeMillis(); }
+            return;
+        }
+        streamCard = null;
         if (!restoring && text != null && !text.isEmpty()) { lastReply = text; lastReplyAt = System.currentTimeMillis(); }
         final View oldCard = replyCard;   // 已經有回答卡（接續對話的下一則、彩蛋的第二張）：舊的滲掉、換成新的
         replyCard = null;

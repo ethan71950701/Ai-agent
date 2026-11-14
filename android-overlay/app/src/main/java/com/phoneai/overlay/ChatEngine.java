@@ -109,6 +109,99 @@ final class ChatEngine {
 
     /** 這一輪聊天助理判斷「這是要操作手機」，呼叫了 phone_action：Brain 看到這個旗標就改走路由／自動操作。每次 ask 開頭會清掉。 */
     static volatile boolean handoff;
+    /** 串流回答：設了之後（面板的聊天），Claude 的請求改用串流，文字邊收邊交給它（已去掉 <work> 推算過程）。別家服務、網頁搜尋、沒設的呼叫端照舊一次收完。 */
+    static volatile java.util.function.Consumer<String> onPartial;
+    private static long lastPartialAt;
+
+    private static void emitPartial(String text) {
+        java.util.function.Consumer<String> cb = onPartial;
+        if (cb == null) return;
+        String t = text;
+        int w = t.indexOf("<work>");
+        if (w >= 0) {
+            int e = t.indexOf("</work>");
+            if (e < 0) return;
+            t = t.substring(e + 7);
+        }
+        t = t.trim();
+        long now = android.os.SystemClock.uptimeMillis();
+        if (t.isEmpty() || now - lastPartialAt < 70) return;
+        lastPartialAt = now;
+        cb.accept(t);
+    }
+
+    private static boolean hasServerTools(JSONObject body) {
+        JSONArray ts = body.optJSONArray("tools");
+        for (int i = 0; ts != null && i < ts.length(); i++) if (ts.optJSONObject(i) != null && ts.optJSONObject(i).optString("type").startsWith("web_search")) return true;
+        return false;
+    }
+
+    /** 讀 Claude 的串流（SSE），組回跟一次收完的回應一樣的 JSON：content（text、tool_use）、stop_reason、usage。 */
+    private static JSONObject readStream(InputStream in) throws Exception {
+        java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
+        java.util.TreeMap<Integer, JSONObject> blocks = new java.util.TreeMap<>();
+        java.util.HashMap<Integer, StringBuilder> acc = new java.util.HashMap<>();
+        JSONObject usage = new JSONObject();
+        String stop = "";
+        StringBuilder all = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (!line.startsWith("data:")) continue;
+            String data = line.substring(5).trim();
+            if (data.isEmpty()) continue;
+            JSONObject ev = new JSONObject(data);
+            String type = ev.optString("type");
+            switch (type) {
+                case "message_start": {
+                    JSONObject u = ev.optJSONObject("message") == null ? null : ev.optJSONObject("message").optJSONObject("usage");
+                    if (u != null) for (java.util.Iterator<String> it = u.keys(); it.hasNext();) { String k = it.next(); usage.put(k, u.opt(k)); }
+                    break;
+                }
+                case "content_block_start": {
+                    int idx = ev.optInt("index");
+                    blocks.put(idx, ev.getJSONObject("content_block"));
+                    acc.put(idx, new StringBuilder());
+                    break;
+                }
+                case "content_block_delta": {
+                    int idx = ev.optInt("index");
+                    JSONObject d = ev.optJSONObject("delta");
+                    if (d == null) break;
+                    if ("text_delta".equals(d.optString("type"))) {
+                        acc.get(idx).append(d.optString("text"));
+                        all.setLength(0);
+                        for (Integer k : blocks.keySet()) if ("text".equals(blocks.get(k).optString("type")) && acc.get(k) != null) all.append(acc.get(k));
+                        emitPartial(all.toString());
+                    } else if ("input_json_delta".equals(d.optString("type"))) acc.get(idx).append(d.optString("partial_json"));
+                    break;
+                }
+                case "content_block_stop": {
+                    int idx = ev.optInt("index");
+                    JSONObject b = blocks.get(idx);
+                    if (b == null) break;
+                    if ("text".equals(b.optString("type"))) b.put("text", acc.get(idx).toString());
+                    else if ("tool_use".equals(b.optString("type"))) {
+                        String js = acc.get(idx).toString().trim();
+                        b.put("input", js.isEmpty() ? new JSONObject() : new JSONObject(js));
+                    }
+                    break;
+                }
+                case "message_delta": {
+                    JSONObject d = ev.optJSONObject("delta");
+                    if (d != null && d.has("stop_reason")) stop = d.optString("stop_reason");
+                    JSONObject u = ev.optJSONObject("usage");
+                    if (u != null) for (java.util.Iterator<String> it = u.keys(); it.hasNext();) { String k = it.next(); usage.put(k, u.opt(k)); }
+                    break;
+                }
+                case "error":
+                    throw new Exception(ev.optJSONObject("error") == null ? data : ev.optJSONObject("error").optString("message", data));
+                default: break;
+            }
+        }
+        JSONArray content = new JSONArray();
+        for (JSONObject b : blocks.values()) content.put(b);
+        return new JSONObject().put("content", content).put("stop_reason", stop).put("usage", usage);
+    }
     private static final String SCHED_RULE_ZH = "\n13c. 使用者要「每天／每隔幾天、幾點，自動去查某個資訊」（價格、新聞、天氣、營業時間…）→ 用 schedule_web_query 建立（會跳確認框）。它只能用網路搜尋查公開資料；使用者要查自己的訂單、需要登入的內容，老實說目前做不到，可以建議改查公開的資訊。查看或取消定時，叫他說「我的定時」「取消定時 1」。\n";
     private static final String SCHED_RULE_EN = "\n13c. If the user wants something looked up automatically every day / every N days at a time (prices, news, weather, opening hours...) use schedule_web_query (a confirmation box appears). It only does web searches of public information; for the user's own orders or anything behind a login, honestly say that is not possible yet and suggest a public lookup. To view or cancel, tell them to say \"my scheduled tasks\" / \"cancel schedule 1\".\n";
     private static final String ACT_RULE_ZH = "\n13b. 如果使用者其實是要你操作手機（開關 Wi-Fi／藍牙／音量／亮度、打開 App、點畫面、在 App 裡找東西或操作、傳訊息），而上面的工具做不到，就呼叫 phone_action 交給自動操作，不要說「我不能操作手機」。\n";
@@ -317,6 +410,8 @@ final class ChatEngine {
             if (slot.openai()) return postOpenAi(app, body, slot, key);
             if (!slot.model.isEmpty()) { body.put("model", slot.model); lastModel = slot.model; }   // 使用者自己選了 Claude 的模型：用他選的（沒選就用程式內建的）
         }
+        final boolean stream = onPartial != null && !hasServerTools(body);
+        if (stream) body.put("stream", true);
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;
         con.setRequestMethod("POST");
@@ -329,10 +424,15 @@ final class ChatEngine {
         try (OutputStream out = con.getOutputStream()) { out.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
         int code = con.getResponseCode();
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
-        String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
-        inflight = null;
-        if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
-        JSONObject r = new JSONObject(text);
+        JSONObject r;
+        if (stream && code < 400) {
+            try { r = readStream(in); } finally { inflight = null; }
+        } else {
+            String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
+            inflight = null;
+            if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
+            r = new JSONObject(text);
+        }
         JSONObject u = r.optJSONObject("usage");
         if (app != null && u != null) {
             long cw = u.optLong("cache_creation_input_tokens"), cr = u.optLong("cache_read_input_tokens");

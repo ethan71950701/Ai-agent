@@ -19,6 +19,21 @@ final class ReplyCard {
 
     private ReplyCard() { }
 
+    private static final int BODY_TAG = 0x7f0a0e62;
+
+    /** 串流回答：文字邊收邊換進同一張卡片（沒有重建卡片）。 */
+    static void setText(View card, String text) {
+        Object o = card.getTag(BODY_TAG);
+        if (!(o instanceof TextView)) return;
+        TextView body = (TextView) o;
+        body.setText(Md.render(text));
+        if (text != null && text.contains(TavilySearch.SOURCES_MARK.trim())) {
+            android.text.util.Linkify.addLinks(body, android.text.util.Linkify.WEB_URLS);
+            body.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+            body.setLinkTextColor(0xFF8AB4F8);
+        }
+    }
+
     static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) {
         final float d = act.getResources().getDisplayMetrics().density;
         FrameLayout card = new FrameLayout(act);
@@ -69,6 +84,7 @@ final class ReplyCard {
         body.setPadding(0, 0, (int) (4 * d), 0);
         sv.addView(body, new FrameLayout.LayoutParams(-1, -2));
         card.addView(sv, new FrameLayout.LayoutParams(-1, -2));
+        card.setTag(BODY_TAG, body);
 
         return card;
     }

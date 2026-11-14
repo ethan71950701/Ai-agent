@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 助理面板的聊天回答改成邊收邊顯示（Claude；其他服務與帶網頁搜尋的回答仍是一次出現），不用等整段回完才看到字｜Assistant panel chat answers now appear as they stream in (Claude; other services and answers with built-in web search still appear all at once)
 - 定時網路查詢：通知附上參考的網站，並跟上一次的結果比較（例如價格漲跌）；路由的提示詞只附上跟這句話有關的 App 名稱，更短更快｜Scheduled web lookups: the notification lists the source sites and compares with the previous result (e.g. price changes); the router prompt now only includes app names related to the request, so it is shorter and faster
 
 ## 1.0.1644
