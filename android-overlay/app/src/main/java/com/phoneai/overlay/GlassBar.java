@@ -44,6 +44,7 @@ final class GlassBar extends FrameLayout {
             + "uniform float surface;\n"
             + "uniform float vividSat;\n"
             + "uniform float vividBr;\n"
+            + "uniform float vividLift;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
             + "uniform float keepAlpha;\n"
@@ -103,6 +104,7 @@ final class GlassBar extends FrameLayout {
             + "        float lum = dot(color, half3(0.299, 0.587, 0.114));\n"
             + "        color = mix(half3(lum), color, half(vividSat));\n"
             + "        color *= half(mix(vividBr, 1.0, smoothstep(0.25, 0.6, lum)));\n"
+            + "        color += half3(vividLift * mix(0.14, -0.14, smoothstep(0.2, 0.45, lum)));\n"   // 跟背景拉開落差：很暗的背景把玻璃提亮，其餘壓暗（任何背景都看得出卡片）
             + "    }\n"
             + "    color = mix(color, half3(0.35), indicator < 0.5 ? shade : shade * (1.0 - progress));\n"   // 底欄：往灰色混一點；透鏡沒按住時跟底欄一樣（不然比底欄更黑），按住時逐漸取消   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
@@ -225,6 +227,9 @@ final class GlassBar extends FrameLayout {
      * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
      */
     void setFollowContent(boolean on) { followContent = on; }
+    private float liftAmount;
+    /** 跟背景拉開亮度落差的強度（0 = 不拉；回答卡用 1）。 */
+    void setLift(float k) { liftAmount = k; invalidate(); }
     private float blurOverride = -1f;
     /** 這一條自己的模糊半徑（dp）；不設就用設定頁的「模糊程度」。回答卡用：後面的畫面要模糊，邊界才看得出來。 */
     void setBlurDp(float dp) { blurOverride = dp; invalidate(); }
@@ -465,6 +470,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? 1.6f : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
         sh.setFloatUniform("vividBr", 1.18f);
+        sh.setFloatUniform("vividLift", liftAmount);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
         sh.setFloatUniform("stretch", lens ? stretchX : 0f, lens ? stretchY : 0f);
