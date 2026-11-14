@@ -1131,10 +1131,11 @@ public class MainActivity extends Activity {
             glassSlider(g, L.t("拖動歪斜量"), L.t("拖動時畫面被拖歪的程度"), 0f, 2f, GlassPrefs.skew, GlassPrefs.K_SKEW);
             glassSlider(g, L.t("拖動形變強度"), L.t("拖動時透鏡邊緣被拉扯的程度，0 = 沒有；預設 2"), 0f, 6f, GlassPrefs.stretch, GlassPrefs.K_STRETCH);
             glassSlider(g, L.t("底欄暗度"), L.t("0 = 幾乎透明，1 = 很暗"), 0f, 1f, GlassPrefs.barDark, GlassPrefs.K_BAR_DARK);
-            glassSwitch(g, 0, 4, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
-            glassSwitch(g, 1, 4, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
-            glassSwitch(g, 2, 4, "bolt", L.t("GPU 錄製背景"), GlassPrefs.gpu, GlassPrefs.K_GPU);
-            glassSwitch(g, 3, 4, "image", L.t("圖示折射與色散"), GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
+            glassSwitch(g, 0, 5, "image", L.t("按住時放大圖示"), GlassPrefs.magnify, GlassPrefs.K_MAGNIFY);
+            glassSwitch(g, 1, 5, "sun", L.t("拖動歪斜"), GlassPrefs.skewOn, GlassPrefs.K_SKEW_ON);
+            glassSwitch(g, 2, 5, "bolt", L.t("GPU 錄製背景"), GlassPrefs.gpu, GlassPrefs.K_GPU);
+            glassSwitch(g, 3, 5, "image", L.t("圖示折射與色散"), GlassPrefs.iconRefr, GlassPrefs.K_ICON_REFR);
+            glassSwitch(g, 4, 5, "sparkle", L.t("顏色增強（像 iOS 液態玻璃）"), GlassPrefs.vivid, GlassPrefs.K_VIVID);
             LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, Ui.dp(this, 52));
             rl.topMargin = Ui.dp(this, 12);
             g.addView(Ui.pill(this, L.t("恢復預設"), false, v -> {

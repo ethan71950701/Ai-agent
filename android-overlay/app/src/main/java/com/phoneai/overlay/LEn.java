@@ -37,6 +37,7 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("顏色增強（像 iOS 液態玻璃）", "Vivid glass (like iOS Liquid Glass)");
         m.put("來源：", "Sources: ");
         m.put("定時任務", "Scheduled tasks");
         m.put("找不到這個定時", "That schedule was not found");

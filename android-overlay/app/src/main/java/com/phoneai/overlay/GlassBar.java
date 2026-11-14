@@ -42,6 +42,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float shade;\n"          // 底欄的暗度（只影響底欄，不影響透鏡）
             + "uniform float dispersion;\n"
             + "uniform float surface;\n"
+            + "uniform float vividSat;\n"
+            + "uniform float vividBr;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
             + "uniform float keepAlpha;\n"
@@ -97,6 +99,11 @@ final class GlassBar extends FrameLayout {
             + "    }\n"
             + "    if (keepAlpha > 0.5) return base;\n"
             + "    half3 color = base.rgb + half3(surface) * (1.0 - base.a);\n"
+            + "    if (vividSat > 0.0 && indicator < 0.5) {\n"   // 顏色增強：飽和度拉高；背景暗的地方提亮、亮的地方不動（像 iOS 液態玻璃：蓋住的地方顏色跟沒蓋住的不一樣）
+            + "        float lum = dot(color, half3(0.299, 0.587, 0.114));\n"
+            + "        color = mix(half3(lum), color, half(vividSat));\n"
+            + "        color *= half(mix(vividBr, 1.0, smoothstep(0.25, 0.6, lum)));\n"
+            + "    }\n"
             + "    color = mix(color, half3(0.35), indicator < 0.5 ? shade : shade * (1.0 - progress));\n"   // 底欄：往灰色混一點；透鏡沒按住時跟底欄一樣（不然比底欄更黑），按住時逐漸取消   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
             + "    float2 gn = gradient(p, radius) / viewScale;\n"
@@ -221,7 +228,7 @@ final class GlassBar extends FrameLayout {
     private float darkScale = 1f;
     /** 這一條自己的暗度倍率（0.6＝比設定的底欄暗度再淡 4 成）；助理面板的輸入列用，看起來比較透。 */
     void setDarkScale(float k) { darkScale = k; invalidate(); }
-    float dark() { return GlassPrefs.barDark * darkScale; }
+    float dark() { return GlassPrefs.barDark * darkScale * (GlassPrefs.vivid && !lens ? 0.4f : 1f); }   // 顏色增強開著時黑底只留 4 成，才看得到後面的顏色
 
     private final android.view.ViewTreeObserver.OnPreDrawListener contentWatcher = () -> {
         if (!followContent) return true;
@@ -452,6 +459,8 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("shade", dark() * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
         sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
+        sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? 1.6f : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
+        sh.setFloatUniform("vividBr", 1.18f);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
         sh.setFloatUniform("stretch", lens ? stretchX : 0f, lens ? stretchY : 0f);
