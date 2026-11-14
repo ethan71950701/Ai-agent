@@ -49,6 +49,7 @@ final class Brain {
         if (over != null) return over;
         long t0 = android.os.SystemClock.uptimeMillis();
         String reply = ChatEngine.ask(act, t, images, msg -> confirm(act, msg));
+        if (ChatEngine.handoff) return handOff(act, t, ui);
         long ms = android.os.SystemClock.uptimeMillis() - t0;
         int kb = 0;
         for (String b : images) kb += b.length() / 1024;
@@ -65,7 +66,9 @@ final class Brain {
         }
         String over = Usage.overLimit(act);   // 超過用量上限：不送出 Claude 的請求
         if (over != null) return over;
-        Router.Decision d = Router.decide(act, t);
+        final boolean likely = Router.likelyAction(t);
+        Router.Decision d = likely ? Router.decide(act, t) : null;   // 不像操作手機的話直接聊天（省掉路由那一次又長又慢的請求）；聊天助理覺得需要操作時會用 phone_action 交出去
+        if (!likely) Router.lastNote = L.t("路由：看起來是聊天，直接聊天（沒有問路由）");
         String kind = d == null ? Router.CHAT : d.kind;
         switch (kind) {
             case Router.CMD:
@@ -79,6 +82,7 @@ final class Brain {
                 String reply = scheduleAnswer(act, t);   // 定時任務（建立、列出、取消）程式自己處理
                 long c0 = android.os.SystemClock.uptimeMillis();
                 if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
+                if (ChatEngine.handoff) return handOff(act, t, ui);   // 聊天助理說這是要操作手機
                 if (!Router.lastNote.isEmpty()) Router.lastNote += "；" + L.t("聊天回答") + " " + (android.os.SystemClock.uptimeMillis() - c0) + " ms";   // 診斷：慢的時候看是路由慢還是回答慢
                 if (reply == null) reply = Schedule.quickAnswer(act, t);   // 連不上 AI（沒網路）時，才用關鍵字直接回答電量、儲存空間、幾點這類短問題
                 // 聊天助理回答「我不能操作手機」，但使用者明明是要操作：補救，改走自動操作
@@ -86,6 +90,18 @@ final class Brain {
                 return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
             }
         }
+    }
+
+    /** 聊天助理（便宜模型）判斷這句話要操作手機：這時才問路由（固定指令、開 App 或自動操作），路由也說不出來就直接自動操作。 */
+    private static String handOff(Activity act, String t, AgentLoop.Ui ui) {
+        Router.Decision d = Router.decide(act, t);
+        Router.lastNote = L.t("聊天助理判斷要操作手機，交給自動操作") + (Router.lastNote.isEmpty() ? "" : "；" + Router.lastNote);
+        if (d != null) {
+            if (Router.CMD.equals(d.kind)) return runFixed(act, Assist.fixed(d.cmdIndex));
+            if (Router.APP.equals(d.kind)) { Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1"); return L.t("已開啟 App"); }
+            if (Router.AGENT.equals(d.kind)) return AgentLoop.run(act, t, ui, Router.isSystemInfoQuestion(t) ? null : d.openPkg, d.macroTask);
+        }
+        return AgentLoop.run(act, t, ui);
     }
 
     static String runFixed(Activity act, Assist.Route r) {

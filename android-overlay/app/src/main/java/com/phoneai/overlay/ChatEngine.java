@@ -97,11 +97,18 @@ final class ChatEngine {
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\",\"description\":\"提醒內容\"},\"date\":{\"type\":\"string\",\"description\":\"日期 yyyy-MM-dd；沒說日期就省略\"},\"time\":{\"type\":\"string\",\"description\":\"時間 HH:mm（24 小時制）；沒說時間就省略（會變成全天）\"}},\"required\":[\"title\"]}},"
             + "{\"name\":\"run_shell\",\"description\":\"在手機上執行一個唯讀的系統指令（例如 dumpsys battery、getprop、pm list packages、settings get …），回傳輸出。會改東西的指令會被拒絕；需要 root 或 Shizuku。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"cmd\":{\"type\":\"string\",\"description\":\"唯讀指令\"}},\"required\":[\"cmd\"]}},"
+            + "{\"name\":\"phone_action\",\"description\":\"使用者要你「做」手機上的動作、而上面其他工具都做不到時呼叫：開關 Wi-Fi／藍牙／音量／亮度等系統開關、打開某個 App、點畫面、在某個 App 裡查東西或操作、傳訊息。呼叫後由自動操作接手，你不用再回答，也不要說自己做不到。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{}}},"
             + "{\"name\":\"memory_list\",\"description\":\"列出記憶（含編號）。提示裡已有未完成的項目；要看已完成的才需要呼叫。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"include_done\":{\"type\":\"boolean\"}}}}"
             + "]";
 
     private ChatEngine() { }
+
+    /** 這一輪聊天助理判斷「這是要操作手機」，呼叫了 phone_action：Brain 看到這個旗標就改走路由／自動操作。每次 ask 開頭會清掉。 */
+    static volatile boolean handoff;
+    private static final String ACT_RULE_ZH = "\n13b. 如果使用者其實是要你操作手機（開關 Wi-Fi／藍牙／音量／亮度、打開 App、點畫面、在 App 裡找東西或操作、傳訊息），而上面的工具做不到，就呼叫 phone_action 交給自動操作，不要說「我不能操作手機」。\n";
+    private static final String ACT_RULE_EN = "\n13b. If the user actually wants you to operate the phone (toggle Wi-Fi/Bluetooth/volume/brightness, open an app, tap the screen, look something up or act inside an app, send a message) and your other tools cannot do it, call phone_action to hand over to automatic operation; do not say you cannot operate the phone.\n";
 
     private static File history(Context c) { return new File(c.getFilesDir(), "chat_history.json"); }
 
@@ -411,13 +418,14 @@ final class ChatEngine {
         final boolean hasImg = images != null && !images.isEmpty();
         final String model = hasImg ? AgentLoop.MODEL : MODEL;   // 看圖欄位的模型
         lastError = "";
+        handoff = false;
         String key = key(c);
         if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
         try {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
             String nowTime = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date());
-            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN + PIN_RULE_EN : SYSTEM + WORK_RULE_ZH + PIN_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
+            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN + PIN_RULE_EN + ACT_RULE_EN : SYSTEM + WORK_RULE_ZH + PIN_RULE_ZH + ACT_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
                     + (L.en() ? ", the current time is " : "，現在時間 ") + nowTime + (L.en() ? ".\nTo-dos (not done): " : "。\n待辦（未完成）：")
                     + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.noteIndex(mem);
             JSONArray msgs = loadHistory(c);
@@ -486,6 +494,7 @@ final class ChatEngine {
                     JSONObject u = uses.getJSONObject(i);
                     String tn = u.optString("name");
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
+                    if (tn.equals("phone_action")) { handoff = true; return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
                     if (tn.equals("read_notifications")) readNotifs = true;
                     String out = tn.equals("read_notifications") ? NotifListener.snapshot(c)
                             : tn.equals("get_time") ? new java.text.SimpleDateFormat("yyyy-MM-dd (EEEE) HH:mm:ss", java.util.Locale.TAIWAN).format(new java.util.Date())

@@ -37,6 +37,8 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("路由：看起來是聊天，直接聊天（沒有問路由）", "Route: looks like chat, chatting directly (router skipped)");
+        m.put("聊天助理判斷要操作手機，交給自動操作", "Chat assistant decided this needs phone operation; handing over");
         m.put("路由：寒暄，直接聊天（沒有問路由）", "Route: small talk, chat directly (router skipped)");
         m.put("聊天回答", "chat reply");
         m.put("已經有這個服務的 Key", "This service already has a key");
