@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1652
+
 - 拿掉玻璃回答框的白色邊框｜Removed the white border from the glass answer card
 
 ## 1.0.1651
