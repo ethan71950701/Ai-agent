@@ -37,6 +37,7 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("來源：", "Sources: ");
         m.put("定時任務", "Scheduled tasks");
         m.put("找不到這個定時", "That schedule was not found");
         m.put("這個定時沒有答案", "This schedule has no answer");

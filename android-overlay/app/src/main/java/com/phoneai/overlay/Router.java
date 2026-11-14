@@ -103,6 +103,8 @@ final class Router {
         return null;
     }
 
+    private static String cut(String x, int n) { return x == null || x.length() <= n ? x : x.substring(0, n) + "…"; }
+
     /** 問一次路由，回最後一個 JSON 物件的文字；連不上或沒有 JSON 回 null。 */
     private static String askRoute(String model, String prompt, String key) throws Exception {
         JSONObject body = new JSONObject().put("model", model).put("max_tokens", 400)
@@ -154,7 +156,17 @@ final class Router {
         List<String> names = new ArrayList<>(apps.keySet());
         Collections.sort(names);
         StringBuilder appNames = new StringBuilder();
-        for (int i = 0; i < names.size() && i < 400; i++) appNames.append(i > 0 ? "、" : "").append(names.get(i));
+        // 只附上跟這句話有關的 App 名稱（名稱含這句話的任何連續兩個字，最多 60 個）；以前一律附 400 個，提示詞多出上萬 token、一句話要等好幾秒
+        String tl = text == null ? "" : text.toLowerCase(java.util.Locale.ROOT);
+        java.util.Set<String> grams = new java.util.HashSet<>();
+        for (int i = 0; i + 2 <= tl.length(); i++) grams.add(tl.substring(i, i + 2));
+        int shown = 0;
+        for (int i = 0; i < names.size() && shown < 60; i++) {
+            String nm = names.get(i), nl = nm.toLowerCase(java.util.Locale.ROOT);
+            boolean rel = tl.contains(nl);
+            for (int k = 0; !rel && k + 2 <= nl.length(); k++) rel = grams.contains(nl.substring(k, k + 2));
+            if (rel) appNames.append(shown++ > 0 ? "、" : "").append(nm);
+        }
         String prompt = "使用者對手機助手說：「" + text + "」\n"
                 + "請判斷這句話是不是下列某個固定指令或App的另一種說法（錯字、同音字、口語都算，例如「藍芽」=藍牙）。\n"
                 + "固定指令:\n" + cmds + "\nApp名稱: " + appNames + "\n"
@@ -162,7 +174,7 @@ final class Router {
                 + "記憶與聊天：使用者要記住東西、問記過的事、改或刪待辦/筆記、問知識、閒聊，都回 chat（聊天助理有記憶工具可以自己處理）。但如果要記的內容得先去某個App或相簿裡看畫面、找圖片或檔案、讀畫面上的字才拿得到，聊天助理看不到畫面也不能點畫面，要回 agent（自動操作看完畫面後可以自己存成筆記）。例子：「去相簿的我的最愛找到課表幫我記起來」「打開蝦皮看我的訂單狀態再告訴我」→ agent；「幫我記住明天要開會」「我剛剛記了什麼」→ chat。要在別的App裡找東西、看東西、點東西的，就算還要記或回報，也一律是 agent。"
                 + "導航：使用者要「打開地圖並導航／帶我去／開車去某個地方」，回 chat（聊天助理有導航工具，會用 Google 地圖直接開始導航），不要只回 app。route 是 app 只限於使用者「單純想打開某個 App、沒有別的要求」。鬧鐘：使用者要設鬧鐘、幾點叫我，都回 chat（聊天助理有設鬧鐘的工具）。行事曆：使用者要新增行事曆、提醒某天某時的事、在地圖上找地方、打電話給某個號碼，也都回 chat（聊天助理有行事曆、地圖、撥號的工具）。使用者明確說要用「三星提醒」（Samsung Reminder）App 新增提醒，也回 chat（聊天助理有 samsung_reminder 工具）。"
                 + "傳檔案：使用者要在自己的裝置之間傳檔案、找檔案、從另一台手機或電腦拿檔案、傳到另一台裝置，都回 chat（聊天助理有傳檔案工具）。"
-                + "使用者的筆記（記憶，只列標題與摘要）：" + Memory.noteIndex(Memory.load(c)) + "\n"
+                + "使用者的筆記（記憶，只列標題與摘要）：" + cut(Memory.noteIndex(Memory.load(c)), 600) + "\n"
                 + "如果使用者問的事，答案很可能已經在上面的筆記裡（例如課表、地址、號碼、他說過要記的事），回 chat：聊天助理看得到筆記的完整內容，不要再去開App或操作畫面查。\n"
                 + "如果你不太確定（例如聊天和自動操作都說得通），在JSON裡多加 \"conf\":\"low\"；很確定就不用寫這個欄位。\n"
                 + "只輸出一行JSON，不要解釋：\n"
