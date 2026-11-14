@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1658
+
 - 玻璃回答框改成「邊緣通透、中間漸漸變糊」：邊緣有折射與柔和高光，文字所在的中間再疊一層很糊的玻璃，保證可讀｜Glass answer card is now clear at the edges and blurred toward the middle: edge refraction and a soft highlight, with an extra heavily blurred layer behind the text for legibility
 
 ## 1.0.1657
