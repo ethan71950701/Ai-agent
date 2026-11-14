@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 「你好」「謝謝」這類寒暄不再先問路由（以前要多等好幾秒）；診斷的路由那行多顯示「聊天回答」花的時間，慢的時候能看出是路由慢還是回答慢｜Greetings like "hello"/"thanks" skip the router (it used to add seconds); the route diagnostic line now also shows the chat reply time
+
+## 1.0.1640
+
 - 回答後再長按電源鍵：接著上一輪繼續對話（回答卡還在、10 分鐘內），不是開新的；輸入列比較透明有玻璃感；已經設定過 Key 的服務可以選「換新的」（Claude 也能在這裡換 Key）｜Long-press power after an answer now continues the same conversation (answer card kept, within 10 min); the input bar is more see-through; services that already have a key can now be set to a new key (Claude too)
 
 ## 1.0.1638
