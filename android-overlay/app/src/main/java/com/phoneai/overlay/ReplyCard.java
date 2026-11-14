@@ -49,7 +49,7 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            g.setBlurDp(14f);       // 後面的畫面（桌面截圖）模糊：卡片裡模糊、卡片外清楚，邊界就出來了
+            g.setBlurDp(30f);       // 後面的畫面（桌面截圖）模糊成柔和的色塊：卡片裡模糊、卡片外清楚，邊界就出來了；14 時桌面圖示還看得出圓角方塊的輪廓，像怪怪的圓形
             g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
