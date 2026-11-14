@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 回答框改成跟輸入列一樣的液態玻璃（顏色增強）；按住按鈕時圓角的變化放慢，不再瞬間跳變｜The answer card now uses the same liquid glass as the input bar (vivid glass); the corner change when pressing a button is slower, no more instant jump
 - 底欄與輸入列玻璃加「顏色增強」（像 iOS 液態玻璃：蓋住的地方飽和度拉高、暗背景提亮、黑底變淡）；設定 → 底欄玻璃（進階）可關｜Bottom bar and input bar glass get a "Vivid glass" option (like iOS Liquid Glass: boosted saturation, brighter over dark backgrounds, lighter dark tint); can be turned off in Settings → Bottom bar glass (advanced)
 
 ## 1.0.1646

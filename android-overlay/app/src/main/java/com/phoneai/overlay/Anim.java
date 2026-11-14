@@ -245,7 +245,7 @@ final class Anim {
             card.setTag(R_MORPH_ANIM, sa);
         }
         if (sa.getSpring() == null) sa.setSpring(new androidx.dynamicanimation.animation.SpringForce(0f));
-        sa.getSpring().setStiffness(down ? 900f : 380f).setDampingRatio(down ? 0.85f : 0.55f);
+        sa.getSpring().setStiffness(down ? 220f : 380f).setDampingRatio(down ? 0.9f : 0.55f);   // 按下以前 900（約 0.08 秒就到位，看起來圓角瞬間跳變）；放慢到約 0.2 秒
         sa.animateToFinalPosition(down ? 1f : 0f);   // 跑到一半也能直接換目標，速度接著用
     }
 

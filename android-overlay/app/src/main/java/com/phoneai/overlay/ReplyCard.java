@@ -34,17 +34,32 @@ final class ReplyCard {
         }
     }
 
-    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) {
+    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) { return build(act, title, text, close, maxHeightPx, null); }
+
+    /** source 不是 null：卡片用跟輸入列同一種液態玻璃（折射 source 後面的畫面、顏色增強）；null：舊的深色卡片。 */
+    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx, View source) {
         final float d = act.getResources().getDisplayMetrics().density;
-        FrameLayout card = new FrameLayout(act);
+        final boolean glass = source != null;
+        FrameLayout card;
+        if (glass) {
+            GlassBar g = new GlassBar(act, 0xFF23262A, 0x00000000, 0x44FFFFFF, 30 * d, false);
+            g.setSource(source);
+            g.setGlowColor(0xFFFFFFFF);
+            g.setClipChildren(false);
+            g.setLive(true);
+            g.setDarkScale(0.6f);
+            card = g;
+        } else card = new FrameLayout(act);
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});
         bg.setStroke((int) Math.max(2, 1.5f * d), 0x99FFFFFF);   // 白色細邊
         bg.setCornerRadius(30 * d);
+        if (!glass) {
         card.setBackground(bg);
         card.setElevation(24 * d);                                // 浮起來；陰影用白色，像一圈柔和白光
         card.setOutlineSpotShadowColor(0xFFFFFFFF);
         card.setOutlineAmbientShadowColor(0xFFFFFFFF);
         card.setClipToOutline(true);
+        }
 
         // 底部光區：AuroraView 放在一個固定高度的容器裡，貼著卡片底邊；光暈中心在容器底部附近
         final int glowH = (int) (GLOW_DP * d);
@@ -55,8 +70,10 @@ final class ReplyCard {
         View glowFade = new View(act);   // 光區上緣慢慢淡進卡片底色，不要有一條硬邊
         glowFade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8191927, 0x00191927}));
         glowBox.addView(glowFade, new FrameLayout.LayoutParams(-1, (int) (90 * d), Gravity.TOP));
+        if (!glass) {   // 玻璃版不放底部光區（玻璃後面已經是極光）
         card.addView(glowBox, new FrameLayout.LayoutParams(-1, glowH, Gravity.BOTTOM));
         card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> aurora.setGlowY(glowH - 16 * d));
+        }
 
         final int maxH = maxHeightPx;   // 呼叫端依畫面實際可用的高度算好（卡片從上方排起，長文在裡面捲動，不會超出螢幕）
         ScrollView sv = new ScrollView(act) {

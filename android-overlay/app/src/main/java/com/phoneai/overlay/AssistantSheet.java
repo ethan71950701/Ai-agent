@@ -1101,7 +1101,7 @@ public class AssistantSheet {
         aurora.setEnergy(0.45f);
         final int topPad = (int) (56 * d), botPad = (int) (150 * d) + bottomInset;
         final int maxH = Math.max((int) (160 * d), root.getHeight() - topPad - botPad);   // 狀態列下面到輸入列上面之間能用的高度
-        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH);
+        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH, root);
         replyCard = card;
         // 卡片放在「狀態列下面」到「輸入列上面」這一段的中間偏上，不要貼著底部（使用者回報太偏下）
         final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
