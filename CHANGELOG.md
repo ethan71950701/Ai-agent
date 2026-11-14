@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 定時網路查詢：通知附上參考的網站，並跟上一次的結果比較（例如價格漲跌）；路由的提示詞只附上跟這句話有關的 App 名稱，更短更快｜Scheduled web lookups: the notification lists the source sites and compares with the previous result (e.g. price changes); the router prompt now only includes app names related to the request, so it is shorter and faster
+
+## 1.0.1644
+
 - 功能頁新增「定時任務」清單：點一項可「立刻試跑一次」或刪除；也可以說「試跑定時 1」｜New "Scheduled tasks" list in Features: tap one to test-run it now or delete it
 - 定時網路查詢：對助理說「每天早上 8 點幫我查某某商品的價格」「每 3 天查一次…」，到時間自動用網路搜尋查、整理後用通知告訴你（只查公開網頁；「我的定時」「取消定時 1」可看與取消）｜Scheduled web lookups: tell the assistant "every day at 8 look up the price of …" or "every 3 days …"; at that time it searches the web and sends a summary notification (public web only; say "my scheduled tasks" / "cancel schedule 1" to view or cancel)
 
