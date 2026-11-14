@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1651
+
 - 玻璃回答框在任何背景都看得出來：邊線改成黑白兩圈，並自動跟背景拉開亮度落差（很暗的背景提亮、其他壓暗）｜The glass answer card is visible on any background: a black-and-white double edge line, and it automatically separates its brightness from the background (brighter over very dark backgrounds, darker otherwise)
 
 ## 1.0.1650
