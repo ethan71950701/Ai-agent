@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 玻璃回答框後面的畫面加模糊（卡片裡模糊、外面清楚），邊界更明顯｜The glass answer card now blurs what is behind it (blurred inside, sharp outside) so its boundary is clearer
+
+## 1.0.1649
+
 - 玻璃回答框加邊緣亮線、底色稍深，邊界更明顯｜Glass answer card gets a bright edge line and a slightly darker tint so its boundary is clearer
 
 ## 1.0.1648
