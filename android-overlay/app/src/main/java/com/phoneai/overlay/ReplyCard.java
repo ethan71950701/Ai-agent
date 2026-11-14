@@ -50,19 +50,7 @@ final class ReplyCard {
             g.setBlurDp(14f);       // 後面的畫面（桌面截圖）模糊：卡片裡模糊、卡片外清楚，邊界就出來了
             g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setLift(1f);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
-            // 邊線兩圈：外面一圈細黑線（亮背景看得到）＋裡面一圈白線（暗背景看得到），任何背景都有邊界
-            int w1 = (int) Math.max(1, d);
-            GradientDrawable outer = new GradientDrawable();
-            outer.setColor(0);
-            outer.setCornerRadius(30 * d);
-            outer.setStroke(w1, 0x66000000);
-            GradientDrawable inner = new GradientDrawable();
-            inner.setColor(0);
-            inner.setCornerRadius(30 * d - w1);
-            inner.setStroke((int) Math.max(2, 1.5f * d), 0xC0FFFFFF);
-            android.graphics.drawable.LayerDrawable rim = new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{outer, inner});
-            rim.setLayerInset(1, w1, w1, w1, w1);
-            g.setForeground(rim);
+            // 白色邊框已拿掉（使用者覺得很突兀）；邊界靠後面畫面的模糊與亮度落差
             card = g;
         } else card = new FrameLayout(act);
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});
