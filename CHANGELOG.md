@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 玻璃回答框加邊緣亮線、底色稍深，邊界更明顯｜Glass answer card gets a bright edge line and a slightly darker tint so its boundary is clearer
+
+## 1.0.1648
+
 - 回答框改成跟輸入列一樣的液態玻璃（顏色增強）；按住按鈕時圓角的變化放慢，不再瞬間跳變｜The answer card now uses the same liquid glass as the input bar (vivid glass); the corner change when pressing a button is slower, no more instant jump
 
 ## 1.0.1647
