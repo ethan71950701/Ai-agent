@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1657
+
 - 玻璃回答框：模糊再加大、飽和度調低，透過卡片的桌面圖示只剩一片柔和的顏色｜Glass answer card: stronger blur and lower saturation so desktop icons seen through it become just a soft wash of color
 
 ## 1.0.1656
