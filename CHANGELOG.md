@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1641
+
 - 「你好」「謝謝」這類寒暄不再先問路由（以前要多等好幾秒）；診斷的路由那行多顯示「聊天回答」花的時間，慢的時候能看出是路由慢還是回答慢｜Greetings like "hello"/"thanks" skip the router (it used to add seconds); the route diagnostic line now also shows the chat reply time
 
 ## 1.0.1640
