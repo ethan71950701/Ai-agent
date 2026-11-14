@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1656
+
 - 修正玻璃回答框裡圖示外圍出現反色黑圈（亮度落差的切換太陡，把漸層翻轉了）｜Fixed a dark halo around icons seen through the glass answer card (the brightness-separation switch was so steep it inverted gradients)
 
 ## 1.0.1655
