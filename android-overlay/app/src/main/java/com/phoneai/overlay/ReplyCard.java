@@ -49,9 +49,20 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            g.setBlurDp(56f);      // 再加大：圖示的輪廓與陰影完全糊掉，只剩一片柔和的顏色
-            g.setSatBoost(1.25f);   // 比底欄低：後面的圖示不會被染成一團團鮮豔的色塊
-            //       // 後面的畫面（桌面截圖）模糊成柔和的色塊：卡片裡模糊、卡片外清楚，邊界就出來了；14 時桌面圖示還看得出圓角方塊的輪廓，像怪怪的圓形
+            g.setBlurDp(6f);        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
+            g.setSatBoost(1.25f);
+            g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
+            g.setSoftGlow(1f);      // 柔和高光（不是白框）
+            // 文字所在的中間：再疊一層很糊的玻璃（只畫中間，邊緣漸漸透明），保證可讀；邊緣仍然通透（預覽的 G5）
+            GlassBar mid = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
+            mid.setSource(source);
+            mid.setClipChildren(false);
+            mid.setLive(true);
+            mid.setBlurDp(46f);
+            mid.setSatBoost(1.2f);
+            mid.setDarkScale(0.9f);
+            mid.setCenterMask(true);
+            g.addView(mid, new FrameLayout.LayoutParams(-1, -1));
             g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {

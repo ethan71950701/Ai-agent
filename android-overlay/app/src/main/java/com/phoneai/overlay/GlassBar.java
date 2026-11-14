@@ -45,6 +45,8 @@ final class GlassBar extends FrameLayout {
             + "uniform float vividSat;\n"
             + "uniform float vividBr;\n"
             + "uniform float vividLift;\n"
+            + "uniform float maskK;\n"
+            + "uniform float softGlow;\n"
             + "uniform float skew;\n"
             + "uniform float2 viewScale;\n"
             + "uniform float keepAlpha;\n"
@@ -129,6 +131,17 @@ final class GlassBar extends FrameLayout {
             + "    float3 spectrum = clamp(abs(fract(hue + float3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0) - 1.0, 0.0, 1.0);\n"
             + "    color = mix(color, half3(spectrum), clamp(ring, 0.0, 1.0));\n"
             + "    color = mix(color * (1.0 - shadow), half3(1.0), clamp(rim, 0.0, 0.9));\n"
+            + "    if (softGlow > 0.0) {\n"   // 柔和高光（不是白框）：邊緣內側一圈很淡的光暈＋左上角一片淡淡的亮
+            + "        float glow = 0.14 * (1.0 - smoothstep(0.0, 5.5 * density, depth));\n"
+            + "        float tt = (p.x / (2.0 * max(halfSize.x, 1.0)) + 0.5 + p.y / (2.0 * max(halfSize.y, 1.0)) + 0.5) * 0.5;\n"
+            + "        float sh2 = 0.22 * clamp(1.0 - tt / 0.42, 0.0, 1.0);\n"
+            + "        color += half3(softGlow * (glow + sh2));\n"
+            + "    }\n"
+            + "    if (maskK > 0.5) {\n"   // 只畫中間：離中心越遠越透明（回答卡文字所在的地方漸漸變糊，邊緣留給下面那層清楚的玻璃）
+            + "        float2 q = p / (halfSize * float2(1.24, 1.32));\n"
+            + "        float ma = 1.0 - smoothstep(0.40, 1.0, length(q));\n"
+            + "        return half4(color * half(ma), half(ma));\n"
+            + "    }\n"
             + "    return half4(color, 1.0);\n"
             + "}\n";
     private static final String AGSL_BAR = COMMON;
@@ -227,6 +240,14 @@ final class GlassBar extends FrameLayout {
      * 標誌的波實際上大約每 8 格才更新一次（使用者錄影逐格比對：120Hz 螢幕上約 15 fps）。
      */
     void setFollowContent(boolean on) { followContent = on; }
+    private boolean centerMask;
+    private float softGlowK, refrScale = 1f, bandDp = 18f;
+    /** 只畫中間、邊緣漸漸透明（疊在清楚的玻璃上，讓文字所在的中間變糊）。 */
+    void setCenterMask(boolean on) { centerMask = on; invalidate(); }
+    /** 柔和高光強度（0 = 沒有）。 */
+    void setSoftGlow(float k) { softGlowK = k; invalidate(); }
+    /** 這一條自己的折射倍率與折射帶寬度（dp）。 */
+    void setRefraction(float scale, float band) { refrScale = scale; bandDp = band; invalidate(); }
     private float satBoost = 1.6f;
     /** 這一條自己的飽和度倍率（預設 1.6）。回答卡用較低的值，免得後面的圖示被染成一團團鮮豔的色塊。 */
     void setSatBoost(float k) { satBoost = k; invalidate(); }
@@ -458,8 +479,8 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("halfSize", w / 2f, h / 2f);
         sh.setFloatUniform("radius", radius);
         sh.setFloatUniform("density", 4f * dp);                              // 邊緣光的寬度尺度（約 3dp；太小就看不到）
-        sh.setFloatUniform("band", (lens ? 12f : 18f) * dp);                  // 邊緣折射的寬度
-        sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * push);      // 折射推開的距離（像素）
+        sh.setFloatUniform("band", (lens ? 12f : bandDp) * dp);                  // 邊緣折射的寬度
+        sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * refrScale * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
         sh.setFloatUniform("highlightAlpha", lens ? HIGHLIGHT * progress : 0f);   // 邊緣高光：被左上光源照到的亮邊，背景再平也有玻璃感；按住才慢慢出現
         float[] lp = virtualLight();
@@ -473,6 +494,8 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? satBoost : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
         sh.setFloatUniform("vividBr", 1.18f);
+        sh.setFloatUniform("maskK", centerMask ? 1f : 0f);
+        sh.setFloatUniform("softGlow", softGlowK);
         sh.setFloatUniform("vividLift", liftAmount);
         sh.setFloatUniform("edgeLine", lens ? EDGE_LINE * progress : 0f);   // 沒按住不畫彩虹環，按住才慢慢出現
         sh.setFloatUniform("bodyLift", lens ? BODY_LIFT * (1f - progress) : 0f);   // 靜止時透鏡整塊微亮，按住時消失
