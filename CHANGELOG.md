@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1650
+
 - 玻璃回答框後面的畫面加模糊（卡片裡模糊、外面清楚），邊界更明顯｜The glass answer card now blurs what is behind it (blurred inside, sharp outside) so its boundary is clearer
 
 ## 1.0.1649
