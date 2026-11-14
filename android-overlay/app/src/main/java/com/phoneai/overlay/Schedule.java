@@ -128,6 +128,8 @@ final class Schedule {
         return null;
     }
 
+    static String describe(JSONObject it) { return fmt(it); }
+
     private static String fmt(JSONObject it) {
         if ("web".equals(it.optString("kind")))
             return it.optInt("id") + ". " + (it.optInt("every", 1) <= 1 ? L.t("每天 ") : L.t("每 ") + it.optInt("every") + L.t(" 天 ")) + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m")) + L.t(" 查詢：") + it.optString("query");
@@ -167,6 +169,11 @@ final class Schedule {
             save(c, keep);
             return L.t("已取消定時 ") + numTxt + L.t("。");
         }
+        Matcher mt = Pattern.compile("^(試跑|试跑|立刻執行|立刻执行|現在執行|现在执行)定時(?:第)?([0-9一二三四五六七八九十]+)").matcher(t);
+        if (mt.find()) {
+            Integer n = cnInt(mt.group(2));
+            return runNow(c, n == null ? -1 : n);
+        }
         String[] task = new String[1];
         int[] hm = parseTime(text, task);
         if (hm == null) return null;
@@ -200,6 +207,29 @@ final class Schedule {
             boolean ok = ensureJob(c);
             return L.t("已建立定時 ") + nid + "：" + when + " " + query + (ok ? "" : L.t("（排程註冊失敗，請再試一次）"));
         } catch (Exception e) { return L.t("建立失敗：") + e.getMessage(); }
+    }
+
+    /** 立刻跑一次（不改下次時間）；網路查詢回整理後的結果，短問題回答案。在背景執行緒呼叫。 */
+    static String runNow(Context c, int id) {
+        JSONArray items = load(c);
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject it = items.optJSONObject(i);
+            if (it == null || it.optInt("id") != id) continue;
+            if ("web".equals(it.optString("kind"))) return runWeb(c, it.optString("query"));
+            String a = quickAnswer(c, it.optString("task"));
+            return a == null ? L.t("這個定時沒有答案") : a;
+        }
+        return L.t("找不到這個定時");
+    }
+
+    static boolean remove(Context c, int id) {
+        try {
+            JSONArray items = load(c), keep = new JSONArray();
+            for (int i = 0; i < items.length(); i++) if (items.getJSONObject(i).optInt("id") != id) keep.put(items.getJSONObject(i));
+            if (keep.length() == items.length()) return false;
+            save(c, keep);
+            return true;
+        } catch (Exception e) { return false; }
     }
 
     private static String dayStr(Calendar k) {

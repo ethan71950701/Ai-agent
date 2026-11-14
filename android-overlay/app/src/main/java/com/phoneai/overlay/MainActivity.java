@@ -984,6 +984,7 @@ public class MainActivity extends Activity {
                     new Ui.Tile("flask", L.t("AI 比較測試"), L.t("同一批任務用不同 AI 各跑一遍，比成功率與花費"), false, v -> AbTestUi.open(this)),
                     new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                     new Ui.Tile("note", L.t("通知整理"), NotifDigest.on(this) ? String.format(java.util.Locale.US, L.t("每天 %02d:%02d 整理通知"), NotifDigest.hour(this), NotifDigest.minute(this)) : L.t("定時整理通知，有日期的事一鍵加入"), false, v -> NotifDigest.openSettings(this, this::recreate)),
+                    new Ui.Tile("clock", L.t("定時任務"), ScheduleUi.summary(this), false, v -> ScheduleUi.open(this, this::recreate)),
                     new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))),
                     new Ui.Tile("transfer", L.t("互傳檔案"), L.t("在自己的裝置之間互傳檔案"), false, v -> startActivity(new Intent(this, TransferActivity.class))));
         });

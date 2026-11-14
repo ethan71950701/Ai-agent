@@ -37,6 +37,16 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("定時任務", "Scheduled tasks");
+        m.put("找不到這個定時", "That schedule was not found");
+        m.put("這個定時沒有答案", "This schedule has no answer");
+        m.put("好", "OK");
+        m.put("已刪除", "Deleted");
+        m.put("目前 %d 個（點進去看、試跑、刪除）", "%d now (tap to view, test-run or delete)");
+        m.put("目前沒有定時任務。\n\n對助理說，例如：「每天早上 8 點幫我查某某商品的價格」「每 3 天晚上 9 點查一次…」，確認後就會建立。只查公開網頁，看不到你的帳號或訂單。", "No scheduled tasks yet.\n\nTell the assistant, for example: \"every day at 8 am look up the price of …\" or \"every 3 days at 9 pm check …\", and confirm. Only public web pages are searched; your accounts and orders are not visible.");
+        m.put("目前沒有；對助理說「每天早上 8 點幫我查…」就能建立", "None yet; tell the assistant \"every day at 8 am look up …\" to create one");
+        m.put("立刻試跑一次", "Test-run now");
+        m.put("試跑結果", "Test-run result");
         m.put(" 天 ", " days at ");
         m.put(" 查詢：", " lookup: ");
         m.put(" 用網路搜尋查「", " web search for \"");
