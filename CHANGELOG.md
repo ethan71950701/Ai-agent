@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正玻璃回答框裡圖示外圍出現反色黑圈（亮度落差的切換太陡，把漸層翻轉了）｜Fixed a dark halo around icons seen through the glass answer card (the brightness-separation switch was so steep it inverted gradients)
+
+## 1.0.1655
+
 - 回答框後面的模糊加大，透過卡片看到的桌面圖示變成柔和色塊，不再像怪怪的圓形｜The answer card blurs more strongly, so desktop icons seen through it become soft color patches instead of odd round shapes
 - 取消「10 分鐘內再叫出面板就接上一輪」；輸入列後面的畫面加模糊，桌面圖示不再被折射成怪怪的圓形（回答卡還開著時再按電源鍵仍然接著問）｜Removed "reopen within 10 minutes restores the last answer"; the input bar now blurs what is behind it so desktop icons no longer look like odd round blobs (pressing the power key while the answer card is still open still continues)
 
