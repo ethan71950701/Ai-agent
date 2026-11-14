@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 不像操作手機的話（問問題、閒聊、記事情）直接用便宜模型聊天，不再先問路由；聊天時如果它發現其實要操作手機，會自己交給自動操作（再問路由決定是固定指令、開 App 還是操作畫面）｜Messages that don't look like phone actions now go straight to the cheap chat model without the router; if it finds the request needs phone operation it hands over to automatic operation (the router then picks command / open app / screen operation)
+
+## 1.0.1641
+
 - 「你好」「謝謝」這類寒暄不再先問路由（以前要多等好幾秒）；診斷的路由那行多顯示「聊天回答」花的時間，慢的時候能看出是路由慢還是回答慢｜Greetings like "hello"/"thanks" skip the router (it used to add seconds); the route diagnostic line now also shows the chat reply time
 
 ## 1.0.1640
