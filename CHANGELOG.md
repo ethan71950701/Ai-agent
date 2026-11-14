@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1653
+
 - 玻璃回答框：染上主題色、外圍加柔和陰影，邊界更明顯｜Glass answer card: tinted with the theme color and given a soft outer shadow so its boundary is clearer
 
 ## 1.0.1652
