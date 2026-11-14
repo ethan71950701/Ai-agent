@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 玻璃回答框改成「邊緣通透、中間漸漸變糊」：邊緣有折射與柔和高光，文字所在的中間再疊一層很糊的玻璃，保證可讀｜Glass answer card is now clear at the edges and blurred toward the middle: edge refraction and a soft highlight, with an extra heavily blurred layer behind the text for legibility
+
+## 1.0.1657
+
 - 玻璃回答框：模糊再加大、飽和度調低，透過卡片的桌面圖示只剩一片柔和的顏色｜Glass answer card: stronger blur and lower saturation so desktop icons seen through it become just a soft wash of color
 
 ## 1.0.1656
