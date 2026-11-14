@@ -37,6 +37,8 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("路由：寒暄，直接聊天（沒有問路由）", "Route: small talk, chat directly (router skipped)");
+        m.put("聊天回答", "chat reply");
         m.put("已經有這個服務的 Key", "This service already has a key");
         m.put("要沿用目前的 Key，還是換成新的？（新的會取代舊的）", "Keep the current key or replace it with a new one? (The new one overwrites the old.)");
         m.put("沿用", "Keep");

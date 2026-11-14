@@ -120,8 +120,18 @@ final class Router {
         return last;
     }
 
+    private static final Pattern SMALL_TALK = Pattern.compile(
+            "^(你好|您好|哈囉|嗨|嘿|hi|hello|hey|早安|早|午安|晚安|謝謝|謝啦|感謝|多謝|掰掰|拜拜|再見|好的|好喔|好|ok|okay|嗯|哈哈|在嗎|在不在|你是誰|你叫什麼|你叫什麼名字|你會什麼|你能做什麼)[!！。.~～？?，, ]*$",
+            Pattern.CASE_INSENSITIVE);
+
+    /** 純寒暄（你好、謝謝…）：不用問路由，直接聊天。路由的提示詞很長（App 清單、筆記），一句「你好」也要等好幾秒（使用者回報）。 */
+    static boolean isSmallTalk(String text) {
+        return text != null && SMALL_TALK.matcher(text.trim()).matches();
+    }
+
     /** 回傳判斷結果；Key 讀不到、網路失敗、回答看不懂回 null（呼叫端改用聊天）。 */
     static Decision decide(Context c, String text) {
+        if (isSmallTalk(text)) { lastNote = L.t("路由：寒暄，直接聊天（沒有問路由）"); return new Decision(CHAT, -1, null, 0); }
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return null;
         Map<String, String> apps = apps(c);
