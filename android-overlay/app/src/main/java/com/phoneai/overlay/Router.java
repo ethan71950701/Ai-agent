@@ -125,8 +125,11 @@ final class Router {
                     + "\\b(open|turn|go to|goto|tap|click|launch|switch|send|call|volume|brightness|screenshot|enable|disable)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern SCHED_HINT = Pattern.compile("每天|每隔|每[0-9一二三四五六七八九十兩]+天|每週|每周|定時|排程|(?i:\\b(every day|every \\d+ days|daily|schedule)\\b)");
+
     /** 這句話看起來可能是要操作手機：先問路由（一次判斷固定指令、開 App、操作畫面）。不像的就直接聊天，聊天助理真的需要操作時會自己呼叫 phone_action 交出去。 */
     static boolean likelyAction(String text) {
+        if (text != null && SCHED_HINT.matcher(text).find()) return false;   // 要排定時查詢：交給聊天助理（它有 schedule_web_query）
         return text != null && ACTION_HINT.matcher(text).find();
     }
 

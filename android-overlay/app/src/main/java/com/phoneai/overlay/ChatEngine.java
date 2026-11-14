@@ -97,6 +97,8 @@ final class ChatEngine {
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\",\"description\":\"提醒內容\"},\"date\":{\"type\":\"string\",\"description\":\"日期 yyyy-MM-dd；沒說日期就省略\"},\"time\":{\"type\":\"string\",\"description\":\"時間 HH:mm（24 小時制）；沒說時間就省略（會變成全天）\"}},\"required\":[\"title\"]}},"
             + "{\"name\":\"run_shell\",\"description\":\"在手機上執行一個唯讀的系統指令（例如 dumpsys battery、getprop、pm list packages、settings get …），回傳輸出。會改東西的指令會被拒絕；需要 root 或 Shizuku。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"cmd\":{\"type\":\"string\",\"description\":\"唯讀指令\"}},\"required\":[\"cmd\"]}},"
+            + "{\"name\":\"schedule_web_query\",\"description\":\"建立「定時網路查詢」：每天或每隔 N 天、在指定時間，自動用網路搜尋查某個資訊（價格、新聞、天氣、營業時間…），整理後用通知告訴使用者。只查公開網頁，不能登入、看不到使用者的帳號或訂單。會跳確認框。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"要查什麼，寫成完整的搜尋問題\"},\"hour\":{\"type\":\"integer\",\"description\":\"幾點，24 小時制\"},\"minute\":{\"type\":\"integer\"},\"every_days\":{\"type\":\"integer\",\"description\":\"每隔幾天，每天是 1\"}},\"required\":[\"query\",\"hour\"]}},"
             + "{\"name\":\"phone_action\",\"description\":\"使用者要你「做」手機上的動作、而上面其他工具都做不到時呼叫：開關 Wi-Fi／藍牙／音量／亮度等系統開關、打開某個 App、點畫面、在某個 App 裡查東西或操作、傳訊息。呼叫後由自動操作接手，你不用再回答，也不要說自己做不到。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{}}},"
             + "{\"name\":\"memory_list\",\"description\":\"列出記憶（含編號）。提示裡已有未完成的項目；要看已完成的才需要呼叫。\","
@@ -107,6 +109,8 @@ final class ChatEngine {
 
     /** 這一輪聊天助理判斷「這是要操作手機」，呼叫了 phone_action：Brain 看到這個旗標就改走路由／自動操作。每次 ask 開頭會清掉。 */
     static volatile boolean handoff;
+    private static final String SCHED_RULE_ZH = "\n13c. 使用者要「每天／每隔幾天、幾點，自動去查某個資訊」（價格、新聞、天氣、營業時間…）→ 用 schedule_web_query 建立（會跳確認框）。它只能用網路搜尋查公開資料；使用者要查自己的訂單、需要登入的內容，老實說目前做不到，可以建議改查公開的資訊。查看或取消定時，叫他說「我的定時」「取消定時 1」。\n";
+    private static final String SCHED_RULE_EN = "\n13c. If the user wants something looked up automatically every day / every N days at a time (prices, news, weather, opening hours...) use schedule_web_query (a confirmation box appears). It only does web searches of public information; for the user's own orders or anything behind a login, honestly say that is not possible yet and suggest a public lookup. To view or cancel, tell them to say \"my scheduled tasks\" / \"cancel schedule 1\".\n";
     private static final String ACT_RULE_ZH = "\n13b. 如果使用者其實是要你操作手機（開關 Wi-Fi／藍牙／音量／亮度、打開 App、點畫面、在 App 裡找東西或操作、傳訊息），而上面的工具做不到，就呼叫 phone_action 交給自動操作，不要說「我不能操作手機」。\n";
     private static final String ACT_RULE_EN = "\n13b. If the user actually wants you to operate the phone (toggle Wi-Fi/Bluetooth/volume/brightness, open an app, tap the screen, look something up or act inside an app, send a message) and your other tools cannot do it, call phone_action to hand over to automatic operation; do not say you cannot operate the phone.\n";
 
@@ -425,7 +429,7 @@ final class ChatEngine {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
             String nowTime = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.US).format(new java.util.Date());
-            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN + PIN_RULE_EN + ACT_RULE_EN : SYSTEM + WORK_RULE_ZH + PIN_RULE_ZH + ACT_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
+            String system = (L.en() ? SYSTEM_EN + WORK_RULE_EN + PIN_RULE_EN + ACT_RULE_EN + SCHED_RULE_EN : SYSTEM + WORK_RULE_ZH + PIN_RULE_ZH + ACT_RULE_ZH + SCHED_RULE_ZH) + (L.en() ? "\nToday is " : "\n今天是 ") + today
                     + (L.en() ? ", the current time is " : "，現在時間 ") + nowTime + (L.en() ? ".\nTo-dos (not done): " : "。\n待辦（未完成）：")
                     + Memory.promptRows(mem, "todo") + (L.en() ? "\nNotes: " : "\n筆記：") + Memory.noteIndex(mem);
             JSONArray msgs = loadHistory(c);
@@ -505,6 +509,7 @@ final class ChatEngine {
                             : tn.equals("show_on_map") ? SystemIntents.showOnMap(c, ti.optString("place"))
                             : tn.equals("dial") ? SystemIntents.dial(c, ti.optString("number"))
                             : tn.equals("samsung_reminder") ? AgentLoop.reminderForChat(c, ti)
+                            : tn.equals("schedule_web_query") ? Schedule.addWeb(c, ti.optString("query"), ti.optInt("hour", -1), ti.optInt("minute", 0), ti.optInt("every_days", 1), confirm)
                             : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
                             : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 定時網路查詢：對助理說「每天早上 8 點幫我查某某商品的價格」「每 3 天查一次…」，到時間自動用網路搜尋查、整理後用通知告訴你（只查公開網頁；「我的定時」「取消定時 1」可看與取消）｜Scheduled web lookups: tell the assistant "every day at 8 look up the price of …" or "every 3 days …"; at that time it searches the web and sends a summary notification (public web only; say "my scheduled tasks" / "cancel schedule 1" to view or cancel)
 - 不像操作手機的話（問問題、閒聊、記事情）直接用便宜模型聊天，不再先問路由；聊天時如果它發現其實要操作手機，會自己交給自動操作（再問路由決定是固定指令、開 App 還是操作畫面）｜Messages that don't look like phone actions now go straight to the cheap chat model without the router; if it finds the request needs phone operation it hands over to automatic operation (the router then picks command / open app / screen operation)
 
 ## 1.0.1641
