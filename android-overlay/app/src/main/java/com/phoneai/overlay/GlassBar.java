@@ -104,7 +104,7 @@ final class GlassBar extends FrameLayout {
             + "        float lum = dot(color, half3(0.299, 0.587, 0.114));\n"
             + "        color = mix(half3(lum), color, half(vividSat));\n"
             + "        color *= half(mix(vividBr, 1.0, smoothstep(0.25, 0.6, lum)));\n"
-            + "        color += half3(vividLift * mix(0.14, -0.14, smoothstep(0.2, 0.45, lum)));\n"   // 跟背景拉開落差：很暗的背景把玻璃提亮，其餘壓暗（任何背景都看得出卡片）
+            + "        color += half3(vividLift * mix(0.12, -0.12, smoothstep(0.15, 0.75, lum)));\n"   // 跟背景拉開落差：很暗的背景把玻璃提亮，其餘壓暗（任何背景都看得出卡片）
             + "    }\n"
             + "    color = mix(color, half3(0.35), indicator < 0.5 ? shade : shade * (1.0 - progress));\n"   // 底欄：往灰色混一點；透鏡沒按住時跟底欄一樣（不然比底欄更黑），按住時逐漸取消   // 透鏡內部不再變暗、不加底色，跟酷安一樣直接看到背景
 
