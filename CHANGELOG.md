@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 背景模式（背景螢幕）也改用元件清單：更省 token、點得更準，不再只靠截圖｜Background mode (background display) now also uses the element list: cheaper and more accurate than screenshots alone
+
+## 1.0.1659
+
 - 診斷頁新增「背景螢幕元件清單測試」：建立背景螢幕、開設定，看無障礙服務在背景螢幕上讀不讀得到元件（只回報數量）｜Diagnostics: new "Background display element-list test" — creates the background display, opens Settings and reports whether the accessibility service can read elements there (counts only)
 
 ## 1.0.1658
