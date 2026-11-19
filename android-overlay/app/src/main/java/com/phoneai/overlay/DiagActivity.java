@@ -64,6 +64,13 @@ public class DiagActivity extends Activity {
                 Ui.button(this, L.t("下載聲紋模型"), v -> downloadSpeaker()),
                 Ui.button(this, L.t("登錄我的聲音"), v -> enrollVoice()),
                 Ui.button(this, L.t("刪除聲紋"), v -> { SpeakerId.clear(this); spkStatus.setText(SpeakerId.statusText(this)); refresh(); }));
+        Ui.buttons(this, box, Ui.button(this, L.t("背景螢幕元件清單測試"), v -> {
+            android.widget.Toast.makeText(this, L.t("測試中，約 10 秒…"), android.widget.Toast.LENGTH_SHORT).show();
+            new Thread(() -> {
+                final String r = BgProbe.run(getApplicationContext());
+                runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("背景螢幕元件清單測試")).setMessage(r).setPositiveButton(L.t("好"), null).show());
+            }, "bg-probe").start();
+        }));
         Ui.buttons(this, box, Ui.button(this, L.t("重建玻璃（底欄變形時按）"), v ->
                 android.widget.Toast.makeText(this, MainActivity.rebuildGlass() ? L.t("已重建，回到首頁看看有沒有恢復") : L.t("主畫面不在，沒有東西可以重建"), android.widget.Toast.LENGTH_LONG).show()));
     }
