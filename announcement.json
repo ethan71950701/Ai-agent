@@ -1,9 +1,6 @@
 {
-  "id": "test-announcement-2",
+  "id": "",
   "severity": "info",
-  "title": { "zh": "公告測試（第二則）", "en": "Announcement test (2)" },
-  "body": {
-    "zh": "第二則測試公告。看到這則就代表公告功能正常；按「知道了」之後不會再出現。",
-    "en": "Second test announcement. If you can read this, announcements work; tap OK and it will not show again."
-  }
+  "title": { "zh": "", "en": "" },
+  "body": { "zh": "", "en": "" }
 }
