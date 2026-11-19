@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 用本機／區網的 AI 模型時，助理面板等回答的時間延長到 3 分鐘（以前 30 秒沒消息就自己關掉，回答還沒到）｜With a local / LAN AI model the assistant panel now waits up to 3 minutes for the answer (it used to close itself after 30 s with no reply)
+
+## 1.0.1695
+
 - 本機／區網的 AI 服務（例如手機上跑的本地模型）不用填 API Key｜Local / LAN AI services (e.g. a model running on the phone) no longer need an API key
 
 ## 1.0.1694
