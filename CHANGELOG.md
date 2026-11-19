@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1664
+
 - 背景模式開始操作時，助理面板也會收起來｜In background mode the assistant panel now also closes when the AI starts operating
 
 ## 1.0.1663
