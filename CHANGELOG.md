@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1662
+
 - 背景模式：任務一開始就自動顯示預覽小視窗（以前要點 Now Bar 才會出現）；點 Now Bar 仍可關閉或再開｜Background mode: the preview window now opens automatically when the task starts (it used to appear only after tapping the Now Bar); tapping the Now Bar still closes or reopens it
 
 ## 1.0.1661
