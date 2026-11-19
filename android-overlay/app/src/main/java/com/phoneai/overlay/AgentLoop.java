@@ -550,7 +550,10 @@ final class AgentLoop {
     static String screenshot() { return screenshot(WIDTH); }
 
     /** width：縮圖寬度。一般 432 省 token；look（元件清單裡找不到，要靠看圖找位置）用大一點的圖，縮圖、小圖示才看得清楚。 */
-    static String screenshot(int width) {
+    static String screenshot(int width) { return screenshot(width, false); }
+
+    /** retried：背景螢幕的截圖編號失效時，重新查一次再試一次（只試一次）。 */
+    private static String screenshot(int width, boolean retried) {
         if (!Root.available()) {   // 沒有 root：用無障礙截圖
             Bitmap shot = Phone.screenshot();
             return shot == null ? null : encodeJpeg(shot, width);
@@ -574,6 +577,7 @@ final class AgentLoop {
                 if (png.length < 100 && BgDisplay.active) {   // 診斷：背景螢幕截不到時，記下結束碼與錯誤訊息（不含畫面內容）
                     String e = errBuf.toString().trim().replace('\n', ' ');
                     LifeLog.add(App.ctx, "背景螢幕截圖失敗：screencap -d " + BgDisplay.sf + " 結束碼 " + code + "，輸出 " + png.length + " 位元組" + (e.isEmpty() ? "" : "，錯誤：" + (e.length() > 160 ? e.substring(0, 160) : e)));
+                    if (!retried && e.contains("not valid") && BgDisplay.refreshSf()) return screenshot(width, true);   // 截圖編號失效（背景螢幕被主機重建過）：重新查編號再截一次
                 }
             }
             if (png.length < 100) return null;

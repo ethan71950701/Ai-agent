@@ -36,6 +36,26 @@ final class BgDisplay {
     static volatile boolean active;
     static volatile int id;
     static volatile String sf = "";
+    private static volatile Set<String> baseline = new HashSet<>();   // 建立背景螢幕前就有的螢幕編號
+
+    /**
+     * 截圖編號失效（診斷：「Display Id … is not valid」，預覽窗接上去後主機重建了背景螢幕，SurfaceFlinger 編號換了）：
+     * 重新查，挑一個建立前沒有的虛擬螢幕編號。有換成新的回 true。
+     */
+    static synchronized boolean refreshSf() {
+        if (!active) return false;
+        try {
+            Set<String> now = sfIds(Maintenance.suRun("dumpsys SurfaceFlinger --display-id"));
+            now.removeAll(baseline);
+            if (now.isEmpty() || now.contains(sf) && now.size() == 1) return false;
+            String pick = now.contains(sf) ? sf : now.iterator().next();
+            if (pick.equals(sf)) return false;
+            sf = pick;
+            OverlayService.vdSf = pick;
+            LifeLog.add(App.ctx, "背景螢幕截圖編號換成 " + pick);
+            return true;
+        } catch (Exception e) { return false; }
+    }
 
     private static Process host;
 
@@ -55,6 +75,7 @@ final class BgDisplay {
         H = landscape ? 720 : 1200;
         try {
             Set<String> before = sfIds(Maintenance.suRun("dumpsys SurfaceFlinger --display-id"));
+            baseline = new HashSet<>(before);
             String cmd = "CLASSPATH=" + c.getApplicationInfo().sourceDir + " exec app_process / com.phoneai.overlay.DirectDisplay --host " + W + " " + H + " " + DPI;
             host = new ProcessBuilder(Root.su(), "-c", cmd).redirectErrorStream(true).start();
             final int[] got = {-1};
