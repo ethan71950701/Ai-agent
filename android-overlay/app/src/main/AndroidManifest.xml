@@ -157,6 +157,14 @@
         </receiver>
 
         <activity
+            android:name=".PreviewToggleActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:noHistory="true"
+            android:exported="false" />
+
+        <activity
             android:name=".MemoryActivity"
             android:theme="@style/AppTheme.Sub"
             android:exported="false" />

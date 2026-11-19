@@ -306,7 +306,8 @@ public class OverlayService extends Service {
         // 點通知開 App。沒有 contentIntent 時 logcat 顯示 OngoingActivityDataHelper.shouldHide()=true（intent.component:null），膠囊被藏
         boolean vd = !vdSf.isEmpty();  // 有背景虛擬螢幕：點通知 = 顯示／關閉預覽；沒有就開 App
         PendingIntent open = vd
-                ? PendingIntent.getService(this, 2, new Intent(this, OverlayService.class).setAction(ACTION_PREVIEW),
+                // 點 Now Bar／通知：用看不見的 Activity 轉一手再開關預覽窗（三星的 Now Bar 對 PendingIntent.getService 不一定有反應）
+                ? PendingIntent.getActivity(this, 2, new Intent(this, PreviewToggleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION),
                         PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)
                 : PendingIntent.getActivity(this, 0,
                         new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP),
@@ -328,7 +329,7 @@ public class OverlayService extends Service {
                 .addAction(new Notification.Action.Builder(icon, paused ? L.t("繼續") : L.t("暫停"),
                         PendingIntent.getService(this, 4, new Intent(this, OverlayService.class).setAction(ACTION_PAUSE),
                                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)).build());
-        if (vd) {  // 有背景虛擬螢幕：Now Bar 上只有「停止」和「接手／完成」；要預覽就點通知本身
+        if (vd && takeover) {  // 接手中（你點了預覽窗就會自動接手）才出現「完成」；平常沒有「接手」鈕，點 Now Bar 就是開關預覽窗
             PendingIntent take = PendingIntent.getService(this, 3, new Intent(this, OverlayService.class).setAction(ACTION_TAKEOVER),
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
             b.addAction(new Notification.Action.Builder(icon, takeover ? L.t("完成") : L.t("接手"), take).build());

@@ -43,6 +43,7 @@ final class PreviewTouch extends View {
     private boolean resizing, dismissing, past, touching, controlling;
     private boolean edge;               // 這次觸控從卡片左／右邊緣開始：往內滑 = 返回（背景螢幕沒有系統手勢列，要自己做）
     private float edgeStartX;
+    private boolean multiLive;          // 這次觸控出現過第二根手指：之後都用多指頭格式（手指編號要一致）
     private boolean live, kbd;        // live：這次觸控正在即時注入（LiveInput）；kbd：按在小白條列最左邊的鍵盤圖示
     private long lastMove;
     private final Runnable idleEnd = this::endTakeoverIfIdle;
@@ -366,7 +367,8 @@ final class PreviewTouch extends View {
                         invalidate();
                     } else if (live && e.getEventTime() - lastMove >= 8) {  // 即時注入：邊移動邊送（約 120Hz 上限）
                         lastMove = e.getEventTime();
-                        liveSend(MotionEvent.ACTION_MOVE, e.getX(), e.getY());
+                        if (multiLive) sendMulti(e, MotionEvent.ACTION_MOVE);
+                        else liveSend(MotionEvent.ACTION_MOVE, e.getX(), e.getY());
                     }
                 } else if (ctrlHit != 0 || kbd) {
                     // 點鍵盤圖示：過程中什麼都不動，放手時才處理
@@ -388,6 +390,13 @@ final class PreviewTouch extends View {
                     targetY = clampY(baseY + (e.getRawY() - startRawY));
                     springX.retarget(targetX);
                     springY.retarget(targetY);
+                }
+                return true;
+            case MotionEvent.ACTION_POINTER_DOWN:
+            case MotionEvent.ACTION_POINTER_UP:   // 多點觸控（縮放、雙指操作）：整串事件改用多指頭的格式送給背景螢幕
+                if (live && controlling && DirectHost.ready(OverlayService.vdId)) {
+                    multiLive = true;
+                    sendMulti(e, e.getActionMasked() | (e.getActionIndex() << MotionEvent.ACTION_POINTER_INDEX_SHIFT));
                 }
                 return true;
             case MotionEvent.ACTION_UP:
@@ -418,7 +427,9 @@ final class PreviewTouch extends View {
                         edge = false;
                         live = false;
                     } else if (live) {
-                        liveSend(up ? MotionEvent.ACTION_UP : MotionEvent.ACTION_CANCEL, e.getX(), e.getY());
+                        if (multiLive) sendMulti(e, up ? MotionEvent.ACTION_UP : MotionEvent.ACTION_CANCEL);
+                        else liveSend(up ? MotionEvent.ACTION_UP : MotionEvent.ACTION_CANCEL, e.getX(), e.getY());
+                        multiLive = false;
                         live = false;
                         card.pulse(e.getX(), e.getY());
                     } else if (up) injectGesture(e);
@@ -466,7 +477,7 @@ final class PreviewTouch extends View {
         }
     }
 
-    private static final long IDLE_END_MS = 4000;
+    private static final long IDLE_END_MS = 10000;   // 停手 10 秒，自動把操作交回 AI（以前 4 秒太快）
     private static final float EDGE_DP = 14f;   // 左右邊緣多寬算「邊緣滑動返回」的起點
 
     /** 即時送一個觸控事件：有直接顯示主機就走 Binder（最快），否則走 LiveInput（root 管道）。 */
@@ -479,6 +490,14 @@ final class PreviewTouch extends View {
             case MotionEvent.ACTION_UP: LiveInput.send("U " + vx + " " + vy); break;
             default: LiveInput.send("C");
         }
+    }
+
+    /** 把目前所有手指（編號與座標）一起送給背景螢幕。 */
+    private void sendMulti(MotionEvent e, int action) {
+        int n = e.getPointerCount();
+        int[] ids = new int[n], xs = new int[n], ys = new int[n];
+        for (int i = 0; i < n; i++) { ids[i] = e.getPointerId(i); xs[i] = mapX(e.getX(i)); ys[i] = mapY(e.getY(i)); }
+        DirectHost.touchMulti(action, ids, xs, ys);
     }
 
     /** 螢幕座標換算：卡片觸控座標 → 背景虛擬螢幕座標。 */

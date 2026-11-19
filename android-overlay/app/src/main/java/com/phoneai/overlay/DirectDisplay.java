@@ -141,6 +141,34 @@ public final class DirectDisplay {
                     }
                     return true;
                 }
+                if (code == DirectHost.TX_TOUCHM) {   // 多點觸控：每根手指各有編號與座標
+                    int action = data.readInt(), n = Math.max(1, Math.min(data.readInt(), 10));
+                    MotionEvent.PointerProperties[] props = new MotionEvent.PointerProperties[n];
+                    MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[n];
+                    for (int i = 0; i < n; i++) {
+                        props[i] = new MotionEvent.PointerProperties();
+                        props[i].id = data.readInt();
+                        props[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+                        coords[i] = new MotionEvent.PointerCoords();
+                        coords[i].x = data.readInt();
+                        coords[i].y = data.readInt();
+                        coords[i].pressure = 1f;
+                        coords[i].size = 1f;
+                    }
+                    long now = SystemClock.uptimeMillis();
+                    if ((action & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_DOWN) hostDown = now;
+                    MotionEvent ev = MotionEvent.obtain(hostDown, now, action, n, props, coords, 0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+                    try {
+                        setDisplay.invoke(ev, id);
+                        inject.invoke(im, ev, 0);
+                    } catch (Throwable t) {
+                        System.out.println("touchm error " + t);
+                        System.out.flush();
+                    } finally {
+                        ev.recycle();
+                    }
+                    return true;
+                }
                 if (code == DirectHost.TX_TOUCH) {
                     int action = data.readInt(), x = data.readInt(), y = data.readInt();
                     long now = SystemClock.uptimeMillis();

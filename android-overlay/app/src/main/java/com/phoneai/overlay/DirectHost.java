@@ -14,7 +14,7 @@ import android.view.Surface;
  */
 final class DirectHost {
     static final int TX_SURFACE = IBinder.FIRST_CALL_TRANSACTION, TX_TOUCH = IBinder.FIRST_CALL_TRANSACTION + 1,
-            TX_KEY = IBinder.FIRST_CALL_TRANSACTION + 2;
+            TX_KEY = IBinder.FIRST_CALL_TRANSACTION + 2, TX_TOUCHM = IBinder.FIRST_CALL_TRANSACTION + 3;
     private static volatile IBinder host;
     private static volatile int display = -1;
 
@@ -58,6 +58,22 @@ final class DirectHost {
             return true;
         } catch (Exception e) {
             return false;
+        } finally {
+            p.recycle();
+        }
+    }
+
+    /** 多點觸控：action 同 MotionEvent（含 ACTION_POINTER_DOWN/UP 的指標編號位移）；ids、xs、ys 是每根手指的編號與背景螢幕座標。 */
+    static void touchMulti(int action, int[] ids, int[] xs, int[] ys) {
+        IBinder b = host;
+        if (b == null) return;
+        Parcel p = Parcel.obtain();
+        try {
+            p.writeInt(action);
+            p.writeInt(ids.length);
+            for (int i = 0; i < ids.length; i++) { p.writeInt(ids[i]); p.writeInt(xs[i]); p.writeInt(ys[i]); }
+            b.transact(TX_TOUCHM, p, null, IBinder.FLAG_ONEWAY);
+        } catch (Exception ignored) {
         } finally {
             p.recycle();
         }

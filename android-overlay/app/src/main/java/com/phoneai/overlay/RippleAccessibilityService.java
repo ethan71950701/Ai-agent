@@ -275,6 +275,18 @@ public class RippleAccessibilityService extends AccessibilityService {
         else s.openPreview(sf);
     }
 
+    /** 主螢幕轉向：預覽窗是用開啟時的螢幕大小排的，轉向後位置會跑掉甚至看不到，關掉重開一次（回到預設位置）。 */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (preview == null) return;
+        final String sf = OverlayService.vdSf;
+        closePreview();
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (!sf.isEmpty() && OverlayService.vdSf.equals(sf) && preview == null) openPreview(sf);
+        }, 400);
+    }
+
     /** 背景螢幕收掉了（任務結束、按停止）：把預覽窗也關掉。可以從任何執行緒呼叫。 */
     static void hidePreview() {
         final RippleAccessibilityService s = instance;
