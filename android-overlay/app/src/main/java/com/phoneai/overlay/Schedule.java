@@ -192,6 +192,7 @@ final class Schedule {
 
     /** 聊天助理的 schedule_web_query 工具：建立「每 N 天、幾點、用網路搜尋查某個資訊、用通知回報」。跳確認框；只查公開網頁，不登入、不操作螢幕。 */
     static String addWeb(Context c, String query, int h, int m, int everyDays, Memory.Confirm confirm) {
+        if (Announcements.off("scheduled_lookup")) return L.t("定時網路查詢目前被暫時停用了（公告）。");
         try {
             query = query == null ? "" : query.trim();
             if (query.isEmpty() || h < 0 || h > 23 || m < 0 || m > 59) return L.t("時間或要查的內容不完整，請問使用者。");
@@ -292,6 +293,7 @@ final class Schedule {
             long late = now.getTimeInMillis() - at.getTimeInMillis();
             if (today.equals(it.optString("last")) || late < 0 || late > MAX_LATE_MS) continue;
             if ("web".equals(it.optString("kind"))) {
+                if (Announcements.off("scheduled_lookup")) continue;   // 暫時停用：不執行也不更新「下次」，恢復後照常跑
                 if (today.compareTo(it.optString("next", today)) < 0) continue;   // 還沒到下一次（每 N 天）
                 String res = runWeb(c, it.optString("query"), it.optString("prev"));
                 if (!res.startsWith(L.t("查詢失敗："))) it.put("prev", res.split("\n" + java.util.regex.Pattern.quote(L.t("來源：")))[0]);   // 記下這次的結果（不含來源行），下次拿來比較

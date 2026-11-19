@@ -102,6 +102,7 @@ final class TransferServer {
         while (running && ss != null) {
             try {
                 final Socket s = ss.accept();
+                if (Announcements.off("file_transfer")) { try { s.close(); } catch (IOException ignored) { } continue; }   // 遠端公告暫時停用檔案互傳
                 if (ACTIVE.incrementAndGet() > MAX_CONNECTIONS) {   // 同時連線太多（異常或惡意）：直接關掉，不再開執行緒
                     ACTIVE.decrementAndGet();
                     try { s.close(); } catch (IOException ignored) { }

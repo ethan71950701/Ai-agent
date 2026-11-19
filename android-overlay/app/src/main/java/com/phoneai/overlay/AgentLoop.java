@@ -1731,7 +1731,7 @@ final class AgentLoop {
 
     /** 唯讀 shell：白名單程式，後面只能接過濾程式，不能寫入、跳脫或子命令。 */
     /** 唯讀指令檢查：實際規則在 {@link SafetyGuard}（純邏輯、有單元測試）；這裡保留舊名稱讓呼叫端不用改。 */
-    static boolean readOnly(String cmd) { return SafetyGuard.readOnly(cmd); }
+    static boolean readOnly(String cmd) { return !Announcements.off("run_shell") && SafetyGuard.readOnly(cmd); }   // 遠端公告可以暫時停用唯讀 shell 工具
 
     private static boolean in(String[] arr, String s) {
         for (String x : arr) if (x.equals(s)) return true;

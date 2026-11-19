@@ -37,6 +37,11 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("定時網路查詢目前被暫時停用了（公告）。", "Scheduled web lookups are temporarily disabled (announcement).");
+        m.put("公告", "Announcement");
+        m.put("前往更新", "Update now");
+        m.put("開 App 時看公告", "Check announcements when the app opens");
+        m.put("打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有新公告；不會傳送任何你的資料。關掉就不會收到公告，也收不到暫時停用功能的通知", "When the app opens (at most every 10 minutes) it checks GitHub for a new announcement; none of your data is sent. If turned off you will not get announcements or notices that a feature was temporarily disabled.");
         m.put("背景任務開始時自動顯示預覽窗", "Show the preview window automatically when a background task starts");
         m.put("很短的任務一下就結束，來不及點 Now Bar 開預覽。關掉的話，要自己點 Now Bar 才會出現", "Short tasks can finish before you tap the Now Bar. If turned off, tap the Now Bar to open the preview.");
         m.put("隱藏文字（輸入密碼時開）", "Hide text (turn on for passwords)");

@@ -411,7 +411,7 @@ final class ChatEngine {
             if (slot.openai()) return postOpenAi(app, body, slot, key);
             if (!slot.model.isEmpty()) { body.put("model", slot.model); lastModel = slot.model; }   // 使用者自己選了 Claude 的模型：用他選的（沒選就用程式內建的）
         }
-        final boolean stream = onPartial != null && !hasServerTools(body);
+        final boolean stream = onPartial != null && !hasServerTools(body) && !Announcements.off("chat_stream");
         if (stream) body.put("stream", true);
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;

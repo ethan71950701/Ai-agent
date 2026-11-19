@@ -405,4 +405,47 @@ public class LlmAdapterTest {
             org.junit.Assert.assertTrue(e.getMessage(), e.getMessage().contains("Overloaded"));
         }
     }
+
+    private static final long NOW = 1_800_000_000_000L;   // 2027-01 左右
+
+    @org.junit.Test
+    public void announcementShowsOnceUnlessCriticalAndStillOld() {
+        java.util.Set<String> none = new java.util.HashSet<>();
+        String j = "{\"id\":\"a1\",\"severity\":\"warn\",\"title\":{\"zh\":\"標題\",\"en\":\"Title\"},\"body\":\"內文\"}";
+        Announcements.Result r = Announcements.parse(j, 1000, NOW, true, none);
+        org.junit.Assert.assertTrue(r.show);
+        org.junit.Assert.assertEquals("標題", r.title);
+        org.junit.Assert.assertEquals("Title", Announcements.parse(j, 1000, NOW, false, none).title);
+        org.junit.Assert.assertTrue(r.offerUpdate);
+        java.util.Set<String> seen = new java.util.HashSet<>(java.util.Arrays.asList("a1"));
+        org.junit.Assert.assertFalse(Announcements.parse(j, 1000, NOW, true, seen).show);   // 看過了
+        String crit = "{\"id\":\"c1\",\"severity\":\"critical\",\"title\":\"t\",\"min_version_below\":1700}";
+        org.junit.Assert.assertTrue(Announcements.parse(crit, 1600, NOW, true, new java.util.HashSet<>(java.util.Arrays.asList("c1"))).show);   // 還沒更新：每次都提醒
+        org.junit.Assert.assertFalse(Announcements.parse(crit, 1700, NOW, true, none).show);   // 已經更新：不顯示
+        org.junit.Assert.assertFalse(Announcements.parse(crit, 1800, NOW, true, none).show);
+    }
+
+    @org.junit.Test
+    public void announcementEmptyExpiredAndMalformedNeverShow() {
+        java.util.Set<String> none = new java.util.HashSet<>();
+        org.junit.Assert.assertFalse(Announcements.parse("{\"id\":\"\",\"title\":{\"zh\":\"\"}}", 1, NOW, true, none).show);   // 空檔案
+        org.junit.Assert.assertFalse(Announcements.parse("{\"id\":\"x\"}", 1, NOW, true, none).show);                                 // 沒有文字
+        org.junit.Assert.assertFalse(Announcements.parse("{\"id\":\"x\",\"title\":\"t\",\"expires\":\"2020-01-01\"}", 1, NOW, true, none).show);
+        org.junit.Assert.assertTrue(Announcements.parse("{\"id\":\"x\",\"title\":\"t\",\"expires\":\"2999-01-01\"}", 1, NOW, true, none).show);
+        org.junit.Assert.assertNull(Announcements.parse("not json", 1, NOW, true, none));
+        org.junit.Assert.assertNull(Announcements.parse("", 1, NOW, true, none));
+    }
+
+    @org.junit.Test
+    public void announcementOnlyAllowsWhitelistedFlagsAndPlainText() {
+        String j = "{\"id\":\"x\",\"title\":\"t\\u0000\\u001b[31m紅\",\"disable\":[\"background_mode\",\"reboot_phone\",\"run_shell\",123]}";
+        Announcements.Result r = Announcements.parse(j, 1, NOW, true, new java.util.HashSet<>());
+        org.junit.Assert.assertEquals(new java.util.HashSet<>(java.util.Arrays.asList("background_mode", "run_shell")), r.disable);
+        org.junit.Assert.assertFalse(r.title.contains("\u0000"));
+        org.junit.Assert.assertFalse(r.title.contains("\u001b"));
+        StringBuilder big = new StringBuilder();
+        for (int i = 0; i < 2000; i++) big.append('字');
+        Announcements.Result b = Announcements.parse("{\"id\":\"x\",\"body\":\"" + big + "\"}", 1, NOW, true, new java.util.HashSet<>());
+        org.junit.Assert.assertTrue(b.body.length() <= 601);
+    }
 }
