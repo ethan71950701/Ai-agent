@@ -116,15 +116,53 @@ final class AiServiceUi {
         form.setOrientation(LinearLayout.VERTICAL);
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
-        form.addView(Ui.body(a, L.t("填這個服務的網址（到 /v1 為止）和模型。下一步輸入 Key 之後，可以查詢這個服務現在有哪些模型再選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
-        boolean both = ALL.equals(scope);
+        form.addView(Ui.body(a, L.t("填這個服務的網址（到 /v1 為止）和 API Key，按下一步會自動查詢有哪些模型讓你選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
         EditText base = field(a, form, L.t("網址"), ps.base.isEmpty() ? LlmConfig.DEF_BASE : ps.base);
-        EditText cheap = LlmConfig.VISION.equals(scope) ? null : field(a, form, L.t("便宜模型"), ps.cheap);
-        EditText vision = LlmConfig.CHEAP.equals(scope) ? null : field(a, form, L.t("看圖模型"), ps.vision);
+        EditText key = field(a, form, L.t("API Key（已存過可留空）"), "");
+        key.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
         new MaterialAlertDialogBuilder(a).setTitle(L.t(ps.name)).setView(form)
-                .setPositiveButton(L.t("儲存並輸入 Key"), (d, w) -> saveAndAskKey(a, scope, base.getText().toString(),
-                        cheap == null ? "" : cheap.getText().toString(), vision == null ? "" : vision.getText().toString(), done))
+                .setPositiveButton(L.t("儲存並查詢模型"), (d, w) -> {
+                    final String b = base.getText().toString().trim();
+                    final String k = key.getText().toString();
+                    if (b.isEmpty()) { android.widget.Toast.makeText(a, L.t("網址不能空白"), android.widget.Toast.LENGTH_LONG).show(); return; }
+                    saveAndList(a, scope, b, ps.cheap, ps.vision, k, done);
+                })
                 .setNegativeButton(L.t("取消"), null).show();
+    }
+
+    /** 自訂服務：存網址與 Key（Key 空白就沿用已存的），然後直接查詢模型清單讓使用者選。查不到才請使用者手動填模型名。 */
+    private static void saveAndList(Activity a, String scope, String b, String cheapModel, String visionModel, String keyText, Runnable done) {
+        if (!LlmAdapter.isSafeEndpoint(b)) { android.widget.Toast.makeText(a, L.t("網址必須是 https（或本機／區網的 http）"), android.widget.Toast.LENGTH_LONG).show(); return; }
+        LlmConfig.Slot probe = new LlmConfig.Slot(LlmConfig.OPENAI, b, "");
+        if (keyText != null && !keyText.trim().isEmpty()) {
+            String r = Maintenance.saveKey(keyText, LlmConfig.keyFile(probe));
+            if (r != null) { android.widget.Toast.makeText(a, r, android.widget.Toast.LENGTH_LONG).show(); return; }
+        } else if (!LlmConfig.hasOwnKey(a, probe)) {
+            android.widget.Toast.makeText(a, L.t("還沒有這個服務的 Key，請貼上 API Key"), android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!LlmConfig.VISION.equals(scope)) LlmConfig.set(a, LlmConfig.CHEAP, LlmConfig.OPENAI, b, cheapModel);
+        if (!LlmConfig.CHEAP.equals(scope)) LlmConfig.set(a, LlmConfig.VISION, LlmConfig.OPENAI, b, visionModel);
+        List<String> order = new ArrayList<>();
+        for (String x : slots(scope)) order.add(x);
+        pickModels(a, order, 0, done);
+    }
+
+    /** 查不到模型清單時：請使用者手動輸入模型名（空白＝保留目前的）。 */
+    private static void manualModel(Activity a, String name, LlmConfig.Slot slot, String why, Runnable next) {
+        LinearLayout form = new LinearLayout(a);
+        form.setOrientation(LinearLayout.VERTICAL);
+        int fp = Ui.dp(a, 20);
+        form.setPadding(fp, fp / 2, fp, 0);
+        form.addView(Ui.body(a, L.t("查不到這個服務的模型清單：") + (why == null ? "" : why) + "\n" + L.t("可以自己填模型名稱（空白＝保留目前的）。")));
+        EditText m = field(a, form, L.t("模型名稱"), slot.model == null ? "" : slot.model);
+        new MaterialAlertDialogBuilder(a).setTitle(LlmConfig.CHEAP.equals(name) ? L.t("便宜模型") : L.t("看圖模型")).setView(form)
+                .setPositiveButton(L.t("儲存"), (d, w) -> {
+                    String v = m.getText().toString().trim();
+                    if (!v.isEmpty()) LlmConfig.set(a, name, LlmConfig.OPENAI, slot.base, v);
+                    next.run();
+                })
+                .setNegativeButton(L.t("保留目前的"), (d, w) -> next.run()).show();
     }
 
     /** 存下網址與模型，接著輸入 Key，再問要不要查詢模型清單。 */
@@ -171,6 +209,7 @@ final class AiServiceUi {
             final String e = err;
             a.runOnUiThread(() -> {
                 if (models == null || models.isEmpty()) {
+                    if (slot.openai()) { manualModel(a, name, slot, e, () -> pickModels(a, order, idx + 1, done)); return; }
                     android.widget.Toast.makeText(a, L.t("查詢失敗，保留預設值：") + (e == null ? "" : e), android.widget.Toast.LENGTH_LONG).show();
                     pickModels(a, order, idx + 1, done);
                     return;

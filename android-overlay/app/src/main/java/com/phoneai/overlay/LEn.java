@@ -794,6 +794,15 @@ final class LEn {
         m.put("開啟官網用量頁：", "Open the usage page: ");
         m.put("（還沒有紀錄）", " (no records yet)");
         m.put("已用 $", "Used $");
+        m.put("API Key（已存過可留空）", "API key (leave empty if already saved)");
+        m.put("儲存並查詢模型", "Save and look up models");
+        m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
+        m.put("填這個服務的網址（到 /v1 為止）和 API Key，按下一步會自動查詢有哪些模型讓你選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。", "Enter this service's URL (up to /v1) and API key; the next step looks up the available models for you to pick. Note: the phone-operating prompts are tuned for Claude so test other models yourself; web search is Claude-only; task cost shows $0.");
+        m.put("查不到這個服務的模型清單：", "Could not get this service's model list: ");
+        m.put("模型名稱", "Model name");
+        m.put("網址不能空白", "The URL cannot be empty");
+        m.put("網址必須是 https（或本機／區網的 http）", "The URL must be https (or http on this device / local network)");
+        m.put("還沒有這個服務的 Key，請貼上 API Key", "No key saved for this service yet; paste the API key");
         m.put("填這個服務的網址（到 /v1 為止）和模型。下一步輸入 Key 之後，可以查詢這個服務現在有哪些模型再選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。", "Enter this service's URL (up to /v1) and models. After entering the key you can look up which models the service has now. Note: the phone-operating prompts are tuned for Claude so test other models yourself; web search is Claude-only; task cost shows $0.");
         m.put("AI 服務與 API Key", "AI service and API key");
         m.put("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡", "Pick Claude, Gemini, OpenAI and more; the key stays on the phone");
