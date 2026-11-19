@@ -538,4 +538,32 @@ public class LogicTest {
         assertFalse(AgentLoop.readOnly("getprop\u0000; reboot"));
         assertFalse(AgentLoop.readOnly("getprop\u001b[0m"));
     }
+
+    @Test
+    public void transferSpaceReservationIsAtomicAndReleasable() throws Exception {
+        final TransferServer.SpaceReserver r = new TransferServer.SpaceReserver();
+        final long usable = 10L * 1024, keep = 1024, each = 2L * 1024;   // 10 單位剩餘、至少留 1、每個要 2：最多只能答應 4 個
+        final java.util.concurrent.atomic.AtomicInteger ok = new java.util.concurrent.atomic.AtomicInteger();
+        Thread[] ts = new Thread[16];
+        final java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
+        for (int i = 0; i < ts.length; i++) {
+            ts[i] = new Thread(() -> {
+                try { go.await(); } catch (InterruptedException ignored) { }
+                if (r.tryReserve(usable, each, keep)) ok.incrementAndGet();
+            });
+            ts[i].start();
+        }
+        go.countDown();
+        for (Thread t0 : ts) t0.join();
+        assertEquals(4, ok.get());
+        assertEquals(4 * each, r.reserved());
+        assertFalse(r.tryReserve(usable, each, keep));
+        r.release(each);                         // 失敗或完成後釋放
+        assertTrue(r.tryReserve(usable, each, keep));
+        r.release(each * 100);                   // 多釋放不會變負數
+        assertEquals(0, r.reserved());
+        assertTrue(r.tryReserve(usable, 0, keep));   // 大小 0 的檔案沒問題
+        assertFalse(r.tryReserve(usable, -1, keep)); // 負數大小直接拒絕
+        assertFalse(r.tryReserve(500, 0, keep));     // 空間已經低於保留量，連 0 都不收
+    }
 }

@@ -95,7 +95,7 @@ final class TransferServer {
     static final long MAX_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024;
     private static final long KEEP_FREE_BYTES = 200L * 1024 * 1024;   // 接收後至少還要剩這麼多空間
     private static final Object RENAME_LOCK = new Object();
-    private static final java.util.concurrent.atomic.AtomicLong RESERVED = new java.util.concurrent.atomic.AtomicLong();   // 進行中的上傳已答應的位元組數
+    private static final SpaceReserver RESERVER = new SpaceReserver();
 
     private void loop() {
         ServerSocket ss = server;
@@ -296,37 +296,51 @@ final class TransferServer {
         File inbox = host.inbox();
         if (!inbox.isDirectory() && !inbox.mkdirs()) { reply(out, 500, "no inbox"); return; }
         if (expect > MAX_UPLOAD_BYTES) { reply(out, 413, "too large"); return; }
-        synchronized (RENAME_LOCK) {   // 預留空間：同時好幾個上傳各自看到「夠用」、一起寫滿的情形，要把已答應的量算進去
-            if (inbox.getUsableSpace() - RESERVED.get() - expect < KEEP_FREE_BYTES) { reply(out, 507, "not enough space"); return; }
-            RESERVED.addAndGet(expect);
-        }
-        final long reserved = expect;
-        File tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
+        if (!insideRoot(host.root(), inbox)) { reply(out, 500, "inbox outside root"); return; }   // 收件匣本身是指到共享根目錄外面的符號連結：不寫
+        if (!RESERVER.tryReserve(inbox.getUsableSpace(), expect, KEEP_FREE_BYTES)) { reply(out, 507, "not enough space"); return; }   // 預留空間：同時好幾個上傳各自看到「夠用」、一起寫滿的情形，要把已答應的量算進去
         long total = 0;
-        try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
-             FileOutputStream fo = new FileOutputStream(tmp)) {
-            byte[] buf = new byte[32 * 1024];
-            int n;
-            while ((n = body.read(buf)) > 0) {
-                fo.write(buf, 0, n);
-                total += n;
-                if (total > MAX_UPLOAD_BYTES || total > expect + 64 * 1024) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
-                if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
-                host.progress(au.peer, false, base, total, expect);
+        File tmp = null;
+        try {   // 不管成功、失敗、被中斷（含 Error），預留的空間與暫存檔一定要處理掉
+            tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
+            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
+                 FileOutputStream fo = new FileOutputStream(tmp)) {
+                byte[] buf = new byte[32 * 1024];
+                int n;
+                while ((n = body.read(buf)) > 0) {
+                    fo.write(buf, 0, n);
+                    total += n;
+                    if (total > MAX_UPLOAD_BYTES || total > expect + 64 * 1024) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
+                    if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
+                    host.progress(au.peer, false, base, total, expect);
+                }
             }
-        } catch (IOException | RuntimeException e) {
-            tmp.delete();   // 中斷或被停止：未完成的檔案刪掉
-            RESERVED.addAndGet(-reserved);
-            throw e;
+            File dest;
+            synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
+                dest = unique(inbox, base);
+                if (!tmp.renameTo(dest)) { reply(out, 500, "rename failed"); return; }
+                tmp = null;   // 已經改名成正式檔案，不要在 finally 刪掉
+            }
+            host.event(au.peer, "put", rel(dest), total);
+            sendText(out, au, "saved\t" + dest.getName() + "\t" + total);
+        } finally {
+            if (tmp != null) tmp.delete();   // 中斷、被停止或改名失敗：未完成的檔案刪掉
+            RESERVER.release(expect);
         }
-        RESERVED.addAndGet(-reserved);   // 寫完了：預留的量還回去（實際用掉的空間下次檢查就看得到）
-        File dest;
-        synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
-            dest = unique(inbox, base);
-            if (!tmp.renameTo(dest)) { tmp.delete(); reply(out, 500, "rename failed"); return; }
+    }
+
+    /** 進行中的上傳「已答應」的空間總量；判斷剩餘空間夠不夠時要先扣掉它。純邏輯，可單元測試。 */
+    static final class SpaceReserver {
+        private long reserved;
+
+        synchronized boolean tryReserve(long usable, long expect, long keepFree) {
+            if (expect < 0 || usable - reserved - expect < keepFree) return false;
+            reserved += expect;
+            return true;
         }
-        host.event(au.peer, "put", rel(dest), total);
-        sendText(out, au, "saved\t" + dest.getName() + "\t" + total);
+
+        synchronized void release(long n) { reserved = Math.max(0, reserved - n); }
+
+        synchronized long reserved() { return reserved; }
     }
 
     private static File unique(File dir, String name) {
