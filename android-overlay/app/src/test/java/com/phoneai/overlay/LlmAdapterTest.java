@@ -350,4 +350,15 @@ public class LlmAdapterTest {
         org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint(""));
         org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint(null));
     }
+
+    @org.junit.Test
+    public void errorBodiesNeverEchoKeys() {
+        String e = LlmErrors.explain(401, "{\"error\":{\"message\":\"Incorrect API key provided: sk-proj-abcdefghijklmnop1234. Bearer abcdefgh12345678\"}}", "OpenAI");
+        org.junit.Assert.assertFalse(e, e.contains("abcdefghijklmnop1234"));
+        org.junit.Assert.assertFalse(e, e.contains("abcdefgh12345678"));
+        org.junit.Assert.assertTrue(e.contains("HTTP 401"));
+        String g = LlmErrors.explain(400, "API key not valid. AIzaSyA1234567890abcdefghijklmnopqrstu", "Gemini");
+        org.junit.Assert.assertFalse(g, g.contains("AIzaSyA1234567890"));
+        org.junit.Assert.assertEquals("", LlmErrors.redact(null));
+    }
 }

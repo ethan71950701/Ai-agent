@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 安全與穩定性（第三輪審查）：root／Shizuku 指令失敗（結束碼不是 0）時不再換另一種 su 寫法重跑（以前可能把有副作用的腳本跑三遍）；程序逾時與輸出上限改成整個生命週期有界；唯讀 shell 檢查改成白名單（dumpsys 只准幾個服務、cat 只准幾類系統檔、擋引號與控制字元、ls -R）；互傳檔案的預留空間一定會釋放；查模型清單、查餘額、測模型也強制 https；錯誤訊息不會回顯 API Key｜Security and stability (third review): when a root/Shizuku command fails (non-zero exit) it is no longer re-run with another su variant (it could run a side-effecting script three times); process timeout and output cap now cover the whole lifecycle; the read-only shell check is now allowlist-based (dumpsys only for a few services, cat only for some system files, quotes and control characters blocked, ls -R blocked); file-transfer space reservations are always released; model listing, balance and model tests also require https; error messages no longer echo API keys
 - 安全與穩定性（第二次外部審查）：唯讀指令的黑名單不再被多個空格／Tab／前置選項繞過（dumpsys notification 等）；互傳檔案列表也不列符號連結、一定要有檔案大小、並行上傳會預留空間、傳輸中持續檢查剩餘空間；root 指令加上 90 秒逾時與 2 MB 輸出上限｜Security and stability (second external review): the read-only shell denylist can no longer be bypassed with extra spaces/tabs/leading options (dumpsys notification, etc.); file-transfer listings also hide symlinks, a file size is now required, concurrent uploads reserve space and free space is rechecked during transfer; root commands now have a 90 s timeout and a 2 MB output cap
 
 ## 1.0.1679

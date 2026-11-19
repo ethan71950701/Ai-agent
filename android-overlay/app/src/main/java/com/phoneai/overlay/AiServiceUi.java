@@ -214,6 +214,7 @@ final class AiServiceUi {
 
     /** 對這個模型送一則極短的請求，看你的帳號能不能用。能用回 null，不能用回原因（含狀態碼）。 */
     static String testModel(String base, String key, String model) {
+        if (key != null && !LlmAdapter.isSafeEndpoint(base)) return L.t("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。");
         try {
             HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
             con.setRequestMethod("POST");
@@ -237,6 +238,7 @@ final class AiServiceUi {
 
     /** GET {網址}/models（OpenAI 相容服務都有）；Gemini 回的名稱前面有 models/，去掉。 */
     static List<String> listModels(String base, String key) throws Exception {
+        if (key != null && !LlmAdapter.isSafeEndpoint(base)) throw new Exception(L.t("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。"));
         String b = base.trim();
         while (b.endsWith("/")) b = b.substring(0, b.length() - 1);
         HttpURLConnection con = (HttpURLConnection) new URL(b + "/models").openConnection();

@@ -30,6 +30,7 @@ final class LlmBalance {
     }
 
     private static String get(String url, String key) throws Exception {
+        if (!LlmAdapter.isSafeEndpoint(url)) throw new Exception(L.t("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。"));
         HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         con.setConnectTimeout(15000);
         con.setReadTimeout(20000);

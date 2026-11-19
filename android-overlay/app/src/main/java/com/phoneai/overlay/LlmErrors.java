@@ -4,6 +4,16 @@ package com.phoneai.overlay;
 final class LlmErrors {
     private LlmErrors() { }
 
+    /** 錯誤內容有些服務會把（部分）Key 回顯在裡面：像 Key 的字串一律遮掉，不顯示、也不寫進紀錄。 */
+    static String redact(String s) {
+        if (s == null) return "";
+        return s.replaceAll("(?i)(bearer\\s+)[A-Za-z0-9._\\-]{8,}", "$1[已遮蔽]")
+                .replaceAll("sk-[A-Za-z0-9._\\-*]{6,}", "[已遮蔽]")
+                .replaceAll("AIza[0-9A-Za-z_\\-]{20,}", "[已遮蔽]")
+                .replaceAll("tvly-[A-Za-z0-9_\\-]{8,}", "[已遮蔽]")
+                .replaceAll("[A-Za-z0-9_\\-]{32,}", "[已遮蔽]");
+    }
+
     static String explain(int code, String body, String service) {
         String what;
         switch (code) {
@@ -28,7 +38,7 @@ final class LlmErrors {
             default:
                 what = code >= 500 ? L.t("這個服務暫時有問題（伺服器錯誤），稍後再試。") : L.t("服務回傳了錯誤。");
         }
-        String raw = body == null ? "" : body.replaceAll("\\s+", " ").trim();
+        String raw = redact(body == null ? "" : body.replaceAll("\\s+", " ").trim());
         if (raw.length() > 160) raw = raw.substring(0, 160) + "…";
         return (service.isEmpty() ? "" : service + "：") + "HTTP " + code + "　" + what + (raw.isEmpty() ? "" : "\n（" + raw + "）");
     }
