@@ -1560,9 +1560,9 @@ final class AgentLoop {
             String n = Router.norm(name);
             java.util.List<String> near = new java.util.ArrayList<>(), rest = new java.util.ArrayList<>();
             for (String k : new java.util.TreeSet<>(apps.keySet())) {
-                boolean rel = false;
-                for (int i = 0; !rel && i + 1 <= n.length(); i++) rel = k.contains(n.substring(i, i + 1)) && n.length() <= 2;
-                (rel ? near : rest).add(k);
+                boolean cjk = false;   // 中文名稱優先列出（英文名稱按字母排在前面，會把長度額度用完）
+                for (int i = 0; !cjk && i < k.length(); i++) cjk = k.charAt(i) >= 0x2E80;
+                (cjk ? near : rest).add(k);
             }
             StringBuilder sb = new StringBuilder("。已安裝的 App 名稱（請用其中一個名稱重試，遊戲在手機上可能是英文名）：");
             int shown = 0;

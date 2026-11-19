@@ -46,8 +46,20 @@ final class Router {
         return AgentLoop.isQuestion(task) && task != null && SYSTEM_INFO.matcher(task).find();
     }
 
+    private static android.icu.text.Transliterator toSimplified;
+    private static boolean icuTried;
+
+    /** 繁體轉簡體：App 名稱可能是簡體（遊戲常見），使用者或模型說的是繁體（或反過來），比對前兩邊都轉成簡體。 */
+    private static String simplify(String t) {
+        if (!icuTried) {
+            icuTried = true;
+            try { toSimplified = android.icu.text.Transliterator.getInstance("Hant-Hans"); } catch (Throwable ignored) { }
+        }
+        try { return toSimplified == null ? t : toSimplified.transliterate(t); } catch (Throwable e) { return t; }
+    }
+
     static String norm(String t) {
-        return (t == null ? "" : t).replaceAll("[\\s\\-_，。,.]", "").toLowerCase(java.util.Locale.ROOT);
+        return simplify((t == null ? "" : t).replaceAll("[\\s\\-_，。,.]", "").toLowerCase(java.util.Locale.ROOT));
     }
 
     /** App 名稱 → 套件名稱（已安裝、有桌面圖示的）。 */

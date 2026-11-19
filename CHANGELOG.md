@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 開 App 時繁體與簡體名稱互通（例如「死亡細胞」對上「死亡细胞」）；找不到時提示列出的已安裝 App 先列中文名稱｜Opening apps now treats Traditional and Simplified names as the same (e.g. 死亡細胞 matches 死亡细胞); when an app isn't found, the installed-app hint lists Chinese names first
 - 背景螢幕：橫式 App／遊戲不再把預覽轉歪（叫系統忽略 App 的方向要求，橫式畫面上下留黑邊）｜Background display: landscape apps/games no longer rotate the preview sideways (the system is told to ignore the app's orientation request; landscape content is letterboxed)
 
 ## 1.0.1664
