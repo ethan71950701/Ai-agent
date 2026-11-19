@@ -85,6 +85,16 @@ public class AssistantSheet {
     private String curSvc = "";
     private final Runnable waitTimeout = this::dismiss;
 
+    /** 送出後等回答多久沒消息就收起面板：一般 30 秒、帶圖 120 秒；聊天用的是本機／區網的模型（想很久、一開始沒有輸出）就等 180 秒，不然回答還沒到面板先關了。 */
+    private long waitMs(boolean images) {
+        if (images) return 120000;
+        try {
+            String b = LlmConfig.cheap(act).base;
+            if (b != null && b.trim().toLowerCase(java.util.Locale.ROOT).startsWith("http://")) return 180000;
+        } catch (Exception ignored) { }
+        return 30000;
+    }
+
     /** 錯誤碼 12/13（語言不支援/不可用）時，依序換這幾種語言寫法再試；null = 不指定語言（用系統預設）。 */
     private static String[] langs() {   // 辨識語言的寫法（隨介面語言，不快取，所以切換語言不用重開）
         return L.en() ? new String[]{"en-US", null} : new String[]{"zh-TW", "cmn-Hant-TW", "zh-Hant-TW", "zh-CN", null};
@@ -999,7 +1009,7 @@ public class AssistantSheet {
             setStatus(L.t("思考中…"));
             setWaveState(WaveView.THINKING);
             refreshAction();
-            root.postDelayed(waitTimeout, sendImgs.isEmpty() ? 30000 : 120000);   // 帶圖片的請求上傳大、看圖慢，等久一點（以前一律 30 秒，面板會在回答前自己關掉）
+            root.postDelayed(waitTimeout, waitMs(!sendImgs.isEmpty()));   // 帶圖片的請求上傳大、看圖慢，等久一點（以前一律 30 秒，面板會在回答前自己關掉）
             return;
         }
         // 送出後面板不關：輸入換成思考中的聲波、按鈕停用。助理如果是用文字回答，會出現回答卡片；
@@ -1008,7 +1018,7 @@ public class AssistantSheet {
         input.setEnabled(false);
         setWaveState(WaveView.THINKING);
         row.setEnabled(false);
-        root.postDelayed(waitTimeout, sendImgs.isEmpty() ? 30000 : 120000);
+        root.postDelayed(waitTimeout, waitMs(!sendImgs.isEmpty()));
     }
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */
