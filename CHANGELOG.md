@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1693
+
 - 移除一次性的簽名金鑰產生工作流程（它會把金鑰明文放進 Artifact）｜Removed the one-off signing-key generator workflow (it put the key in a plain Artifact)
 - 安全補強：唯讀指令的管線工具不能再讀檔；逾時會結束整組子程序；截圖讀取加上時間與大小上限；互傳檔案大小必須完全一致；CI 簽名金鑰只在建置時出現｜Security hardening: read-only pipes can no longer read files; timeouts kill the whole process tree; screenshot reads are time- and size-bounded; transfer size must match exactly; CI signing key only exists during the build
 
