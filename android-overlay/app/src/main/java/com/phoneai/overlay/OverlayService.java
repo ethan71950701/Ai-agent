@@ -305,13 +305,10 @@ public class OverlayService extends Service {
         Icon icon = Icon.createWithResource(this, R.drawable.ic_stat);
         // 點通知開 App。沒有 contentIntent 時 logcat 顯示 OngoingActivityDataHelper.shouldHide()=true（intent.component:null），膠囊被藏
         boolean vd = !vdSf.isEmpty();  // 有背景虛擬螢幕：點通知 = 顯示／關閉預覽；沒有就開 App
-        PendingIntent open = vd
-                // 點 Now Bar／通知：用看不見的 Activity 轉一手再開關預覽窗（三星的 Now Bar 對 PendingIntent.getService 不一定有反應）
-                ? PendingIntent.getActivity(this, 2, new Intent(this, PreviewToggleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION),
-                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)
-                : PendingIntent.getActivity(this, 0,
-                        new Intent(this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP),
-                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        // 點 Now Bar／通知：永遠是同一個 PendingIntent（看不見的跳板 Activity），由它當下判斷：有背景螢幕就開關預覽窗，沒有就開 App。
+        // 不再依「有沒有背景螢幕」換不同的 PendingIntent：三星的 Now Bar 可能只認第一次發出時的 contentIntent，之後更新的不理（使用者回報以前點得動，後來點不動）。
+        PendingIntent open = PendingIntent.getActivity(this, 2, new Intent(this, PreviewToggleActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION),
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         String chip = max > 0 ? "AI " + step + "/" + max : "AI";  // 膠囊空間小（建議 7 字內）
         Notification.Builder b = new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat)

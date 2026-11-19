@@ -8,7 +8,10 @@ public class PreviewToggleActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        try { RippleAccessibilityService.togglePreview(OverlayService.vdSf); } catch (Throwable ignored) { }
+        try {
+            if (!OverlayService.vdSf.isEmpty()) RippleAccessibilityService.togglePreview(OverlayService.vdSf);   // 有背景螢幕：開關預覽窗
+            else startActivity(new android.content.Intent(this, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP | android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP));   // 沒有：開 App
+        } catch (Throwable ignored) { }
         finish();
         overridePendingTransition(0, 0);
     }
