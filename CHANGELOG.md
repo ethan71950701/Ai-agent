@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 背景模式：任務結束或按停止後，預覽窗會跟著關掉；拿掉「從預覽窗取畫面」的截圖備援（系統截圖本來就正常）｜Background mode: the preview window now closes when the task ends or you press stop; the "capture from the preview window" screenshot fallback was removed (the system screencap works)
+
+## 1.0.1671
+
 - 診斷：在背景預覽窗裡點擊時，記錄接手與輸入通道的狀態｜Diagnostics: touching the background preview now logs the takeover and input-channel state
 
 ## 1.0.1669
