@@ -563,8 +563,18 @@ final class AgentLoop {
             } else {
                 Process p = new ProcessBuilder(Root.su(), "-c", BgDisplay.active ? "screencap -d " + BgDisplay.sf + " -p" : "screencap -p").redirectErrorStream(false).start();
                 p.getOutputStream().close();
+                final Process pp = p;
+                final StringBuilder errBuf = new StringBuilder();
+                Thread et = new Thread(() -> { try { errBuf.append(new String(readAll(pp.getErrorStream()), java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception ignored) { } }, "screencap-err");
+                et.setDaemon(true);
+                et.start();
                 png = readAll(p.getInputStream());
-                p.waitFor();
+                int code = p.waitFor();
+                try { et.join(300); } catch (InterruptedException ignored) { }
+                if (png.length < 100 && BgDisplay.active) {   // 診斷：背景螢幕截不到時，記下結束碼與錯誤訊息（不含畫面內容）
+                    String e = errBuf.toString().trim().replace('\n', ' ');
+                    LifeLog.add(App.ctx, "背景螢幕截圖失敗：screencap -d " + BgDisplay.sf + " 結束碼 " + code + "，輸出 " + png.length + " 位元組" + (e.isEmpty() ? "" : "，錯誤：" + (e.length() > 160 ? e.substring(0, 160) : e)));
+                }
             }
             if (png.length < 100 && BgDisplay.active) {   // screencap -d 截不到背景螢幕（直接顯示模式）：改從預覽窗拿畫面
                 Bitmap viaPreview = RippleAccessibilityService.previewSnapshot(OverlayService.vdSf);
