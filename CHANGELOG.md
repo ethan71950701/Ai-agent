@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1695
+
 - 本機／區網的 AI 服務（例如手機上跑的本地模型）不用填 API Key｜Local / LAN AI services (e.g. a model running on the phone) no longer need an API key
 
 ## 1.0.1694
