@@ -99,20 +99,49 @@ final class SafetyGuard {
         return false;
     }
 
+    /**
+     * 管線後面的文字處理工具：只准處理前一段的輸出（標準輸入），**不准任何檔案參數**——
+     * 不然 `getprop | grep . /proc/self/environ` 就能讓 grep 讀白名單外的檔案（外部審查發現）。
+     * 做法：把參數分成「選項」「選項的值」「一般參數（可能是檔案）」，一般參數數量必須剛好符合（grep 一個＝搜尋字串；tr 一到兩個＝字元集；其他零個），
+     * 而且搜尋字串與字元集不能含「/」；會讀檔、遞迴、寫檔、執行程式、不會結束的選項一律拒絕。
+     */
     private static boolean pipeSegmentSafe(String prog, String[] w) {
+        final java.util.Set<String> valueOpts;   // 需要下一個參數當值的選項
         switch (prog) {
-            case "sort":   // sort -o 檔案 會寫檔；--compress-program 會執行程式；-T 指定暫存目錄
-                for (int k = 1; k < w.length; k++) {
-                    if (w[k].matches("-[a-zA-Z]*[oT][a-zA-Z]*") || w[k].startsWith("--output") || w[k].startsWith("--compress-program") || w[k].startsWith("--temporary-directory")) return false;
+            case "grep": valueOpts = new java.util.HashSet<>(java.util.Arrays.asList("-m", "-A", "-B", "-C")); break;
+            case "head": case "tail": valueOpts = new java.util.HashSet<>(java.util.Arrays.asList("-n", "-c")); break;
+            case "sort": valueOpts = new java.util.HashSet<>(java.util.Arrays.asList("-k", "-t")); break;
+            case "cut": valueOpts = new java.util.HashSet<>(java.util.Arrays.asList("-d", "-f", "-c", "-b")); break;
+            case "uniq": valueOpts = new java.util.HashSet<>(java.util.Arrays.asList("-f", "-s", "-w")); break;
+            default: valueOpts = new java.util.HashSet<>(); break;   // wc、tr
+        }
+        java.util.List<String> operands = new java.util.ArrayList<>();
+        boolean skipNext = false;
+        for (int k = 1; k < w.length; k++) {
+            String t = w[k];
+            if (skipNext) { skipNext = false; continue; }   // 選項的值（數字、分隔字元…）；這些選項的值不會被當成檔案
+            if (t.startsWith("-") && t.length() > 1) {
+                if (t.startsWith("--")) {   // 長選項一律不收（--file、--recursive、--output、--follow…），只留常見的無害旗標
+                    if (!(t.equals("--count") || t.equals("--ignore-case") || t.equals("--invert-match") || t.equals("--line-number"))) return false;
+                    continue;
                 }
+                if (prog.equals("grep") && t.matches("-[a-zA-Z]*[frRdDeEPXz][a-zA-Z]*") && !t.matches("-[a-zA-Z]*E[a-zA-Z]*")) return false;   // -f 檔案、-r/-R 遞迴、-d/-D 目錄與裝置、-e 另一種給搜尋字串的方式
+                if (prog.equals("sort") && t.matches("-[a-zA-Z]*[oT][a-zA-Z]*")) return false;      // -o 寫檔、-T 暫存目錄
+                if (prog.equals("tail") && t.matches("-[a-zA-Z]*[fF][a-zA-Z]*")) return false;      // -f 不會結束
+                if (valueOpts.contains(t)) skipNext = true;
+                continue;
+            }
+            operands.add(t);
+        }
+        switch (prog) {
+            case "grep":
+                return operands.size() == 1 && operands.get(0).matches("[^/\\\\\\s]{1,80}");
+            case "tr":
+                if (operands.isEmpty() || operands.size() > 2) return false;
+                for (String o : operands) if (!o.matches("[A-Za-z0-9\\-:,._]{1,40}")) return false;
                 return true;
-            case "uniq":   // uniq 輸入 輸出：第二個非選項參數是輸出檔
-                for (int k = 1; k < w.length; k++) if (!w[k].startsWith("-")) return false;
-                return true;
-            case "tail":   // tail -f 不會結束
-                for (int k = 1; k < w.length; k++) if (w[k].equals("-f") || w[k].equals("-F") || w[k].startsWith("--follow")) return false;
-                return true;
-            default: return true;
+            default:
+                return operands.isEmpty();   // head、tail、wc、sort、cut、uniq：不能有任何檔案參數
         }
     }
 

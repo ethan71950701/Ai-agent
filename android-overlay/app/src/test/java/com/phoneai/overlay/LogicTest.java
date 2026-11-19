@@ -566,4 +566,40 @@ public class LogicTest {
         assertFalse(r.tryReserve(usable, -1, keep)); // 負數大小直接拒絕
         assertFalse(r.tryReserve(500, 0, keep));     // 空間已經低於保留量，連 0 都不收
     }
+
+    @Test
+    public void readOnlyPipeToolsCannotReadFiles() {
+        // 外部審查發現：管線後面的 grep 等工具可以帶檔案參數，讀到白名單以外的檔案
+        assertFalse(AgentLoop.readOnly("getprop | grep . /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | grep version /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | grep version environ"));
+        assertFalse(AgentLoop.readOnly("getprop | grep -f /proc/self/environ x"));
+        assertFalse(AgentLoop.readOnly("getprop | grep -r x"));
+        assertFalse(AgentLoop.readOnly("getprop | grep -rn x"));
+        assertFalse(AgentLoop.readOnly("getprop | grep -e x"));
+        assertFalse(AgentLoop.readOnly("getprop | grep --file=/proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | grep"));
+        assertFalse(AgentLoop.readOnly("getprop | grep a/b"));
+        assertFalse(AgentLoop.readOnly("getprop | head /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | head -n 5 /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | tail -n 5 environ"));
+        assertFalse(AgentLoop.readOnly("getprop | wc -l /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | sort /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | cut -f1 /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | uniq /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | tr a /proc/self/environ"));
+        assertFalse(AgentLoop.readOnly("getprop | tr"));
+        assertFalse(AgentLoop.readOnly("getprop | head --lines=5"));
+        // 正常用法仍可以
+        assertTrue(AgentLoop.readOnly("getprop | grep version"));
+        assertTrue(AgentLoop.readOnly("getprop | grep -i version | head -n 5"));
+        assertTrue(AgentLoop.readOnly("getprop | grep -m 3 ro.build"));
+        assertTrue(AgentLoop.readOnly("getprop | grep -E ro.build | wc -l"));
+        assertTrue(AgentLoop.readOnly("dumpsys battery | grep level | cut -d: -f2"));
+        assertTrue(AgentLoop.readOnly("dumpsys battery | cut -d : -f 2"));
+        assertTrue(AgentLoop.readOnly("pm list packages | sort | uniq -c | tail -5"));
+        assertTrue(AgentLoop.readOnly("getprop | head -5"));
+        assertTrue(AgentLoop.readOnly("getprop | tr a-z A-Z | head -n 3"));
+        assertTrue(AgentLoop.readOnly("getprop | sort -r | head -n 2"));
+    }
 }
