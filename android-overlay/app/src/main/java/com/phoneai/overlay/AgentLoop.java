@@ -1069,7 +1069,7 @@ final class AgentLoop {
                 case "open": {
                     String pkg = a.optString("pkg", "");
                     if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));   // 提示寫「程式會用 name 查套件」，這裡真的去查
-                    if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App";
+                    if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name"));
                     if (BgDisplay.active && ProtectedApps.isProtected(c, pkg)) return "背景模式不會操作銀行、支付這類受保護的 App（" + pkg + "）；請關掉背景模式，改在主螢幕做（會先問你）";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
                     st.opened.add(pkg);
@@ -1249,7 +1249,7 @@ final class AgentLoop {
             case "open": {
                 String pkg = a.optString("pkg", "");
                 if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));
-                if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App";
+                if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name"));
                 if (!Phone.launch(c, pkg)) return "打不開 " + pkg;
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;
@@ -1553,6 +1553,25 @@ final class AgentLoop {
     }
 
     /** 依 App 顯示名稱找已安裝的套件名稱：先完全相符，再找名稱互相包含的；找不到回 null。 */
+    /** 找不到 App 時：附上已安裝 App 的名稱（優先列出名稱有相同字的），讓模型自己改用正確的名稱（例如遊戲在手機上是英文名）。 */
+    private static String installedHint(Context c, String name) {
+        try {
+            java.util.Map<String, String> apps = Router.apps(c);
+            String n = Router.norm(name);
+            java.util.List<String> near = new java.util.ArrayList<>(), rest = new java.util.ArrayList<>();
+            for (String k : new java.util.TreeSet<>(apps.keySet())) {
+                boolean rel = false;
+                for (int i = 0; !rel && i + 1 <= n.length(); i++) rel = k.contains(n.substring(i, i + 1)) && n.length() <= 2;
+                (rel ? near : rest).add(k);
+            }
+            StringBuilder sb = new StringBuilder("。已安裝的 App 名稱（請用其中一個名稱重試，遊戲在手機上可能是英文名）：");
+            int shown = 0;
+            for (String k : near) { if (shown++ >= 20) break; sb.append(k).append("、"); }
+            for (String k : rest) { if (sb.length() > 700) break; sb.append(k).append("、"); }
+            return sb.toString();
+        } catch (Throwable t) { return ""; }
+    }
+
     private static String findPackage(Context c, String name) {
         String n = Router.norm(name);
         if (n.isEmpty()) return null;

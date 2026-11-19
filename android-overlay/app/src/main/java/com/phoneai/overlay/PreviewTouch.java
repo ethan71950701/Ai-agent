@@ -70,14 +70,17 @@ final class PreviewTouch extends View {
     }
 
     /** 卡片下面的把手區（y 超過卡片高度）：只有這裡拖動才是移動／上滑關閉視窗。 */
-    private boolean inHandleZone(MotionEvent e) { return e.getY() > card.cardHeight(); }
+    private boolean inHandleZone(MotionEvent e) { return e.getY() > handleTop(); }
+
+    /** 把手那一列的上緣：用這個視窗自己的高度算（比卡片多出 HANDLE_H_DP 那一條），卡片大小正在變的瞬間按鈕也不會跑到卡片中間。 */
+    private float handleTop() { return getHeight() > 0 ? getHeight() - HANDLE_H_DP * d : card.cardHeight(); }
 
     /** 畫卡片正下方那一列：中間一條細細的小白條（跟系統手勢條同風格：抓它拖動視窗、往上滑關閉），最右邊兩條斜線（抓它拖曳縮放）。 */
     @Override
     protected void onDraw(android.graphics.Canvas c) {
         drawBackHint(c);
         if (!pillOn) return;
-        float cx = getWidth() / 2f, cy = card.cardHeight() + (HANDLE_H_DP * 0.45f) * d;
+        float cx = getWidth() / 2f, cy = handleTop() + (HANDLE_H_DP * 0.45f) * d;
         pillPaint.setColor(OverlayService.takeover ? 0xB3FFFFFF : 0x88FFFFFF);
         pillPaint.setStyle(android.graphics.Paint.Style.FILL);
         c.drawRoundRect(cx - 18 * d, cy - 1.5f * d, cx + 18 * d, cy + 1.5f * d, 2 * d, 2 * d, pillPaint);
