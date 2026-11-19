@@ -88,12 +88,25 @@ final class TransferServer {
         server = null;
     }
 
+    /** 同時最多幾個連線（含傳輸中的），超過就拒絕新的。 */
+    static final int MAX_CONNECTIONS = 8;
+    private static final java.util.concurrent.atomic.AtomicInteger ACTIVE = new java.util.concurrent.atomic.AtomicInteger();
+    /** 單一檔案接收上限（2 GiB）；另外還要確認收件匣所在儲存空間夠用。 */
+    static final long MAX_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024;
+    private static final long KEEP_FREE_BYTES = 200L * 1024 * 1024;   // 接收後至少還要剩這麼多空間
+    private static final Object RENAME_LOCK = new Object();
+
     private void loop() {
         ServerSocket ss = server;
         while (running && ss != null) {
             try {
                 final Socket s = ss.accept();
-                Thread t = new Thread(() -> serve(s), "transfer-conn");
+                if (ACTIVE.incrementAndGet() > MAX_CONNECTIONS) {   // 同時連線太多（異常或惡意）：直接關掉，不再開執行緒
+                    ACTIVE.decrementAndGet();
+                    try { s.close(); } catch (IOException ignored) { }
+                    continue;
+                }
+                Thread t = new Thread(() -> { try { serve(s); } finally { ACTIVE.decrementAndGet(); } }, "transfer-conn");
                 t.setDaemon(true);
                 t.start();
             } catch (IOException e) {
@@ -280,8 +293,9 @@ final class TransferServer {
         if (base.isEmpty() || base.equals("..") || base.equals(".")) { reply(out, 400, "bad name"); return; }
         File inbox = host.inbox();
         if (!inbox.isDirectory() && !inbox.mkdirs()) { reply(out, 500, "no inbox"); return; }
-        File dest = unique(inbox, base);
-        File tmp = new File(inbox, "." + dest.getName() + ".part");
+        if (expect > MAX_UPLOAD_BYTES) { reply(out, 413, "too large"); return; }
+        if (expect > 0 && inbox.getUsableSpace() - expect < KEEP_FREE_BYTES) { reply(out, 507, "not enough space"); return; }
+        File tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
         long total = 0;
         try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
              FileOutputStream fo = new FileOutputStream(tmp)) {
@@ -290,13 +304,18 @@ final class TransferServer {
             while ((n = body.read(buf)) > 0) {
                 fo.write(buf, 0, n);
                 total += n;
+                if (total > MAX_UPLOAD_BYTES || (expect > 0 && total > expect + 64 * 1024)) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
                 host.progress(au.peer, false, base, total, expect);
             }
         } catch (IOException | RuntimeException e) {
             tmp.delete();   // 中斷或被停止：未完成的檔案刪掉
             throw e;
         }
-        if (!tmp.renameTo(dest)) { tmp.delete(); reply(out, 500, "rename failed"); return; }
+        File dest;
+        synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
+            dest = unique(inbox, base);
+            if (!tmp.renameTo(dest)) { tmp.delete(); reply(out, 500, "rename failed"); return; }
+        }
         host.event(au.peer, "put", rel(dest), total);
         sendText(out, au, "saved\t" + dest.getName() + "\t" + total);
     }
@@ -378,6 +397,7 @@ final class TransferServer {
                 visited++;
                 String n = k.getName();
                 if (n.startsWith(".")) continue;
+                if (java.nio.file.Files.isSymbolicLink(k.toPath())) continue;   // 符號連結不跟、不列出（可能指到共享根目錄以外）
                 if (depth == 0 && n.equals("Android")) continue;   // 其他 App 的資料夾，不找
                 if (n.toLowerCase(Locale.ROOT).contains(q)) hits.add(k);
                 if (k.isDirectory() && depth < 8) todo.add(new Object[]{k, depth + 1});

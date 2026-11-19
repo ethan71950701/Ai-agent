@@ -446,6 +446,7 @@ final class ChatEngine {
     /** OpenAI 相容的 API：請求轉成 chat/completions，回應轉回 Claude 的格式，其他程式不用知道換了服務。 */
     private static JSONObject postOpenAi(Context app, JSONObject body, LlmConfig.Slot slot, String key) throws Exception {
         String base = slot.base;
+        if (!LlmAdapter.isSafeEndpoint(base)) throw new Exception(L.t("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。"));
         JSONObject req = LlmAdapter.toOpenAi(body, slot.model, slot.model, slot.official());
         HttpURLConnection con = (HttpURLConnection) new URL(LlmAdapter.endpoint(base)).openConnection();
         inflight = con;

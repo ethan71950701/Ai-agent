@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 安全修補（外部程式碼審查發現）：①唯讀指令檢查：含「|」時也一律擋掉 shell 控制字元，並逐段檢查參數（sort -o、date -s、dumpsys battery set、wm size …都擋）；②互傳檔案：搜尋不跟符號連結、單檔上限 2 GiB 並檢查剩餘空間、同時連線最多 8 個、暫存檔改隨機名稱；③自訂 AI 網址必須是 https（本機與區域網路的 http 才行），避免 API Key 明文傳輸｜Security fixes from an external code review: (1) the read-only shell check now always blocks shell control characters, even with pipes, and checks each segment's arguments (sort -o, date -s, dumpsys battery set, wm size … are blocked); (2) file transfer: search no longer follows symlinks, a 2 GiB per-file cap with a free-space check, at most 8 concurrent connections, and random temp file names; (3) custom AI service URLs must be https (plain http only for localhost/LAN) so API keys are not sent in clear text
 
 ## 1.0.1678
 

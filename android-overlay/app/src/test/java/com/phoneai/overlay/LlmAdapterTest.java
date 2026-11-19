@@ -333,4 +333,21 @@ public class LlmAdapterTest {
         assertEquals(1793845508374L, es.get(0).time);
         assertEquals(0, NotifHistory.parse(new byte[]{(byte) 0xff, (byte) 0xff}).size());   // 壞掉的檔案不會丟例外
     }
+
+    @org.junit.Test
+    public void endpointMustBeHttpsUnlessLocal() {
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("https://api.openai.com/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://localhost:11434/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://192.168.1.5:8080/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://10.0.0.2/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://172.20.1.1/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://127.0.0.1:1234/v1"));
+        org.junit.Assert.assertTrue(LlmAdapter.isSafeEndpoint("http://mybox.local/v1"));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint("http://api.example.com/v1"));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint("http://172.32.0.1/v1"));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint("http://localhost.evil.com/v1"));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint("ftp://x"));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint(""));
+        org.junit.Assert.assertFalse(LlmAdapter.isSafeEndpoint(null));
+    }
 }

@@ -126,6 +126,23 @@ final class LlmAdapter {
         return sb.toString();
     }
 
+    /**
+     * 這個服務網址可以送 API Key 嗎：https 一律可以；http 只有本機與區域網路（localhost、127.x、10.x、192.168.x、172.16–31.x、*.local、*.lan）才可以，
+     * 其他的 http 會讓 Key 以明文在網路上傳輸，直接拒絕。
+     */
+    static boolean isSafeEndpoint(String base) {
+        String b = base == null ? "" : base.trim().toLowerCase(java.util.Locale.ROOT);
+        if (b.startsWith("https://")) return true;
+        if (!b.startsWith("http://")) return false;
+        String rest = b.substring(7);
+        int cut = rest.length();
+        for (char c : new char[]{'/', ':', '?', '#'}) { int i = rest.indexOf(c); if (i >= 0 && i < cut) cut = i; }
+        String host = rest.substring(0, cut);
+        if (host.equals("localhost") || host.endsWith(".local") || host.endsWith(".lan")) return true;
+        if (host.matches("127\\.\\d+\\.\\d+\\.\\d+") || host.matches("10\\.\\d+\\.\\d+\\.\\d+") || host.matches("192\\.168\\.\\d+\\.\\d+")) return true;
+        return host.matches("172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+");
+    }
+
     /** chat/completions 的網址：使用者填到 /v1 或整段都行。 */
     static String endpoint(String base) {
         String b = base == null ? "" : base.trim();
