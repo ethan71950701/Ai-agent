@@ -37,6 +37,7 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("隱藏文字（輸入密碼時開）", "Hide text (turn on for passwords)");
         m.put("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。", "This service URL is not https, so the API key is not sent. Use an https URL (plain http is only allowed for localhost or the local network).");
         m.put("任務結束後，背景螢幕與預覽窗再留多久；你碰預覽窗會重新計時。0 = 馬上收掉", "How long the background display and preview stay after a task ends; touching the preview restarts the timer. 0 = close immediately");
         m.put(" 秒（你碰預覽窗會重新計時）", " s (touching the preview restarts the timer)");

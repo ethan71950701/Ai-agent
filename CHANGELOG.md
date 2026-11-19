@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 背景模式：AI 點擊的漣漪重新顯示在背景螢幕上；AI 與你自己輸入文字改用無障礙直接填進背景螢幕的輸入框（中文也行，不用剪貼簿）；手動輸入框預設是一般文字（不再是密碼欄位、可以打中文），密碼才開「隱藏文字」｜Background mode: the ripple for AI taps is shown on the background display again; typing (by the AI and by you) now fills the background display's input field directly through accessibility (Chinese works, no clipboard needed); the manual input box is plain text by default (no longer a password field, so Chinese works), with "Hide text" for passwords
 
 ## 1.0.1682
 

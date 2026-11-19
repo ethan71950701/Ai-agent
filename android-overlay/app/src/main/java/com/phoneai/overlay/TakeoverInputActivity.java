@@ -53,15 +53,14 @@ public class TakeoverInputActivity extends Activity {
         box.addView(hint);
 
         et = new EditText(this);
-        et.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);  // 預設隱藏內容
+        et.setInputType(InputType.TYPE_CLASS_TEXT);   // 預設一般文字（可以打中文）；密碼才開下面的「隱藏文字」。以前預設就是密碼欄位，輸入法會限制成只能英文與符號
         et.setSingleLine(true);
         box.addView(et, new LinearLayout.LayoutParams(-1, -2));
 
         com.google.android.material.materialswitch.MaterialSwitch show = new com.google.android.material.materialswitch.MaterialSwitch(this);
-        show.setText(L.t("顯示文字"));
+        show.setText(L.t("隱藏文字（輸入密碼時開）"));
         show.setOnCheckedChangeListener((v, on) -> {
-            et.setInputType(InputType.TYPE_CLASS_TEXT | (on ? InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                    : InputType.TYPE_TEXT_VARIATION_PASSWORD));
+            et.setInputType(InputType.TYPE_CLASS_TEXT | (on ? InputType.TYPE_TEXT_VARIATION_PASSWORD : 0));
             et.setSelection(et.getText().length());
         });
         box.addView(show);
@@ -95,6 +94,13 @@ public class TakeoverInputActivity extends Activity {
         }
         paste.setEnabled(false);
         pasteEnter.setEnabled(false);
+        // 先用無障礙直接把文字填進背景螢幕目前的輸入框（不用剪貼簿、不用輸入法，中文也行）；填不進去才退回剪貼簿貼上
+        if (RippleAccessibilityService.setFocusedText(t, true)) {
+            if (enter && !RippleAccessibilityService.imeEnter()) RootInput.key(display, 66);
+            et.setText("");
+            h.postDelayed(this::finish, 300);
+            return;
+        }
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("", t);
         PersistableBundle ex = new PersistableBundle();

@@ -389,10 +389,33 @@ public class RippleAccessibilityService extends AccessibilityService {
      * 把文字填進目前焦點的輸入框（ACTION_SET_TEXT）。只碰焦點欄位，不讀其他元件；append = true 時接在原本的文字後面。
      * 成功回 true；沒有焦點輸入框、服務沒開、或系統不接受時回 false（呼叫端改用其他方法）。
      */
+    /**
+     * 要讀寫輸入框的那個視窗的根節點：背景模式讀「背景螢幕」上的應用程式視窗（診斷實驗證實無障礙服務讀得到），
+     * 其他情況用目前的主視窗。背景螢幕上的 App 不是主螢幕的「作用中視窗」，getRootInActiveWindow() 看不到它。
+     */
+    private android.view.accessibility.AccessibilityNodeInfo inputRoot() {
+        if (BgDisplay.active) {
+            try {
+                android.util.SparseArray<java.util.List<android.view.accessibility.AccessibilityWindowInfo>> all = getWindowsOnAllDisplays();
+                java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = all == null ? null : all.get(BgDisplay.id);
+                android.view.accessibility.AccessibilityNodeInfo fallback = null;
+                if (wins != null) for (android.view.accessibility.AccessibilityWindowInfo w : wins) {
+                    if (w.getType() != android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION) continue;
+                    android.view.accessibility.AccessibilityNodeInfo r = w.getRoot();
+                    if (r == null) continue;
+                    if (w.isFocused() || w.isActive()) return r;
+                    if (fallback == null) fallback = r;
+                }
+                return fallback;
+            } catch (Throwable t) { return null; }
+        }
+        return getRootInActiveWindow();
+    }
+
     static boolean setFocusedText(String text, boolean append) {
         RippleAccessibilityService s = instance;
         if (s == null || text == null) return false;
-        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        android.view.accessibility.AccessibilityNodeInfo root = s.inputRoot();
         if (root == null) return false;
         android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
         if (node == null || !node.isEditable()) {
@@ -430,7 +453,7 @@ public class RippleAccessibilityService extends AccessibilityService {
     static String focusedInputText() {
         RippleAccessibilityService s = instance;
         if (s == null) return null;
-        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        android.view.accessibility.AccessibilityNodeInfo root = s.inputRoot();
         if (root == null) return null;
         android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
         if (node == null || !node.isEditable()) return null;
@@ -442,7 +465,7 @@ public class RippleAccessibilityService extends AccessibilityService {
     static boolean imeEnter() {
         RippleAccessibilityService s = instance;
         if (s == null) return false;
-        android.view.accessibility.AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        android.view.accessibility.AccessibilityNodeInfo root = s.inputRoot();
         if (root == null) return false;
         android.view.accessibility.AccessibilityNodeInfo node = root.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT);
         if (node == null || !node.isEditable()) return false;

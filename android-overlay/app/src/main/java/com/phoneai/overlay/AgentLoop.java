@@ -860,9 +860,9 @@ final class AgentLoop {
 
     /** 點擊或滑動後畫漣漪（無障礙服務開著時才有；在主執行緒畫）。起點等於終點就是點擊。 */
     private static void ripple(int x1, int y1, int x2, int y2) {
-        if (BgDisplay.active) return;   // 漣漪畫在主螢幕，背景螢幕上不畫
+        final int disp = BgDisplay.active ? BgDisplay.id : 0;   // 背景模式：漣漪畫在背景螢幕上（預覽窗看得到 AI 點在哪）；以前被關掉了
         MAIN.post(() -> {
-            RippleView v = RippleAccessibilityService.view();
+            RippleView v = disp > 0 ? RippleAccessibilityService.viewFor(disp) : RippleAccessibilityService.view();
             if (v == null) return;
             if (x1 == x2 && y1 == y2) v.ripple(x1, y1);
             else v.swipe(x1, y1, x2, y2);
@@ -1630,15 +1630,15 @@ final class AgentLoop {
 
     /** 送出輸入框：先用輸入法的動作鍵（搜尋／前往），沒用才送假的 Enter 鍵。 */
     private static void pressEnter() {
-        if (BgDisplay.active || !RippleAccessibilityService.imeEnter()) sh("input keyevent 66");
+        if (!RippleAccessibilityService.imeEnter()) sh("input keyevent 66");
     }
 
     /** 文字輸入：ASCII 直接 input text；中文等用剪貼簿貼上。clear = 先全選再刪。 */
     private static String type(String text, boolean clear, boolean enter, Context c) {
         if (text == null) text = "";
         if (!Root.available()) return typeNoRoot(text, clear, enter, c);
-        if (!BgDisplay.active && !text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
-            // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿
+        if (!text.isEmpty() && RippleAccessibilityService.setFocusedText(text, !clear)) {
+            // 無障礙直接把文字填進焦點欄位：不經過鍵盤，中文鍵盤也不會變成注音，也不碰剪貼簿；背景模式也走這條（寫剪貼簿要 App 在前景，背景任務時面板收起來後就寫不進去了）
             sleep(250);
             if (landed(text) != 0) {   // 進去了（或讀不到輸入框、無法判斷）才算成功；有些 App（例如 Instagram 的聊天輸入框）回報成功但文字根本沒進去
                 if (enter) { sleep(200); pressEnter(); }
