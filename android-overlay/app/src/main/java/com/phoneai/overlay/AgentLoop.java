@@ -566,6 +566,10 @@ final class AgentLoop {
                 png = readAll(p.getInputStream());
                 p.waitFor();
             }
+            if (png.length < 100 && BgDisplay.active) {   // screencap -d 截不到背景螢幕（直接顯示模式）：改從預覽窗拿畫面
+                Bitmap viaPreview = RippleAccessibilityService.previewSnapshot(OverlayService.vdSf);
+                if (viaPreview != null) { LifeLog.add(App.ctx, "背景螢幕截圖：screencap 失敗，改用預覽窗的畫面"); return encodeJpeg(viaPreview, width); }
+            }
             if (png.length < 100) return null;
             Bitmap bmp = BitmapFactory.decodeByteArray(png, 0, png.length);
             if (bmp == null) return null;

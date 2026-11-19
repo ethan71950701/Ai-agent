@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 背景模式截圖：系統指令截不到背景螢幕時，改從預覽窗拿畫面，AI 不會再因為「截圖失敗」就停住｜Background-mode screenshots: when the system command cannot capture the background display, the preview window's frame is used instead, so the AI no longer stops with "screenshot failed"
 - 設定新增「背景螢幕：橫式遊戲不轉向（實驗）」開關；有的橫式遊戲在直式背景螢幕上會當掉，關掉它就會讓遊戲轉向｜New setting "Background display: keep landscape games upright (experimental)"; some landscape games crash on the portrait background display, turn it off to let the game rotate
 
 ## 1.0.1667
