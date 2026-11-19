@@ -200,7 +200,7 @@ public class OverlayService extends Service {
         }
         else if (ACTION_RESUME.equals(a)) { paused = false; clearHandoffAlert(this); postStatus(title, L.t("繼續中…"), lastStep, lastMax); }
         else if (ACTION_BEGIN.equals(a)) postStatus(L.t("AI 正在操作手機"), L.t("準備中…"), 0, 0);
-        else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.togglePreview(vdSf);
+        else if (ACTION_PREVIEW.equals(a)) RippleAccessibilityService.showPreview(vdSf);   // 只開不關
         else if (ACTION_TAKEOVER.equals(a)) {  // Now Bar 的「接手／完成」：切換，並打開預覽讓使用者操作
             applyTakeover(!takeover, "");
             RippleAccessibilityService.takeoverChanged();
