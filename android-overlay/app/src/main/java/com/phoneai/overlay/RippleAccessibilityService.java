@@ -275,6 +275,13 @@ public class RippleAccessibilityService extends AccessibilityService {
         else s.openPreview(sf);
     }
 
+    /** 背景任務開始：預覽還沒開就開（使用者想看背景螢幕，不用先去點 Now Bar；已經開著就不動）。必須在主執行緒呼叫。 */
+    static void showPreview(String sf) {
+        RippleAccessibilityService s = instance;
+        if (s == null || sf == null || sf.isEmpty() || s.preview != null) return;
+        s.openPreview(sf);
+    }
+
     /** 接手狀態變了（agent2 的 takeover 指令，或使用者按預覽上的「接手／完成」）：必要時打開預覽，並更新預覽的外觀。 */
     static void takeoverChanged() {
         RippleAccessibilityService s = instance;
