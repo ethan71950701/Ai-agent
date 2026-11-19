@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 背景模式：要打開的 App 宣告橫式（多數橫式遊戲）時，背景螢幕直接建立成橫式，遊戲和預覽窗都是正的｜Background mode: when the app to open declares landscape (most landscape games), the background display is created in landscape so the game and the preview are upright
+
+## 1.0.1672
+
 - 背景模式：任務結束或按停止後，預覽窗會跟著關掉；拿掉「從預覽窗取畫面」的截圖備援（系統截圖本來就正常）｜Background mode: the preview window now closes when the task ends or you press stop; the "capture from the preview window" screenshot fallback was removed (the system screencap works)
 
 ## 1.0.1671
