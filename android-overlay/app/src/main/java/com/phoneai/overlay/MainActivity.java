@@ -982,6 +982,7 @@ public class MainActivity extends Activity {
                     new Ui.Tile("pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), false, v -> TavilySearch.editTrusted(this, this::recreate)),
                     new Ui.Tile("list", L.t("記住的步驟"), String.format(L.t("目前記住 %d 個任務（點進去看、刪除）"), Macros.count(this)), false, v -> MacrosUi.open(this, this::recreate)),
                     new Ui.Tile("flask", L.t("AI 比較測試"), L.t("同一批任務用不同 AI 各跑一遍，比成功率與花費"), false, v -> AbTestUi.open(this)),
+                    new Ui.Tile("bell", L.t("公告"), AnnouncementsUi.summary(this), false, v -> AnnouncementsUi.open(this, this::recreate)),
                     new Ui.Tile("note", L.t("助理的記憶"), L.t("待辦與筆記"), false, v -> startActivity(new Intent(this, MemoryActivity.class))),
                     new Ui.Tile("note", L.t("通知整理"), NotifDigest.on(this) ? String.format(java.util.Locale.US, L.t("每天 %02d:%02d 整理通知"), NotifDigest.hour(this), NotifDigest.minute(this)) : L.t("定時整理通知，有日期的事一鍵加入"), false, v -> NotifDigest.openSettings(this, this::recreate)),
                     new Ui.Tile("clock", L.t("定時任務"), ScheduleUi.summary(this), false, v -> ScheduleUi.open(this, this::recreate)),

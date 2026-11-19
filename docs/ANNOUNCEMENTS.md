@@ -20,8 +20,8 @@ App 打開時（最多每 10 分鐘一次）會讀 repo `main` 分支根目錄�
 
 | 欄位 | 說明 |
 |---|---|
-| `id` | 公告編號。**沒有 id 或沒有 title／body 就不會顯示**（空檔案＝沒有公告）。同一個 id 每台手機只彈一次。 |
-| `severity` | `info`（一般）、`warn`、`critical`。`warn`／`critical` 會多一顆「前往更新」鈕；`critical` 加上 `min_version_below` 時，**還沒更新就每次打開都提醒**。 |
+| `id` | 公告編號。**沒有 id 或沒有 title／body 就不會顯示**（空檔案＝沒有公告）。**每次打開 App 都會彈出**（同一次執行只彈一次），直到使用者在對話框勾「不要再提醒這則公告」。收到過的公告會存在 App 的「公告」頁（功能 → 資料 →「公告」），可以再看、刪除或恢復提醒。 |
+| `severity` | `info`（一般）、`warn`、`critical`。`warn`／`critical` 會多一顆「前往更新」鈕；`critical` 加上 `min_version_below` 時，**還沒更新就每次打開都提醒，而且沒有「不要再提醒」可勾**。 |
 | `title`、`body` | `{"zh":"…","en":"…"}` 或純字串。標題最多 80 字、內文最多 600 字，只顯示純文字。 |
 | `min_version_below` | 版本號（versionCode，Release 標籤 `build-1684-…` 裡的 1684）。**只有安裝的版本號小於這個數字才顯示**；省略＝所有版本都看到。 |
 | `expires` | `yyyy-MM-dd`，（UTC）那天之後不再顯示。 |

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 公告改成每次打開 App 都彈出（不會因為手滑關掉就看不到），對話框可勾「不要再提醒這則公告」；新增「公告」頁（功能 → 資料），收到過的公告都留在那裡，可再看、刪除、恢復提醒｜Announcements now pop up every time the app opens (a slip of the finger no longer hides them), with a "Don't remind me about this announcement" checkbox; new "Announcements" page (Features → Data) keeps every announcement you received so you can reread, delete or un-mute them
 
 ## 1.0.1689
 

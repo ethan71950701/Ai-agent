@@ -448,4 +448,29 @@ public class LlmAdapterTest {
         Announcements.Result b = Announcements.parse("{\"id\":\"x\",\"body\":\"" + big + "\"}", 1, NOW, true, new java.util.HashSet<>());
         org.junit.Assert.assertTrue(b.body.length() <= 601);
     }
+
+    @org.junit.Test
+    public void announcementHistoryKeepsNewestFirstAndCapsAndReplacesSameId() throws Exception {
+        String h = "[]";
+        for (int i = 1; i <= 5; i++) h = Announcements.mergeHistory(h, "id" + i, "info", "T" + i, "B" + i, i * 1000L, 3);
+        org.json.JSONArray a = new org.json.JSONArray(h);
+        org.junit.Assert.assertEquals(3, a.length());
+        org.junit.Assert.assertEquals("id5", a.getJSONObject(0).getString("id"));
+        org.junit.Assert.assertEquals("id3", a.getJSONObject(2).getString("id"));
+        h = Announcements.mergeHistory(h, "id4", "warn", "T4b", "B4b", 9000L, 3);
+        a = new org.json.JSONArray(h);
+        org.junit.Assert.assertEquals(3, a.length());
+        org.junit.Assert.assertEquals("id4", a.getJSONObject(0).getString("id"));
+        org.junit.Assert.assertEquals("T4b", a.getJSONObject(0).getString("title"));
+        org.junit.Assert.assertEquals("id5", a.getJSONObject(1).getString("id"));   // 舊的 id4 被換掉，沒有重複
+        org.junit.Assert.assertEquals(1, new org.json.JSONArray(Announcements.mergeHistory("not json", "x", "info", "t", "b", 1, 3)).length());   // 舊紀錄壞掉：從頭開始
+    }
+
+    @org.junit.Test
+    public void mutedAnnouncementDoesNotShowButCriticalOutdatedStillDoes() {
+        java.util.Set<String> muted = new java.util.HashSet<>(java.util.Arrays.asList("m1", "c1"));
+        org.junit.Assert.assertFalse(Announcements.parse("{\"id\":\"m1\",\"title\":\"t\"}", 1, NOW, true, muted).show);
+        org.junit.Assert.assertTrue(Announcements.parse("{\"id\":\"c1\",\"severity\":\"critical\",\"title\":\"t\",\"min_version_below\":100}", 1, NOW, true, muted).show);
+        org.junit.Assert.assertFalse(Announcements.parse("{\"id\":\"m1\",\"title\":\"t\"}", 1, NOW, true, muted).repeat);
+    }
 }

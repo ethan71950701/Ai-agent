@@ -37,6 +37,13 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("不要再提醒這則公告", "Don't remind me about this announcement");
+        m.put("之後打開 App 會再提醒這則", "You will be reminded about this one again when the app opens");
+        m.put("恢復提醒", "Remind me again");
+        m.put("收到過 %d 則（點進去看）", "%d received (tap to view)");
+        m.put("還沒有收到公告", "No announcements yet");
+        m.put("還沒有收到公告。有新公告時，打開 App 就會跳出來，收到過的會留在這裡。", "No announcements yet. A new one pops up when the app opens, and the ones you received stay here.");
+        m.put("（已不再提醒）", "(muted)");
         m.put("立即看公告", "Check announcements now");
         m.put("現在就去抓一次公告（不受 10 分鐘限制，看過的也會再顯示）", "Fetch the announcement right now (ignores the 10-minute limit and shows ones you have already seen)");
         m.put("抓不到公告（網路不通，或檔案不存在）", "Could not fetch the announcement (no network, or the file does not exist)");
