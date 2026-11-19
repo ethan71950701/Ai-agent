@@ -310,11 +310,12 @@ final class TransferServer {
                 while ((n = body.read(buf)) > 0) {
                     fo.write(buf, 0, n);
                     total += n;
-                    if (total > MAX_UPLOAD_BYTES || total > expect + 64 * 1024) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
+                    if (total > MAX_UPLOAD_BYTES || total > expect) throw new IOException("upload larger than declared");   // 超過上限或比宣告的大小多一個位元組：中止
                     if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
                     host.progress(au.peer, false, base, total, expect);
                 }
             }
+            if (total != expect) throw new IOException("upload size mismatch: declared " + expect + ", got " + total);   // 提早結束或大小對不上：不當成成功的檔案（finally 會刪暫存檔、釋放預留）
             File dest;
             synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
                 dest = unique(inbox, base);
