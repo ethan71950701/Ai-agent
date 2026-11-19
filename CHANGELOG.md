@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1682
+
 - 安全與穩定性（第三輪審查）：root／Shizuku 指令失敗（結束碼不是 0）時不再換另一種 su 寫法重跑（以前可能把有副作用的腳本跑三遍）；程序逾時與輸出上限改成整個生命週期有界；唯讀 shell 檢查改成白名單（dumpsys 只准幾個服務、cat 只准幾類系統檔、擋引號與控制字元、ls -R）；互傳檔案的預留空間一定會釋放；查模型清單、查餘額、測模型也強制 https；錯誤訊息不會回顯 API Key｜Security and stability (third review): when a root/Shizuku command fails (non-zero exit) it is no longer re-run with another su variant (it could run a side-effecting script three times); process timeout and output cap now cover the whole lifecycle; the read-only shell check is now allowlist-based (dumpsys only for a few services, cat only for some system files, quotes and control characters blocked, ls -R blocked); file-transfer space reservations are always released; model listing, balance and model tests also require https; error messages no longer echo API keys
 
 ## 1.0.1681
