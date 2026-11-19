@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1661
+
 - 自動操作：元件清單標出「+」（這一步新出現的）與「⚠」（敏感按鈕）；新增 collect 動作，自動捲動讀完整個長列表；確認框在 AI 剛點擊後的一小段時間不接受觸控，避免 AI 自己按掉確認｜Automatic operation: the element list now marks "+" (newly appeared) and "⚠" (sensitive buttons); new collect action scrolls and reads a whole long list; the confirmation dialog ignores touches right after the AI injected input so it cannot press its own confirm
 
 ## 1.0.1660
