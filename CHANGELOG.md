@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1669
+
 - 背景模式截圖：系統指令截不到背景螢幕時，改從預覽窗拿畫面，AI 不會再因為「截圖失敗」就停住｜Background-mode screenshots: when the system command cannot capture the background display, the preview window's frame is used instead, so the AI no longer stops with "screenshot failed"
 
 ## 1.0.1668
