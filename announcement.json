@@ -1,6 +1,9 @@
 {
-  "id": "",
+  "id": "test-announcement-1",
   "severity": "info",
-  "title": { "zh": "", "en": "" },
-  "body": { "zh": "", "en": "" }
+  "title": { "zh": "公告測試", "en": "Announcement test" },
+  "body": {
+    "zh": "這是一則測試公告，用來確認不更新 App 也能收到訊息。看到這則就代表公告功能正常，按「知道了」就好，之後不會再出現。",
+    "en": "This is a test announcement to confirm that messages arrive without updating the app. If you can read this, announcements work; just tap OK and it will not show again."
+  }
 }
