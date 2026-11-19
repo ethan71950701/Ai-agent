@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 # 權限：整個 workflow 預設只讀；只有「發布」那個 job 才有寫入權限（建置 job 會跑 Gradle 與第三方程式，不給它能改 repo 或發 Release 的權杖）。
-# 簽名金鑰：只在「Build release APK」那一個步驟的環境變數裡，不寫進 GITHUB_ENV，單元測試與其他步驟看不到；金鑰檔建置完立刻刪掉。
+# 簽名金鑰：單元測試之後才還原金鑰檔，密碼只在「Build release APK」那一個步驟的環境變數裡，不寫進 GITHUB_ENV；金鑰檔建置完立刻刪掉。
 # 第三方 Actions 都固定到完整 commit SHA（註解寫對應的版本標籤），避免標籤被改指到惡意程式。
 permissions:
   contents: read
@@ -51,6 +51,9 @@ jobs:
           tar xjf /tmp/sherpa-android.tar.bz2 -C /tmp/sherpa-x ./jniLibs/arm64-v8a/libonnxruntime.so ./jniLibs/arm64-v8a/libsherpa-onnx-jni.so
           cp /tmp/sherpa-x/jniLibs/arm64-v8a/libonnxruntime.so /tmp/sherpa-x/jniLibs/arm64-v8a/libsherpa-onnx-jni.so android-overlay/app/src/main/jniLibs/arm64-v8a/
           ls -l android-overlay/app/src/main/jniLibs/arm64-v8a/
+      - name: Unit tests
+        working-directory: android-overlay
+        run: gradle --no-daemon testDebugUnitTest
       - name: Restore signing key (from Secrets)
         id: signing
         env:
@@ -74,9 +77,6 @@ jobs:
         run: |
           echo "::error::main 上需要簽名金鑰：請照 docs/PUBLISH_CHECKLIST.md「簽名金鑰」設定 4 個 Secrets 後重跑"
           exit 1
-      - name: Unit tests
-        working-directory: android-overlay
-        run: gradle --no-daemon testDebugUnitTest
       - name: Build release APK
         working-directory: android-overlay
         env:   # 簽名金鑰只在這一步可見
