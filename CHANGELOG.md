@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 「任務結束後背景螢幕保留」改成 0～120 秒的滑桿｜"Keep the background display after a task" is now a 0–120 second slider
 - 背景模式：任務結束後背景螢幕與預覽窗再保留一段時間（預設 15 秒，設定 →「執行任務時」可調，0＝馬上收），你碰預覽窗就重新計時｜Background mode: after a task ends the background display and preview stay for a while (default 15 s; adjustable in Settings → "While running tasks", 0 = close immediately); touching the preview restarts the timer
 
 ## 1.0.1676

@@ -1247,7 +1247,7 @@ public class MainActivity extends Activity {
                 innerS.addView(slS, new LinearLayout.LayoutParams(-1, -2));
             }
             final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
-            final int n = hasRoot ? 12 : 7;
+            final int n = hasRoot ? 11 : 7;
             int k = 0;
             Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                     (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
@@ -1259,17 +1259,6 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景螢幕：橫式遊戲不轉向（實驗）"), L.t("開：叫系統忽略 App 的方向要求，橫式遊戲在直式背景螢幕上維持正的（比較小）。關：遊戲會轉 90 度。有的遊戲在直式畫面裡會當掉，當掉就關掉這個再試"),
                     cfg().getBoolean("bg_ignore_orient", true), (v, on) -> cfg().edit().putBoolean("bg_ignore_orient", on).apply());
-            if (hasRoot) {
-                final int[] opts = {0, 5, 15, 30, 60, 120};
-                int curS = BgDisplay.keepSeconds(this);
-                Ui.row(this, g, k++, n, "monitor", L.t("任務結束後背景螢幕保留"), curS <= 0 ? L.t("不保留，馬上收掉") : curS + L.t(" 秒（你碰預覽窗會重新計時）"), Ui.chevron(this), v -> {
-                    String[] names = new String[opts.length];
-                    for (int i = 0; i < opts.length; i++) names[i] = opts[i] == 0 ? L.t("不保留，馬上收掉") : opts[i] + L.t(" 秒");
-                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("任務結束後背景螢幕保留"))
-                            .setItems(names, (d, which) -> { cfg().edit().putInt("bg_keep_s", opts[which]).apply(); recreate(); })
-                            .setNegativeButton(L.t("取消"), null).show();
-                });
-            }
             if (hasRoot) Ui.row(this, g, k++, n, "monitor", L.t("測試背景螢幕"), L.t("建立一次背景螢幕、開「設定」截圖，看畫面是不是正常"), Ui.chevron(this), v -> {
                 android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
                 new Thread(() -> {
@@ -1302,11 +1291,30 @@ public class MainActivity extends Activity {
             Ui.switchRow(this, g, k++, n, "flask", L.t("記住成功的步驟（巨集）"), L.t("同樣的任務下次直接重播，AI 只確認結果；畫面對不上就交回 AI。更快更省"),
                     cfg().getBoolean("macro_on", true), (v, on) -> cfg().edit().putBoolean("macro_on", on).apply());
             Ui.row(this, g, k++, n, "shield", L.t("執行模式"), modeName(ExecMode.get(this)) + L.t("（點一下切換）"), Ui.chevron(this), v -> chooseMode());
+            if (hasRoot) {   // 任務結束後背景螢幕與預覽窗再保留幾秒（滑桿；0＝馬上收）
+                LinearLayout kc = Ui.card(this, g);
+                final TextView kt = Ui.body(this, keepLabel(BgDisplay.keepSeconds(this)));
+                kt.setTextColor(Ui.attr(this, com.google.android.material.R.attr.colorOnSurface));
+                kc.addView(kt);
+                kc.addView(Ui.body(this, L.t("任務結束後，背景螢幕與預覽窗再留多久；你碰預覽窗會重新計時。0 = 馬上收掉")));
+                com.google.android.material.slider.Slider ks = new com.google.android.material.slider.Slider(this);
+                ks.setValueFrom(0);
+                ks.setValueTo(120);
+                ks.setStepSize(1);
+                ks.setValue(Math.max(0, Math.min(120, BgDisplay.keepSeconds(this))));
+                ks.addOnChangeListener((sl, v, fromUser) -> {
+                    cfg().edit().putInt("bg_keep_s", (int) v).apply();
+                    kt.setText(keepLabel((int) v));
+                });
+                kc.addView(ks, new LinearLayout.LayoutParams(-1, -2));
+            }
         });
         return steps;
     }
 
     private void buildSettings() { for (Runnable r : settingsSteps()) r.run(); }
+
+    private static String keepLabel(int sec) { return L.t("任務結束後背景螢幕保留")  + "　" + (sec <= 0 ? L.t("不保留，馬上收掉") : sec + L.t(" 秒")); }
 
     private static String modeName(String m) {
         return ExecMode.SHIZUKU.equals(m) ? "Shizuku" : ExecMode.NORMAL.equals(m) ? L.t("普通") : "root";

@@ -37,6 +37,7 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("任務結束後，背景螢幕與預覽窗再留多久；你碰預覽窗會重新計時。0 = 馬上收掉", "How long the background display and preview stay after a task ends; touching the preview restarts the timer. 0 = close immediately");
         m.put(" 秒（你碰預覽窗會重新計時）", " s (touching the preview restarts the timer)");
         m.put("不保留，馬上收掉", "Don't keep; close immediately");
         m.put("任務結束後背景螢幕保留", "Keep the background display after a task");
