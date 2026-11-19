@@ -70,7 +70,11 @@ public class ProcRunTest {
         java.io.File proc = new java.io.File("/proc/" + pid);
         boolean gone = false;
         for (int k = 0; k < 40 && !gone; k++) {   // 最多等 4 秒讓系統收掉
-            gone = !proc.exists() || new String(java.nio.file.Files.readAllBytes(new java.io.File(proc, "stat").toPath())).contains(") Z");
+            try {
+                gone = !proc.exists() || new String(java.nio.file.Files.readAllBytes(new java.io.File(proc, "stat").toPath())).contains(") Z");
+            } catch (java.io.IOException e) {
+                gone = true;   // 檢查與讀取之間行程剛好被收掉 = 已結束
+            }
             if (!gone) Thread.sleep(100);
         }
         assertTrue("the child sleep process must be killed with its parent", gone);
