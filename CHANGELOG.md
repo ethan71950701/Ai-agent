@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1676
+
 - Now Bar／通知的點擊永遠用同一個跳板（有背景螢幕就開關預覽窗，沒有就開 App），避免三星 Now Bar 只認第一次發出的點擊動作｜Tapping the Now Bar/notification now always uses the same trampoline (toggles the preview when a background display exists, otherwise opens the app), in case Samsung's Now Bar only honors the first tap action it saw
 
 ## 1.0.1675
