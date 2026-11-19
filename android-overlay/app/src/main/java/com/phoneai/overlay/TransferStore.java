@@ -30,6 +30,7 @@ final class TransferStore {
         String tsIp;             // Tailscale 位址（100.x，外網用）
         int tsPort;
         byte[] key;
+        String fcmToken;         // 實驗：對方的 FCM token（叫醒用，門鈴會送到這裡）
     }
 
     /** Tailscale 的位址範圍 100.64.0.0/10。 */
@@ -99,6 +100,8 @@ final class TransferStore {
                 p.tsIp = o.optString("ts_ip", "");
                 if (p.tsIp.isEmpty()) p.tsIp = null;
                 p.tsPort = o.optInt("ts_port", 0);
+                p.fcmToken = o.optString("fcm", "");
+                if (p.fcmToken.isEmpty()) p.fcmToken = null;
                 p.key = TransferCrypto.unhex(o.getString("key"));
                 out.add(p);
             }
@@ -112,7 +115,7 @@ final class TransferStore {
             for (Peer p : list) {
                 a.put(new JSONObject().put("id", p.id).put("name", p.name).put("ip", p.ip == null ? "" : p.ip)
                         .put("port", p.port).put("ts_ip", p.tsIp == null ? "" : p.tsIp).put("ts_port", p.tsPort)
-                        .put("key", TransferCrypto.hex(p.key)));
+                        .put("fcm", p.fcmToken == null ? "" : p.fcmToken).put("key", TransferCrypto.hex(p.key)));
             }
             File f = peersFile(c), tmp = new File(f.getPath() + ".tmp");
             Files.write(tmp.toPath(), a.toString().getBytes(StandardCharsets.UTF_8));
@@ -153,6 +156,12 @@ final class TransferStore {
         boolean changed = false;
         for (Peer p : l) if (p.id.equals(id) && !p.name.equals(name)) { p.name = name; changed = true; }
         if (changed) save(c, l);
+    }
+
+    static synchronized void setFcmToken(Context c, String id, String token) {
+        List<Peer> l = peers(c);
+        for (Peer p : l) if (p.id.equals(id)) p.fcmToken = token == null || token.trim().isEmpty() ? null : token.trim();
+        save(c, l);
     }
 
     static byte[] keyOf(Context c, String id) {

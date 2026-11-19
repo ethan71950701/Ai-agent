@@ -85,14 +85,24 @@ final class FcmLab {
 
     /** 送一則高優先級「資料訊息」給指定裝置 token。回 null 成功，否則錯誤（含狀態碼）。 */
     static String send(Context c, String token, String text) {
+        java.util.Map<String, String> d = new java.util.LinkedHashMap<>();
+        d.put("kind", "fcm_lab");
+        d.put("text", text);
+        d.put("sent", String.valueOf(System.currentTimeMillis()));
+        return sendData(c, token, d);
+    }
+
+    static String sendData(Context c, String token, java.util.Map<String, String> data) {
         try {
             if (!file(c, SENDER).isFile()) return "這支手機沒有服務帳戶金鑰（只有發送端需要）";
             String project = projectId(c);
             if (project == null) return "沒有 google-services.json";
             String access = accessToken(new JSONObject(read(c, SENDER)));
+            JSONObject dj = new JSONObject();
+            for (java.util.Map.Entry<String, String> e : data.entrySet()) dj.put(e.getKey(), e.getValue());
             JSONObject msg = new JSONObject()
                     .put("token", token.trim())
-                    .put("data", new JSONObject().put("kind", "fcm_lab").put("text", text).put("sent", String.valueOf(System.currentTimeMillis())))
+                    .put("data", dj)
                     .put("android", new JSONObject().put("priority", "high"));
             byte[] body = new JSONObject().put("message", msg).toString().getBytes(StandardCharsets.UTF_8);
             HttpURLConnection con = (HttpURLConnection) new URL("https://fcm.googleapis.com/v1/projects/" + project + "/messages:send").openConnection();
@@ -109,6 +119,31 @@ final class FcmLab {
         } catch (Throwable e) {
             return String.valueOf(e);
         }
+    }
+
+    /** 本機的區網 IPv4（10.x／172.16–31.x／192.168.x）；沒有回 null。 */
+    static String lanIp() {
+        try {
+            for (java.net.NetworkInterface ni : java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())) {
+                if (!ni.isUp() || ni.isLoopback()) continue;
+                for (java.net.InetAddress a : java.util.Collections.list(ni.getInetAddresses())) {
+                    String h = a.getHostAddress();
+                    if (a instanceof java.net.Inet4Address && Doorbell.isPrivateLan(h)) return h;
+                }
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    /** 按門鈴：A（本機）請這個已配對裝置來取檔案（relPath 是共享根目錄底下的相對路徑，檔案要先存在）。回 null 成功，否則錯誤。 */
+    static String ring(Context c, TransferStore.Peer peer, String relPath) {
+        if (peer.fcmToken == null) return "還沒有存這台裝置的 token";
+        String ip = lanIp();
+        if (ip == null) return "找不到本機的區網位址（要連上 Wi-Fi）";
+        File f = new File(TransferStore.root(), relPath);
+        if (!f.isFile()) return "找不到檔案：" + relPath;
+        java.util.Map<String, String> m = Doorbell.make(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, relPath, f.getName(), f.length(), System.currentTimeMillis());
+        return sendData(c, peer.fcmToken, m);
     }
 
     private static String slurp(InputStream in) throws Exception {

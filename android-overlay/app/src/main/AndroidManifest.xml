@@ -85,6 +85,10 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service android:name=".FetchService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Fetches one file the user's own paired device announced, over the local network, then stops." />
+        </service>
         <activity android:name=".FcmLabActivity" android:exported="false" android:label="FCM 喚醒實驗" />
 
         <!-- 讀通知欄（「整理通知」用）：使用者要在系統設定開「通知存取」，有 root 會自動開 -->

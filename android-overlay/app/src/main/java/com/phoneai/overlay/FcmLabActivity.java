@@ -56,6 +56,36 @@ public class FcmLabActivity extends Activity {
                 runOnUiThread(() -> Toast.makeText(this, r == null ? "已送出" : r, Toast.LENGTH_LONG).show());
             }).start();
         }));
+        TextView t2 = new TextView(this);
+        t2.setText("\n—— 接上互傳（階段 2）——\n兩支手機要先在「設定 → 互傳檔案」配對，並給「所有檔案存取」。發送端的互傳總開關要開著（它在使用中）。接收端把 App 滑掉也行。");
+        col.addView(t2);
+        col.addView(button("儲存已配對裝置的 token", v -> pickPeer(peer -> {
+            EditText e = new EditText(this);
+            e.setHint("貼上「" + peer.name + "」的 token");
+            new android.app.AlertDialog.Builder(this).setTitle(peer.name).setView(e).setPositiveButton("儲存", (d, w) -> {
+                TransferStore.setFcmToken(this, peer.id, e.getText().toString());
+                Toast.makeText(this, "已儲存", Toast.LENGTH_SHORT).show();
+            }).setNegativeButton("取消", null).show();
+        })));
+        EditText nameQ = new EditText(this);
+        nameQ.setHint("要傳的檔名關鍵字（本機共享資料夾裡找）");
+        col.addView(nameQ);
+        col.addView(button("按門鈴：請對方來取這個檔案", v -> {
+            final String q = nameQ.getText().toString().trim();
+            if (q.isEmpty()) { Toast.makeText(this, "先填檔名關鍵字", Toast.LENGTH_SHORT).show(); return; }
+            pickPeer(peer -> new Thread(() -> {
+                String raw;
+                try { raw = TransferServer.findIn(TransferStore.root(), q); } catch (java.io.IOException e) { raw = ""; }
+                String rel = null;
+                for (String line : raw.split("\n")) {
+                    String[] f = line.split("\t");
+                    if (f.length >= 4 && f[0].equals("F")) { rel = f[3]; break; }
+                }
+                final String r = rel == null ? "找不到檔名包含「" + q + "」的檔案" : FcmLab.ring(this, peer, rel);
+                final String shown = rel;
+                runOnUiThread(() -> Toast.makeText(this, r == null ? "已按門鈴：" + shown : r, Toast.LENGTH_LONG).show());
+            }).start());
+        }));
         refresh();
     }
 
@@ -65,6 +95,14 @@ public class FcmLabActivity extends Activity {
         x.setAllCaps(false);
         x.setOnClickListener(l);
         return x;
+    }
+
+    private void pickPeer(java.util.function.Consumer<TransferStore.Peer> then) {
+        final java.util.List<TransferStore.Peer> ps = TransferStore.peers(this);
+        if (ps.isEmpty()) { Toast.makeText(this, "還沒有配對過的裝置（設定 → 互傳檔案）", Toast.LENGTH_LONG).show(); return; }
+        String[] names = new String[ps.size()];
+        for (int i = 0; i < names.length; i++) names[i] = ps.get(i).name + (ps.get(i).fcmToken == null ? "（沒存 token）" : "");
+        new android.app.AlertDialog.Builder(this).setTitle("選裝置").setItems(names, (d, w) -> then.accept(ps.get(w))).show();
     }
 
     private void pick(int req) {
