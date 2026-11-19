@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1671
+
 - 診斷：在背景預覽窗裡點擊時，記錄接手與輸入通道的狀態｜Diagnostics: touching the background preview now logs the takeover and input-channel state
 
 ## 1.0.1669
