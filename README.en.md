@@ -15,7 +15,7 @@ The whole project is one app: **no PC, no Termux, no Python scripts**.
 | Assistant panel | Type or speak. Open it from the app's home screen, a quick-settings tile, a long press of the power button (set it as the default digital assistant), a floating button on the screen edge, a home-screen widget or "Share to assistant" |
 | Fixed commands (instant) | Turn Wi-Fi / Bluetooth on or off, go back, set the volume (you can say a percentage), launch any app by name |
 | Chat and tools | Ask questions directly. The chat assistant can use memory (to-dos, notes), alarms, the calendar, **Samsung Reminder**, maps, dialing, file transfer and read-only system commands (battery, storage, which apps are installed…) |
-| Screen automation | The AI looks at the screen (accessibility element list, or a screenshot when needed) and taps, swipes, drags and types step by step to finish what you asked (up to 12 steps; a cheap model goes first and a stronger one takes over when stuck) |
+| Screen automation | The AI looks at the screen (accessibility element list, or a screenshot when needed) and taps, swipes, drags and types step by step to finish what you asked (20 steps by default, adjustable from 8 to 40 in Settings; a cheap model goes first and a stronger one takes over when stuck) |
 | Remembered routes | A clean run is saved as a **macro** and replayed next time; after a wrong turn the AI writes itself a **lesson** that is added to later prompts |
 | Background mode | Operates on a virtual screen in the background so you can keep using the phone, with preview and takeover (needs root) |
 | When only you can do it | For an unlock pattern, password or code the AI pauses and shows a draggable card asking you to take over; press Continue when done |

@@ -15,6 +15,9 @@ final class SafetyGuard {
     private static final String[] SHELL_DENY = {"/data", "/sdcard", "/storage", "/mnt", "..", "claude_key", "openai_key", "key_", "token", "password", "keystore", "noredact",
             "dumpsys notification", "dumpsys account", "dumpsys clipboard", "dumpsys contacts", "dumpsys telecom", "dumpsys sms"};
 
+    /** 會洩漏通知、帳號、剪貼簿、聯絡人、電話、簡訊內容的 dumpsys 服務名稱。 */
+    private static final String[] DUMPSYS_PRIVATE = {"notification", "account", "clipboard", "contacts", "telecom", "sms", "content", "user"};
+
     /** dumpsys 的子命令或參數裡出現這些字，表示會改系統狀態（例如 dumpsys battery set level 5、unplug）。 */
     private static final String[] DUMPSYS_MUTATE = {"set", "reset", "unplug", "suspend", "restore", "enable", "disable", "start", "stop", "kill", "force", "write", "clear", "add", "remove", "delete", "trigger"};
 
@@ -28,7 +31,7 @@ final class SafetyGuard {
      */
     static boolean readOnly(String cmd) {
         if (cmd == null || cmd.trim().isEmpty() || cmd.contains("\n") || cmd.contains("\r")) return false;
-        String low = cmd.toLowerCase(java.util.Locale.ROOT);
+        String low = cmd.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ");   // 多個空格、Tab 先變成一個空格再比對（以前「dumpsys    notification」能繞過黑名單）
         for (String d : SHELL_DENY) if (low.contains(d)) return false;
         if (cmd.matches(".*[;&`$<>*?{}()\\\\\\[\\]!~#].*") || cmd.contains("||")) return false;
         String[] parts = cmd.split("\\|", -1);
@@ -59,8 +62,11 @@ final class SafetyGuard {
             case "date":   // date -s／date 月日時分 會改系統時間：只允許 +格式、-u、-R
                 for (int k = 1; k < w.length; k++) if (!(w[k].startsWith("+") || w[k].equals("-u") || w[k].equals("-R"))) return false;
                 return true;
-            case "dumpsys":
-                for (int k = 1; k < w.length; k++) if (in(DUMPSYS_MUTATE, w[k].toLowerCase(java.util.Locale.ROOT))) return false;
+            case "dumpsys":   // 子命令與參數逐個檢查（不管前面有沒有別的選項，例如 dumpsys -t 5 notification）
+                for (int k = 1; k < w.length; k++) {
+                    String a = w[k].toLowerCase(java.util.Locale.ROOT);
+                    if (in(DUMPSYS_MUTATE, a) || in(DUMPSYS_PRIVATE, a)) return false;
+                }
                 return true;
             default: return true;   // getprop、ls、cat、df、uptime、free、ps、top、uname：本身只讀（寫檔要靠 > ，已被擋）
         }

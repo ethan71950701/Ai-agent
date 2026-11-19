@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 安全與穩定性（第二次外部審查）：唯讀指令的黑名單不再被多個空格／Tab／前置選項繞過（dumpsys notification 等）；互傳檔案列表也不列符號連結、一定要有檔案大小、並行上傳會預留空間、傳輸中持續檢查剩餘空間；root 指令加上 90 秒逾時與 2 MB 輸出上限｜Security and stability (second external review): the read-only shell denylist can no longer be bypassed with extra spaces/tabs/leading options (dumpsys notification, etc.); file-transfer listings also hide symlinks, a file size is now required, concurrent uploads reserve space and free space is rechecked during transfer; root commands now have a 90 s timeout and a 2 MB output cap
 
 ## 1.0.1679
 

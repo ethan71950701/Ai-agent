@@ -476,4 +476,36 @@ public class LogicTest {
         assertFalse(found.contains("secret-note.txt"));
         assertFalse(found.contains(outside.toString()));
     }
+
+    @Test
+    public void readOnlyShellBlocksWhitespaceTricksOnPrivateDumpsys() {
+        assertFalse(AgentLoop.readOnly("dumpsys notification"));
+        assertFalse(AgentLoop.readOnly("dumpsys    notification"));
+        assertFalse(AgentLoop.readOnly("dumpsys\tnotification"));
+        assertFalse(AgentLoop.readOnly("dumpsys -t 5 notification"));
+        assertFalse(AgentLoop.readOnly("dumpsys account"));
+        assertFalse(AgentLoop.readOnly("dumpsys  clipboard | grep a"));
+        assertFalse(AgentLoop.readOnly("dumpsys CONTACTS"));
+        assertFalse(AgentLoop.readOnly("dumpsys telecom"));
+        assertTrue(AgentLoop.readOnly("dumpsys   battery"));
+        assertTrue(AgentLoop.readOnly("dumpsys\tmeminfo | head -20"));
+    }
+
+    @Test
+    public void transferListHidesSymlinksAndOutsideEntries() throws Exception {
+        java.nio.file.Path base = java.nio.file.Files.createTempDirectory("share2");
+        java.nio.file.Path root = java.nio.file.Files.createDirectory(base.resolve("root"));
+        java.nio.file.Path outside = java.nio.file.Files.createDirectory(base.resolve("outside"));
+        java.nio.file.Files.write(root.resolve("a.txt"), new byte[]{1});
+        java.nio.file.Files.write(outside.resolve("secret.txt"), new byte[]{1});
+        java.nio.file.Files.createSymbolicLink(root.resolve("link-dir"), outside);
+        java.nio.file.Files.createSymbolicLink(root.resolve("link-file"), outside.resolve("secret.txt"));
+        String listed = TransferServer.listIn(root.toFile(), root.toFile());
+        assertTrue(listed.contains("a.txt"));
+        assertFalse(listed.contains("link-dir"));
+        assertFalse(listed.contains("link-file"));
+        assertFalse(listed.contains(outside.toString()));
+        assertFalse(TransferServer.insideRoot(root.toFile(), outside.toFile()));
+        assertTrue(TransferServer.insideRoot(root.toFile(), root.resolve("a.txt").toFile()));
+    }
 }

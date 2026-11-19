@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * 自動操作迴圈：截圖 → Claude 看圖決定下一步 → 用 root 執行 → 重複。照搬 scripts/agent2.py 的核心與第二段功能：
  * 分段拖曳（drag_start／move／end／cancel，手指一直按著）、拖曳（drag）、批次動作（batch，中間不截圖）、
  * 經驗記錄（remember，存進記憶）、網路搜尋（search，Claude 的網頁搜尋，每個任務最多 2 次）、等待、唯讀 shell。
- * 還沒搬的：多指觸控（multitouch）、背景虛擬螢幕、模型自動升級、重複動作偵測。
+ * （多指觸控、背景虛擬螢幕、模型自動升級、重複動作偵測都已經有了。）
  */
 final class AgentLoop {
     static final String MODEL = "claude-sonnet-5-5";

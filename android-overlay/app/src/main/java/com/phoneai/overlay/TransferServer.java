@@ -95,6 +95,7 @@ final class TransferServer {
     static final long MAX_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024;
     private static final long KEEP_FREE_BYTES = 200L * 1024 * 1024;   // 接收後至少還要剩這麼多空間
     private static final Object RENAME_LOCK = new Object();
+    private static final java.util.concurrent.atomic.AtomicLong RESERVED = new java.util.concurrent.atomic.AtomicLong();   // 進行中的上傳已答應的位元組數
 
     private void loop() {
         ServerSocket ss = server;
@@ -287,14 +288,19 @@ final class TransferServer {
     }
 
     private void receive(InputStream in, OutputStream out, Auth au, String name, String size) throws IOException {
-        long expect = 0;
-        try { expect = Long.parseLong(size); } catch (Exception ignored) { }
+        long expect;
+        try { expect = Long.parseLong(size == null ? "" : size.trim()); } catch (Exception e) { expect = -1; }
+        if (expect < 0) { reply(out, 411, "size required"); return; }   // 沒給大小或不是數字：不收（以前沒給大小就跳過空間檢查）
         String base = name == null ? "" : new File(name.replace('\\', '/')).getName();
         if (base.isEmpty() || base.equals("..") || base.equals(".")) { reply(out, 400, "bad name"); return; }
         File inbox = host.inbox();
         if (!inbox.isDirectory() && !inbox.mkdirs()) { reply(out, 500, "no inbox"); return; }
         if (expect > MAX_UPLOAD_BYTES) { reply(out, 413, "too large"); return; }
-        if (expect > 0 && inbox.getUsableSpace() - expect < KEEP_FREE_BYTES) { reply(out, 507, "not enough space"); return; }
+        synchronized (RENAME_LOCK) {   // 預留空間：同時好幾個上傳各自看到「夠用」、一起寫滿的情形，要把已答應的量算進去
+            if (inbox.getUsableSpace() - RESERVED.get() - expect < KEEP_FREE_BYTES) { reply(out, 507, "not enough space"); return; }
+            RESERVED.addAndGet(expect);
+        }
+        final long reserved = expect;
         File tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
         long total = 0;
         try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
@@ -304,13 +310,16 @@ final class TransferServer {
             while ((n = body.read(buf)) > 0) {
                 fo.write(buf, 0, n);
                 total += n;
-                if (total > MAX_UPLOAD_BYTES || (expect > 0 && total > expect + 64 * 1024)) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
+                if (total > MAX_UPLOAD_BYTES || total > expect + 64 * 1024) throw new IOException("upload too large");   // 超過上限或比宣告的大小多很多：中止
+                if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
                 host.progress(au.peer, false, base, total, expect);
             }
         } catch (IOException | RuntimeException e) {
             tmp.delete();   // 中斷或被停止：未完成的檔案刪掉
+            RESERVED.addAndGet(-reserved);
             throw e;
         }
+        RESERVED.addAndGet(-reserved);   // 寫完了：預留的量還回去（實際用掉的空間下次檢查就看得到）
         File dest;
         synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
             dest = unique(inbox, base);
@@ -365,13 +374,29 @@ final class TransferServer {
 
     private String line(File f) { return lineOf(host.root(), f); }
 
-    private String list(File dir) {
-        File[] kids = dir.listFiles();
-        if (kids == null) return "";
+    private String list(File dir) { return listIn(host.root(), dir); }
+
+    /** 目錄內容：符號連結與指到共享根目錄以外的項目不列出（不然會洩漏外面的檔名與絕對路徑）。 */
+    static String listIn(File rootDir, File dir) {
+        File[] all = dir.listFiles();
+        if (all == null) return "";
+        List<File> okKids = new ArrayList<>();
+        for (File k : all) if (!java.nio.file.Files.isSymbolicLink(k.toPath()) && insideRoot(rootDir, k)) okKids.add(k);
+        File[] kids = okKids.toArray(new File[0]);
         Arrays.sort(kids, (x, y) -> x.isDirectory() != y.isDirectory() ? (x.isDirectory() ? -1 : 1) : x.getName().compareToIgnoreCase(y.getName()));
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < kids.length && i < 500; i++) sb.append(line(kids[i]));
+        for (int i = 0; i < kids.length && i < 500; i++) sb.append(lineOf(rootDir, kids[i]));
         return sb.toString();
+    }
+
+    /** f 的真實路徑還在 rootDir 之內（含 rootDir 本身）。 */
+    static boolean insideRoot(File rootDir, File f) {
+        try {
+            String root = rootDir.getCanonicalPath(), p = f.getCanonicalPath();
+            return p.equals(root) || p.startsWith(root + File.separator);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /** 依檔名（包含關鍵字、不分大小寫）找檔案：最多找 4 秒、4 萬個項目，回傳最新的 30 個。 */

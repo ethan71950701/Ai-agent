@@ -16,6 +16,39 @@ final class Maintenance {
     private static final String[][] SU = {{Root.su(), "-mm"}, {Root.su(), "-M"}, {Root.su()}};
 
     /** 用 root 跑腳本（標準輸入餵進去）；回傳輸出。依序試幾種 su 寫法，第一個「結束碼 0」的就用。 */
+    private static final long SU_TIMEOUT_MS = 90_000;   // 一次 root 指令最多等多久；超過就強制結束（以前 shell 卡住會永遠等）
+    private static final int SU_MAX_BYTES = 2 * 1024 * 1024;   // 輸出最多留多少；超過的丟掉（以前整個讀進記憶體，dumpsys 可能很大）
+
+    /**
+     * 讀完一個程序的輸出：超過 timeoutMs 強制結束；輸出只留前 maxBytes，後面的讀掉但丟棄（不然程序會卡在寫入）。
+     * 回傳 {結束碼（逾時＝-1）, 輸出文字}。
+     */
+    static Object[] drain(final Process p, final long timeoutMs, final int maxBytes) throws Exception {
+        final java.util.concurrent.atomic.AtomicBoolean timedOut = new java.util.concurrent.atomic.AtomicBoolean();
+        Thread wd = new Thread(() -> {
+            try { Thread.sleep(timeoutMs); } catch (InterruptedException e) { return; }
+            timedOut.set(true);
+            p.destroyForcibly();
+        }, "su-watchdog");
+        wd.setDaemon(true);
+        wd.start();
+        java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
+        try (java.io.InputStream in = p.getInputStream()) {
+            byte[] b = new byte[4096];
+            int n;
+            while ((n = in.read(b)) > 0) {
+                int room = maxBytes - o.size();
+                if (room > 0) o.write(b, 0, Math.min(n, room));
+            }
+        } catch (java.io.IOException e) {
+            if (!timedOut.get()) throw e;   // 逾時被強制結束時讀取會中斷，這是預期的
+        }
+        int code = timedOut.get() ? -1 : p.waitFor();
+        wd.interrupt();
+        String text = o.toString("UTF-8");
+        return new Object[]{timedOut.get() ? -1 : code, timedOut.get() ? text + "\n(逾時，已強制結束)" : text};
+    }
+
     static String suRun(String script) {
         if (App.ctx != null && ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) return ShizukuBackend.run(script);
         String last = "";
@@ -24,12 +57,9 @@ final class Maintenance {
                 Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
                 p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
                 p.getOutputStream().close();
-                java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
-                byte[] b = new byte[4096];
-                int n;
-                while ((n = p.getInputStream().read(b)) > 0) o.write(b, 0, n);
-                String out = o.toString("UTF-8");
-                if (p.waitFor() == 0) return out;
+                Object[] r = drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES);
+                String out = (String) r[1];
+                if ((Integer) r[0] == 0) return out;
                 last = out;
             } catch (Exception e) {
                 last = String.valueOf(e);
@@ -64,12 +94,7 @@ final class Maintenance {
             Process p = new ProcessBuilder(Root.su()).redirectErrorStream(true).start();
             p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
             p.getOutputStream().close();
-            java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = p.getInputStream().read(buf)) > 0) o.write(buf, 0, n);
-            p.waitFor();
-            return o.toString("UTF-8");
+            return (String) drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES)[1];
         } catch (Exception e) {
             return "ERR:" + e;
         }
