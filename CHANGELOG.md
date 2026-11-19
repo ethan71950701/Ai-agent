@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1674
+
 - 修正背景模式截圖失敗（「Display Id … is not valid」）：背景螢幕被重建、截圖編號換了時，自動重新查編號再截一次｜Fixed background-mode screenshot failures ("Display Id … is not valid"): when the background display was rebuilt and its capture id changed, the id is looked up again and the capture retried
 - 背景模式：要打開的 App 宣告橫式（多數橫式遊戲）時，背景螢幕直接建立成橫式，遊戲和預覽窗都是正的｜Background mode: when the app to open declares landscape (most landscape games), the background display is created in landscape so the game and the preview are upright
 
