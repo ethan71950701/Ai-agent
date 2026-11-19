@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1694
+
 - 自訂 AI 服務：網址與 API Key 填在同一個畫面，按下去自動查詢模型清單讓你選（查不到才手動填）｜Custom AI service: URL and API key on one screen, then the model list is looked up automatically (manual entry only if the lookup fails)
 
 ## 1.0.1693
