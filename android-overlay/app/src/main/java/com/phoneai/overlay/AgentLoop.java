@@ -126,7 +126,7 @@ final class AgentLoop {
 
     /** 第一次要真的操作手機時才收起面板（之後不再收）；在這之前面板一直留著。 */
     private static void hideBeforeOperate(Ui ui, boolean[] hidden, String name) {
-        if (BgDisplay.active || hidden[0] || !operatesPhone(name)) return;   // 背景螢幕不會擋到助理面板
+        if (hidden[0] || !operatesPhone(name)) return;   // 背景模式也收起面板（使用者要的；以前背景螢幕不會擋到面板就留著）
         hidden[0] = true;
         ui.hide();
         sleep(600);
