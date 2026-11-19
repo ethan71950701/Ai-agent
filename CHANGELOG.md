@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 本機／區網的 AI 服務（例如手機上跑的本地模型）不用填 API Key｜Local / LAN AI services (e.g. a model running on the phone) no longer need an API key
 - 自訂 AI 服務：網址與 API Key 填在同一個畫面，按下去自動查詢模型清單讓你選（查不到才手動填）｜Custom AI service: URL and API key on one screen, then the model list is looked up automatically (manual entry only if the lookup fails)
 
 ## 1.0.1693

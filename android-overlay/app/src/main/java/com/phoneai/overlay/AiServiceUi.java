@@ -118,7 +118,7 @@ final class AiServiceUi {
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(Ui.body(a, L.t("填這個服務的網址（到 /v1 為止）和 API Key，按下一步會自動查詢有哪些模型讓你選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。")));
         EditText base = field(a, form, L.t("網址"), ps.base.isEmpty() ? LlmConfig.DEF_BASE : ps.base);
-        EditText key = field(a, form, L.t("API Key（已存過可留空）"), "");
+        EditText key = field(a, form, L.t("API Key（已存過、或本機服務可留空）"), "");
         key.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
         new MaterialAlertDialogBuilder(a).setTitle(L.t(ps.name)).setView(form)
                 .setPositiveButton(L.t("儲存並查詢模型"), (d, w) -> {
@@ -137,6 +137,9 @@ final class AiServiceUi {
         if (keyText != null && !keyText.trim().isEmpty()) {
             String r = Maintenance.saveKey(keyText, LlmConfig.keyFile(probe));
             if (r != null) { android.widget.Toast.makeText(a, r, android.widget.Toast.LENGTH_LONG).show(); return; }
+        } else if (!LlmConfig.hasOwnKey(a, probe) && b.toLowerCase(java.util.Locale.ROOT).startsWith("http://")) {
+            // 本機／區網的服務（Ollama、llama.cpp、手機上的本地模型）通常不檢查 Key；App 其他地方都要有 Key，所以存一個佔位字串（只會送給這個本地網址）
+            Maintenance.saveKey("local-service-no-key-needed", LlmConfig.keyFile(probe));
         } else if (!LlmConfig.hasOwnKey(a, probe)) {
             android.widget.Toast.makeText(a, L.t("還沒有這個服務的 Key，請貼上 API Key"), android.widget.Toast.LENGTH_LONG).show();
             return;

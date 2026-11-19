@@ -794,7 +794,7 @@ final class LEn {
         m.put("開啟官網用量頁：", "Open the usage page: ");
         m.put("（還沒有紀錄）", " (no records yet)");
         m.put("已用 $", "Used $");
-        m.put("API Key（已存過可留空）", "API key (leave empty if already saved)");
+        m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
         m.put("填這個服務的網址（到 /v1 為止）和 API Key，按下一步會自動查詢有哪些模型讓你選。注意：操作手機的提示是照 Claude 調的，換別家要自己實測；網頁搜尋是 Claude 專屬；任務過程的費用會顯示 $0。", "Enter this service's URL (up to /v1) and API key; the next step looks up the available models for you to pick. Note: the phone-operating prompts are tuned for Claude so test other models yourself; web search is Claude-only; task cost shows $0.");
