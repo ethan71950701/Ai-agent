@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1665
+
 - 背景螢幕：橫式 App／遊戲不再把預覽轉歪（叫系統忽略 App 的方向要求，橫式畫面上下留黑邊）｜Background display: landscape apps/games no longer rotate the preview sideways (the system is told to ignore the app's orientation request; landscape content is letterboxed)
 
 ## 1.0.1664
