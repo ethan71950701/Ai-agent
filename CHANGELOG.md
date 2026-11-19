@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1660
+
 - 背景模式（背景螢幕）也改用元件清單：更省 token、點得更準，不再只靠截圖｜Background mode (background display) now also uses the element list: cheaper and more accurate than screenshots alone
 
 ## 1.0.1659
