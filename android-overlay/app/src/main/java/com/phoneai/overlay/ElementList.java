@@ -37,7 +37,7 @@ final class ElementList {
      */
     private static List<AccessibilityNodeInfo> candidateRoots(RippleAccessibilityService svc, int h) {
         List<AccessibilityNodeInfo> roots = new ArrayList<>();
-        List<AccessibilityWindowInfo> wins = svc.getWindows();
+        List<AccessibilityWindowInfo> wins = windows(svc);
         if (wins == null) return roots;
         List<AccessibilityWindowInfo> sorted = new ArrayList<>(wins);
         sorted.sort((a, b) -> b.getLayer() - a.getLayer());
@@ -78,6 +78,17 @@ final class ElementList {
         return false;
     }
 
+    /** 要讀的螢幕上的視窗：背景模式（虛擬螢幕）讀背景螢幕（診斷實驗確認無障礙服務看得到它），否則讀主螢幕。 */
+    private static List<AccessibilityWindowInfo> windows(RippleAccessibilityService svc) {
+        if (BgDisplay.active) {
+            try {
+                android.util.SparseArray<List<AccessibilityWindowInfo>> all = svc.getWindowsOnAllDisplays();
+                return all == null ? null : all.get(BgDisplay.id);
+            } catch (Throwable t) { return null; }
+        }
+        return svc.getWindows();
+    }
+
     /** 目前前景（目標）App 的套件名稱；讀不到回 null。經驗要記在哪個 App、要帶哪個 App 的經驗，都用它。 */
     static String foregroundPackage() {
         RippleAccessibilityService svc = RippleAccessibilityService.instance;
@@ -89,7 +100,7 @@ final class ElementList {
     /** 不是 Vertex 自己的應用程式視窗；優先取活動中的那個（助理面板也是 Vertex 的視窗，要略過）。 */
     private static AccessibilityNodeInfo targetRoot(RippleAccessibilityService svc) {
         AccessibilityNodeInfo fallback = null;
-        List<AccessibilityWindowInfo> wins = svc.getWindows();
+        List<AccessibilityWindowInfo> wins = windows(svc);
         if (wins == null) return null;
         for (AccessibilityWindowInfo win : wins) {
             if (win.getType() != AccessibilityWindowInfo.TYPE_APPLICATION) continue;

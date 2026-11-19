@@ -241,7 +241,7 @@ final class AgentLoop {
         }
         String finalSay = null;
         boolean wantShow = false;   // 模型說這次的回答是使用者要看的資訊（名稱、數字、結果），不只是「完成了」
-        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true) && !BgDisplay.active;   // 背景螢幕：元件清單讀的是主螢幕，不適用
+        boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true);   // 背景螢幕也用元件清單（ElementList 會讀背景螢幕的視窗；診斷實驗：設定頁讀得到 31 個元件）
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
