@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1696
+
 - 用本機／區網的 AI 模型時，助理面板等回答的時間延長到 3 分鐘（以前 30 秒沒消息就自己關掉，回答還沒到）｜With a local / LAN AI model the assistant panel now waits up to 3 minutes for the answer (it used to close itself after 30 s with no reply)
 
 ## 1.0.1695
