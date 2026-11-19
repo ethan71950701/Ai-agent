@@ -66,6 +66,7 @@ final class BgDisplay {
                         // 橫式遊戲：叫系統「不理會 App 要求的方向」，讓橫式 App 在直式背景螢幕上維持正的（上下留黑邊），
                         // 不會被轉 90 度、讓預覽整個歪掉（使用者以前要把手機橫過來才看得懂）。指令不支援也沒關係，結果記進診斷頁的最近事件。
                         try {
+                            if (!c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_ignore_orient", true)) throw new Exception("off");
                             String r = Maintenance.suRun("wm set-ignore-orientation-request -d " + id + " true 2>&1");
                             LifeLog.add(c, "背景螢幕：忽略 App 的方向要求 → " + (r == null || r.trim().isEmpty() ? "已設定" : r.trim().replace('\n', ' ')));
                         } catch (Throwable ignored2) { }
