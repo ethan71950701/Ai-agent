@@ -1,6 +1,6 @@
 # 手機對手機互傳：用 FCM 當「門鈴」的設計（草案）
 
-> 狀態：📝 設計草案，還沒寫程式。前提是 `docs/FCM_LAB.md` 的實驗結果（背景、滑掉、鎖屏都能被叫醒，延遲約幾百毫秒；**需要使用者開「自啟動」**）。
+> 狀態：📝 設計草案。階段 1 的純邏輯（`Doorbell`：產生、加解密、驗證、位址與欄位檢查）與單元測試已完成（2026-11-19），**尚未接上 Firebase 與 UI**；Firebase 依賴與接收服務等確定要併進 main 時再加。前提是 `docs/FCM_LAB.md` 的實驗結果（背景、滑掉、鎖屏都能被叫醒，延遲約幾百毫秒；**需要使用者開「自啟動」**）。
 > 本文件建立在現有互傳（`docs/FILE_TRANSFER.md`：配對、HMAC 簽章、AES-GCM、`TransferServer`／`TransferClient`）之上，**不改現有協定**。
 
 ## 1. 目標與不做的事
@@ -30,7 +30,7 @@
 5. App 檢查並引導：通知權限、電池「無限制」、**自啟動**（依廠牌顯示對應路徑；偵測不到就文字說明）。
 
 ## 4. 門鈴訊息（FCM data，`priority: high`）
-- 內容（JSON）：`v`（版本）、`from`（A 的裝置 id）、`ts`（毫秒時間戳）、`nonce`（隨機）、`ip`／`port`（A 目前的區網位址）、`path`（要拿的檔案）、`name`、`size`，整包用**配對金鑰**衍生的 AES-GCM 加密，並附 HMAC-SHA256。
+- 內容（JSON）：`v`（版本）、`from`（A 的裝置 id）、`ts`（毫秒時間戳）、`nonce`（隨機）、`ip`／`port`（A 目前的區網位址）、`path`（要拿的檔案）、`name`、`size`，密文用 AES-GCM（金鑰＝HMAC(配對金鑰, "bell|"+nonce)，每則一把新的；AAD 綁住 v、from、ts、nonce，GCM 的標籤同時負責完整性，所以不另外附 HMAC）。實作：`Doorbell.java`（純 Java）與 `DoorbellTest`。
 - 大小遠小於 FCM 限制（約 4 KB）。
 - 不放任何金鑰或可直接使用的授權；它只是「請你去這裡拿這個」。
 
