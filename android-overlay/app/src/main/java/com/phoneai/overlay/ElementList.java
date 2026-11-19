@@ -172,6 +172,34 @@ final class ElementList {
         return sb.toString();
     }
 
+    /** 元件的比對鍵（種類＋文字）：判斷這一步有哪些元件是上一步沒有的。 */
+    static String key(JSONObject o) { return o.optString("k") + "|" + o.optString("t"); }
+
+    static java.util.Set<String> keys(List<JSONObject> els) {
+        java.util.Set<String> s = new java.util.HashSet<>();
+        for (JSONObject o : els) s.add(key(o));
+        return s;
+    }
+
+    /**
+     * 給 AI 看的清單，加兩種標記：「+」＝上一步的畫面沒有、這一步才出現的元件（一眼看出點了之後哪裡變了）；
+     * 「⚠」＝敏感按鈕（付款、刪除、傳送…），點它程式會先問使用者。prev 是 null（第一步）時不標 +。
+     */
+    static String describeMarked(List<JSONObject> els, java.util.Set<String> prev) {
+        StringBuilder sb = new StringBuilder();
+        boolean any = false;
+        for (JSONObject o : els) {
+            boolean fresh = prev != null && !prev.contains(key(o));
+            boolean warn = AgentLoop.isSensitiveLabel(o.optString("t"));
+            any |= fresh || warn;
+            sb.append(o.optInt("n")).append(". ").append(o.optString("k")).append(o.optBoolean("f") ? "（已聚焦）" : "").append('「')
+                    .append(o.optString("t").isEmpty() ? "無文字" : o.optString("t")).append("」(")
+                    .append(o.optInt("x")).append(',').append(o.optInt("y")).append(')').append(warn ? " ⚠" : "").append(fresh ? " +" : "").append('\n');
+        }
+        if (any) sb.append("（標記：+＝這一步新出現的；⚠＝敏感按鈕，點了程式會先問使用者）\n");
+        return sb.toString();
+    }
+
     /** 動作本身或 batch 裡每個子動作的 pick 都換成 x、y；有任何一個找不到編號就回 false。 */
     static boolean pickAll(JSONObject action, List<JSONObject> els) {
         if (action.has("pick") && !pick(action, els)) return false;

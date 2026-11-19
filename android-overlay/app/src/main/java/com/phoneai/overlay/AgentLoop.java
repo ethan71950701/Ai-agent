@@ -243,6 +243,7 @@ final class AgentLoop {
         boolean wantShow = false;   // 模型說這次的回答是使用者要看的資訊（名稱、數字、結果），不只是「完成了」
         boolean treeOn = c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tree_on", true);   // 背景螢幕也用元件清單（ElementList 會讀背景螢幕的視窗；診斷實驗：設定頁讀得到 31 個元件）
         boolean forceShot = false;   // 上一步點不到編號：這一步改回截圖＋Sonnet（升級）
+        java.util.Set<String> prevTreeKeys = null;   // 上一步的元件鍵：這一步清單裡沒在上一步出現過的標「+」
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
         int waits = 0;               // 連續 wait 的次數（相機取景這種本來就不會變的畫面，不能只看清單有沒有變）
@@ -302,6 +303,8 @@ final class AgentLoop {
                 String treeText = useTree ? ElementList.describe(tree) : null;
                 sameTree = treeText != null && treeText.equals(lastTreeText) ? sameTree + 1 : 0;
                 lastTreeText = treeText;
+                final java.util.Set<String> prevForMarks = prevTreeKeys;
+                prevTreeKeys = useTree ? ElementList.keys(tree) : null;
                 if (useTree && sameTree >= 1 && waits >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 連續等了兩次、清單還是沒變：可能卡住，這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot(wasForced ? WIDTH_LOOK : WIDTH);   // look 之後的看圖步驟用大圖
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 Vertex。");
@@ -318,7 +321,7 @@ final class AgentLoop {
                 String model = useTree || cheapFirst ? TREE_MODEL : MODEL;
                 String retryRaw = null;   // Haiku 的回覆看不懂、改用 Sonnet 重問時，留下 Haiku 回覆的開頭給任務過程看
                 try {
-                    action = askModel(key, task, history, img, lessons, model, useTree ? ElementList.describe(tree) : null);
+                    action = askModel(key, task, history, img, lessons, model, useTree ? ElementList.describeMarked(tree, prevForMarks) : null);
                     if (cheapFirst && action != null && needsCoords(action.optString("action"))) {
                         model = MODEL;
                         action = askModel(key, task, history, img, lessons, model, null);
@@ -946,8 +949,18 @@ final class AgentLoop {
     }
 
     /** 執行一個動作，並記下最近輸入的文字（給 done 前的「是否已送出」檢查用）。 */
+    /** 最近一次由 AI 送出觸控／按鍵的時間：確認框在這之後的一小段時間不接受觸控，避免 AI 自己按掉確認框。 */
+    static volatile long lastInjectAt;
+    static boolean injectedRecently() { return android.os.SystemClock.uptimeMillis() - lastInjectAt < 800; }
+
     static String execute(JSONObject a, int[] wh, Context c, State st) {
-        String r = executeInner(a, wh, c, st);
+        lastInjectAt = android.os.SystemClock.uptimeMillis();
+        String r;
+        try {
+            r = "collect".equals(a.optString("action")) ? collectList(a, wh, c, st) : executeInner(a, wh, c, st);
+        } finally {
+            lastInjectAt = android.os.SystemClock.uptimeMillis();
+        }
         if ("back".equals(a.optString("action"))) st.backs++;
         if ("type".equals(a.optString("action")) && r != null && r.startsWith("已輸入")) { st.lastTyped = a.optString("text"); st.typedAny = true; }
         return r;
@@ -1470,6 +1483,49 @@ final class AgentLoop {
     private static final String[] SENSITIVE_LABELS = {"付款", "支付", "轉帳", "转账", "匯款", "汇款", "購買", "购买", "下單", "下单", "訂購", "刪除", "删除",
             "清除全部", "安裝", "安装", "訂閱", "订阅", "傳送", "发送", "發送", "確認訂單",
             "pay", "buy", "purchase", "send", "delete", "install", "subscribe", "transfer", "remove all", "checkout"};
+
+    /**
+     * 「collect」：自動往下捲、每捲一次讀一次元件清單，文字去重後一次回傳整份長列表（以前要 AI 一格一格滑，很費步數）。
+     * max_pages（預設 8、最多 20）；until＝出現這段文字就停。只讀，不點任何東西。
+     */
+    private static String collectList(JSONObject a, int[] wh, Context c, State st) {
+        int max = Math.max(1, Math.min(a.optInt("max_pages", 8), 20));
+        String until = a.optString("until", "");
+        java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
+        int stale = 0;
+        for (int page = 0; page < max && !cancelled; page++) {
+            List<JSONObject> els = ElementList.collect(wh[0], wh[1]);
+            if (els == null || els.isEmpty()) return page == 0 ? "讀不到元件清單，沒辦法自動收集；請改用 scroll 一頁一頁看" : joinCollected(seen);
+            int before = seen.size();
+            for (JSONObject o : els) {
+                String t = o.optString("t").trim();
+                if (!t.isEmpty() && !"輸入框".equals(o.optString("k"))) seen.add(t);
+            }
+            boolean found = !until.isEmpty() && String.join("\n", seen).contains(until);
+            stale = seen.size() == before ? stale + 1 : 0;
+            if (found || stale >= 2 || page == max - 1) break;
+            try { execute(new JSONObject().put("action", "scroll").put("dir", "down"), wh, c, st); } catch (org.json.JSONException ignored) { }
+            sleep(700);
+        }
+        return joinCollected(seen);
+    }
+
+    private static String joinCollected(java.util.Set<String> seen) {
+        StringBuilder sb = new StringBuilder("已收集 " + seen.size() + " 項（滑過的畫面，文字去重）：\n");
+        for (String t : seen) {
+            if (sb.length() > 3500) { sb.append("…（太長，後面省略）"); break; }
+            sb.append("• ").append(t.length() > 80 ? t.substring(0, 80) + "…" : t).append('\n');
+        }
+        return sb.toString();
+    }
+
+    /** 元件文字含敏感字（付款、刪除、傳送…）：元件清單裡標 ⚠。 */
+    static boolean isSensitiveLabel(String t) {
+        if (t == null || t.isEmpty()) return false;
+        String s = t.toLowerCase(java.util.Locale.ROOT);
+        for (String w : SENSITIVE_LABELS) if (s.contains(w)) return true;
+        return false;
+    }
 
     /** 這次要點的元件名稱含敏感字、而且使用者的任務沒提到這個字：回那個元件名稱（要跳確認框）；沒有回 null。 */
     static String sensitiveLabel(JSONObject action, String task) {

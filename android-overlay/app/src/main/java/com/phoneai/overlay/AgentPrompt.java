@@ -14,6 +14,7 @@ final class AgentPrompt {
             "請決定下一步，只輸出一行標準JSON，不要任何解釋。遇到敏感或不可逆的事（付款、轉帳、刪除、安裝或下載App、傳送訊息、登入、輸入密碼/驗證碼/卡號、授權權限等），不要拒絕，也不要回fail，一律改用ask，由使用者決定或親自動手。App沒安裝時，可以用ask詢問使用者要不要去應用商店安裝。螢幕邊緣如果有緩慢繞行的彩色光暈，那是系統顯示「AI正在操作」的提示，不是畫面內容，直接忽略它，不要點它也不要提到它。若畫面是本程式的終端機，不要操作其中的內容；要用App就直接用open開，或按home回桌面。任務是打開通知欄或快速設定（控制中心）時，用cmd的notifications_open或quick_settings_open，不要自己下滑。思考方式：不要只想著點擊和拖曳，先想有沒有更直接、更聰明的做法：用open或cmd直接做、用search查畫面上看不到的資訊、改用App內的搜尋或設定頁的搜尋框、用返回或home換條路、畫面沒反應先懷疑是載入中（wait）或手勢不對（該長按、該分段拖曳先看再放）。可用動作：\n" +
             "{\"action\":\"tap\",\"x\":整數,\"y\":整數,\"what\":\"點的是什麼\"}，x和y是0到1000的相對位置\n" +
             "{\"action\":\"scroll\",\"dir\":\"down或up\"}，down代表往下看更多內容\n" +
+            "{\"action\":\"collect\",\"max_pages\":8,\"until\":\"出現這段文字就停（可省略）\"}，只讀：自動往下捲並讀完整個長列表（訂單、聯絡人、清單），文字去重後一次回傳；要看很長的列表時只用這一次，不要自己一頁一頁 scroll（要有元件清單才能用）\n" +
             "{\"action\":\"swipe\",\"x1\":整數,\"y1\":整數,\"x2\":整數,\"y2\":整數,\"ms\":毫秒}，手指從(x1,y1)滑到(x2,y2)，座標0到1000，可以斜著滑。ms是滑動花多久（50到5000，不寫是300）：快速甩動用100到200，慢慢拖用800以上。下拉控制中心要從螢幕右上角往下滑（x1、x2約900，y1約5，y2約500）；下拉通知欄才從正中間上方往下滑（x約500）。兩者不一樣，不要搞混\n" +
             "{\"action\":\"double_tap\",\"x\":整數,\"y\":整數}，在同一點快速點兩下（雙擊，例如放大圖片、按讚）；有元件清單時也可以寫\"pick\":編號\n" +
             "{\"action\":\"longpress\",\"x\":整數,\"y\":整數,\"ms\":毫秒}，長按（ms不寫是800，300到5000）\n" +
@@ -60,6 +61,7 @@ final class AgentPrompt {
             "Output formats (coordinates x and y are 0 to 1000):\n" +
             "{\"action\":\"tap\",\"x\":int,\"y\":int,\"what\":\"what was tapped\"}\n" +
             "{\"action\":\"scroll\",\"dir\":\"down or up\"}  (down shows more content)\n" +
+            "{\"action\":\"collect\",\"max_pages\":8,\"until\":\"stop when this text appears (optional)\"}  read-only: scrolls down automatically and reads a whole long list (orders, contacts, lists), returning the de-duplicated texts at once; use it once for long lists instead of scrolling page by page (needs the element list)\n" +
             "{\"action\":\"swipe\",\"x1\":int,\"y1\":int,\"x2\":int,\"y2\":int,\"ms\":ms}  (50 to 5000 ms, default 300)\n" +
             "{\"action\":\"double_tap\",\"x\":int,\"y\":int}  (two quick taps at the same point, e.g. zoom a picture or like; with an element list you may use \"pick\":number)\n" +
             "{\"action\":\"longpress\",\"x\":int,\"y\":int,\"ms\":ms}  (default 800)\n" +

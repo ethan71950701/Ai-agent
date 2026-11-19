@@ -45,6 +45,13 @@ public class ConfirmActivity extends Activity {
         }
     }
 
+    /** AI 剛送出觸控或按鍵的一小段時間內不接受任何觸控：避免 AI 自己的點擊落在確認框的「是」上（借鏡別的專案的 InjectGuard）。 */
+    @Override
+    public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (AgentLoop.injectedRecently()) return true;
+        return super.dispatchTouchEvent(ev);
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
