@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1663
+
 - 背景預覽窗的按鈕（鍵盤、小白條、縮放）固定貼在預覽窗最下面一列，不會跑到卡片中間；找不到 App 名稱時，把已安裝的 App 名稱給 AI，讓它改用正確名稱重試｜Background preview buttons (keyboard, pill, resize) are pinned to the bottom strip of the preview and no longer jump into the middle of the card; when an app name isn't found, the installed app names are given to the AI so it can retry with the right one
 
 ## 1.0.1662
