@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1678
+
 - 「任務結束後背景螢幕保留」改成 0～120 秒的滑桿｜"Keep the background display after a task" is now a 0–120 second slider
 
 ## 1.0.1677
