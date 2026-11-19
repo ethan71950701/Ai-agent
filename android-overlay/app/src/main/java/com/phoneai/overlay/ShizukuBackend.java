@@ -73,9 +73,8 @@ final class ShizukuBackend {
         try {
             Process p = start(new String[]{"sh", "-c", cmd});
             p.getOutputStream().close();
-            byte[] out = readAll(p.getInputStream());
-            p.waitFor();
-            return out;
+            ProcRun.Bytes r = ProcRun.drainBytes(p, 20_000, 64 * 1024 * 1024);   // 逾時 20 秒、輸出上限 64 MB（以前沒有，截圖程序卡住會永遠等）
+            return r.ok() ? r.data : null;
         } catch (Throwable e) {
             return null;
         }

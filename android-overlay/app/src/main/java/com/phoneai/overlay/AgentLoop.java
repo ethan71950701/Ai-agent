@@ -565,16 +565,12 @@ final class AgentLoop {
             } else {
                 Process p = new ProcessBuilder(Root.su(), "-c", BgDisplay.active ? "screencap -d " + BgDisplay.sf + " -p" : "screencap -p").redirectErrorStream(false).start();
                 p.getOutputStream().close();
-                final Process pp = p;
-                final StringBuilder errBuf = new StringBuilder();
-                Thread et = new Thread(() -> { try { errBuf.append(new String(readAll(pp.getErrorStream()), java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception ignored) { } }, "screencap-err");
-                et.setDaemon(true);
-                et.start();
-                png = readAll(p.getInputStream());
-                int code = p.waitFor();
-                try { et.join(300); } catch (InterruptedException ignored) { }
+                ProcRun.Bytes pr = ProcRun.drainBytes(p, 20_000, 64 * 1024 * 1024);   // 逾時與大小上限（以前 readAll＋waitFor，程序卡住會永遠等）
+                png = pr.ok() ? pr.data : new byte[0];
+                int code = pr.code;
+                final String errText = pr.timedOut ? "timeout" : pr.tooBig ? "output too big" : pr.err;
                 if (png.length < 100 && BgDisplay.active) {   // 診斷：背景螢幕截不到時，記下結束碼與錯誤訊息（不含畫面內容）
-                    String e = errBuf.toString().trim().replace('\n', ' ');
+                    String e = errText.trim().replace('\n', ' ');
                     LifeLog.add(App.ctx, "背景螢幕截圖失敗：screencap -d " + BgDisplay.sf + " 結束碼 " + code + "，輸出 " + png.length + " 位元組" + (e.isEmpty() ? "" : "，錯誤：" + (e.length() > 160 ? e.substring(0, 160) : e)));
                     if (!retried && e.contains("not valid") && BgDisplay.refreshSf()) return screenshot(width, true);   // 截圖編號失效（背景螢幕被主機重建過）：重新查編號再截一次
                 }
@@ -605,8 +601,8 @@ final class AgentLoop {
             } else {
                 Process p = new ProcessBuilder(Root.su(), "-c", "screencap -p").redirectErrorStream(false).start();
                 p.getOutputStream().close();
-                png = readAll(p.getInputStream());
-                p.waitFor();
+                ProcRun.Bytes pr = ProcRun.drainBytes(p, 20_000, 64 * 1024 * 1024);
+                png = pr.ok() ? pr.data : new byte[0];
             }
             return png.length < 100 ? null : BitmapFactory.decodeByteArray(png, 0, png.length);
         } catch (Exception e) {
@@ -624,13 +620,9 @@ final class AgentLoop {
             } else {
                 Process p = new ProcessBuilder(Root.su(), "-c", "screencap").redirectErrorStream(false).start();
                 p.getOutputStream().close();
-                ByteArrayOutputStream bo = new ByteArrayOutputStream(1 << 25);
-                byte[] buf = new byte[1 << 17];
-                int n;
-                java.io.InputStream in = p.getInputStream();
-                while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
-                p.waitFor();
-                raw = bo.toByteArray();
+                ProcRun.Bytes pr = ProcRun.drainBytes(p, 20_000, 64 * 1024 * 1024);
+                if (!pr.ok()) return null;
+                raw = pr.data;
             }
             if (raw.length < 64) return null;
             java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(raw).order(java.nio.ByteOrder.LITTLE_ENDIAN);

@@ -59,4 +59,37 @@ public class ProcRunTest {
         assertTrue(ProcRun.suNotLaunched(1, "su: invalid option -- 'm'"));
         assertTrue(ProcRun.suNotLaunched(2, "Unknown option: -mm\nusage: su [options]"));
     }
+
+    @Test
+    public void timeoutAlsoKillsChildProcesses() throws Exception {
+        Assume.assumeTrue(new java.io.File("/proc/self").exists());
+        Object[] r = ProcRun.drain(sh("sleep 30 & echo $!; wait"), 500, 1024);
+        assertEquals(ProcRun.TIMED_OUT, r[0]);
+        String pid = ((String) r[1]).trim().split("\\s+")[0];
+        assertTrue("pid line: " + r[1], pid.matches("\\d+"));
+        java.io.File proc = new java.io.File("/proc/" + pid);
+        boolean gone = false;
+        for (int k = 0; k < 40 && !gone; k++) {   // 最多等 4 秒讓系統收掉
+            gone = !proc.exists() || new String(java.nio.file.Files.readAllBytes(new java.io.File(proc, "stat").toPath())).contains(") Z");
+            if (!gone) Thread.sleep(100);
+        }
+        assertTrue("the child sleep process must be killed with its parent", gone);
+    }
+
+    @Test
+    public void binaryDrainReturnsBytesAndCaps() throws Exception {
+        Assume.assumeTrue(new java.io.File("/bin/sh").exists());
+        ProcRun.Bytes ok = ProcRun.drainBytes(new ProcessBuilder("sh", "-c", "head -c 5000 /dev/zero; echo warn >&2").start(), 5000, 100000);
+        assertTrue(ok.ok());
+        assertEquals(5000, ok.data.length);
+        assertTrue(ok.err.contains("warn"));
+        ProcRun.Bytes big = ProcRun.drainBytes(new ProcessBuilder("sh", "-c", "head -c 300000 /dev/zero").start(), 5000, 100000);
+        assertTrue(big.tooBig);
+        assertFalse(big.ok());
+        long t0 = System.currentTimeMillis();
+        ProcRun.Bytes hung = ProcRun.drainBytes(new ProcessBuilder("sh", "-c", "sleep 30").start(), 400, 1000);
+        assertTrue(hung.timedOut);
+        assertFalse(hung.ok());
+        assertTrue(System.currentTimeMillis() - t0 < 6000);
+    }
 }
