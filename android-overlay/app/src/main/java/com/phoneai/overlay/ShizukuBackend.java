@@ -61,8 +61,8 @@ final class ShizukuBackend {
             Process p = start(new String[]{"sh"});
             p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
             p.getOutputStream().close();
-            String out = new String(readAll(p.getInputStream()), StandardCharsets.UTF_8);
-            return p.waitFor() == 0 ? out : "ERR:" + out;
+            Object[] r = ProcRun.drain(p, 90_000, 2 * 1024 * 1024);   // 逾時與輸出上限（跟 root 的 suRun 一樣）
+            return (Integer) r[0] == 0 ? (String) r[1] : "ERR:" + r[1];
         } catch (Throwable e) {
             return "ERR:" + e;
         }

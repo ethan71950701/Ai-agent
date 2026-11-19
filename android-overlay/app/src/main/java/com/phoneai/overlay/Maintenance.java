@@ -19,53 +19,33 @@ final class Maintenance {
     private static final long SU_TIMEOUT_MS = 90_000;   // 一次 root 指令最多等多久；超過就強制結束（以前 shell 卡住會永遠等）
     private static final int SU_MAX_BYTES = 2 * 1024 * 1024;   // 輸出最多留多少；超過的丟掉（以前整個讀進記憶體，dumpsys 可能很大）
 
-    /**
-     * 讀完一個程序的輸出：超過 timeoutMs 強制結束；輸出只留前 maxBytes，後面的讀掉但丟棄（不然程序會卡在寫入）。
-     * 回傳 {結束碼（逾時＝-1）, 輸出文字}。
-     */
-    static Object[] drain(final Process p, final long timeoutMs, final int maxBytes) throws Exception {
-        final java.util.concurrent.atomic.AtomicBoolean timedOut = new java.util.concurrent.atomic.AtomicBoolean();
-        Thread wd = new Thread(() -> {
-            try { Thread.sleep(timeoutMs); } catch (InterruptedException e) { return; }
-            timedOut.set(true);
-            p.destroyForcibly();
-        }, "su-watchdog");
-        wd.setDaemon(true);
-        wd.start();
-        java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
-        try (java.io.InputStream in = p.getInputStream()) {
-            byte[] b = new byte[4096];
-            int n;
-            while ((n = in.read(b)) > 0) {
-                int room = maxBytes - o.size();
-                if (room > 0) o.write(b, 0, Math.min(n, room));
-            }
-        } catch (java.io.IOException e) {
-            if (!timedOut.get()) throw e;   // 逾時被強制結束時讀取會中斷，這是預期的
-        }
-        int code = timedOut.get() ? -1 : p.waitFor();
-        wd.interrupt();
-        String text = o.toString("UTF-8");
-        return new Object[]{timedOut.get() ? -1 : code, timedOut.get() ? text + "\n(逾時，已強制結束)" : text};
-    }
-
     static String suRun(String script) {
         if (App.ctx != null && ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) return ShizukuBackend.run(script);
         String last = "";
         for (String[] cmd : SU) {
+            Process p;
             try {
-                Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+                p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+            } catch (Exception e) {   // su 這種寫法根本起不來：什麼都沒執行過，換下一種
+                last = String.valueOf(e);
+                continue;
+            }
+            try {
                 p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
                 p.getOutputStream().close();
-                Object[] r = drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES);
+                Object[] r = ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES);
+                int code = (Integer) r[0];
                 String out = (String) r[1];
-                if ((Integer) r[0] == 0) return out;
-                last = out;
+                if (code == 0) return out;
+                if (code == ProcRun.TIMED_OUT) return "ERR:" + out;   // 腳本可能已經執行一部分：不換寫法重跑
+                if (!ProcRun.suNotLaunched(code, out)) return "ERR:" + out;   // 腳本跑過了、只是結束碼不是 0：照實回報，絕不重跑（以前會用另外兩種 su 寫法再跑兩次）
+                last = out;   // su 自己的選項不支援：換下一種寫法
             } catch (Exception e) {
-                last = String.valueOf(e);
+                p.destroyForcibly();
+                return "ERR:" + e;   // 已經開始送腳本才出錯：不重跑
             }
         }
-        Root.recheck();   // su 都失敗：可能是 root 被撤銷了，下次用 Root.available() 時重新判斷
+        Root.recheck();   // su 都起不來：可能是 root 被撤銷了，下次用 Root.available() 時重新判斷
         return "ERR:" + last;
     }
 
@@ -94,7 +74,7 @@ final class Maintenance {
             Process p = new ProcessBuilder(Root.su()).redirectErrorStream(true).start();
             p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
             p.getOutputStream().close();
-            return (String) drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES)[1];
+            return (String) ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES)[1];
         } catch (Exception e) {
             return "ERR:" + e;
         }
