@@ -37,6 +37,8 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("背景任務開始時自動顯示預覽窗", "Show the preview window automatically when a background task starts");
+        m.put("很短的任務一下就結束，來不及點 Now Bar 開預覽。關掉的話，要自己點 Now Bar 才會出現", "Short tasks can finish before you tap the Now Bar. If turned off, tap the Now Bar to open the preview.");
         m.put("隱藏文字（輸入密碼時開）", "Hide text (turn on for passwords)");
         m.put("這個服務的網址不是 https，為了保護 API Key 不送出。請改用 https 網址（本機或區域網路的 http 才允許）。", "This service URL is not https, so the API key is not sent. Use an https URL (plain http is only allowed for localhost or the local network).");
         m.put("任務結束後，背景螢幕與預覽窗再留多久；你碰預覽窗會重新計時。0 = 馬上收掉", "How long the background display and preview stay after a task ends; touching the preview restarts the timer. 0 = close immediately");

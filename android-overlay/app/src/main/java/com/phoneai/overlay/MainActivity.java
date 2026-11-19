@@ -1247,7 +1247,7 @@ public class MainActivity extends Activity {
                 innerS.addView(slS, new LinearLayout.LayoutParams(-1, -2));
             }
             final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
-            final int n = hasRoot ? 11 : 7;
+            final int n = hasRoot ? 12 : 7;
             int k = 0;
             Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                     (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
@@ -1259,6 +1259,8 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景螢幕：橫式遊戲不轉向（實驗）"), L.t("開：叫系統忽略 App 的方向要求，橫式遊戲在直式背景螢幕上維持正的（比較小）。關：遊戲會轉 90 度。有的遊戲在直式畫面裡會當掉，當掉就關掉這個再試"),
                     cfg().getBoolean("bg_ignore_orient", true), (v, on) -> cfg().edit().putBoolean("bg_ignore_orient", on).apply());
+            if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景任務開始時自動顯示預覽窗"), L.t("很短的任務一下就結束，來不及點 Now Bar 開預覽。關掉的話，要自己點 Now Bar 才會出現"),
+                    cfg().getBoolean("bg_preview_auto", true), (v, on) -> cfg().edit().putBoolean("bg_preview_auto", on).apply());
             if (hasRoot) Ui.row(this, g, k++, n, "monitor", L.t("測試背景螢幕"), L.t("建立一次背景螢幕、開「設定」截圖，看畫面是不是正常"), Ui.chevron(this), v -> {
                 android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
                 new Thread(() -> {
