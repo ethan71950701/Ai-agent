@@ -37,6 +37,11 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put("立即看公告", "Check announcements now");
+        m.put("現在就去抓一次公告（不受 10 分鐘限制，看過的也會再顯示）", "Fetch the announcement right now (ignores the 10-minute limit and shows ones you have already seen)");
+        m.put("抓不到公告（網路不通，或檔案不存在）", "Could not fetch the announcement (no network, or the file does not exist)");
+        m.put("公告檔案格式看不懂", "The announcement file could not be read");
+        m.put("目前沒有公告", "No announcement right now");
         m.put("定時網路查詢目前被暫時停用了（公告）。", "Scheduled web lookups are temporarily disabled (announcement).");
         m.put("公告", "Announcement");
         m.put("前往更新", "Update now");

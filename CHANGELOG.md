@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 設定 →「更新」新增「立即看公告」（不受 10 分鐘限制，抓不到會告訴你原因）｜Settings → Update: new "Check announcements now" (ignores the 10-minute limit and tells you why if it cannot fetch)
 - 公告與功能開關：打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有公告，不用更新 App 就能收到重要通知（例如請盡快更新）；出重大問題時也能遠端暫時停用背景模式、檔案互傳、定時查詢、串流顯示、唯讀 shell；設定 →「更新」可關掉。只顯示文字、不傳送任何資料｜Announcements and feature switches: when the app opens (at most every 10 minutes) it checks GitHub for an announcement, so important notices (e.g. "please update soon") reach you without an app update; a serious problem can also temporarily disable background mode, file transfer, scheduled lookups, streaming and the read-only shell remotely; can be turned off in Settings → Update. Text only; no data is sent
 
 ## 1.0.1687

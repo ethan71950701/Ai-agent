@@ -118,26 +118,45 @@ final class Announcements {
     static boolean enabled(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("ann_on", true); }
 
     /** 打開 App 時呼叫（主畫面 onResume）：背景抓一次，有要顯示的就跳對話框。 */
-    static void checkOnOpen(final Activity a) {
+    static void checkOnOpen(final Activity a) { check(a, false); }
+
+    /**
+     * manual＝使用者在設定按「立即看公告」：不管 10 分鐘限制、也不管看過沒有，現在有公告就顯示，沒有或抓不到就用提示告訴他原因。
+     */
+    static void check(final Activity a, final boolean manual) {
         final SharedPreferences sp = a.getSharedPreferences("cfg", Context.MODE_PRIVATE);
-        if (!sp.getBoolean("ann_on", true)) return;
+        if (!manual && !sp.getBoolean("ann_on", true)) return;
         long now = System.currentTimeMillis();
-        if (now - sp.getLong(PREF_LAST, 0) < MIN_INTERVAL_MS) return;
+        if (!manual && now - sp.getLong(PREF_LAST, 0) < MIN_INTERVAL_MS) return;
         sp.edit().putLong(PREF_LAST, now).apply();
         new Thread(() -> {
             final Result r;
             try {
                 String json = fetch();
-                if (json == null) return;
+                if (json == null) {
+                    LifeLog.add(a, "公告：抓不到（網路或檔案不存在）");
+                    if (manual) a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("抓不到公告（網路不通，或檔案不存在）"), android.widget.Toast.LENGTH_LONG).show());
+                    return;
+                }
                 long vc = a.getPackageManager().getPackageInfo(a.getPackageName(), 0).getLongVersionCode();
-                Set<String> seen = new HashSet<>(sp.getStringSet(PREF_SEEN, new HashSet<>()));
+                Set<String> seen = manual ? new HashSet<String>() : new HashSet<>(sp.getStringSet(PREF_SEEN, new HashSet<>()));
                 r = parse(json, vc, System.currentTimeMillis(), !L.en(), seen);
-                if (r == null) return;
+                if (r == null) {
+                    LifeLog.add(a, "公告：檔案格式看不懂");
+                    if (manual) a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("公告檔案格式看不懂"), android.widget.Toast.LENGTH_LONG).show());
+                    return;
+                }
+                LifeLog.add(a, "公告：抓到（id=" + r.id + "，" + (r.show ? "要顯示" : "不顯示") + "，停用 " + r.disable + "）");
                 sp.edit().putString(PREF_FLAGS, String.join(",", r.disable)).putLong(PREF_FLAGS_AT, System.currentTimeMillis()).apply();   // 成功抓到：開關以這次為準（檔案沒寫就是全部恢復）
             } catch (Exception e) {
+                LifeLog.add(a, "公告：出錯 " + e);
+                if (manual) a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("抓不到公告（網路不通，或檔案不存在）"), android.widget.Toast.LENGTH_LONG).show());
                 return;   // 沒網路、檔案不存在：靜靜地略過
             }
-            if (!r.show) return;
+            if (!r.show) {
+                if (manual) a.runOnUiThread(() -> android.widget.Toast.makeText(a, L.t("目前沒有公告"), android.widget.Toast.LENGTH_SHORT).show());
+                return;
+            }
             a.runOnUiThread(() -> show(a, r));
         }, "announcements").start();
     }

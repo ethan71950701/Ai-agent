@@ -1107,10 +1107,11 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("自動檢查新版本"), false);
-            Ui.row(this, u, 0, 3, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
-            Ui.switchRow(this, u, 1, 3, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
+            Ui.row(this, u, 0, 4, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
+            Ui.switchRow(this, u, 1, 4, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
                     cfg().getBoolean("upd_auto", true), (v, on) -> cfg().edit().putBoolean("upd_auto", on).apply());
-            Ui.switchRow(this, u, 2, 3, "bell", L.t("開 App 時看公告"), L.t("打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有新公告；不會傳送任何你的資料。關掉就不會收到公告，也收不到暫時停用功能的通知"),
+            Ui.row(this, u, 2, 4, "bell", L.t("立即看公告"), L.t("現在就去抓一次公告（不受 10 分鐘限制，看過的也會再顯示）"), Ui.chevron(this), v -> Announcements.check(this, true));
+            Ui.switchRow(this, u, 3, 4, "bell", L.t("開 App 時看公告"), L.t("打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有新公告；不會傳送任何你的資料。關掉就不會收到公告，也收不到暫時停用功能的通知"),
                     cfg().getBoolean("ann_on", true), (v, on) -> cfg().edit().putBoolean("ann_on", on).apply());
         });
         steps.add(() -> {
