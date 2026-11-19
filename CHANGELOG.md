@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 背景預覽窗：支援多點觸控；主螢幕轉向後預覽窗會重新排好位置（以前會不見）；拿掉 Now Bar 的「接手」鈕，直接點 Now Bar 開關預覽窗，點預覽窗就自動接手，停手 10 秒自動交回 AI（接手中才有「完成」）；任務開始時不再自動開預覽｜Background preview: multi-touch support; the preview is re-laid out after the screen rotates (it used to vanish); removed the Now Bar "Take over" button — tap the Now Bar to toggle the preview, touching the preview takes over automatically, and control returns to the AI after 10 seconds idle (a "Done" button appears only while taking over); the preview no longer opens automatically
+
+## 1.0.1674
+
 - 修正背景模式截圖失敗（「Display Id … is not valid」）：背景螢幕被重建、截圖編號換了時，自動重新查編號再截一次｜Fixed background-mode screenshot failures ("Display Id … is not valid"): when the background display was rebuilt and its capture id changed, the id is looked up again and the capture retried
 - 背景模式：要打開的 App 宣告橫式（多數橫式遊戲）時，背景螢幕直接建立成橫式，遊戲和預覽窗都是正的｜Background mode: when the app to open declares landscape (most landscape games), the background display is created in landscape so the game and the preview are upright
 
