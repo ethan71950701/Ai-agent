@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 背景模式：任務結束後背景螢幕與預覽窗再保留一段時間（預設 15 秒，設定 →「執行任務時」可調，0＝馬上收），你碰預覽窗就重新計時｜Background mode: after a task ends the background display and preview stay for a while (default 15 s; adjustable in Settings → "While running tasks", 0 = close immediately); touching the preview restarts the timer
 - Now Bar／通知的點擊永遠用同一個跳板（有背景螢幕就開關預覽窗，沒有就開 App），避免三星 Now Bar 只認第一次發出的點擊動作｜Tapping the Now Bar/notification now always uses the same trampoline (toggles the preview when a background display exists, otherwise opens the app), in case Samsung's Now Bar only honors the first tap action it saw
 
 ## 1.0.1675

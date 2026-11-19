@@ -121,7 +121,44 @@ final class BgDisplay {
         return false;
     }
 
-    static synchronized void stop() { stopQuietly(); }
+    static synchronized void stop() { lingerUntil = 0; stopQuietly(); }
+
+    // ---------- 任務結束後保留一段時間 ----------
+    private static volatile long lingerUntil;   // 0 = 沒有在保留；否則是預定收掉的時間（uptime）
+    private static final android.os.Handler LINGER = new android.os.Handler(android.os.Looper.getMainLooper());
+
+    /** 設定的保留秒數（任務結束後背景螢幕與預覽窗再留多久，你碰預覽窗就重新計時）；0 = 馬上收。 */
+    static int keepSeconds(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getInt("bg_keep_s", 15); }
+
+    /** 任務結束：背景螢幕不馬上收，留 keepSeconds 秒讓你看結果、繼續操作；你碰預覽窗會重新計時。 */
+    static void stopLater(Context c) {
+        int s = keepSeconds(c);
+        if (s <= 0 || !active) { stop(); return; }
+        lingerUntil = android.os.SystemClock.uptimeMillis() + s * 1000L;
+        scheduleLinger();
+    }
+
+    private static void scheduleLinger() {
+        LINGER.removeCallbacksAndMessages(null);
+        long wait = Math.max(200, lingerUntil - android.os.SystemClock.uptimeMillis());
+        LINGER.postDelayed(() -> {
+            if (lingerUntil == 0) return;
+            if (android.os.SystemClock.uptimeMillis() >= lingerUntil) {
+                new Thread(BgDisplay::stop, "bg-linger-stop").start();   // 收掉要等程序結束，不要卡主執行緒
+            } else scheduleLinger();
+        }, wait);
+    }
+
+    /** 你碰了預覽窗（或在上面操作）：保留中就重新計時。 */
+    static void touched(Context c) {
+        if (lingerUntil == 0) return;
+        lingerUntil = android.os.SystemClock.uptimeMillis() + Math.max(5, keepSeconds(c)) * 1000L;
+    }
+
+    /** 新任務開始前：還在保留的舊背景螢幕要收掉，不然新任務的指令會被改寫到舊的背景螢幕上。 */
+    static void stopIfLingering() {
+        if (lingerUntil != 0) stop();
+    }
 
     private static void stopQuietly() {
         active = false;

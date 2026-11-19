@@ -37,6 +37,9 @@ final class LEn {
         m.put("思考中…", "Thinking…");
         m.put("AI 正在操作手機", "AI is operating your phone");
         m.put("取消", "Cancel");
+        m.put(" 秒（你碰預覽窗會重新計時）", " s (touching the preview restarts the timer)");
+        m.put("不保留，馬上收掉", "Don't keep; close immediately");
+        m.put("任務結束後背景螢幕保留", "Keep the background display after a task");
         m.put("背景螢幕：橫式遊戲不轉向（實驗）", "Background display: keep landscape games upright (experimental)");
         m.put("開：叫系統忽略 App 的方向要求，橫式遊戲在直式背景螢幕上維持正的（比較小）。關：遊戲會轉 90 度。有的遊戲在直式畫面裡會當掉，當掉就關掉這個再試", "On: the system ignores the app's orientation request so landscape games stay upright (smaller) on the portrait background display. Off: the game rotates 90 degrees. Some games crash on a portrait screen; if so, turn this off and retry.");
         m.put(" 個元件，", " nodes, ");

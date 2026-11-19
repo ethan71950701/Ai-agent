@@ -307,6 +307,7 @@ final class PreviewTouch extends View {
                 handleUndecided = handle;
                 dismissing = false;
                 controlling = ctrlHit == 0 && !inStrip;
+                BgDisplay.touched(getContext());   // 任務結束後保留中的背景螢幕：你碰了就重新計時
                 if (controlling && e.getEventTime() - lastTouchLog > 1500) {   // 診斷：在預覽裡點下去時，記下目前的狀態（診斷頁最近事件）
                     lastTouchLog = e.getEventTime();
                     com.phoneai.overlay.LifeLog.add(getContext(), "預覽觸控：接手=" + OverlayService.takeover + " 直接輸入=" + DirectHost.ready(OverlayService.vdId) + " 即時輸入=" + LiveInput.ready() + " 螢幕編號=" + OverlayService.vdId);

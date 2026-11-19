@@ -1247,7 +1247,7 @@ public class MainActivity extends Activity {
                 innerS.addView(slS, new LinearLayout.LayoutParams(-1, -2));
             }
             final boolean hasRoot = Root.knownRoot();   // 背景模式與無障礙自動修復都要 root：沒 root 就不顯示
-            final int n = hasRoot ? 11 : 7;
+            final int n = hasRoot ? 12 : 7;
             int k = 0;
             Ui.switchRow(this, g, k++, n, "sun", L.t("呼吸光暈"), L.t("任務執行中，螢幕四周顯示光暈"), cfg().getBoolean("glow_on", true),
                     (v, on) -> cfg().edit().putBoolean("glow_on", on).apply());
@@ -1259,6 +1259,17 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景螢幕：橫式遊戲不轉向（實驗）"), L.t("開：叫系統忽略 App 的方向要求，橫式遊戲在直式背景螢幕上維持正的（比較小）。關：遊戲會轉 90 度。有的遊戲在直式畫面裡會當掉，當掉就關掉這個再試"),
                     cfg().getBoolean("bg_ignore_orient", true), (v, on) -> cfg().edit().putBoolean("bg_ignore_orient", on).apply());
+            if (hasRoot) {
+                final int[] opts = {0, 5, 15, 30, 60, 120};
+                int curS = BgDisplay.keepSeconds(this);
+                Ui.row(this, g, k++, n, "monitor", L.t("任務結束後背景螢幕保留"), curS <= 0 ? L.t("不保留，馬上收掉") : curS + L.t(" 秒（你碰預覽窗會重新計時）"), Ui.chevron(this), v -> {
+                    String[] names = new String[opts.length];
+                    for (int i = 0; i < opts.length; i++) names[i] = opts[i] == 0 ? L.t("不保留，馬上收掉") : opts[i] + L.t(" 秒");
+                    new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("任務結束後背景螢幕保留"))
+                            .setItems(names, (d, which) -> { cfg().edit().putInt("bg_keep_s", opts[which]).apply(); recreate(); })
+                            .setNegativeButton(L.t("取消"), null).show();
+                });
+            }
             if (hasRoot) Ui.row(this, g, k++, n, "monitor", L.t("測試背景螢幕"), L.t("建立一次背景螢幕、開「設定」截圖，看畫面是不是正常"), Ui.chevron(this), v -> {
                 android.widget.Toast.makeText(this, L.t("測試中…（約 10 秒）"), android.widget.Toast.LENGTH_SHORT).show();
                 new Thread(() -> {

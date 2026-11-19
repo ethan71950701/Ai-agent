@@ -172,6 +172,7 @@ final class AgentLoop {
         cardNote = "";
         macroNote = "";
         lastSteps = null;
+        BgDisplay.stopIfLingering();   // 上一次任務留著的背景螢幕先收掉
         boolean bg = BgDisplay.wanted(c);
         if (bg && !BgDisplay.start(c, preOpen)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
         if (bg && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_preview_auto", false)) {   // 背景任務一開始就顯示預覽小視窗（以前要點 Now Bar 才出現，使用者找不到）
@@ -181,7 +182,7 @@ final class AgentLoop {
         try {
             return runInner(c, task, ui, preOpen, macroTask);
         } finally {
-            if (bg) BgDisplay.stop();   // 任務結束就收掉背景螢幕，上面開的 App 一起消失
+            if (bg) BgDisplay.stopLater(c);   // 任務結束：背景螢幕與預覽窗再留一段時間（設定可調，預設 15 秒；你碰預覽窗就重新計時），之後收掉，上面開的 App 一起消失
             // 要跳回答卡片時，進度條多留一下：Android 只允許「有看得見的懸浮視窗」的 App 在背景啟動畫面，
             // 太早收掉的話，面板接著要叫出的回答卡片可能被系統靜默擋掉
             if (showCard) MAIN.postDelayed(() -> OverlayService.endSteps(c), 2500);
