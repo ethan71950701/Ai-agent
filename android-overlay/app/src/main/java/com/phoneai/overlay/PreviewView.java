@@ -167,11 +167,6 @@ final class PreviewView extends FrameLayout {
         dots.pulse(x, y);
     }
 
-    /** 預覽目前畫的背景螢幕畫面（原始大小）；還沒準備好回 null。必須在主執行緒呼叫。 */
-    android.graphics.Bitmap snapshot() {
-        try { return video.isAvailable() ? video.getBitmap(OverlayService.vdW, OverlayService.vdH) : null; } catch (Throwable t) { return null; }
-    }
-
     int cardWidth() { return width; }
 
     int cardHeight() { return (int) (width * aspect); }

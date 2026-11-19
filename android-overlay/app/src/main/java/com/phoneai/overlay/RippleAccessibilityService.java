@@ -275,24 +275,11 @@ public class RippleAccessibilityService extends AccessibilityService {
         else s.openPreview(sf);
     }
 
-    /** 從預覽窗拿背景螢幕的畫面（`screencap -d` 截不到背景螢幕時的備援）。預覽沒開就先開、等一下。在背景執行緒呼叫；拿不到回 null。 */
-    static android.graphics.Bitmap previewSnapshot(String sf) {
+    /** 背景螢幕收掉了（任務結束、按停止）：把預覽窗也關掉。可以從任何執行緒呼叫。 */
+    static void hidePreview() {
         final RippleAccessibilityService s = instance;
-        if (s == null) return null;
-        final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
-        final java.util.concurrent.atomic.AtomicReference<android.graphics.Bitmap> out = new java.util.concurrent.atomic.AtomicReference<>();
-        for (int attempt = 0; attempt < 3 && out.get() == null; attempt++) {
-            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-            main.post(() -> {
-                try {
-                    if (s.preview == null) s.openPreview(sf);
-                    else out.set(s.preview.snapshot());
-                } finally { latch.countDown(); }
-            });
-            try { latch.await(2, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException e) { return null; }
-            if (out.get() == null) { try { Thread.sleep(700); } catch (InterruptedException e) { return null; } }
-        }
-        return out.get();
+        if (s == null) return;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> { if (s.preview != null || s.previewHost != null || s.previewTouch != null) s.closePreview(); });
     }
 
     /** 背景任務開始：預覽還沒開就開（使用者想看背景螢幕，不用先去點 Now Bar；已經開著就不動）。必須在主執行緒呼叫。 */

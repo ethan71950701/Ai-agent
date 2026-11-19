@@ -93,6 +93,7 @@ final class BgDisplay {
             try { if (!p.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) p.destroy(); } catch (Exception ignored) { }
         }
         try { Maintenance.suRun("pkill -f com.phoneai.overlay.DirectDisplay"); } catch (Exception ignored) { }
+        RippleAccessibilityService.hidePreview();   // 背景螢幕沒了：預覽窗跟著關（以前按停止後預覽窗還留著）
         if (!OverlayService.vdSf.isEmpty()) {
             OverlayService.vdSf = "";
             OverlayService.vdId = 0;
