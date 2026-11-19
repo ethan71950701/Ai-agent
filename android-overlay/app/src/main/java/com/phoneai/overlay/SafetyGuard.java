@@ -33,7 +33,8 @@ final class SafetyGuard {
         if (cmd == null || cmd.trim().isEmpty() || cmd.contains("\n") || cmd.contains("\r")) return false;
         String low = cmd.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ");   // 多個空格、Tab 先變成一個空格再比對（以前「dumpsys    notification」能繞過黑名單）
         for (String d : SHELL_DENY) if (low.contains(d)) return false;
-        if (cmd.matches(".*[;&`$<>*?{}()\\\\\\[\\]!~#].*") || cmd.contains("||")) return false;
+        if (cmd.matches(".*[;&`$<>*?{}()\\\\\\[\\]!~#'\"].*") || cmd.contains("||")) return false;   // 引號也擋：dumpsys "notification" 這種寫法會讓黑名單比對失效
+        for (int k = 0; k < cmd.length(); k++) { char ch = cmd.charAt(k); if (ch < 0x20 && ch != '\t') return false; if (ch == 0x7f) return false; }   // 控制字元（NUL、ESC…）一律擋
         String[] parts = cmd.split("\\|", -1);
         for (int i = 0; i < parts.length; i++) {
             String seg = parts[i].trim();
@@ -62,14 +63,40 @@ final class SafetyGuard {
             case "date":   // date -s／date 月日時分 會改系統時間：只允許 +格式、-u、-R
                 for (int k = 1; k < w.length; k++) if (!(w[k].startsWith("+") || w[k].equals("-u") || w[k].equals("-R"))) return false;
                 return true;
-            case "dumpsys":   // 子命令與參數逐個檢查（不管前面有沒有別的選項，例如 dumpsys -t 5 notification）
-                for (int k = 1; k < w.length; k++) {
-                    String a = w[k].toLowerCase(java.util.Locale.ROOT);
+            case "dumpsys": {   // 白名單：一定要指定服務，而且服務在 DUMPSYS_OK 內（單獨 dumpsys 會傾印全部服務，含通知、帳號…）
+                int k = 1;
+                if (k < w.length && w[k].equals("-t") && k + 1 < w.length && w[k + 1].matches("\\d{1,3}")) k += 2;   // dumpsys -t 秒數 服務
+                if (k >= w.length || !in(DUMPSYS_OK, w[k].toLowerCase(java.util.Locale.ROOT))) return false;
+                for (int m = k + 1; m < w.length; m++) {
+                    String a = w[m].toLowerCase(java.util.Locale.ROOT);
                     if (in(DUMPSYS_MUTATE, a) || in(DUMPSYS_PRIVATE, a)) return false;
                 }
                 return true;
+            }
+            case "cat":   // 只准讀這幾類系統資訊檔，不是任意路徑（黑名單擋不完：/proc/<pid>/environ、其他 App 的行程資訊…）
+                if (w.length < 2) return false;
+                for (int k = 1; k < w.length; k++) if (w[k].startsWith("-") || !catPathOk(w[k])) return false;
+                return true;
+            case "ls":   // 遞迴列出會繞過路徑黑名單（ls -R / 會列出 /data、/sdcard 底下的名稱）
+                for (int k = 1; k < w.length; k++) if (w[k].matches("-[a-zA-Z]*[Rr][a-zA-Z]*") || w[k].startsWith("--recursive")) return false;
+                return true;
+            case "top":   // 沒有 -n 的 top 不會結束
+                for (int k = 1; k < w.length; k++) if (w[k].matches("-[a-zA-Z]*n[a-zA-Z]*")) return true;
+                return false;
             default: return true;   // getprop、ls、cat、df、uptime、free、ps、top、uname：本身只讀（寫檔要靠 > ，已被擋）
         }
+    }
+
+    /** dumpsys 允許的服務（唯讀的系統狀態）。不在這裡的（通知、帳號、剪貼簿、聯絡人、電話、簡訊、位置、使用紀錄、wifi…）一律不行。 */
+    private static final String[] DUMPSYS_OK = {"battery", "meminfo", "cpuinfo", "display", "power", "thermalservice", "diskstats", "window", "surfaceflinger", "connectivity", "-l"};
+
+    private static final String[] CAT_OK_PREFIX = {"/proc/meminfo", "/proc/cpuinfo", "/proc/version", "/proc/uptime", "/proc/loadavg", "/proc/stat", "/proc/vmstat", "/proc/zoneinfo",
+            "/sys/class/power_supply/", "/sys/class/thermal/", "/sys/devices/system/cpu/", "/system/build.prop", "/vendor/build.prop"};
+
+    static boolean catPathOk(String path) {
+        if (path.contains("..") || path.contains("//")) return false;
+        for (String p : CAT_OK_PREFIX) if (path.equals(p) || (p.endsWith("/") && path.startsWith(p))) return true;
+        return false;
     }
 
     private static boolean pipeSegmentSafe(String prog, String[] w) {

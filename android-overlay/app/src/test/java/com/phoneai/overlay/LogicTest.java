@@ -508,4 +508,34 @@ public class LogicTest {
         assertFalse(TransferServer.insideRoot(root.toFile(), outside.toFile()));
         assertTrue(TransferServer.insideRoot(root.toFile(), root.resolve("a.txt").toFile()));
     }
+
+    @Test
+    public void readOnlyShellBlocksQuotesWhitelistsServicesAndPaths() {
+        assertFalse(AgentLoop.readOnly("dumpsys \"notification\""));
+        assertFalse(AgentLoop.readOnly("dumpsys 'notification'"));
+        assertFalse(AgentLoop.readOnly("dumpsys notif\\ication"));
+        assertFalse(AgentLoop.readOnly("dumpsys"));              // 單獨 dumpsys 會傾印全部服務
+        assertFalse(AgentLoop.readOnly("dumpsys location"));
+        assertFalse(AgentLoop.readOnly("dumpsys usagestats"));
+        assertFalse(AgentLoop.readOnly("dumpsys wifi"));
+        assertFalse(AgentLoop.readOnly("dumpsys -t 5"));
+        assertTrue(AgentLoop.readOnly("dumpsys -t 5 battery"));
+        assertTrue(AgentLoop.readOnly("dumpsys -l"));
+        assertFalse(AgentLoop.readOnly("cat /proc/1/environ"));
+        assertFalse(AgentLoop.readOnly("cat /proc/self/maps"));
+        assertFalse(AgentLoop.readOnly("cat /system/etc/hosts"));
+        assertFalse(AgentLoop.readOnly("cat /proc/meminfo /proc/1/environ"));
+        assertFalse(AgentLoop.readOnly("cat /proc/../etc/passwd"));
+        assertFalse(AgentLoop.readOnly("cat"));
+        assertTrue(AgentLoop.readOnly("cat /proc/meminfo"));
+        assertTrue(AgentLoop.readOnly("cat /sys/class/power_supply/battery/capacity"));
+        assertFalse(AgentLoop.readOnly("ls -R /"));
+        assertFalse(AgentLoop.readOnly("ls -lR /"));
+        assertFalse(AgentLoop.readOnly("ls --recursive /"));
+        assertTrue(AgentLoop.readOnly("ls /system/app"));
+        assertFalse(AgentLoop.readOnly("top"));
+        assertTrue(AgentLoop.readOnly("top -n 1 -b"));
+        assertFalse(AgentLoop.readOnly("getprop\u0000; reboot"));
+        assertFalse(AgentLoop.readOnly("getprop\u001b[0m"));
+    }
 }
