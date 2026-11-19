@@ -137,7 +137,7 @@ final class ChatEngine {
     }
 
     /** 讀 Claude 的串流（SSE），組回跟一次收完的回應一樣的 JSON：content（text、tool_use）、stop_reason、usage。 */
-    private static JSONObject readStream(InputStream in) throws Exception {
+    static JSONObject readStream(InputStream in) throws Exception {
         java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
         java.util.TreeMap<Integer, JSONObject> blocks = new java.util.TreeMap<>();
         java.util.HashMap<Integer, StringBuilder> acc = new java.util.HashMap<>();
@@ -198,6 +198,7 @@ final class ChatEngine {
                 default: break;
             }
         }
+        if (stop.isEmpty()) throw new java.io.IOException("stream ended early");   // 串流在結束標記（message_delta）之前就斷了：不能當成完整回答（以前會回傳一半的內容），丟 IOException 讓重試機制接手
         JSONArray content = new JSONArray();
         for (JSONObject b : blocks.values()) content.put(b);
         return new JSONObject().put("content", content).put("stop_reason", stop).put("usage", usage);

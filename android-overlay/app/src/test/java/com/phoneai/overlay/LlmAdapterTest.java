@@ -361,4 +361,48 @@ public class LlmAdapterTest {
         org.junit.Assert.assertFalse(g, g.contains("AIzaSyA1234567890"));
         org.junit.Assert.assertEquals("", LlmErrors.redact(null));
     }
+
+    private static java.io.InputStream sse(String... events) {
+        StringBuilder sb = new StringBuilder();
+        for (String e : events) sb.append("event: x\ndata: ").append(e).append("\n\n");
+        return new java.io.ByteArrayInputStream(sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    @org.junit.Test
+    public void streamParsesTextAndToolUse() throws Exception {
+        org.json.JSONObject r = ChatEngine.readStream(sse(
+                "{\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":10}}}",
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"你好\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"，世界\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":0}",
+                "{\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"t1\",\"name\":\"get_time\",\"input\":{}}}",
+                "{\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"a\\\":\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"1}\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":1}",
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":7}}"));
+        org.junit.Assert.assertEquals("tool_use", r.getString("stop_reason"));
+        org.json.JSONArray c = r.getJSONArray("content");
+        org.junit.Assert.assertEquals("你好，世界", c.getJSONObject(0).getString("text"));
+        org.junit.Assert.assertEquals(1, c.getJSONObject(1).getJSONObject("input").getInt("a"));
+        org.junit.Assert.assertEquals(10, r.getJSONObject("usage").getInt("input_tokens"));
+        org.junit.Assert.assertEquals(7, r.getJSONObject("usage").getInt("output_tokens"));
+    }
+
+    @org.junit.Test(expected = java.io.IOException.class)
+    public void streamCutBeforeTheEndIsAnErrorNotAHalfAnswer() throws Exception {
+        ChatEngine.readStream(sse(
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"說到一半\"}}"));
+    }
+
+    @org.junit.Test
+    public void streamErrorEventBecomesAnException() throws Exception {
+        try {
+            ChatEngine.readStream(sse("{\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"Overloaded\"}}"));
+            org.junit.Assert.fail("should throw");
+        } catch (Exception e) {
+            org.junit.Assert.assertTrue(e.getMessage(), e.getMessage().contains("Overloaded"));
+        }
+    }
 }
