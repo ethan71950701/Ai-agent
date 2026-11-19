@@ -134,6 +134,7 @@ final class AgentLoop {
 
     /** 這一次任務的狀態：開過哪些 App、量測次數、記了幾則經驗、搜尋次數、拖曳手指是否還按著。 */
     private static final class State {
+        String openFailed;   // 這次任務開 App 失敗過的名稱：之後用別的名稱開成功，就記成別名
         final List<String> opened = new ArrayList<>();
         final List<String> remembered = new ArrayList<>();
         int measures, remembers, searches;
@@ -1069,7 +1070,8 @@ final class AgentLoop {
                 case "open": {
                     String pkg = a.optString("pkg", "");
                     if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));   // 提示寫「程式會用 name 查套件」，這裡真的去查
-                    if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name"));
+                    if (pkg == null || pkg.isEmpty()) { st.openFailed = a.optString("name"); return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name")); }
+                    if (st.openFailed != null) { Router.saveAlias(c, st.openFailed, pkg); st.openFailed = null; }
                     if (BgDisplay.active && ProtectedApps.isProtected(c, pkg)) return "背景模式不會操作銀行、支付這類受保護的 App（" + pkg + "）；請關掉背景模式，改在主螢幕做（會先問你）";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
                     st.opened.add(pkg);
@@ -1249,7 +1251,8 @@ final class AgentLoop {
             case "open": {
                 String pkg = a.optString("pkg", "");
                 if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));
-                if (pkg == null || pkg.isEmpty()) return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name"));
+                if (pkg == null || pkg.isEmpty()) { st.openFailed = a.optString("name"); return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name")); }
+                    if (st.openFailed != null) { Router.saveAlias(c, st.openFailed, pkg); st.openFailed = null; }
                 if (!Phone.launch(c, pkg)) return "打不開 " + pkg;
                 st.opened.add(pkg);
                 return "已開啟 " + pkg;

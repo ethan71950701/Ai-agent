@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 開 App 找不到名稱、AI 改用另一個名稱開成功時，會記成別名（例如「死亡細胞」＝「重生細胞」），下次直接開｜When an app can't be found by one name and the AI opens it with another, the first name is remembered as an alias (e.g. 死亡細胞 = 重生細胞) so it opens directly next time
 - 開 App 時繁體與簡體名稱互通（例如「死亡細胞」對上「死亡细胞」）；找不到時提示列出的已安裝 App 先列中文名稱｜Opening apps now treats Traditional and Simplified names as the same (e.g. 死亡細胞 matches 死亡细胞); when an app isn't found, the installed-app hint lists Chinese names first
 
 ## 1.0.1665

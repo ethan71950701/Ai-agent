@@ -93,9 +93,35 @@ final class Router {
     };
 
     /** 依顯示名稱找套件：先完全相符，再找同義的說法（相簿＝圖庫）；找不到回 null。 */
+    private static final String ALIAS_PREF = "app_alias";
+
+    /** 學到的別名：使用者說的名稱 → 套件（AI 第一次找不到、改用另一個名稱開成功時記下來，之後直接用）。 */
+    static void saveAlias(Context c, String spoken, String pkg) {
+        String n = norm(spoken);
+        if (n.isEmpty() || pkg == null || pkg.isEmpty()) return;
+        try {
+            android.content.SharedPreferences p = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+            org.json.JSONObject o = new org.json.JSONObject(p.getString(ALIAS_PREF, "{}"));
+            if (pkg.equals(o.optString(n))) return;
+            o.put(n, pkg);
+            p.edit().putString(ALIAS_PREF, o.toString()).apply();
+            LifeLog.add(c, "學到 App 別名：「" + spoken + "」＝ " + pkg);
+        } catch (Exception ignored) { }
+    }
+
+    private static String aliasPkg(String n) {
+        try {
+            if (App.ctx == null) return null;
+            String p = new org.json.JSONObject(App.ctx.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString(ALIAS_PREF, "{}")).optString(n);
+            return p.isEmpty() ? null : p;
+        } catch (Exception e) { return null; }
+    }
+
     static String findApp(Map<String, String> apps, String name) {
         String n = norm(name);
         if (n.isEmpty()) return null;
+        String learned = aliasPkg(n);
+        if (learned != null) return learned;
         String hit = apps.get(n);
         if (hit != null) return hit;
         for (String[] g : ALIASES) {
