@@ -17,7 +17,21 @@ import java.util.regex.Pattern;
 final class BgDisplay {
     private BgDisplay() { }
 
-    static final int W = 720, H = 1200, DPI = 280;   // 舊版預設（AI 看的截圖本來就縮小，預覽窗也不大）
+    static volatile int W = 720, H = 1200;   // 預設直式；要開的 App 在清單裡宣告橫式（遊戲常見）時，建立背景螢幕就用橫式 1200x720（AI 看的截圖本來就縮小，預覽窗也不大）
+    static final int DPI = 280;
+
+    /** 這個 App 的啟動畫面在 AndroidManifest 裡宣告橫式（橫式、感應橫式、反向橫式、使用者橫式）。沒宣告或程式裡才轉方向的看不出來，回 false。 */
+    static boolean isLandscapeApp(Context c, String pkg) {
+        try {
+            if (pkg == null || pkg.isEmpty()) return false;
+            android.content.pm.PackageManager pm = c.getPackageManager();
+            android.content.Intent li = pm.getLaunchIntentForPackage(pkg);
+            android.content.pm.ActivityInfo ai = li == null ? null : li.resolveActivityInfo(pm, 0);
+            if (ai == null) return false;
+            int o = ai.screenOrientation;   // 0 LANDSCAPE、6 SENSOR_LANDSCAPE、8 REVERSE_LANDSCAPE、11 USER_LANDSCAPE
+            return o == 0 || o == 6 || o == 8 || o == 11;
+        } catch (Throwable t) { return false; }
+    }
 
     static volatile boolean active;
     static volatile int id;
@@ -31,8 +45,14 @@ final class BgDisplay {
     }
 
     /** 建立背景螢幕；成功回 true。在背景執行緒呼叫（最多等約 15 秒）。 */
-    static synchronized boolean start(Context c) {
+    static synchronized boolean start(Context c) { return start(c, null); }
+
+    /** pkg：任務一開始要打開的 App（可為 null）；它是橫式的就建立橫式背景螢幕，橫式遊戲才不會被轉歪。 */
+    static synchronized boolean start(Context c, String pkg) {
         stopQuietly();
+        boolean landscape = isLandscapeApp(c, pkg);
+        W = landscape ? 1200 : 720;
+        H = landscape ? 720 : 1200;
         try {
             Set<String> before = sfIds(Maintenance.suRun("dumpsys SurfaceFlinger --display-id"));
             String cmd = "CLASSPATH=" + c.getApplicationInfo().sourceDir + " exec app_process / com.phoneai.overlay.DirectDisplay --host " + W + " " + H + " " + DPI;
@@ -66,7 +86,7 @@ final class BgDisplay {
                         // 橫式遊戲：叫系統「不理會 App 要求的方向」，讓橫式 App 在直式背景螢幕上維持正的（上下留黑邊），
                         // 不會被轉 90 度、讓預覽整個歪掉（使用者以前要把手機橫過來才看得懂）。指令不支援也沒關係，結果記進診斷頁的最近事件。
                         try {
-                            if (!c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_ignore_orient", true)) throw new Exception("off");
+                            if (W > H || !c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_ignore_orient", true)) throw new Exception("off");   // 橫式背景螢幕不需要忽略方向
                             String r = Maintenance.suRun("wm set-ignore-orientation-request -d " + id + " true 2>&1");
                             LifeLog.add(c, "背景螢幕：忽略 App 的方向要求 → " + (r == null || r.trim().isEmpty() ? "已設定" : r.trim().replace('\n', ' ')));
                         } catch (Throwable ignored2) { }

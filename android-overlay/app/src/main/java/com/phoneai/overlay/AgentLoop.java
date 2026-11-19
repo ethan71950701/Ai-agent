@@ -173,7 +173,7 @@ final class AgentLoop {
         macroNote = "";
         lastSteps = null;
         boolean bg = BgDisplay.wanted(c);
-        if (bg && !BgDisplay.start(c)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
+        if (bg && !BgDisplay.start(c, preOpen)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
         if (bg && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_preview_auto", true)) {   // 背景任務一開始就顯示預覽小視窗（以前要點 Now Bar 才出現，使用者找不到）
             final String sfNow = OverlayService.vdSf;
             MAIN.postDelayed(() -> { try { RippleAccessibilityService.showPreview(sfNow); } catch (Throwable ignored) { } }, 800);
