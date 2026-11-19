@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 設定新增「背景螢幕：橫式遊戲不轉向（實驗）」開關；有的橫式遊戲在直式背景螢幕上會當掉，關掉它就會讓遊戲轉向｜New setting "Background display: keep landscape games upright (experimental)"; some landscape games crash on the portrait background display, turn it off to let the game rotate
+
+## 1.0.1667
+
 - 開 App 找不到名稱、AI 改用另一個名稱開成功時，會記成別名（例如「死亡細胞」＝「重生細胞」），下次直接開｜When an app can't be found by one name and the AI opens it with another, the first name is remembered as an alias (e.g. 死亡細胞 = 重生細胞) so it opens directly next time
 - 開 App 時繁體與簡體名稱互通（例如「死亡細胞」對上「死亡细胞」）；找不到時提示列出的已安裝 App 先列中文名稱｜Opening apps now treats Traditional and Simplified names as the same (e.g. 死亡細胞 matches 死亡细胞); when an app isn't found, the installed-app hint lists Chinese names first
 
