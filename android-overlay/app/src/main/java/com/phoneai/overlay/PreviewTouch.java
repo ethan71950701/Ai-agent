@@ -48,6 +48,7 @@ final class PreviewTouch extends View {
     private final Runnable idleEnd = this::endTakeoverIfIdle;
     private boolean handle, handleUndecided, pillOn = true;   // handle：這次觸控是按在卡片下面的小白條上；pillOn：小白條要不要畫（拖動中先藏起來）
     private final android.graphics.Paint pillPaint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    private long lastTouchLog;
     private int ctrlHit;                  // 這次觸控落在右上角控制區的哪個鈕（0 = 沒有）
     private float downX, downY;           // 接手手勢的起點（觸控層座標 = 卡片座標）
     private VelocityTracker vt;
@@ -305,6 +306,10 @@ final class PreviewTouch extends View {
                 handleUndecided = handle;
                 dismissing = false;
                 controlling = ctrlHit == 0 && !inStrip;
+                if (controlling && e.getEventTime() - lastTouchLog > 1500) {   // 診斷：在預覽裡點下去時，記下目前的狀態（診斷頁最近事件）
+                    lastTouchLog = e.getEventTime();
+                    com.phoneai.overlay.LifeLog.add(getContext(), "預覽觸控：接手=" + OverlayService.takeover + " 直接輸入=" + DirectHost.ready(OverlayService.vdId) + " 即時輸入=" + LiveInput.ready() + " 螢幕編號=" + OverlayService.vdId);
+                }
                 if (controlling && !OverlayService.takeover) {  // 碰到畫面：自動接手（AI 下一步開始前會看到並暫停）
                     OverlayService.applyTakeover(true, "");
                     RippleAccessibilityService.takeoverChanged();
