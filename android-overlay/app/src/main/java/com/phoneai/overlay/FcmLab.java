@@ -348,6 +348,34 @@ final class FcmLab {
         return sendData(c, peer.fcmToken, Doorbell.makeServe(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, System.currentTimeMillis()));
     }
 
+    /** 逐步診斷「叫醒對方」：每一步的結果都寫出來（不含 token 全文與金鑰），看是哪一步斷掉。回傳多行文字。 */
+    static String diagnoseWake(Context c, TransferStore.Peer p) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("對象：").append(p.name).append('\n');
+        sb.append("1. 對方的 token：").append(p.fcmToken == null ? "❌ 沒有（先互換 token）" : "✅ 有（結尾 " + p.fcmToken.substring(Math.max(0, p.fcmToken.length() - 6)) + "）").append('\n');
+        sb.append("2. 這支手機的設定檔：").append(hasConfig(c) ? "✅" : "❌").append("；發送金鑰：").append(FcmVault.has(c) ? "✅" : "❌").append('\n');
+        String ip = lanNet();
+        sb.append("3. 這支手機的 Wi-Fi 位址：").append(ip == null ? "❌ 沒有" : "✅ " + ip).append('\n');
+        if (p.fcmToken == null || !hasConfig(c) || !FcmVault.has(c) || ip == null) { sb.append("→ 上面有 ❌，先處理它").append('\n'); return sb.toString(); }
+        TransferDiscovery.Found already = FileTools.scanPeer(p, 1200);
+        if (already != null) { sb.append("4. 對方現在其實已經在線上（").append(already.ip).append("），沒有休眠，這次測不出叫醒。請讓它休眠幾分鐘再測。").append('\n'); return sb.toString(); }
+        sb.append("4. 對方目前不在線上（找不到），開始叫醒\n");
+        long t0 = System.currentTimeMillis();
+        String err = wake(c, p);
+        sb.append("5. 推播送出：").append(err == null ? "✅ Google 收下了（花 " + (System.currentTimeMillis() - t0) + " 毫秒）" : "❌ " + err).append('\n');
+        if (err != null) {
+            if (err.contains("UNREGISTERED") || err.contains("NOT_FOUND")) sb.append("→ 對方的 token 已失效（它重裝過或清過資料）：請在能連上它的時候重新互換 token。\n");
+            if (err.contains("PERMISSION") || err.contains("401") || err.contains("403")) sb.append("→ 發送金鑰沒有權限或不是這個專案的：重新匯入正確的金鑰。\n");
+            return sb.toString();
+        }
+        TransferDiscovery.Found f = null;
+        long until = System.currentTimeMillis() + 20000;
+        while (f == null && System.currentTimeMillis() < until) f = FileTools.scanPeer(p, 1500);
+        if (f != null) sb.append("6. ✅ 對方起來了（").append(f.ip).append("），共花 ").append((System.currentTimeMillis() - t0) / 1000.0).append(" 秒\n");
+        else sb.append("6. ❌ 20 秒內對方沒有出現。推播送到了，但對方沒有把伺服器開起來：到對方手機看有沒有跳「FCM 門鈴」的通知（會寫被拒絕的原因）；沒有任何通知的話，是對方的系統沒有叫醒它（自啟動、電池限制）；對方的互傳總開關也要開著。\n");
+        return sb.toString();
+    }
+
     /** 被「叫醒」的這一端：把互傳伺服器開起來，沒人用了就自動關（瀏覽時最後一個連線結束後多留 60 秒）。 */
     static void serveForAWhile(Context c) {
         final Context app = c.getApplicationContext();

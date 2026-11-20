@@ -168,20 +168,13 @@ public class FcmSetupActivity extends Activity {
         }).start();
     }
 
-    /** 用叫醒的方式去連對方，量花了多久；對方本來就在線上會直接找到。 */
+    /** 逐步診斷叫醒對方：每一步的結果都列出來，看是哪一步斷掉（對方要在休眠狀態才測得出叫醒）。 */
     private void testWake(TransferStore.Peer p) {
-        Toast.makeText(this, L.t("測試中…（最久約 20 秒）"), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, L.t("診斷中…（最久約 30 秒）"), Toast.LENGTH_SHORT).show();
         new Thread(() -> {
-            long t0 = System.currentTimeMillis();
-            String msg;
-            try {
-                FileTools.clientFor(this, p).ping();
-                msg = L.t("連上了，花了 ") + (System.currentTimeMillis() - t0) / 1000.0 + L.t(" 秒（如果對方本來就開著，就不是叫醒的成績，請讓它休眠後再測）");
-            } catch (Exception e) {
-                msg = L.t("連不上：") + e.getMessage();
-            }
-            final String m = msg;
-            ui.post(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
+            final String report = FcmLab.diagnoseWake(this, p);
+            ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("叫醒診斷")).setMessage(report)
+                    .setPositiveButton(L.t("好"), null).show());
         }).start();
     }
 

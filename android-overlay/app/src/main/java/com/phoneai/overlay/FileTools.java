@@ -156,6 +156,13 @@ final class FileTools {
         return sb.toString();
     }
 
+    /** 在區網找這台已配對裝置（不叫醒、不連線）；找到回位址，沒找到回 null。診斷用。 */
+    static TransferDiscovery.Found scanPeer(TransferStore.Peer p, int timeoutMs) {
+        List<TransferStore.Peer> one = new ArrayList<>();
+        one.add(p);
+        return TransferDiscovery.scan(p.id, timeoutMs, TransferDiscovery.PORT, extra(one)).get(p.id);
+    }
+
     private static List<InetAddress> extra(List<TransferStore.Peer> peers) {
         List<InetAddress> l = new ArrayList<>();
         for (TransferStore.Peer p : peers) {

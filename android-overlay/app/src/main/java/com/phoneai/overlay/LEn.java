@@ -869,6 +869,9 @@ final class LEn {
         m.put("設定檔", "Config file");
         m.put(" ✓已核對", " ✓ verified");
         m.put("（對方沒提供，未核對）", " (the other side gave none; not verified)");
+        m.put("診斷中…（最久約 30 秒）", "Diagnosing… (up to ~30 s)");
+        m.put("叫醒診斷", "Wake-up diagnosis");
+        m.put("好", "OK");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
