@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1725
+
 - 推播喚醒設定頁新增「只送一則測試推播」：不經過驗證，只看對方有沒有收到推播，用來分辨「推播到不了」還是「到了但沒處理」｜Push wake-up settings: new "Send a plain test push" button (no verification) to tell "the push never arrives" apart from "it arrives but isn't handled"
 
 ## 1.0.1724
