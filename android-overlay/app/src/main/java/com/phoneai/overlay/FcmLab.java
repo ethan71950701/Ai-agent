@@ -452,7 +452,8 @@ final class FcmLab {
                     sb.append("→ 第二次通了：是第一次連線在建立路徑，比較慢；實際傳檔案時 App 會等得比較久。\n");
                     break;
                 }
-                sb.append("→ 兩次都逾時：封包到不了對方。請到對方手機打開 Tailscale，看它自己的位址是不是 ").append(p.tsIp).append("（不一樣就是我們記的過期了：兩台同時開著 Tailscale，各自開互傳頁連一次就會更新）；也請讓對方螢幕亮著再檢查一次，看是不是它休眠。\n");
+                sb.append("→ 兩次都逾時：封包到不了對方，或對方沒有回應。**對方的 Tailscale 可能被系統凍住**（App 顯示開著、其實不處理封包）：到對方手機給 Tailscale「自啟動」「電池無限制」並在最近工作清單鎖定它，再試。\n   ");
+                sb.append("請到對方手機打開 Tailscale，看它自己的位址是不是 ").append(p.tsIp).append("（不一樣就是我們記的過期了：兩台同時開著 Tailscale，各自開互傳頁連一次就會更新）；也請讓對方螢幕亮著再檢查一次，看是不是它休眠。\n");
                 sb.append("→ 連不到對方：最常見是**對方的 Tailscale 沒開**（平常關著的話就是這樣）、或兩台不在同一個 Tailscale 帳號。").append(p.fcmToken != null ? "傳檔案時 App 會先叫醒對方並請它開 Tailscale（要 root，也要給 Tailscale 自啟動）。" : "沒有它的推播 token，沒辦法請它開：請在那支手機手動開 Tailscale。").append('\n');
                 break;
             case "noroute":
@@ -501,6 +502,7 @@ final class FcmLab {
         if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return "互傳總開關沒開，所以沒有開伺服器（到「設定 → 互傳檔案」打開）"; }
         String note = "";
         boolean weTurnedTailscaleOn = false;
+        if (remote && TailscaleControl.isOn()) TailscaleControl.nudge(app);   // 顯示開著但可能被系統凍住：戳一下讓它醒過來
         if (remote && !TailscaleControl.isOn()) {
             weTurnedTailscaleOn = TailscaleControl.turnOn(app, 12000);
             note = weTurnedTailscaleOn ? "，已幫你把 Tailscale 開起來" : "，但 Tailscale 開不起來（對方從外面連不進來）";

@@ -65,6 +65,13 @@ final class TailscaleControl {
         return isOn();
     }
 
+    /** 戳一下 Tailscale：它顯示開著、但可能被系統凍住（收不到封包）時，對它發一次連線廣播讓它醒過來。已經連著不會有任何變化。不等結果。 */
+    static void nudge(Context c) {
+        if (!TailscaleLauncher.installed(c) || !Root.available()) return;
+        List<String> cmds = connectCommands();
+        Maintenance.suRun(cmds.get(Math.max(0, Math.min(cmds.size() - 1, cfg(c).getInt("ts_cmd_idx", 0)))));
+    }
+
     /** 給使用者按的測試：把 Tailscale 開起來再關回去（本來就開著就只報告，不去動它），回傳一段說明。要在背景執行緒呼叫。 */
     static String selfTest(Context c) {
         StringBuilder log = new StringBuilder();
