@@ -295,9 +295,13 @@ final class FileTools {
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = FcmLab.wake(c, p);
             if (err == null) {
-                long until = System.currentTimeMillis() + 15000;
+                long t0 = System.currentTimeMillis(), until = t0 + 25000, nextRing = t0 + 8000;
                 while (f == null && System.currentTimeMillis() < until) {
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
+                    if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
+                        FcmLab.wake(c, p);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
+                        nextRing += 8000;
+                    }
                 }
             } else {
                 TransferStore.log(c, L.t("推播叫醒失敗：") + err);

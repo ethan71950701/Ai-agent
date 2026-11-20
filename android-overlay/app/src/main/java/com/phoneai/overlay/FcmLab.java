@@ -35,6 +35,26 @@ final class FcmLab {
 
     private static android.content.SharedPreferences prefs(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE); }
 
+    /** 記下最近一次收到推播的時間，以及它從送出到收到花的時間（兩支手機的時鐘有差的話會有誤差）。 */
+    static void noteReceived(Context c, java.util.Map<String, String> data) {
+        try {
+            long sent = 0;
+            String v = data.get("ts") != null ? data.get("ts") : data.get("sent");
+            if (v != null && v.matches("\\d{1,15}")) sent = Long.parseLong(v);
+            long now = System.currentTimeMillis();
+            prefs(c).edit().putLong("fcm_last_rx_at", now).putLong("fcm_last_rx_delay", sent > 0 ? now - sent : -1).apply();
+        } catch (Throwable ignored) { }
+    }
+
+    /** 給設定頁看的一行：最近一次收到推播的時間與延遲；沒收過回空字串。 */
+    static String lastReceivedText(Context c) {
+        long at = prefs(c).getLong("fcm_last_rx_at", 0), d = prefs(c).getLong("fcm_last_rx_delay", -1);
+        if (at == 0) return "";
+        String when = new java.text.SimpleDateFormat("MM/dd HH:mm:ss", java.util.Locale.US).format(new java.util.Date(at));
+        String delay = d < 0 ? "?" : d < 10_000 ? d + " ms" : (d / 1000) + " 秒" + (d > 30_000 ? "（很慢）" : "");
+        return when + "　延遲 " + delay;
+    }
+
     /** 這支手機的推播 token（上次取得並存起來的）；沒有回 null。 */
     static String myToken(Context c) {
         String t = prefs(c).getString("fcm_my_token", "");

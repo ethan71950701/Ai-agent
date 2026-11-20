@@ -66,6 +66,7 @@ public class FcmSetupActivity extends Activity {
         me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("裝置編號：") + (mid.length() > 8 ? mid.substring(0, 8) : mid)
                 + "\n" + L.t("推播 token 結尾：") + (mt == null ? L.t("還沒有") : mt.substring(Math.max(0, mt.length() - 6)))
                 + "\n" + L.t("版本：") + getString(R.string.build_id)
+                + (FcmLab.lastReceivedText(this).isEmpty() ? "" : "\n" + L.t("最近一次收到推播：") + FcmLab.lastReceivedText(this))
                 + "\n" + L.t("拿這裡的編號和 token 結尾，去對方手機的「已配對裝置」選單核對，看有沒有對到同一台。")));
 
         Ui.section(this, box, L.t("3. 檢查"));

@@ -15,6 +15,7 @@ public class FcmLabService extends FirebaseMessagingService {
 
     @Override public void onMessageReceived(RemoteMessage m) {
         FcmLab.init(this);
+        FcmLab.noteReceived(this, m.getData());   // 記下收到的時間與延遲（設定頁顯示，看推播連線穩不穩）
         if ("doorbell".equals(m.getData().get("kind"))) { onDoorbell(m); return; }
         long now = System.currentTimeMillis();
         long sent = 0;
