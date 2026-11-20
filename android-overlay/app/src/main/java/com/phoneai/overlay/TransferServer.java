@@ -224,6 +224,9 @@ final class TransferServer {
                     sendText(out, au, "ok\t" + (Doorbell.validToken(mine) ? mine : ""));   // 同一次請求互換：把我的 token 一起回給對方
                     break;
                 }
+                case "/v1/space":   // 對方傳大檔案前先問：現在能收多少（扣掉別人已預留的）、要保留多少、單檔上限
+                    sendText(out, au, Math.max(0, host.inbox().getUsableSpace() - RESERVER.reserved()) + "\t" + KEEP_FREE_BYTES + "\t" + MAX_UPLOAD_BYTES);
+                    break;
                 case "/v1/sha": {
                     File f = resolve(params.get("path"));
                     if (!f.isFile()) { reply(out, 404, "not a file"); return; }

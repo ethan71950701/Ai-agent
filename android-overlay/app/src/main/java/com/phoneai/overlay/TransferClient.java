@@ -126,6 +126,16 @@ final class TransferClient {
         return Doorbell.validToken(theirs) ? theirs : null;
     }
 
+    /** 傳之前先問對方收不收得下（空間與單檔上限）。收不下回原因；收得下、或對方是舊版沒有這個端點、或問不到，回 null。 */
+    String spaceProblem(long size) {
+        try {
+            long[] v = SpaceCheck.parse(getText("/v1/space"));
+            return v == null ? null : SpaceCheck.problem(size, v[0], v[1], v[2]);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     /** 向對方要它剛送出的那個檔案的整檔校驗碼；對方沒有現成的又太大時回空字串。 */
     String remoteSha(String path) throws IOException {
         String r = getText("/v1/sha?path=" + enc(path)).trim();
@@ -221,6 +231,8 @@ final class TransferClient {
 
     /** 從任何輸入串流送出（例如手機選到的 content:// 檔案）；size 是總位元組數，name 是檔名。會關閉 fin。 */
     String put(InputStream fin, long size, String name, Progress cb) throws IOException {
+        String why = spaceProblem(size);   // 對方收不下就直接說原因（以前傳到一半被掛斷，只看到 Connection reset）
+        if (why != null) { try { fin.close(); } catch (IOException ignored) { } throw new IOException(why); }
         String target = "/v1/put?name=" + enc(name) + "&size=" + size;
         try (Socket s = open()) {
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
