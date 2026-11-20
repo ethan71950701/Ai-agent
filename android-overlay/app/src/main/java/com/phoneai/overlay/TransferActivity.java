@@ -161,7 +161,7 @@ public class TransferActivity extends Activity {
         fcm.addView(Ui.body(this, L.t("對方沒開互傳、連不上時，用推播叫醒它來取檔案（不用兩邊都開著介面）。要先設定 Firebase：")
                 + "\n" + L.t("設定檔：") + (FcmLab.hasConfig(this) ? L.t("已載入") : L.t("未載入"))
                 + "\n" + L.t("發送金鑰：") + (FcmLab.hasSenderKey(this) ? L.t("已加密存放") : L.t("沒有（只有要叫醒別人的那支需要）"))));
-        fcm.addView(Ui.tonal(this, L.t("推播喚醒設定"), v -> startActivity(new Intent(this, FcmLabActivity.class))));
+        fcm.addView(Ui.tonal(this, L.t("推播喚醒設定"), v -> startActivity(new Intent(this, FcmSetupActivity.class))));
 
         List<String> recent = TransferStore.recentLog(this, 5);
         if (!recent.isEmpty()) {
