@@ -44,11 +44,12 @@ final class TailscaleControl {
 
     /** log 不是 null 的話，會把每一步發生什麼寫進去（測試用）。 */
     static boolean turnOn(Context c, long waitMs, StringBuilder log) {
-        if (isOn()) { if (log != null) log.append("Tailscale 本來就開著\n"); return true; }
+        if (isOn()) { if (log != null) log.append("Tailscale 本來就開著\n"); return true; }   // 本來就開著：是使用者自己的，不標成我們開的
         if (!TailscaleLauncher.installed(c)) { if (log != null) log.append("❌ 這支手機沒有安裝 Tailscale\n"); return false; }
         if (!Root.available()) { if (log != null) log.append("❌ 沒有 root，沒辦法發廣播\n"); return false; }
         List<String> cmds = connectCommands();
         for (int idx : order(cfg(c).getInt("ts_cmd_idx", -1), cmds.size())) {
+            markOurs(c);   // 廣播一送出就先記下「是我們開的」：就算 12 秒內沒連上、之後才連上，也有人負責關回去；App 被殺掉重開也記得
             String out = Maintenance.suRun(cmds.get(idx));
             if (log != null) log.append("送出：").append(cmds.get(idx)).append("\n回應：").append(out == null ? "" : out.trim().replace('\n', ' ')).append('\n');
             long until = System.currentTimeMillis() + Math.max(2000, waitMs / cmds.size());
@@ -65,10 +66,10 @@ final class TailscaleControl {
         return isOn();
     }
 
-    // ---- 發送端：我們開的 Tailscale，閒置一段時間後關回去（你自己開的不會動）
+    // ---- 我們開的 Tailscale，閒置一段時間後關回去（你自己開的不會動）。發送端與被叫醒的接收端共用這一套；「是我們開的」記在設定裡，App 被殺掉重開也不會漏關
     static final long IDLE_MS = 60_000;
     private static volatile boolean ours;
-    private static volatile long lastUse;
+    private static volatile long lastUse, holdUntil;
     private static Thread watcher;
 
     /** 要不要把 Tailscale 關回去：只有「我們開的」、而且現在沒有傳輸在跑、而且閒置夠久。 */
@@ -76,17 +77,41 @@ final class TailscaleControl {
         return ours && !busy && nowMs - lastUseMs >= idleMs;
     }
 
+    /** 現在算不算忙：有傳輸在跑、有連線進來、或還在「等對方連進來」的保留期內。 */
+    static boolean busy(boolean transferActive, int connections, long nowMs, long holdUntilMs) {
+        return transferActive || connections > 0 || nowMs < holdUntilMs;
+    }
+
+    private static void markOurs(Context c) {
+        ours = true;
+        lastUse = System.currentTimeMillis();
+        cfg(c).edit().putBoolean("ts_ours", true).apply();
+        startWatcher(c.getApplicationContext());
+    }
+
+    private static void clearOurs(Context c) {
+        ours = false;
+        cfg(c).edit().putBoolean("ts_ours", false).apply();
+    }
+
+    /** App 啟動時呼叫：上次是我們開的、但程序被殺掉沒來得及關，就接手繼續負責（閒置後關回去）；已經不在了就清掉記號。要在背景執行緒。 */
+    static void reconcile(Context c) {
+        if (!cfg(c).getBoolean("ts_ours", false)) return;
+        if (!isOn()) { clearOurs(c); return; }
+        ours = true;
+        lastUse = System.currentTimeMillis();
+        startWatcher(c.getApplicationContext());
+    }
+
     /** 連線前用：把 Tailscale 開起來；如果本來是關的、是我們開的，之後閒置 60 秒會自動關回去。 */
-    static synchronized boolean turnOnForSession(Context c, long waitMs) {
-        boolean was = isOn();
+    static boolean turnOnForSession(Context c, long waitMs) {
         boolean ok = turnOn(c, waitMs);
         lastUse = System.currentTimeMillis();
-        if (ok && !was) {
-            ours = true;
-            startWatcher(c.getApplicationContext());
-        }
         return ok;
     }
+
+    /** 被叫醒的接收端：在這段時間內先不要關（對方還在連進來的路上）。 */
+    static void hold(long ms) { holdUntil = System.currentTimeMillis() + ms; }
 
     /** 又用了一次 Tailscale 連線：重新計閒置時間。 */
     static void noteUse() { lastUse = System.currentTimeMillis(); }
@@ -96,12 +121,15 @@ final class TailscaleControl {
         watcher = new Thread(() -> {
             while (ours) {
                 try { Thread.sleep(5000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); return; }
-                if (!isOn()) { ours = false; return; }   // 使用者自己關掉了
-                boolean busy = TransferNotify.active() || TransferServer.activeConnections() > 0;
+                if (!isOn()) {   // 使用者自己關掉了，或一直沒連上
+                    if (System.currentTimeMillis() - lastUse > 90_000) { clearOurs(app); return; }   // 剛送出廣播還在等它連上時先不放棄
+                    continue;
+                }
+                boolean busy = busy(TransferNotify.active(), TransferServer.activeConnections(), System.currentTimeMillis(), holdUntil);
                 if (busy) { lastUse = System.currentTimeMillis(); continue; }
                 if (shouldTurnOff(ours, false, System.currentTimeMillis(), lastUse, IDLE_MS)) {
                     turnOff(app);
-                    ours = false;
+                    clearOurs(app);
                     LifeLog.add(app, "外網：我們開的 Tailscale 閒置 " + IDLE_MS / 1000 + " 秒，已關回去");
                     return;
                 }

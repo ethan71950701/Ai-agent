@@ -67,6 +67,7 @@ public class App extends Application {
         L.init(this);   // 介面語言要最先決定（靜態字串陣列也用得到）
         CrashLog.install(this);   // 當機時把錯誤堆疊寫進「錯誤紀錄」
         FcmLab.init(this);   // 實驗：有設定檔就初始化 Firebase（被推播叫醒時也要先有）
+        new Thread(() -> TailscaleControl.reconcile(this), "ts-reconcile").start();   // 上次我們開的 Tailscale 若因程序被殺沒關到，接手關回去
         FcmLab.refreshMyToken(this);   // 記下最新的 token（配對時要交給對方）
         GlassPrefs.load(this);
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {

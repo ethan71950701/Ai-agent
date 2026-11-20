@@ -46,4 +46,12 @@ public class TailscaleControlTest {
         assertEquals(false, TailscaleControl.shouldTurnOff(false, false, 500_000, 30_000, 60_000));  // 使用者自己開的：不動
         assertTrue(TailscaleControl.shouldTurnOff(true, false, 90_000, 30_000, 60_000));     // 剛好 60 秒
     }
+
+    @Test
+    public void busyCountsTransfersConnectionsAndTheWaitingHold() {
+        assertTrue(TailscaleControl.busy(true, 0, 1000, 0));
+        assertTrue(TailscaleControl.busy(false, 2, 1000, 0));
+        assertTrue("等對方連進來的保留期內不算閒置", TailscaleControl.busy(false, 0, 1000, 5000));
+        assertEquals(false, TailscaleControl.busy(false, 0, 5000, 5000));
+    }
 }

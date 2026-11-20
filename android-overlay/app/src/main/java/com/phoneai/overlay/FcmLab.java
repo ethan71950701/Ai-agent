@@ -502,13 +502,14 @@ final class FcmLab {
         if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return "互傳總開關沒開，所以沒有開伺服器（到「設定 → 互傳檔案」打開）"; }
         String note = "";
         boolean weTurnedTailscaleOn = false;
+        if (remote) TailscaleControl.hold(90_000);   // 對方在連進來的路上：先不要把 Tailscale 關掉
         if (remote && TailscaleControl.isOn()) TailscaleControl.nudge(app);   // 顯示開著但可能被系統凍住：戳一下讓它醒過來
         if (remote && !TailscaleControl.isOn()) {
             weTurnedTailscaleOn = TailscaleControl.turnOn(app, 12000);
             note = weTurnedTailscaleOn ? "，已幫你把 Tailscale 開起來" : "，但 Tailscale 開不起來（對方從外面連不進來）";
             LifeLog.add(app, "FCM 叫醒（外網）：Tailscale " + (weTurnedTailscaleOn ? "已開起來" : "開不起來"));
         }
-        final boolean restore = weTurnedTailscaleOn;
+        final boolean restore = weTurnedTailscaleOn;   // 只用在記錄文字；Tailscale 是否關回去由 TailscaleControl 的共用監看負責（伺服器本來就開著時也一樣）
         final boolean startedHere = !TransferService.running;
         TransferService.start(app);
         if (!startedHere) return "互傳本來就開著，等對方連進來" + note;   // 本來就開著（使用者自己開的）：不去關它
@@ -518,8 +519,7 @@ final class FcmLab {
                 while (!w.tick(System.currentTimeMillis(), TransferServer.activeConnections())) Thread.sleep(3000);
             } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             TransferService.stop(app);
-            if (restore) TailscaleControl.turnOff(app);   // 我們開的 Tailscale 用完關回去
-            TransferStore.log(app, "被叫醒而開起的互傳伺服器已自動關閉" + (restore ? "（Tailscale 也關回去了）" : ""));
+            TransferStore.log(app, "被叫醒而開起的互傳伺服器已自動關閉" + (restore ? "（我們開的 Tailscale 閒置後會自動關回去）" : ""));
         }, "fcm-serve-autostop");
         t.setDaemon(true);
         t.start();
