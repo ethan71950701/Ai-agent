@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 推播喚醒：被叫醒時會跳一則通知說明結果（驗證中、已開啟互傳、互傳總開關沒開、或被拒絕的原因），不再靜靜地做事｜Push wake-up: when woken, a notification now tells you the outcome (verifying, transfer started, transfer switch is off, or why it was rejected) instead of acting silently
+
+## 1.0.1722
+
 - 推播喚醒設定的「測試叫醒對方」改成逐步診斷（token、設定檔、Wi-Fi、推播送出、對方有沒有起來），看得出是哪一步斷掉｜The wake test in push wake-up settings is now a step-by-step diagnosis (token, config, Wi-Fi, push sent, did the peer come up) so you can see which step fails
 
 ## 1.0.1721
