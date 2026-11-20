@@ -60,6 +60,8 @@ final class TransferServer {
         default void peerFcm(String peerId, String token) { }
         /** 我自己的推播 token（回給剛送來 token 的對方）；沒有回 null。 */
         default String myFcmToken() { return null; }
+        /** 處理某個已驗證對方的請求時出錯（原因給使用者看；以前只會默默斷線）。 */
+        default void serverError(String peerId, String what) { }
         /** 已驗證的對方想把推播設定（Firebase 設定檔＋發送金鑰）傳給我：要使用者確認並存起來；接受回 true。會等使用者按（可能很久）。 */
         default boolean fcmSetupOffer(String peerId, String configJson, String keyJson) { return false; }
     }
@@ -392,6 +394,9 @@ final class TransferServer {
             }
             host.event(au.peer, "put", rel(dest), total);
             sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + Checksum.hex(md.digest()));
+        } catch (IOException e) {
+            host.serverError(au.peer, L.t("收「") + base + L.t("」時出錯：") + e.getMessage());   // 留記錄，也盡量告訴對方原因
+            try { reply(out, 500, String.valueOf(e.getMessage())); } catch (IOException ignored) { }
         } finally {
             if (tmp != null) tmp.delete();   // 中斷、被停止或改名失敗：未完成的檔案刪掉
             RESERVER.release(expect);

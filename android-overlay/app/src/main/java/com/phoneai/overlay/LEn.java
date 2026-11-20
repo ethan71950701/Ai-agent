@@ -887,6 +887,8 @@ final class LEn {
         m.put("」有沒有跳出「FCM 實驗：被叫醒了」的通知。有的話，推播本身是通的；沒有的話，推播到不了那支手機（見說明）。", "\" shows a \"FCM 實驗：被叫醒了\" notification. If it does, push delivery works; if not, the push never reaches that phone.");
         m.put("送出失敗：", "Send failed: ");
         m.put("最近一次收到推播：", "Last push received: ");
+        m.put("收「", "Receiving \"");
+        m.put("」時出錯：", "\" failed: ");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

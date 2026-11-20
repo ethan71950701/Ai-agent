@@ -144,6 +144,11 @@ public class TransferService extends Service {
 
             @Override public String myFcmToken() { return FcmLab.myToken(c); }
 
+            @Override public void serverError(String peerId, String what) {
+                TransferStore.log(c, TransferStore.nameOf(c, peerId) + " → " + what);
+                LifeLog.add(c, "互傳伺服器出錯：" + what);
+            }
+
             @Override public boolean fcmSetupOffer(String peerId, String configJson, String keyJson) {
                 String who = TransferStore.nameOf(c, peerId);
                 boolean yes = ConfirmActivity.ask(c, L.t("「") + who + L.t("」想把推播喚醒的設定（Firebase 設定檔和發送金鑰）傳給這支手機。接受後，這支手機就能叫醒、也能被它叫醒。要接受嗎？"));
