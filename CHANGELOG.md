@@ -7,7 +7,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## 1.0.1738
 
-- 自動操作也有傳檔案功能（找檔案、列裝置、傳過去、取回來）：叫助理把檔案傳給另一台手機，就算被判成「操作螢幕」，也會直接用檔案工具做；有好幾個符合的檔案、不確定傳給哪台、找不到時，會問你｜Auto-operate now has the file transfer actions too (list devices, find files, send, fetch): asking the assistant to send a file to another phone works even when the request is routed to screen operation, and it asks you when several files match, the target device is unclear or nothing is found
+- 自動操作現在跟聊天助理共用同一套工具：設鬧鐘／計時器、新增行事曆、撥號、導航與地圖、排程查詢、記憶（新增、查、改、刪）、看通知、傳檔案（找裝置、找檔案、傳過去、取回來）、刪檔案（每次都跳確認）；不用再慢慢點畫面。讀過通知之後這一輪只能用唯讀工具，跟聊天助理一樣；有好幾個選擇或不確定時會問你｜Auto-operate now shares the chat assistant's tools: alarms and timers, calendar events, dialing, navigation and maps, scheduled lookups, memory (add / read / update / delete), reading notifications, file transfer (list devices, find, send, fetch) and deleting files (always confirmed), so it no longer has to tap through apps. After reading notifications only read-only tools are allowed for that run, same as chat; it asks you when there are several choices or it is unsure
 
 ## 1.0.1737
 

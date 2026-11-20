@@ -265,6 +265,71 @@ final class ChatEngine {
     /** 讀過通知之後只留這些唯讀工具：通知是別人寫的，裡面可能藏著要 AI 做事的話，不能讓它接著去刪檔、傳檔、記事。 */
     private static final java.util.Set<String> READ_ONLY_TOOLS = new java.util.HashSet<>(java.util.Arrays.asList("get_time", "read_notifications"));
 
+    /** 執行一個聊天助理的工具（聊天與自動操作共用，兩邊能做的事一樣）。 */
+    static String runTool(Context c, String tn, JSONObject ti, Memory.Confirm confirm) {
+        return tn.equals("read_notifications") ? NotifListener.snapshot(c)
+                            : tn.equals("get_time") ? new java.text.SimpleDateFormat("yyyy-MM-dd (EEEE) HH:mm:ss", java.util.Locale.TAIWAN).format(new java.util.Date())
+                            : tn.equals("set_alarm") ? AlarmTool.set(c, ti.optInt("hour", -1), ti.optInt("minute", -1), ti.optInt("minutes_from_now", -1), ti.optString("label"))
+                            : tn.equals("add_calendar_event") ? SystemIntents.addEvent(c, ti.optString("title"), ti.optString("start"), ti.optString("end"), ti.optString("location"), ti.optString("description"))
+                            : tn.equals("set_timer") ? AlarmTool.setTimer(c, ti.optInt("seconds", -1), ti.optString("label"))
+                            : tn.equals("navigate_map") ? SystemIntents.navigateTo(c, ti.optString("place"), ti.optString("mode"))
+                            : tn.equals("show_on_map") ? SystemIntents.showOnMap(c, ti.optString("place"))
+                            : tn.equals("dial") ? SystemIntents.dial(c, ti.optString("number"))
+                            : tn.equals("samsung_reminder") ? AgentLoop.reminderForChat(c, ti)
+                            : tn.equals("schedule_web_query") ? Schedule.addWeb(c, ti.optString("query"), ti.optInt("hour", -1), ti.optInt("minute", 0), ti.optInt("every_days", 1), confirm)
+                            : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
+                            : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
+    }
+
+    /** 自動操作也能用的工具名稱：聊天助理的全部工具，扣掉自動操作已經有自己版本的（phone_action 是「交給自動操作」，shell 與三星提醒自動操作有自己的）。 */
+    static java.util.Set<String> agentToolNames() {
+        java.util.Set<String> out = new java.util.LinkedHashSet<>();
+        try {
+            JSONArray a = new JSONArray(TOOLS);
+            for (int i = 0; i < a.length(); i++) {
+                String n = a.getJSONObject(i).optString("name");
+                if (!n.equals("phone_action") && !n.equals("run_shell") && !n.equals("samsung_reminder")) out.add(n);
+            }
+        } catch (Exception ignored) { }
+        return out;
+    }
+
+    static boolean isAgentTool(String name) { return name != null && !name.isEmpty() && agentToolNames().contains(name); }
+
+    /** 讀過通知之後，這一輪只能再用這些唯讀工具（通知是別人寫的，不能讓裡面的話叫 AI 去刪檔、傳檔、記事）。 */
+    static boolean readOnlyTool(String name) { return READ_ONLY_TOOLS.contains(name); }
+
+    /** 給自動操作的提示詞：把上面那些工具寫成 {"action":"工具名",參數…} 的格式（從工具定義自動產生，兩邊不會不一致）。 */
+    static String agentToolPrompt() {
+        StringBuilder sb = new StringBuilder();
+        try {
+            JSONArray a = new JSONArray(TOOLS);
+            java.util.Set<String> ok = agentToolNames();
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject t = a.getJSONObject(i);
+                String n = t.optString("name");
+                if (!ok.contains(n)) continue;
+                StringBuilder args = new StringBuilder();
+                JSONObject props = t.optJSONObject("input_schema") == null ? null : t.optJSONObject("input_schema").optJSONObject("properties");
+                if (props != null) {
+                    for (java.util.Iterator<String> it = props.keys(); it.hasNext();) {
+                        String k = it.next();
+                        JSONObject p = props.optJSONObject(k);
+                        String type = p == null ? "string" : p.optString("type", "string");
+                        String hint = type.equals("integer") || type.equals("number") ? "整數" : type.equals("boolean") ? "true或false" : type.equals("array") ? "[…]" : "\"…\"";
+                        args.append(",\"").append(k).append("\":").append(hint);
+                    }
+                }
+                String d = t.optString("description");
+                int cut = d.indexOf('。');
+                if (cut > 0 && cut < 110) d = d.substring(0, cut);
+                else if (d.length() > 110) d = d.substring(0, 110) + "…";
+                sb.append("{\"action\":\"").append(n).append("\"").append(args).append("}，").append(d).append("\n");
+            }
+        } catch (Exception ignored) { }
+        return sb.toString();
+    }
+
     private static JSONObject call(JSONArray messages, String system, String key, boolean search, boolean toolsOn) throws Exception {
         return call(messages, system, key, search, toolsOn, false);
     }
@@ -623,18 +688,7 @@ final class ChatEngine {
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
                     if (tn.equals("phone_action")) { handoff = true; return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
                     if (tn.equals("read_notifications")) readNotifs = true;
-                    String out = tn.equals("read_notifications") ? NotifListener.snapshot(c)
-                            : tn.equals("get_time") ? new java.text.SimpleDateFormat("yyyy-MM-dd (EEEE) HH:mm:ss", java.util.Locale.TAIWAN).format(new java.util.Date())
-                            : tn.equals("set_alarm") ? AlarmTool.set(c, ti.optInt("hour", -1), ti.optInt("minute", -1), ti.optInt("minutes_from_now", -1), ti.optString("label"))
-                            : tn.equals("add_calendar_event") ? SystemIntents.addEvent(c, ti.optString("title"), ti.optString("start"), ti.optString("end"), ti.optString("location"), ti.optString("description"))
-                            : tn.equals("set_timer") ? AlarmTool.setTimer(c, ti.optInt("seconds", -1), ti.optString("label"))
-                            : tn.equals("navigate_map") ? SystemIntents.navigateTo(c, ti.optString("place"), ti.optString("mode"))
-                            : tn.equals("show_on_map") ? SystemIntents.showOnMap(c, ti.optString("place"))
-                            : tn.equals("dial") ? SystemIntents.dial(c, ti.optString("number"))
-                            : tn.equals("samsung_reminder") ? AgentLoop.reminderForChat(c, ti)
-                            : tn.equals("schedule_web_query") ? Schedule.addWeb(c, ti.optString("query"), ti.optInt("hour", -1), ti.optInt("minute", 0), ti.optInt("every_days", 1), confirm)
-                            : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
-                            : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
+                    String out = runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
                 msgs.put(new JSONObject().put("role", "user").put("content", results));

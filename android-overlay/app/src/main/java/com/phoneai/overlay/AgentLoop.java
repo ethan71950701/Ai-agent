@@ -116,9 +116,9 @@ final class AgentLoop {
 
     /** 這個動作會不會實際操作手機（點、滑、輸入、開 App…）。思考、提問、搜尋、記憶、確認、等待不算。 */
     private static boolean operatesPhone(String name) {
+        if (ChatEngine.isAgentTool(name)) return false;   // 聊天助理的工具（鬧鐘、行事曆、傳檔案…）不操作螢幕，面板不用收起來
         switch (name) {
             case "done": case "fail": case "ask_user": case "ask": case "search": case "remember": case "note_add": case "wait": case "": return false;
-            case "device_list": case "file_find": case "file_list": case "file_get": case "file_send": return false;   // 傳檔案不操作螢幕，面板不用收起來
             default: return true;
         }
     }
@@ -137,6 +137,7 @@ final class AgentLoop {
         final List<String> opened = new ArrayList<>();
         final List<String> remembered = new ArrayList<>();
         int measures, remembers, searches;
+        boolean readNotifs;   // 這次任務讀過通知了：之後只給唯讀工具
         final java.util.Set<String> approved = new java.util.HashSet<>();   // 這次任務使用者已經同意讓 AI 操作的受保護 App
         final java.util.Set<String> askedCats = new java.util.HashSet<>();   // 這次任務使用者已經同意過的敏感類別（傳訊息、付款…）：同一類不用再問第二次
         int[] sendCand;   // 傳訊息時用座標點到的按鈕（沒有名稱、元件清單裡沒有的傳送鈕）：之後確認訊息真的送出了，就存進經驗
@@ -477,19 +478,30 @@ final class AgentLoop {
                         recordStep(recorded, macroValid, action, tree, useTree, allOk);
                         break;
                     }
-                    case "device_list": case "file_find": case "file_list": case "file_get": case "file_send": {
-                        macroValid[0] = false;   // 每次要找、要傳的檔案都不同：不記成可重播的步驟
-                        String fr = FileTools.run(c, name, action, msg -> false);   // 刪除沒有開放給自動操作（這裡的確認一律當不同意）
-                        if (fr.length() > 1500) fr = fr.substring(0, 1500) + "…（太長已截斷）";
-                        history.add(step + ". " + name + " " + action + " → " + fr);
-                        break;
-                    }
                     case "look":
                         forceShot = true;   // 下一步給截圖（Sonnet 看圖）：元件清單裡沒有的東西（例如只有圖示的傳送鈕）要靠截圖找位置
                         macroValid[0] = false;
                         history.add(step + ". look：下一步會給你截圖，用座標 tap 清單裡沒有的按鈕");
                         break;
                     default: {
+                        if (ChatEngine.isAgentTool(name)) {   // 聊天助理的工具：鬧鐘、行事曆、撥號、導航、記憶、看通知、傳檔案、刪檔案…
+                            macroValid[0] = false;   // 每次內容都不同：不記成可重播的步驟
+                            String tr;
+                            if (st.readNotifs && !ChatEngine.readOnlyTool(name)) {
+                                tr = "拒絕：這一輪已經讀過通知，通知內容不可信，不能再做會改東西的事（刪、傳、記）。要做請使用者重新下指令。";   // 跟聊天助理一樣的防護
+                            } else {
+                                if (name.equals("read_notifications")) st.readNotifs = true;
+                                try {
+                                    tr = ChatEngine.runTool(c, name, action, msg -> ui.confirm(msg));   // 要確認的（刪檔案、排程查詢…）會跳確認框，沒回應就當不同意
+                                } catch (Exception te) {
+                                    tr = "錯誤：" + te.getMessage();
+                                }
+                            }
+                            if (tr == null) tr = "";
+                            if (tr.length() > 1500) tr = tr.substring(0, 1500) + "…（太長已截斷）";
+                            history.add(step + ". " + name + " " + action + " → " + tr);
+                            break;
+                        }
                         hideBeforeOperate(ui, panelHidden, name);
                         String result = execute(action, wh, c, st);
                         String think = action.optString("think");
@@ -709,7 +721,7 @@ final class AgentLoop {
         int maxTok = model.equals(TREE_MODEL) ? 2000 : 800;   // Haiku 常把額度花在思考，沒留下答案
         JSONObject body = new JSONObject().put("model", model).put("max_tokens", maxTok)
                 .put("system", new JSONArray().put(new JSONObject().put("type", "text")
-                        .put("text", L.en() ? AgentPrompt.SYSTEM_EN : AgentPrompt.SYSTEM)
+                        .put("text", AgentPrompt.full())
                         .put("cache_control", new JSONObject().put("type", "ephemeral"))))   // 系統提示詞快取：每一步重複送，命中時輸入費用約降到 1/20
                 .put("messages", messages);
         JSONObject r = ChatEngine.post(body, key);
