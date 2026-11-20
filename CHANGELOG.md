@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1748
+
 - 外網：傳送端自己開起來的 Tailscale，閒置 60 秒後會自動關回去（你自己開的不會動；傳輸中、暫停也不會立刻關）；外網叫醒最多等 45 秒（螢幕關著比較慢）｜Remote: a Tailscale that the sending phone turned on itself is switched off again after 60 s idle (one you turned on yourself is left alone; not while transferring); waking from outside now waits up to 45 s (slower when the screen is off)
 
 ## 1.0.1747
