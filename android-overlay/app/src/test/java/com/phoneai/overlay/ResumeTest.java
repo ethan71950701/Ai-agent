@@ -67,6 +67,7 @@ public class ResumeTest {
         assertFalse(Resume.retryable(new IOException("校驗碼不符：對方存下的檔案和送出的不一樣")));
         assertFalse(Resume.retryable(new IOException("對方儲存空間不夠：現在剩 1 MB")));
         assertFalse(Resume.retryable(new IOException("409 offset mismatch")));
+        assertTrue("舊連線還占著半成品：等一下就好，要自動重試", Resume.retryable(new IOException("409 busy: same upload in progress")));
         assertFalse(Resume.retryable(null));
     }
 

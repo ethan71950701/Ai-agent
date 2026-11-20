@@ -34,13 +34,13 @@ final class Resume {
         return want > 0 && want <= size && have == want;
     }
 
-    /** 這種錯誤是網路暫時的問題，值得自動接著傳；校驗碼不符、空間不夠、被拒絕這類不是。 */
+    /** 這種錯誤是網路暫時的問題，值得自動接著傳（含「對方還沒發現舊連線已斷、半成品仍被占用」的 409 busy，約 20 秒後會自己放掉）；校驗碼不符、空間不夠、被拒絕這類不是。 */
     static boolean retryable(Throwable e) {
         for (Throwable t = e; t != null; t = t.getCause()) {
             if (t instanceof SocketException || t instanceof SocketTimeoutException || t instanceof EOFException) return true;
             String m = t.getMessage();
             if (m != null && (m.startsWith("failed to connect to") || m.contains("Connection reset") || m.contains("Broken pipe")
-                    || m.contains("對方沒有回應") || m.contains("truncated") || m.contains("Software caused connection abort"))) return true;
+                    || m.contains("對方沒有回應") || m.contains("busy: same upload in progress") || m.contains("truncated") || m.contains("Software caused connection abort"))) return true;
         }
         return false;
     }

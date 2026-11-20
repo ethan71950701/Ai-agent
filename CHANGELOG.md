@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：被推播叫醒的手機，傳輸超過 10 分鐘不再被切斷（以前大檔案會連伺服器和 Tailscale 一起被關掉）；網路閃斷時，對方還占著半成品會自動等一下再續傳，不再直接失敗｜Fix: a phone woken by push no longer cuts a transfer off after 10 minutes (big files used to lose the server and Tailscale); after a network blip, a partial file still held by the old connection is now waited out and resumed automatically instead of failing
 - 外網：傳送端自己開起來的 Tailscale，閒置 60 秒後會自動關回去（你自己開的不會動；傳輸中、暫停也不會立刻關）；外網叫醒最多等 45 秒（螢幕關著比較慢）｜Remote: a Tailscale that the sending phone turned on itself is switched off again after 60 s idle (one you turned on yourself is left alone; not while transferring); waking from outside now waits up to 45 s (slower when the screen is off)
 
 ## 1.0.1747

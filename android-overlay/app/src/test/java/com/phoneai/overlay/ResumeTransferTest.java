@@ -153,6 +153,47 @@ public class ResumeTransferTest {
         assertFalse(new File(inbox, "x.bin").exists());
     }
 
+    /** 網路閃斷、伺服器還沒發現舊連線已斷（半成品仍被占用）：重傳先收到 409 busy，要自動等到放掉再接著傳，不能直接失敗。 */
+    @Test
+    public void retryWaitsWhileTheOldConnectionStillHoldsThePartial() throws Exception {
+        final byte[] d = data(130_000, 9);   // 小到一口氣寫得進 socket 緩衝區：客戶端會讀到 409，而不是寫到一半被重設
+        final java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+        final int[] opens = new int[1];
+        TransferClient.Source stuck = () -> {
+            if (opens[0]++ != 1) return new ByteArrayInputStream(d);   // 第 1 次是算指紋
+            return new InputStream() {
+                int pos;
+                @Override public int read() throws IOException { byte[] one = new byte[1]; return read(one, 0, 1) < 0 ? -1 : one[0] & 255; }
+                @Override public int read(byte[] b, int off, int len) throws IOException {
+                    if (pos >= 100_000) {   // 送了一段就卡住（連線沒斷、也沒資料），直到被放開才失敗
+                        try { release.await(); } catch (InterruptedException e) { throw new IOException(e); }
+                        throw new IOException("test: give up");   // 不是可重試的錯誤，這條傳輸就此結束
+                    }
+                    int n = Math.min(len, Math.min(8 * 1024, 100_000 - pos));
+                    System.arraycopy(d, pos, b, off, n);
+                    pos += n;
+                    return n;
+                }
+            };
+        };
+        Thread first = new Thread(() -> { try { client.putResumable(stuck, d.length, "busy.bin", null); } catch (Exception ignored) { } });
+        first.start();
+        long until = System.currentTimeMillis() + 5000;
+        File[] parts;
+        do { Thread.sleep(50); parts = inbox.listFiles((x, n) -> n.endsWith(".part")); }
+        while ((parts == null || parts.length == 0 || parts[0].length() < 30_000) && System.currentTimeMillis() < until);
+        assertTrue("第一條連線要先把半成品寫出一段", parts != null && parts.length == 1 && parts[0].length() > 0);
+
+        new Thread(() -> { try { Thread.sleep(3000); } catch (InterruptedException ignored) { } release.countDown(); }).start();
+        TransferClient second = new TransferClient("127.0.0.1", server.port(), "cli", "client", key);
+        String saved = second.putResumable(() -> new ByteArrayInputStream(d), d.length, "busy.bin", null);   // 前幾次會收到 409 busy
+        first.join(5000);
+        assertEquals("busy.bin", saved);
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "busy.bin").toPath()));
+        assertTrue(second.lastVerified);
+        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+    }
+
     @Test
     public void interruptedDownloadResumesAndVerifies() throws Exception {
         byte[] d = data(500_000, 5);

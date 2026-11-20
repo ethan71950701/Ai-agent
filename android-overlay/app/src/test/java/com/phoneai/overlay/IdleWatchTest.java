@@ -43,10 +43,19 @@ public class IdleWatchTest {
     }
 
     @Test
-    public void hardLimitStopsEvenIfStuck() {
+    public void longTransferIsNeverCutAtTenMinutes() {
         IdleWatch w = new IdleWatch(1_000);
-        assertFalse(w.tick(500_000, 3));
-        assertTrue(w.tick(601_000, 3));
+        assertFalse(w.tick(500_000, 1));
+        assertFalse("傳輸中超過 10 分鐘不能被切斷", w.tick(601_000, 1));
+        assertFalse(w.tick(3_600_000, 1));
+        assertTrue("但連線都結束後，照常 10 秒後關", !w.tick(3_601_000, 0) && w.tick(3_612_000, 0));
+    }
+
+    @Test
+    public void hardLimitStillStopsAStuckConnectionEventually() {
+        IdleWatch w = new IdleWatch(1_000);
+        assertFalse(w.tick(5_000_000, 3));
+        assertTrue(w.tick(1_000 + IdleWatch.MAX_ACTIVE_MS, 3));
     }
 
     @Test
