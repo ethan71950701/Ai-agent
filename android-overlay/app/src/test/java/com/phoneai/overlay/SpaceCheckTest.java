@@ -41,4 +41,13 @@ public class SpaceCheckTest {
         assertNull(SpaceCheck.parse(""));
         assertNull(SpaceCheck.parse("a\tb\tc"));
     }
+
+    @Test
+    public void serverLimitIsRaisedButKeepsASafetyCeiling() {
+        assertTrue(TransferServer.MAX_UPLOAD_BYTES == 64L * GB);
+        assertTrue(Doorbell.MAX_SIZE == TransferServer.MAX_UPLOAD_BYTES);
+        assertNull(SpaceCheck.problem(5 * GB, 100 * GB, 200 * MB, TransferServer.MAX_UPLOAD_BYTES));      // 5 GB 的影片現在可以傳
+        assertNotNull(SpaceCheck.problem(65 * GB, 500 * GB, 200 * MB, TransferServer.MAX_UPLOAD_BYTES));  // 超過保險上限還是擋
+        assertNotNull(SpaceCheck.problem(5 * GB, 4 * GB, 200 * MB, TransferServer.MAX_UPLOAD_BYTES));     // 空間不夠照樣擋
+    }
 }

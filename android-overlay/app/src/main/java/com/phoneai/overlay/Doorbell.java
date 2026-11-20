@@ -25,7 +25,7 @@ final class Doorbell {
 
     static final String VERSION = "1";
     static final long WINDOW_MS = 60_000;
-    static final long MAX_SIZE = 2L * 1024 * 1024 * 1024;
+    static final long MAX_SIZE = 64L * 1024 * 1024 * 1024;   // 與 TransferServer.MAX_UPLOAD_BYTES 一致
 
     /** 驗證通過的內容。 */
     static final class Ring {
@@ -151,7 +151,7 @@ final class Doorbell {
         if (myIpOrNull != null && !sameSubnet(myIpOrNull, r.ip)) return "位址不在目前的網段（門鈴 " + r.ip + "，本機 " + myIpOrNull + "）";
         if (r.port < 1 || r.port > 65535) return "埠號不對";
         if ("serve".equals(r.mode)) return null;   // 只是叫醒：沒有檔案欄位要檢查
-        if (r.size < 0 || r.size > MAX_SIZE) return "檔案大小不對或超過 2 GiB";
+        if (r.size < 0 || r.size > MAX_SIZE) return "檔案大小不對或超過 64 GiB";
         if (r.path.isEmpty() || r.path.length() > 1024 || hasControl(r.path)) return "路徑不對";
         if (r.name.length() > 255 || hasControl(r.name)) return "檔名不對";
         return null;

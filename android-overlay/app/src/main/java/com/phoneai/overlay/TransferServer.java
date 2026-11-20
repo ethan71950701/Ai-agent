@@ -105,8 +105,8 @@ final class TransferServer {
     static int activeConnections() { return ACTIVE.get(); }
 
     private static final java.util.concurrent.atomic.AtomicInteger ACTIVE = new java.util.concurrent.atomic.AtomicInteger();
-    /** 單一檔案接收上限（2 GiB）；另外還要確認收件匣所在儲存空間夠用。 */
-    static final long MAX_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024;
+    /** 單一檔案接收上限（64 GiB，實質上不限，只是一道保險）；真正擋住塞滿儲存空間的是下面的「收完要保留」與 SpaceReserver 的空間檢查。 */
+    static final long MAX_UPLOAD_BYTES = 64L * 1024 * 1024 * 1024;
     private static final long KEEP_FREE_BYTES = 200L * 1024 * 1024;   // 接收後至少還要剩這麼多空間
     private static final Object RENAME_LOCK = new Object();
     private static final SpaceReserver RESERVER = new SpaceReserver();

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 互傳：單檔接收上限從 2 GB 提高到 64 GB（收完仍要保留 200 MB 空間，傳之前會先檢查）｜File transfer: the per-file receive limit is raised from 2 GB to 64 GB (200 MB must still stay free, and free space is checked before sending)
 - 互傳：傳檔案前先問對方空間與單檔上限（2 GB、收完要保留 200 MB），收不下就直接說原因（以前傳到一半被掛斷，只看到 Connection reset）｜File transfer: before sending, the app now asks the other device about free space and the per-file limit (2 GB, 200 MB kept free) and says why if it will not fit (it used to fail mid-transfer with just "Connection reset")
 
 ## 1.0.1728
