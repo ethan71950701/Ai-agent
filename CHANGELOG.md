@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1743
+
 - 推播喚醒設定頁新增「測試開關 Tailscale（外網用）」：在這支手機上實際用 root 對 Tailscale 發廣播，看能不能自己開起來、再關回去，並寫出原因（版本不支援、沒給自啟動、還沒授權 VPN）；記住哪一種指令有效｜Push wake-up settings: new "Test turning Tailscale on/off" button that really broadcasts to Tailscale with root on this phone, shows whether it turned on and back off and why not (unsupported version, no autostart, VPN not yet authorised), and remembers which command works
 
 ## 1.0.1742
