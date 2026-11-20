@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1741
+
 - 「進階與診斷」新增「送給 AI 的請求大小」：記錄每次請求的系統提示、工具定義、對話各多大，以及實際輸入 token 與花的時間，按聊天、自動操作、路由等來源平均（只量、不改行為）｜Advanced & diagnostics: new "Size of requests sent to the AI" section showing how big the system prompt, tool definitions and conversation are per request, the actual input tokens and the time, averaged per source (chat, auto-operate, router…); it only measures and changes no behavior
 
 ## 1.0.1738
