@@ -37,7 +37,7 @@ public class FcmLabActivity extends Activity {
         col.addView(status);
         col.addView(button("選 google-services.json", v -> pick(REQ_CONFIG)));
         col.addView(button("選服務帳戶金鑰（只有發送端需要）", v -> pick(REQ_SENDER)));
-        col.addView(button("刪除服務帳戶金鑰", v -> { FcmLab.file(this, FcmLab.SENDER).delete(); refresh(); }));
+        col.addView(button("刪除服務帳戶金鑰", v -> { FcmVault.delete(this); FcmLab.file(this, FcmLab.SENDER).delete(); refresh(); }));
         tokenView = new TextView(this);
         tokenView.setTextIsSelectable(true);
         col.addView(tokenView);
@@ -125,7 +125,7 @@ public class FcmLabActivity extends Activity {
     private void refresh() {
         String init = FcmLab.init(this);
         status.setText("設定檔：" + (FcmLab.hasConfig(this) ? "已載入（" + FcmLab.projectId(this) + "）" : "未載入")
-                + "\n服務帳戶金鑰：" + (FcmLab.file(this, FcmLab.SENDER).isFile() ? "有（發送端）" : "無")
+                + "\n服務帳戶金鑰：" + (FcmLab.hasSenderKey(this) ? "有（發送端，已加密存放）" : "無")
                 + "\n初始化：" + (init == null ? "成功" : init));
         tokenView.setText("");
         if (init != null) return;

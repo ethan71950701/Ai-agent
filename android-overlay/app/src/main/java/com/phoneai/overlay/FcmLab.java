@@ -35,6 +35,8 @@ final class FcmLab {
 
     static boolean hasConfig(Context c) { return file(c, CONFIG).isFile(); }
 
+    static boolean hasSenderKey(Context c) { return FcmVault.has(c); }
+
     /** 把使用者選的檔案複製進私有資料夾（權限 600）。回 null 成功，否則錯誤訊息。 */
     static String store(Context c, InputStream in, String name) {
         try {
@@ -43,6 +45,12 @@ final class FcmLab {
             int n, total = 0;
             while ((n = in.read(b)) > 0) { total += n; if (total > 64 * 1024) return "檔案太大，不像設定檔"; bo.write(b, 0, n); }
             new JSONObject(bo.toString("UTF-8"));   // 至少要是 JSON
+            if (name.equals(SENDER)) {   // 服務帳戶金鑰：只存加密後的版本，不留明文檔案
+                JSONObject j = new JSONObject(bo.toString("UTF-8"));
+                if (!j.has("private_key") || !j.has("client_email")) return "這不像服務帳戶金鑰（沒有 private_key／client_email）";
+                file(c, SENDER).delete();
+                return FcmVault.put(c, bo.toString("UTF-8"));
+            }
             File f = file(c, name), tmp = new File(f.getPath() + ".tmp");
             try (java.io.FileOutputStream o = new java.io.FileOutputStream(tmp)) { o.write(bo.toByteArray()); }
             tmp.setReadable(false, false); tmp.setReadable(true, true);
@@ -94,10 +102,11 @@ final class FcmLab {
 
     static String sendData(Context c, String token, java.util.Map<String, String> data) {
         try {
-            if (!file(c, SENDER).isFile()) return "這支手機沒有服務帳戶金鑰（只有發送端需要）";
+            String sa = FcmVault.get(c);
+            if (sa == null) return "這支手機沒有服務帳戶金鑰（只有發送端需要）";
             String project = projectId(c);
             if (project == null) return "沒有 google-services.json";
-            String access = accessToken(new JSONObject(read(c, SENDER)));
+            String access = accessToken(new JSONObject(sa));
             JSONObject dj = new JSONObject();
             for (java.util.Map.Entry<String, String> e : data.entrySet()) dj.put(e.getKey(), e.getValue());
             JSONObject msg = new JSONObject()
@@ -158,7 +167,8 @@ final class FcmLab {
     static String ring(Context c, TransferStore.Peer peer, String relPath) {
         if (peer.fcmToken == null) return "還沒有存這台裝置的 token";
         if (!TransferStore.enabled(c)) return "互傳總開關沒開（設定 → 互傳檔案）";
-        if (!TransferService.running) {   // 互傳伺服器沒在跑（系統可能把它收掉了）：先臨時把它開起來，等它真的在聽才按門鈴
+        boolean startedHere = !TransferService.running;
+        if (startedHere) {   // 互傳伺服器沒在跑（系統可能把它收掉了）：先臨時把它開起來，等它真的在聽才按門鈴
             TransferService.start(c);
             long until = System.currentTimeMillis() + 5000;
             while (!TransferService.running && System.currentTimeMillis() < until) {
@@ -171,7 +181,25 @@ final class FcmLab {
         File f = new File(TransferStore.root(), relPath);
         if (!f.isFile()) return "找不到檔案：" + relPath;
         java.util.Map<String, String> m = Doorbell.make(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, relPath, f.getName(), f.length(), System.currentTimeMillis());
-        return sendData(c, peer.fcmToken, m);
+        String err = sendData(c, peer.fcmToken, m);
+        if (startedHere) autoStop(c, err != null);   // 是我們臨時開的：用完自動關
+        return err;
+    }
+
+    /** 臨時開起的伺服器，沒人來或傳完就關（IdleWatch）。門鈴沒送成功就不用等，直接關。 */
+    private static void autoStop(Context c, boolean now) {
+        final Context app = c.getApplicationContext();
+        if (now) { TransferService.stop(app); return; }
+        Thread t = new Thread(() -> {
+            IdleWatch w = new IdleWatch(System.currentTimeMillis());
+            try {
+                while (!w.tick(System.currentTimeMillis(), TransferServer.activeConnections())) Thread.sleep(3000);
+            } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            TransferService.stop(app);
+            TransferStore.log(app, "臨時開起的互傳伺服器已自動關閉");
+        }, "fcm-autostop");
+        t.setDaemon(true);
+        t.start();
     }
 
     private static String slurp(InputStream in) throws Exception {

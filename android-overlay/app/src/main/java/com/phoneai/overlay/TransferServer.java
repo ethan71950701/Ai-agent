@@ -90,6 +90,9 @@ final class TransferServer {
 
     /** 同時最多幾個連線（含傳輸中的），超過就拒絕新的。 */
     static final int MAX_CONNECTIONS = 8;
+    /** 目前正在處理的連線數（臨時開的伺服器用它判斷什麼時候可以關）。 */
+    static int activeConnections() { return ACTIVE.get(); }
+
     private static final java.util.concurrent.atomic.AtomicInteger ACTIVE = new java.util.concurrent.atomic.AtomicInteger();
     /** 單一檔案接收上限（2 GiB）；另外還要確認收件匣所在儲存空間夠用。 */
     static final long MAX_UPLOAD_BYTES = 2L * 1024 * 1024 * 1024;
