@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 互傳進度通知：顯示目前速度與剩餘時間；收合時只留短短一行（百分比、速度、剩餘時間），完整檔名放在展開內容，太長的檔名縮短中間｜Transfer progress notification: shows current speed and time left; the collapsed view is one short line (percent, speed, time left), the full file name is in the expanded text, and long names are shortened in the middle
 
 ## 1.0.1730
 

@@ -29,6 +29,7 @@ final class TransferNotify {
 
     /** 傳輸剛開始時要做的事（助理面板用：自動收起來，進度只看通知）；用完要設回 null。 */
     static volatile Runnable onStart;
+    private static TransferProgress SPEED = new TransferProgress();
 
     static void requestStop() { stopRequested = true; }
 
@@ -42,6 +43,7 @@ final class TransferNotify {
         if (stopRequested) throw new Stopped();
         if (!active) {
             active = true;
+            SPEED = new TransferProgress();
             Runnable r = onStart;
             if (r != null) r.run();
         }
@@ -49,11 +51,16 @@ final class TransferNotify {
         if (done < total && now - lastAt < 400) return;
         lastAt = now;
         int pct = total > 0 ? (int) (done * 100 / Math.max(1, total)) : 0;
-        String text = name + "　" + pct + "%　" + TransferStore.size(done) + " / " + TransferStore.size(total);
+        double bps = SPEED.update(now, done);
+        long eta = TransferProgress.etaSeconds(total, done, bps);
+        String shortLine = TransferProgress.compact(pct, bps, eta);   // 收合時只有一行：太長會被截掉，所以只放百分比、速度、剩餘時間
+        String full = name + "\n" + TransferStore.size(done) + " / " + TransferStore.size(total) + "\n" + shortLine + "\n" + where;   // 展開才看得到完整檔名
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
         Notification.Builder nb = new Notification.Builder(c, CHANNEL).setSmallIcon(R.drawable.ic_stat)
-                .setContentTitle(title).setContentText(text + "\n" + where)
+                .setContentTitle(title).setContentText(shortLine)
+                .setSubText(TransferProgress.ellipsizeMiddle(name, 24))
+                .setStyle(new Notification.BigTextStyle().bigText(full))
                 .setCategory(Notification.CATEGORY_PROGRESS).setShowWhen(false)
                 .setProgress(100, Math.min(100, pct), false)
                 .addAction(new Notification.Action.Builder(Icon.createWithResource(c, android.R.drawable.ic_menu_close_clear_cancel),
@@ -71,6 +78,7 @@ final class TransferNotify {
     /** 新的傳輸開始：清掉上一次留下的「停止」。 */
     static synchronized void begin() {
         stopRequested = false;
+        SPEED = new TransferProgress();
     }
 
     static synchronized void cancel(Context c) {
