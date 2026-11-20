@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：檔案其實已經傳完、只是「收到了」的回覆掉了，不會再整個重傳變成「檔名 (1)」的重複檔案；傳完核對校驗碼發現不一樣時，會請對方把壞檔刪掉，不再留在收件匣｜Fix: if a file arrived but the "received" reply was lost, it is no longer re-sent as a duplicate "name (1)"; when the checksum doesn't match after transfer, the peer is asked to delete the bad file instead of leaving it in the inbox
 - 修正：在接收端按「停止」或「暫停」，送出端現在會收到明確的通知並停下來，不會當成斷線一直自動重傳（停止會刪掉接收端的半成品，暫停會保留）｜Fix: pressing Stop or Pause on the receiving phone now tells the sender clearly and it stops, instead of treating it as a dropped connection and retrying (Stop deletes the partial file, Pause keeps it)
 
 ## 1.0.1750

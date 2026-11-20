@@ -328,6 +328,23 @@ final class TransferClient {
     /** 最近一次可續傳的傳送用的指紋（呼叫端要記進「沒傳完」清單，之後才能請對方丟掉半成品）。 */
     volatile String lastFp = "";
 
+    /** 整個檔案都寫給對方了，但沒收到「收到了」的回覆時，問對方是不是其實已經收完：是的話回 {saved, 檔名, 大小, 校驗碼}，否則 null（含對方是舊版）。 */
+    String[] remoteDone(String fp) {
+        try {
+            String[] p = getText("/v1/done?fp=" + enc(fp)).trim().split("\t");
+            return p.length >= 4 && p[0].equals("saved") ? p : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 請對方把剛收下的這個指紋的檔案刪掉（校驗碼對不上，那是壞檔）。成功回 true。 */
+    boolean undoRemote(String fp) {
+        try { return getText("/v1/undo?fp=" + enc(fp)).trim().equals("deleted"); } catch (Exception e) { return false; }
+    }
+
+    private volatile String bodySha;   // 這一次已經把整個檔案寫給對方時，整檔的校驗碼；沒寫完是 null
+
     /** 對方的半成品現在收了幾個位元組；問不到（舊版對方、網路問題）就當 0，從頭來。 */
     long remoteOffset(String fp) {
         try {
@@ -374,6 +391,7 @@ final class TransferClient {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
             if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();   // 重試等待中按了暫停
+            bodySha = null;
             long offset = remoteOffset(fp);
             if (offset > size) offset = 0;
             String why = spaceProblem(size - offset);   // 只要看「還要收的那一段」
@@ -383,6 +401,14 @@ final class TransferClient {
             } catch (IOException e) {
                 last = e;
                 boolean mismatch = e.getMessage() != null && e.getMessage().contains("offset mismatch");
+                if (bodySha != null && Resume.retryable(e)) {   // 整個檔案都送出去了才出事：多半只是「收到了」的回覆掉了，先問對方收完沒，免得整個重傳又多一份
+                    String[] done = remoteDone(fp);
+                    if (done != null && Checksum.same(done[3], bodySha) && String.valueOf(size).equals(done[2])) {
+                        lastSha = bodySha;
+                        lastVerified = true;
+                        return done[1];
+                    }
+                }
                 if (!Resume.retryable(e) && !mismatch) throw e;
                 if (attempt == Resume.MAX_ATTEMPTS) break;
                 try { Thread.sleep(Resume.backoffMs(attempt)); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
@@ -423,14 +449,18 @@ final class TransferClient {
                 throw explainWriteFailure(s, w);
             }
             out.flush();
+            final String full = Checksum.hex(md.digest());
+            bodySha = full;
             InputStream in = new BufferedInputStream(s.getInputStream());
             readStatus(in);
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
                 String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
-                lastSha = Checksum.hex(md.digest());
+                lastSha = full;
                 lastVerified = p.length > 3 && !p[3].trim().isEmpty();
-                if (lastVerified && !Checksum.same(lastSha, p[3].trim()))
-                    throw new IOException("校驗碼不符：對方存下的檔案和送出的不一樣（請重傳，必要時刪掉對方收件匣裡的那個檔案）");
+                if (lastVerified && !Checksum.same(lastSha, p[3].trim())) {
+                    boolean removed = undoRemote(fp);   // 對方已經把它存進收件匣了：請它刪掉，不留壞檔
+                    throw new IOException("校驗碼不符：對方存下的檔案和送出的不一樣" + (removed ? "（已請對方刪掉那個檔案，請重傳）" : "（請重傳，必要時刪掉對方收件匣裡的那個檔案）"));
+                }
                 return p.length > 1 ? p[1] : name;
             }
         }

@@ -24,6 +24,7 @@ public class ResumeTransferTest {
     private TransferServer server;
     private byte[] key;
     private TransferClient client;
+    private final java.util.concurrent.atomic.AtomicBoolean dropAckOnce = new java.util.concurrent.atomic.AtomicBoolean();
     private volatile int receiverAction;   // 1＝接收端的使用者按停止，2＝按暫停（在收到一段之後）
     private final AtomicLong sentByServer = new AtomicLong();   // 伺服器「送出」的位元組（取檔時）
     private final AtomicLong receivedByServer = new AtomicLong();   // 伺服器「收到」的位元組（傳檔時）
@@ -46,7 +47,10 @@ public class ResumeTransferTest {
             @Override public String pairState(String peerId) { return "none"; }
             @Override public void event(String peerId, String kind, String what, long size) {
                 if (kind.equals("get")) sentByServer.addAndGet(size);
-                if (kind.equals("put")) receivedByServer.addAndGet(size);
+                if (kind.equals("put")) {
+                    if (dropAckOnce.getAndSet(false)) throw new RuntimeException("test: connection dies before the reply");   // 檔案已收完、已改名，但回覆送不出去
+                    receivedByServer.addAndGet(size);
+                }
             }
             @Override public void peerName(String peerId, String name) { }
             @Override public void progress(String peerId, boolean toPeer, String name, long done, long total) {
@@ -237,6 +241,41 @@ public class ResumeTransferTest {
         client.putResumable(() -> new ByteArrayInputStream(d), d.length, "pauseme.bin", null);
         assertArrayEquals(d, Files.readAllBytes(new File(inbox, "pauseme.bin").toPath()));
         assertTrue(client.lastVerified);
+    }
+
+    /** 檔案收完了、但「收到了」的回覆掉了：送出端要先問對方收完沒，不能整個重傳又多一份「名稱 (1)」。 */
+    @Test
+    public void lostReplyDoesNotCreateADuplicateFile() throws Exception {
+        byte[] d = data(200_000, 13);
+        dropAckOnce.set(true);
+        String saved = client.putResumable(() -> new ByteArrayInputStream(d), d.length, "ack.bin", null);
+        assertEquals("ack.bin", saved);
+        assertTrue(client.lastVerified);
+        assertEquals(Checksum.hex(Checksum.newDigest().digest(d)), client.lastSha);
+        File[] files = inbox.listFiles((x, n) -> !n.startsWith("."));
+        assertEquals("收件匣只該有一份：" + java.util.Arrays.toString(files), 1, files.length);
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "ack.bin").toPath()));
+    }
+
+    /** 續傳時來源檔案的中間被改過（指紋只看開頭 1 MiB，看不出來）：整檔校驗碼會對不上，壞檔要請對方刪掉，不能留在收件匣。 */
+    @Test
+    public void corruptFileFromAChangedSourceIsRemovedFromThePeer() throws Exception {
+        byte[] now = data(1_500_000, 14);
+        byte[] before = now.clone();
+        before[1_100_000] ^= 0x55;   // 開頭 1 MiB 之後的一個位元組不一樣
+        String fp = Resume.fingerprint(now, Resume.HEAD_BYTES, now.length, "chg.bin");
+        assertEquals(fp, Resume.fingerprint(before, Resume.HEAD_BYTES, before.length, "chg.bin"));
+        try (FileOutputStream o = new FileOutputStream(new File(inbox, Resume.partName("cli", fp)))) { o.write(before, 0, 1_200_000); }   // 上次（舊版檔案）傳到一半留下的
+        try {
+            client.putResumable(() -> new ByteArrayInputStream(now), now.length, "chg.bin", null);
+            throw new AssertionError("checksum mismatch expected");
+        } catch (IOException e) {
+            assertTrue(String.valueOf(e.getMessage()), String.valueOf(e.getMessage()).startsWith("校驗碼不符"));
+            assertTrue("要說明已請對方刪掉：" + e.getMessage(), e.getMessage().contains("已請對方刪掉"));
+        }
+        assertEquals("壞檔不能留在收件匣：" + java.util.Arrays.toString(inbox.list()), 0, inbox.listFiles().length);
+        client.putResumable(() -> new ByteArrayInputStream(now), now.length, "chg.bin", null);   // 重傳（這次從頭來）要成功
+        assertArrayEquals(now, Files.readAllBytes(new File(inbox, "chg.bin").toPath()));
     }
 
     @Test

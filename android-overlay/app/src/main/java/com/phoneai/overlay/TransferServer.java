@@ -76,6 +76,23 @@ final class TransferServer {
     private static final java.util.Map<String, Long> STOPPED = new java.util.concurrent.ConcurrentHashMap<>();
     static final long STOPPED_MEMORY_MS = 5_000;
 
+    /** 剛收完的上傳（對方編號|指紋 → 結果）：送出端沒收到「收到了」的回覆時，可以來問一聲，不必整個重傳（會變成「檔名 (1)」的重複檔案）；校驗碼對不上時也靠它請我們刪掉那個檔案。 */
+    static final class Done {
+        final String name, sha;
+        final long size, at;
+        Done(String name, long size, String sha, long at) { this.name = name; this.size = size; this.sha = sha; this.at = at; }
+    }
+    static final long DONE_MEMORY_MS = 10 * 60_000L;
+    private static final java.util.Map<String, Done> COMPLETED = java.util.Collections.synchronizedMap(new LinkedHashMap<String, Done>() {
+        @Override protected boolean removeEldestEntry(Map.Entry<String, Done> e) { return size() > 64; }
+    });
+
+    private static Done recentDone(String peer, String fp) {
+        if (!Resume.validFp(fp)) return null;
+        Done d = COMPLETED.get(peer + "|" + fp);
+        return d != null && System.currentTimeMillis() - d.at < DONE_MEMORY_MS ? d : null;
+    }
+
     private final Host host;
     private ServerSocket server;
     private volatile boolean running;
@@ -241,6 +258,20 @@ final class TransferServer {
                         }
                         if (!ACTIVE_PARTS.contains(part.getName())) gone = part.delete();
                     }
+                    sendText(out, au, gone ? "deleted" : "none");
+                    break;
+                }
+                case "/v1/done": {   // 送出端沒收到回覆時來問：這個指紋剛剛是不是已經收完了（檔案還在才算）
+                    Done d = recentDone(au.peer, params.get("fp"));
+                    File f = d == null ? null : new File(host.inbox(), d.name);
+                    sendText(out, au, d != null && f.isFile() && f.length() == d.size ? "saved\t" + d.name + "\t" + d.size + "\t" + d.sha : "");
+                    break;
+                }
+                case "/v1/undo": {   // 送出端核對校驗碼發現不一樣：請我們把剛收下的那個檔案刪掉，不留壞檔
+                    Done d = recentDone(au.peer, params.get("fp"));
+                    File f = d == null ? null : new File(host.inbox(), d.name);
+                    boolean gone = f != null && f.isFile() && f.length() == d.size && insideRoot(host.inbox(), f) && f.delete();
+                    if (gone) COMPLETED.remove(au.peer + "|" + params.get("fp"));
                     sendText(out, au, gone ? "deleted" : "none");
                     break;
                 }
@@ -471,13 +502,16 @@ final class TransferServer {
             }
             if (total != expect) throw new IOException("upload size mismatch: declared " + expect + ", got " + total);   // 提早結束（對方斷線）：半成品留著給續傳；大小多出來的上面已經處理
             File dest;
+            String finalSha;
             synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
                 dest = unique(inbox, base);
                 if (!tmp.renameTo(dest)) { keepPart = false; reply(out, 500, "rename failed"); return; }
                 tmp = null;   // 已經改名成正式檔案，不要在 finally 刪掉
+                finalSha = Checksum.hex(md.digest());
+                if (resumable) COMPLETED.put(au.peer + "|" + fpParam, new Done(dest.getName(), total, finalSha, System.currentTimeMillis()));
             }
             host.event(au.peer, "put", rel(dest), total - offset);
-            sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + Checksum.hex(md.digest()));
+            sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + finalSha);
         } catch (Aborted a) {   // 這一端的使用者按了停止／暫停：明確回覆（對方才不會當成斷線一直重試）；停止就把半成品刪掉
             keepPart = a.keepPartial;
             if (!a.keepPartial && resumable) STOPPED.put(au.peer + "|" + fpParam, System.currentTimeMillis());
