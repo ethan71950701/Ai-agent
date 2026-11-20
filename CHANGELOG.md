@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 每個 Release 附上 SHA256SUMS.txt（APK 的 SHA-256 校驗碼），發布前 CI 也會再核對一次｜Every release now includes SHA256SUMS.txt (SHA-256 of the APK); CI re-checks it before publishing
 
 ## 1.0.1696
 
