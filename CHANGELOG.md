@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 互傳：傳檔案前先問對方空間與單檔上限（2 GB、收完要保留 200 MB），收不下就直接說原因（以前傳到一半被掛斷，只看到 Connection reset）｜File transfer: before sending, the app now asks the other device about free space and the per-file limit (2 GB, 200 MB kept free) and says why if it will not fit (it used to fail mid-transfer with just "Connection reset")
+
+## 1.0.1728
+
 - 互傳：接收端收檔出錯時，會把原因回報給對方並寫進記錄（以前只會默默斷線，對方只看到 Connection reset）｜File transfer: when receiving fails, the receiver now tells the sender why and logs it (it used to drop the connection silently, so the sender only saw "Connection reset")
 
 ## 1.0.1727
