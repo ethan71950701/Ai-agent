@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1752
+
 - 修正：檔案其實已經傳完、只是「收到了」的回覆掉了，不會再整個重傳變成「檔名 (1)」的重複檔案；傳完核對校驗碼發現不一樣時，會請對方把壞檔刪掉，不再留在收件匣｜Fix: if a file arrived but the "received" reply was lost, it is no longer re-sent as a duplicate "name (1)"; when the checksum doesn't match after transfer, the peer is asked to delete the bad file instead of leaving it in the inbox
 
 ## 1.0.1751
