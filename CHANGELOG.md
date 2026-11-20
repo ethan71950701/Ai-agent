@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1742
+
 - 推播叫醒也能在外面用（行動數據）：對方有 Tailscale 位址時，從外面也能叫醒它、再用 Tailscale 連過去；對方的 Tailscale 平常關著時，被叫醒會盡力自己開起來（要 root），用完關回去（盡力而為，不保證每個 Tailscale 版本都行）｜Push wake-up now works away from home (mobile data): a paired device with a Tailscale address can be woken from outside and then reached over Tailscale; if its Tailscale is off it tries to turn it on by itself (needs root) and turns it off again afterwards (best effort, not guaranteed on every Tailscale version)
 
 ## 1.0.1741
