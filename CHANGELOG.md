@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1751
+
 - 修正：在接收端按「停止」或「暫停」，送出端現在會收到明確的通知並停下來，不會當成斷線一直自動重傳（停止會刪掉接收端的半成品，暫停會保留）｜Fix: pressing Stop or Pause on the receiving phone now tells the sender clearly and it stops, instead of treating it as a dropped connection and retrying (Stop deletes the partial file, Pause keeps it)
 
 ## 1.0.1750
