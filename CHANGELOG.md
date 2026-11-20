@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1747
+
 - 推播喚醒設定頁的 Tailscale 提示補上小米（HyperOS）的經驗：Tailscale 顯示開著卻連不到，多半是被系統凍住，要把 Tailscale 也加進「不限制背景」的保護（例如 FCM Guard）｜The push wake-up settings' Tailscale hint now covers Xiaomi (HyperOS): if Tailscale shows as on but cannot be reached it is most likely frozen by the system; protect it in the no-restrict background list too (e.g. with FCM Guard)
 - 外網：對方被從外面叫醒時，就算 Tailscale 顯示開著，也會再戳它一下（可能被系統凍住、收不到封包）；外網連線檢查逾時時提示這個可能｜Remote: when the other device is woken from outside, Tailscale is nudged even if it shows as on (it may be frozen by the system and not handling packets); the remote check mentions this on a timeout
 
