@@ -56,5 +56,8 @@ public class FcmLabService extends FirebaseMessagingService {
         try { startForegroundService(i); } catch (Exception e) { LifeLog.add(this, "FCM 門鈴：無法啟動接收服務：" + e); }
     }
 
-    @Override public void onNewToken(String token) { LifeLog.add(this, "FCM 實驗：裝置 token 更新"); }
+    @Override public void onNewToken(String token) {
+        FcmLab.saveMyToken(this, token);
+        LifeLog.add(this, "FCM 實驗：裝置 token 更新（對方存的舊 token 會失效，需要重新互換）");
+    }
 }

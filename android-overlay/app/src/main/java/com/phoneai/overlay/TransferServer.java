@@ -58,6 +58,8 @@ final class TransferServer {
         void peerSeen(String peerId, String ip);
         /** 已驗證的對方送來它的推播 token（叫醒它用）。 */
         default void peerFcm(String peerId, String token) { }
+        /** 我自己的推播 token（回給剛送來 token 的對方）；沒有回 null。 */
+        default String myFcmToken() { return null; }
     }
 
     private final Host host;
@@ -208,9 +210,11 @@ final class TransferServer {
                 }
                 case "/v1/fcm": {
                     String tk = params.get("token");
-                    if (!Doorbell.validToken(tk)) { reply(out, 400, "bad token"); return; }
-                    host.peerFcm(au.peer, tk);
-                    sendText(out, au, "ok");
+                    boolean asking = tk == null || tk.isEmpty();   // 空的＝我沒有 token，只是想拿你的
+                    if (!asking && !Doorbell.validToken(tk)) { reply(out, 400, "bad token"); return; }
+                    if (!asking) host.peerFcm(au.peer, tk);
+                    String mine = host.myFcmToken();
+                    sendText(out, au, "ok\t" + (Doorbell.validToken(mine) ? mine : ""));   // 同一次請求互換：把我的 token 一起回給對方
                     break;
                 }
                 case "/v1/put":

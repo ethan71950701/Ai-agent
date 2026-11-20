@@ -67,11 +67,15 @@ public class FcmLabActivity extends Activity {
                 Toast.makeText(this, "已儲存", Toast.LENGTH_SHORT).show();
             }).setNegativeButton("取消", null).show();
         })));
-        col.addView(button("把我的 token 交給某台已配對裝置（兩邊都開著互傳）", v -> {
+        col.addView(button("和某台已配對裝置互換 token", v -> {
             if (!Doorbell.validToken(myToken)) { Toast.makeText(this, "這支手機還沒有 token（先載入設定檔）", Toast.LENGTH_LONG).show(); return; }
             pickPeer(peer -> new Thread(() -> {
                 String res;
-                try { FileTools.clientFor(this, peer).sendFcmToken(myToken); res = "✓ 已交給「" + peer.name + "」"; }
+                try {
+                    String theirs = FileTools.clientFor(this, peer).exchangeFcmToken(myToken);
+                    if (theirs != null) TransferStore.setFcmToken(this, peer.id, theirs);
+                    res = "✓ 已和「" + peer.name + "」互換" + (theirs == null ? "（對方還沒有 token，只有我的交給對方）" : "");
+                }
                 catch (Exception e) { res = "✗ 「" + peer.name + "」：" + e.getMessage(); }
                 final String r = res;
                 runOnUiThread(() -> Toast.makeText(this, r, Toast.LENGTH_LONG).show());

@@ -114,6 +114,14 @@ final class TransferClient {
     /** 把我的推播 token 交給對方（對方存起來，之後才叫得醒我）。 */
     String sendFcmToken(String token) throws IOException { return getText("/v1/fcm?token=" + enc(token)); }
 
+    /** 互換 token：送出我的（沒有就送空的，只是拿對方的），回傳對方的 token；對方沒有或格式不對回 null。 */
+    String exchangeFcmToken(String mine) throws IOException {
+        String r = getText("/v1/fcm?token=" + enc(mine == null ? "" : mine));
+        int tab = r.indexOf('\t');
+        String theirs = tab >= 0 ? r.substring(tab + 1).trim() : "";
+        return Doorbell.validToken(theirs) ? theirs : null;
+    }
+
     String list(String path) throws IOException { return getText("/v1/list?path=" + enc(path)); }
 
     String find(String name) throws IOException { return getText("/v1/find?name=" + enc(name)); }

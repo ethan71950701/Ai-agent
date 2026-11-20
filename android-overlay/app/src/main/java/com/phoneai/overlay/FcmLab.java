@@ -33,6 +33,40 @@ final class FcmLab {
 
     static File file(Context c, String name) { return new File(c.getFilesDir(), name); }
 
+    private static android.content.SharedPreferences prefs(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE); }
+
+    /** 這支手機的推播 token（上次取得並存起來的）；沒有回 null。 */
+    static String myToken(Context c) {
+        String t = prefs(c).getString("fcm_my_token", "");
+        return Doorbell.validToken(t) ? t : null;
+    }
+
+    static void saveMyToken(Context c, String token) {
+        if (Doorbell.validToken(token)) prefs(c).edit().putString("fcm_my_token", token).apply();
+    }
+
+    /** 向 Firebase 要一次最新的 token 並存起來（要先 init 成功）。非同步，不阻塞。 */
+    static void refreshMyToken(Context c) {
+        try {
+            if (init(c) != null) return;
+            final Context app = c.getApplicationContext();
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().getToken().addOnSuccessListener(t -> saveMyToken(app, t));
+        } catch (Throwable ignored) { }
+    }
+
+    /** 配對剛成功時呼叫（要在背景執行緒）：用同一次請求跟對方互換 token。失敗不影響配對本身。 */
+    static void exchangeAfterPairing(Context c, TransferClient client, String peerId) {
+        try {
+            String theirs = client.exchangeFcmToken(myToken(c));
+            if (theirs != null) {
+                TransferStore.setFcmToken(c, peerId, theirs);
+                TransferStore.log(c, "已和「" + TransferStore.nameOf(c, peerId) + "」互換推播 token");
+            }
+        } catch (Throwable e) {
+            TransferStore.log(c, "互換推播 token 沒成功（之後可以在「推播喚醒設定」再做一次）：" + e.getMessage());
+        }
+    }
+
     static boolean hasConfig(Context c) { return file(c, CONFIG).isFile(); }
 
     static boolean hasSenderKey(Context c) { return FcmVault.has(c); }

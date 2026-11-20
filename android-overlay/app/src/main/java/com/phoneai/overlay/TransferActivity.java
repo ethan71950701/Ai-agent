@@ -330,6 +330,9 @@ public class TransferActivity extends Activity {
                     p.key = o.key;
                     TransferStore.addPeer(this, p);
                     TransferStore.log(this, L.t("已配對 ") + p.name);
+                    final TransferClient exch = new TransferClient(ip, port, TransferStore.myId(this), TransferStore.myName(this), p.key);
+                    final String exId = p.id;
+                    new Thread(() -> FcmLab.exchangeAfterPairing(getApplicationContext(), exch, exId), "fcm-exchange").start();   // 順便互換推播 token
                     Toast.makeText(this, L.t("配對完成：") + p.name, Toast.LENGTH_LONG).show();
                 } else {
                     Toast.makeText(this, L.t("對方沒有接受或逾時，沒有配對"), Toast.LENGTH_LONG).show();
