@@ -48,4 +48,13 @@ public class IdleWatchTest {
         assertFalse(w.tick(500_000, 3));
         assertTrue(w.tick(601_000, 3));
     }
+
+    @Test
+    public void customAfterDoneDelayIsUsed() {
+        IdleWatch w = new IdleWatch(0, 60_000);
+        w.tick(5_000, 1);
+        assertFalse(w.tick(8_000, 0));
+        assertFalse(w.tick(67_000, 0));
+        assertTrue(w.tick(68_000, 0));
+    }
 }

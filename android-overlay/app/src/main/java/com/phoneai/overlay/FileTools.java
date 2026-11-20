@@ -77,15 +77,6 @@ final class FileTools {
                     if (!src.isFile() || !src.getCanonicalPath().startsWith(TransferStore.root().getCanonicalPath() + File.separator))
                         return "錯誤：找不到這個檔案：" + p;
                     String saved;
-                    TransferStore.Peer ringPeer = peerNamed(c, dev);
-                    if (FcmLab.canRing(c, ringPeer) && FcmLab.lanIp() != null) {   // 預設走推播
-                        String err = FcmLab.ring(c, ringPeer, p.startsWith("/sdcard/") ? p.substring(8) : p);
-                        if (err == null) {
-                            TransferStore.log(c, L.t("推播叫醒 ") + ringPeer.name + L.t(" 來取 ") + src.getName());
-                            return "已用推播叫醒「" + ringPeer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI；我沒辦法確認它是否已經收到）";
-                        }
-                        TransferStore.log(c, L.t("推播叫醒失敗，改用直接連線：") + err);
-                    }
                     TransferClient cl2;
                     try {
                         cl2 = client(c, dev);
@@ -195,18 +186,6 @@ final class FileTools {
         final String shown = name;
         TransferNotify.begin();
         try {
-            if (FcmLab.canRing(c, p) && FcmLab.lanIp() != null) {   // 預設走推播：對方不用開著互傳，也不用先試連線等逾時
-                java.io.InputStream src = c.getContentResolver().openInputStream(uri);
-                if (src != null) {
-                    String err = FcmLab.sendViaDoorbell(c, p, src, name);
-                    if (err == null) {
-                        TransferStore.log(c, L.t("推播叫醒 ") + p.name + L.t(" 來取 ") + name);
-                        TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
-                        return;
-                    }
-                    TransferStore.log(c, L.t("推播叫醒失敗，改用直接連線：") + err);   // 推播不通（沒網路、金鑰問題）：退回直接連線
-                }
-            }
             TransferClient cl;
             try {
                 cl = clientFor(c, p);
@@ -305,6 +284,18 @@ final class FileTools {
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
+        if (f == null && FcmLab.canRing(c, p) && FcmLab.lanIp() != null && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
+            // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
+            String err = FcmLab.wake(c, p);
+            if (err == null) {
+                long until = System.currentTimeMillis() + 15000;
+                while (f == null && System.currentTimeMillis() < until) {
+                    f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
+                }
+            } else {
+                TransferStore.log(c, L.t("推播叫醒失敗：") + err);
+            }
+        }
         String ip;
         int port;
         if (f != null) {

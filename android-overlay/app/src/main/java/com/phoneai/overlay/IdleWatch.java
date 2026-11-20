@@ -8,11 +8,14 @@ package com.phoneai.overlay;
 final class IdleWatch {
     static final long NO_VISITOR_MS = 90_000, AFTER_DONE_MS = 10_000, HARD_LIMIT_MS = 600_000;
 
-    private final long start;
+    private final long start, afterDone;
     private boolean sawConnection;
     private long idleSince = -1;
 
-    IdleWatch(long startMs) { start = startMs; }
+    IdleWatch(long startMs) { this(startMs, AFTER_DONE_MS); }
+
+    /** afterDoneMs：最後一個連線結束後再等多久才關（瀏覽時要久一點，不然每點一層都要重新叫醒）。 */
+    IdleWatch(long startMs, long afterDoneMs) { start = startMs; afterDone = afterDoneMs; }
 
     /** active：目前的連線數。回 true 表示可以關了。 */
     boolean tick(long nowMs, int active) {
@@ -24,6 +27,6 @@ final class IdleWatch {
         }
         if (!sawConnection) return nowMs - start >= NO_VISITOR_MS;
         if (idleSince < 0) idleSince = nowMs;
-        return nowMs - idleSince >= AFTER_DONE_MS;
+        return nowMs - idleSince >= afterDone;
     }
 }

@@ -240,6 +240,33 @@ final class FcmLab {
         return err;
     }
 
+    /** 叫醒對方：送一則「請把互傳伺服器開起來」的門鈴。回 null 成功，否則錯誤。之後的連線都照原本的直連方式。 */
+    static String wake(Context c, TransferStore.Peer peer) {
+        if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";
+        String ip = lanIp();
+        if (ip == null) return "找不到本機的區網位址（要連上 Wi-Fi）";
+        return sendData(c, peer.fcmToken, Doorbell.makeServe(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, System.currentTimeMillis()));
+    }
+
+    /** 被「叫醒」的這一端：把互傳伺服器開起來，沒人用了就自動關（瀏覽時最後一個連線結束後多留 60 秒）。 */
+    static void serveForAWhile(Context c) {
+        final Context app = c.getApplicationContext();
+        if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return; }
+        final boolean startedHere = !TransferService.running;
+        TransferService.start(app);
+        if (!startedHere) return;   // 本來就開著（使用者自己開的）：不去關它
+        Thread t = new Thread(() -> {
+            IdleWatch w = new IdleWatch(System.currentTimeMillis(), 60_000);
+            try {
+                while (!w.tick(System.currentTimeMillis(), TransferServer.activeConnections())) Thread.sleep(3000);
+            } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            TransferService.stop(app);
+            TransferStore.log(app, "被叫醒而開起的互傳伺服器已自動關閉");
+        }, "fcm-serve-autostop");
+        t.setDaemon(true);
+        t.start();
+    }
+
     /** 臨時開起的伺服器，沒人來或傳完就關（IdleWatch）。門鈴沒送成功就不用等，直接關。 */
     private static void autoStop(Context c, boolean now) {
         final Context app = c.getApplicationContext();

@@ -43,8 +43,13 @@ public class FcmLabService extends FirebaseMessagingService {
             notifyLab("門鈴被拒絕：" + r.error + "｜本機 " + FcmLab.lanNet() + "｜已配對 " + TransferStore.peers(this).size() + " 台");
             return;
         }
+        if ("serve".equals(r.ring.mode)) {   // 只是叫醒：把伺服器開起來，對方再用原本的方式連進來
+            LifeLog.add(this, "FCM 叫醒通過：" + TransferStore.nameOf(this, r.ring.from) + " 要連進來");
+            FcmLab.serveForAWhile(this);
+            return;
+        }
         notifyLab("門鈴通過，準備取檔：" + r.ring.name);
-        LifeLog.add(this, "FCM 門鈴通過：" + r.ring.name + "（" + r.ring.size + " 位元組），來自 " + TransferStore.nameOf(this, r.ring.from));
+        if (!"serve".equals(r.ring.mode)) LifeLog.add(this, "FCM 門鈴通過：" + r.ring.name + "（" + r.ring.size + " 位元組），來自 " + TransferStore.nameOf(this, r.ring.from));
         Intent i = new Intent(this, FetchService.class)
                 .putExtra("from", r.ring.from).putExtra("ip", r.ring.ip).putExtra("port", r.ring.port)
                 .putExtra("path", r.ring.path).putExtra("name", r.ring.name).putExtra("size", r.ring.size);
