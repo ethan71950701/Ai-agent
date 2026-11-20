@@ -78,6 +78,7 @@ public class FcmSetupActivity extends Activity {
         }
         c3.addView(Ui.button(this, L.t("測試叫醒對方"), v -> pickPeer(p -> testWake(p))));
         c3.addView(Ui.tonal(this, L.t("只送一則測試推播（看對方有沒有跳通知）"), v -> pickPeer(p -> plainPush(p))));
+        c3.addView(Ui.tonal(this, L.t("測試開關 Tailscale（外網用）"), v -> testTailscale()));
         Ui.buttons(this, c3,
                 Ui.tonal(this, L.t("電池設定"), v -> openBattery()),
                 Ui.tonal(this, L.t("這個 App 的設定"), v -> openAppSettings()));
@@ -197,6 +198,16 @@ public class FcmSetupActivity extends Activity {
             ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("測試推播"))
                     .setMessage(err == null ? L.t("Google 收下了。請看「") + p.name + L.t("」有沒有跳出「FCM 實驗：被叫醒了」的通知。有的話，推播本身是通的；沒有的話，推播到不了那支手機（見說明）。")
                             : L.t("送出失敗：") + err)
+                    .setPositiveButton(L.t("好"), null).show());
+        }).start();
+    }
+
+    /** 在這支手機上實際試一次：用 root 對 Tailscale 發廣播，看它能不能自己開起來、再關回去。 */
+    private void testTailscale() {
+        Toast.makeText(this, L.t("測試中…（最久約 30 秒，會短暫開關 Tailscale）"), Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            final String r = TailscaleControl.selfTest(this);
+            ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("Tailscale 開關測試")).setMessage(r)
                     .setPositiveButton(L.t("好"), null).show());
         }).start();
     }

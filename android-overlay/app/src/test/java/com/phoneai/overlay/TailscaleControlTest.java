@@ -18,4 +18,12 @@ public class TailscaleControlTest {
         assertEquals("am broadcast -a com.tailscale.ipn.DISCONNECT_VPN -n com.tailscale.ipn/.IPNReceiver", off.get(0));
         for (String c : on) assertTrue(c, c.matches("[A-Za-z0-9 ._/\\-]+"));   // 只有固定的字元，沒有任何外來內容
     }
+
+    @Test
+    public void rememberedCommandIsTriedFirst() {
+        assertEquals(java.util.Arrays.asList(0, 1), TailscaleControl.order(-1, 2));
+        assertEquals(java.util.Arrays.asList(1, 0), TailscaleControl.order(1, 2));
+        assertEquals(java.util.Arrays.asList(0, 1), TailscaleControl.order(0, 2));
+        assertEquals(java.util.Arrays.asList(0, 1), TailscaleControl.order(9, 2));   // 記的編號不合理：照原順序
+    }
 }
