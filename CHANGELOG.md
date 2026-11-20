@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1732
+
 - 互傳支援續傳：傳檔或取檔傳到一半斷線，會自動接著傳（最多重試 6 次），最後還是失敗時已收到的部分會保留，再傳或再取同一個檔案會從斷點繼續（半成品三天後清掉）；整檔 SHA-256 仍會涵蓋續傳前後兩段｜File transfer can resume: if a send or fetch is cut off it continues automatically (up to 6 retries); if it still fails what was received is kept and sending or fetching the same file again continues from there (partial files are removed after three days); the whole-file SHA-256 still covers both parts
 
 ## 1.0.1731
