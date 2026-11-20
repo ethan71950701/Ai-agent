@@ -17,7 +17,7 @@ import org.json.JSONObject;
  * 推播「門鈴」（純 Java，docs/FCM_TRANSFER_DESIGN.md）：發送端把「請到這個位址取這個檔案」加密成一則很小的 FCM 資料訊息，
  * 接收端先驗證才會連線。門鈴只是通知，不是授權：真正取檔仍要用配對金鑰簽章的請求。
  *
- * 訊息欄位：v（版本）、from（發送端裝置 id）、ts（毫秒）、nonce（16 位元組隨機，hex）、ct（Base64 的 AES-GCM 密文）。
+ * 訊息欄位：v（版本）、src（發送端裝置 id；FCM 的資料欄位不能叫 from、message_type，或 google／gcm 開頭）、ts（毫秒）、nonce（16 位元組隨機，hex）、ct（Base64 的 AES-GCM 密文）。
  * 密文金鑰＝HMAC(配對金鑰, "bell|"+nonce)，每則都不同；AAD 綁住 v、from、ts、nonce，任何一項被改解密就失敗。
  */
 final class Doorbell {
@@ -54,7 +54,7 @@ final class Doorbell {
             Map<String, String> m = new LinkedHashMap<>();
             m.put("kind", "doorbell");
             m.put("v", VERSION);
-            m.put("from", fromId);
+            m.put("src", fromId);   // 不能叫 from：那是 FCM 的保留字，會被 HTTP 400 拒絕
             m.put("ts", ts);
             m.put("nonce", nonce);
             m.put("ct", Base64.getEncoder().encodeToString(ct));
@@ -74,7 +74,7 @@ final class Doorbell {
         Verifier(Keys keys) { this.keys = keys; }
 
         synchronized Result verify(Map<String, String> m, long nowMs, String myIpOrNull) {
-            String v = m.get("v"), from = m.get("from"), ts = m.get("ts"), nonce = m.get("nonce"), ct = m.get("ct");
+            String v = m.get("v"), from = m.get("src"), ts = m.get("ts"), nonce = m.get("nonce"), ct = m.get("ct");
             if (!VERSION.equals(v)) return fail("版本不支援");
             if (from == null || from.isEmpty() || from.length() > 64) return fail("來源 id 不對");
             if (nonce == null || !nonce.matches("[0-9a-f]{32}")) return fail("nonce 格式不對");

@@ -30,7 +30,7 @@
 5. App 檢查並引導：通知權限、電池「無限制」、**自啟動**（依廠牌顯示對應路徑；偵測不到就文字說明）。
 
 ## 4. 門鈴訊息（FCM data，`priority: high`）
-- 內容（JSON）：`v`（版本）、`from`（A 的裝置 id）、`ts`（毫秒時間戳）、`nonce`（隨機）、`ip`／`port`（A 目前的區網位址）、`path`（要拿的檔案）、`name`、`size`，密文用 AES-GCM（金鑰＝HMAC(配對金鑰, "bell|"+nonce)，每則一把新的；AAD 綁住 v、from、ts、nonce，GCM 的標籤同時負責完整性，所以不另外附 HMAC）。實作：`Doorbell.java`（純 Java）與 `DoorbellTest`。
+- 內容（JSON）：`v`（版本）、`src`（A 的裝置 id；`from` 是 FCM 保留字，不能用）、`ts`（毫秒時間戳）、`nonce`（隨機）、`ip`／`port`（A 目前的區網位址）、`path`（要拿的檔案）、`name`、`size`，密文用 AES-GCM（金鑰＝HMAC(配對金鑰, "bell|"+nonce)，每則一把新的；AAD 綁住 v、from、ts、nonce，GCM 的標籤同時負責完整性，所以不另外附 HMAC）。實作：`Doorbell.java`（純 Java）與 `DoorbellTest`。
 - 大小遠小於 FCM 限制（約 4 KB）。
 - 不放任何金鑰或可直接使用的授權；它只是「請你去這裡拿這個」。
 

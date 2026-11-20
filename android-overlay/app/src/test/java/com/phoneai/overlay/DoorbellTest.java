@@ -51,6 +51,13 @@ public class DoorbellTest {
     }
 
     @Test
+    public void fieldNamesAvoidFcmReservedWords() {
+        for (String k : ring().keySet()) {
+            assertFalse(k, k.equals("from") || k.equals("message_type") || k.startsWith("google") || k.startsWith("gcm") || k.equals("notification"));
+        }
+    }
+
+    @Test
     public void expiredOrFutureIsRejected() {
         assertFalse(v.verify(ring(), NOW + 61_000, null).ok());
         assertFalse(v.verify(ring(), NOW - 61_000, null).ok());
@@ -76,12 +83,12 @@ public class DoorbellTest {
 
     @Test
     public void anyTamperedFieldBreaksIt() {
-        for (String field : new String[]{"from", "ts", "nonce", "ct", "v"}) {
+        for (String field : new String[]{"src", "ts", "nonce", "ct", "v"}) {
             Map<String, String> m = ring();
             String old = m.get(field);
             String bad = field.equals("ts") ? String.valueOf(Long.parseLong(old) + 1)
                     : field.equals("v") ? "2"
-                    : field.equals("from") ? "phoneB"
+                    : field.equals("src") ? "phoneB"
                     : field.equals("nonce") ? TransferCrypto.hex(TransferCrypto.random(16))
                     : old.substring(0, old.length() - 4) + (old.endsWith("AAAA") ? "BBBB" : "AAAA");
             m.put(field, bad);
@@ -90,7 +97,7 @@ public class DoorbellTest {
         // 換成別的裝置 id 也要有金鑰：把 from 改成有金鑰的 id，但密文是用原本的 AAD 做的，還是失敗
         Doorbell.Verifier two = new Doorbell.Verifier(id -> key);
         Map<String, String> m = ring();
-        m.put("from", "phoneB");
+        m.put("src", "phoneB");
         assertFalse(two.verify(m, NOW, null).ok());
     }
 
@@ -98,7 +105,7 @@ public class DoorbellTest {
     public void garbageInputNeverThrows() {
         Map<String, String> m = new HashMap<>();
         assertFalse(v.verify(m, NOW, null).ok());
-        m.put("v", "1"); m.put("from", "phoneA"); m.put("ts", "abc"); m.put("nonce", "zz"); m.put("ct", "!!!");
+        m.put("v", "1"); m.put("src", "phoneA"); m.put("ts", "abc"); m.put("nonce", "zz"); m.put("ct", "!!!");
         assertFalse(v.verify(m, NOW, null).ok());
         m.put("ts", String.valueOf(NOW)); m.put("nonce", "0123456789abcdef0123456789abcdef"); m.put("ct", "!!!");
         assertFalse(v.verify(m, NOW, null).ok());
