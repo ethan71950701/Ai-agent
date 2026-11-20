@@ -28,9 +28,22 @@ public class FcmLabService extends FirebaseMessagingService {
                 .setContentTitle("FCM 實驗：被叫醒了").setContentText(note).setStyle(new NotificationCompat.BigTextStyle().bigText(note)).setAutoCancel(true).build());
     }
 
+    private void notifyLab(String text) {
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.createNotificationChannel(new NotificationChannel("fcm_lab", "FCM 實驗", NotificationManager.IMPORTANCE_HIGH));
+        nm.notify(7714, new NotificationCompat.Builder(this, "fcm_lab").setSmallIcon(android.R.drawable.stat_notify_chat)
+                .setContentTitle("FCM 門鈴").setContentText(text).setStyle(new NotificationCompat.BigTextStyle().bigText(text)).setAutoCancel(true).build());
+    }
+
     private void onDoorbell(RemoteMessage m) {
+        LifeLog.add(this, "FCM 門鈴：收到（尚未驗證），欄位 " + m.getData().keySet());
         Doorbell.Result r = BELL.verify(m.getData(), System.currentTimeMillis(), FcmLab.lanIp());
-        if (!r.ok()) { LifeLog.add(this, "FCM 門鈴被拒絕：" + r.error); return; }   // 驗證不過：不連線、不通知（只留記錄）
+        if (!r.ok()) {   // 驗證不過：不連線。實驗版才跳通知講原因（正式版只留記錄）
+            LifeLog.add(this, "FCM 門鈴被拒絕：" + r.error);
+            notifyLab("門鈴被拒絕：" + r.error + "｜本機位址 " + FcmLab.lanIp() + "｜已配對 " + TransferStore.peers(this).size() + " 台");
+            return;
+        }
+        notifyLab("門鈴通過，準備取檔：" + r.ring.name);
         LifeLog.add(this, "FCM 門鈴通過：" + r.ring.name + "（" + r.ring.size + " 位元組），來自 " + TransferStore.nameOf(this, r.ring.from));
         Intent i = new Intent(this, FetchService.class)
                 .putExtra("from", r.ring.from).putExtra("ip", r.ring.ip).putExtra("port", r.ring.port)
