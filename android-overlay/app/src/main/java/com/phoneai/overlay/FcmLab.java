@@ -385,6 +385,26 @@ final class FcmLab {
         return "other";
     }
 
+    /** 連一下某個位址：ok／refused／timeout／noroute／other。 */
+    static String probe(String ip, int port, int timeoutMs) {
+        try (java.net.Socket sock = new java.net.Socket()) {
+            sock.connect(new java.net.InetSocketAddress(ip, port), timeoutMs);
+            return "ok";
+        } catch (Exception e) {
+            return classifyConnectError(e);
+        }
+    }
+
+    static String describe(String cls) {
+        switch (cls) {
+            case "ok": return "✅ 連得上";
+            case "refused": return "對方回「拒絕」（網路通，但互傳伺服器沒在跑）";
+            case "timeout": return "逾時";
+            case "noroute": return "沒有路由";
+            default: return "失敗";
+        }
+    }
+
     /** 外網連線檢查：本機 Tailscale、對方的位址紀錄、實際連一次，並依失敗類型說明斷在哪一環。要在背景執行緒呼叫。 */
     static String diagnoseRemote(Context c, TransferStore.Peer p) {
         StringBuilder sb = new StringBuilder();
@@ -424,6 +444,15 @@ final class FcmLab {
                 break;
             case "timeout":
                 sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：逾時（").append(ms).append(" 毫秒）\n");
+                // 逾時代表封包沒到對方（對方的 Tailscale 通的話，埠沒人聽會立刻被拒絕）。再用更久的時間試一次，看是不是第一次連線建立路徑太慢；也試對方的區網位址，看它醒著沒、在不在同一個網路
+                String retry = probe(p.tsIp, p.tsPort, 15000);
+                sb.append("   再試一次（等最多 15 秒）：").append(describe(retry)).append('\n');
+                if (p.ip != null) sb.append("   對方的區網位址 ").append(p.ip).append(":").append(p.port).append("：").append(describe(probe(p.ip, p.port, 4000))).append('\n');
+                if ("ok".equals(retry) || "refused".equals(retry)) {
+                    sb.append("→ 第二次通了：是第一次連線在建立路徑，比較慢；實際傳檔案時 App 會等得比較久。\n");
+                    break;
+                }
+                sb.append("→ 兩次都逾時：封包到不了對方。請到對方手機打開 Tailscale，看它自己的位址是不是 ").append(p.tsIp).append("（不一樣就是我們記的過期了：兩台同時開著 Tailscale，各自開互傳頁連一次就會更新）；也請讓對方螢幕亮著再檢查一次，看是不是它休眠。\n");
                 sb.append("→ 連不到對方：最常見是**對方的 Tailscale 沒開**（平常關著的話就是這樣）、或兩台不在同一個 Tailscale 帳號。").append(p.fcmToken != null ? "傳檔案時 App 會先叫醒對方並請它開 Tailscale（要 root，也要給 Tailscale 自啟動）。" : "沒有它的推播 token，沒辦法請它開：請在那支手機手動開 Tailscale。").append('\n');
                 break;
             case "noroute":

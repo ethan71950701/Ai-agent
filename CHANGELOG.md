@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 外網連線檢查更細：逾時時會多等 15 秒再試一次（看是不是第一次建立路徑太慢），並試對方的區網位址（看它醒著沒、在不在同一個網路）｜The remote connection check is more thorough: on a timeout it retries with a 15-second wait (slow first path setup?) and also tries the other device's LAN address (is it awake, on the same network?)
 
 ## 1.0.1744
 
