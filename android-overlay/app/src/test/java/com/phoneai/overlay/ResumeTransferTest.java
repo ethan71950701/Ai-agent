@@ -205,4 +205,42 @@ public class ResumeTransferTest {
         assertNotNull(why);
         assertTrue(why, why.contains("太大"));
     }
+
+    @Test
+    public void manualStopOfADownloadDeletesThePartial() throws Exception {
+        byte[] d = data(400_000, 8);
+        Files.write(new File(root, "stop.bin").toPath(), d);
+        File dest = new File(inbox, "stop.bin");
+        try {
+            client.download("stop.bin", dest, (done, total) -> { if (done > 100_000) throw new TransferNotify.Stopped(); });
+            throw new AssertionError("should have been stopped");
+        } catch (TransferNotify.Stopped expected) { }
+        assertFalse("手動停止：半成品要刪掉", TransferClient.partOf(dest).exists());
+        assertFalse(dest.exists());
+    }
+
+    @Test
+    public void manualStopOfAnUploadAsksThePeerToDeleteItsPartial() throws Exception {
+        byte[] d = data(400_000, 9);
+        try {
+            client.putResumable(() -> new ByteArrayInputStream(d), d.length, "up.bin", (done, total) -> { if (done > 150_000) throw new TransferNotify.Stopped(); });
+            throw new AssertionError("should have been stopped");
+        } catch (TransferNotify.Stopped expected) { }
+        assertTrue(Resume.validFp(client.lastFp));
+        assertEquals("對方那邊的半成品也要刪掉", 0, client.remoteOffset(client.lastFp));
+        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+        assertFalse(new File(inbox, "up.bin").exists());
+    }
+
+    @Test
+    public void accidentalDisconnectKeepsThePartialForResuming() throws Exception {
+        byte[] d = data(300_000, 10);
+        String fp = Resume.fingerprint(d, d.length, d.length, "keep.bin");
+        File part = new File(inbox, Resume.partName("cli", fp));
+        try (FileOutputStream o = new FileOutputStream(part)) { o.write(d, 0, 90_000); }
+        assertEquals(90_000, client.remoteOffset(fp));   // 之前意外斷線留下的，沒有被誤刪
+        client.discardRemote(fp);                        // 按「丟掉」才刪
+        assertEquals(0, client.remoteOffset(fp));
+        assertFalse(part.exists());
+    }
 }

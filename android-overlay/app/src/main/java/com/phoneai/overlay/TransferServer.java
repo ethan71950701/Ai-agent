@@ -220,6 +220,20 @@ final class TransferServer {
                     try { sendFile(out, au, f, off); } finally { host.transferEnded(); }
                     break;
                 }
+                case "/v1/discard": {   // 使用者按「停止」：請對方（我）把這個指紋的半成品刪掉，不留續傳用的殘檔
+                    String fp = params.get("fp");
+                    boolean gone = false;
+                    if (Resume.validFp(fp) && insideRoot(host.root(), host.inbox())) {
+                        File part = new File(host.inbox(), Resume.partName(au.peer, fp));
+                        // 對方剛按停止：它的上一條連線可能還沒被我發現已經斷了，那份半成品還在「使用中」；等它收尾（最多 3 秒）再刪
+                        for (int i = 0; i < 30 && ACTIVE_PARTS.contains(part.getName()); i++) {
+                            try { Thread.sleep(100); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+                        }
+                        if (!ACTIVE_PARTS.contains(part.getName())) gone = part.delete();
+                    }
+                    sendText(out, au, gone ? "deleted" : "none");
+                    break;
+                }
                 case "/v1/offset": {   // 續傳：這個指紋的半成品現在收了幾個位元組（沒有回 0）
                     String fp = params.get("fp");
                     long have = 0;
@@ -391,6 +405,7 @@ final class TransferServer {
         if (!inbox.isDirectory() && !inbox.mkdirs()) { reply(out, 500, "no inbox"); return; }
         if (expect > MAX_UPLOAD_BYTES) { reply(out, 413, "too large"); return; }
         if (!insideRoot(host.root(), inbox)) { reply(out, 500, "inbox outside root"); return; }   // 收件匣本身是指到共享根目錄外面的符號連結：不寫
+        Resume.purgeOldParts(inbox, System.currentTimeMillis());   // 順便清掉三天前沒人接著傳的半成品
 
         // 續傳：對方帶了指紋就把半成品留在固定名稱的暫存檔，下次從斷點接著收；沒帶（舊版）就維持原本的隨機暫存檔、失敗就刪
         final boolean resumable = Resume.validFp(fpParam);

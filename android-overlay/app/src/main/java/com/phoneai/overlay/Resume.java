@@ -48,4 +48,16 @@ final class Resume {
     static long backoffMs(int attempt) { return Math.min(10_000L, 2_000L * Math.max(1, attempt)); }
 
     static final int MAX_ATTEMPTS = 6;
+    static final long PART_EXPIRE_MS = 3L * 24 * 3600 * 1000;
+
+    /** 清掉超過三天沒人接著傳／接著收的半成品（以「.」開頭、「.part」結尾的檔案）。回傳刪了幾個。 */
+    static int purgeOldParts(java.io.File dir, long nowMs) {
+        java.io.File[] kids = dir == null ? null : dir.listFiles();
+        if (kids == null) return 0;
+        int n = 0;
+        for (java.io.File f : kids) {
+            if (f.isFile() && f.getName().startsWith(".") && f.getName().endsWith(".part") && nowMs - f.lastModified() > PART_EXPIRE_MS && f.delete()) n++;
+        }
+        return n;
+    }
 }

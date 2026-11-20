@@ -132,6 +132,21 @@ public class TransferActivity extends Activity {
         remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.captureTap(this)));
 
 
+        List<PendingStore.Entry> pend = PendingTransfers.list(this);
+        if (!pend.isEmpty()) {   // 意外斷線、重試後還是失敗的傳輸：留在這裡，可以繼續或丟掉
+            Ui.section(this, box, L.t("沒傳完的檔案"));
+            for (final PendingStore.Entry e : pend) {
+                LinearLayout pc = Ui.card(this, box);
+                String who = e.peerName.isEmpty() ? "?" : e.peerName;
+                pc.addView(Ui.body(this, (e.kind.equals("up") ? "↑ " : "↓ ") + e.name + "\n"
+                        + (e.kind.equals("up") ? L.t("傳給 ") : L.t("取自 ")) + who + "｜" + e.percent() + "%（"
+                        + TransferStore.size(e.done) + " / " + TransferStore.size(e.size) + "）"));
+                com.google.android.material.button.MaterialButton go = Ui.button(this, L.t("繼續"), v -> resumePending(e));
+                go.setEnabled(!TransferNotify.active());
+                Ui.buttons(this, pc, go, Ui.tonal(this, L.t("丟掉"), v -> discardPending(e)));
+            }
+        }
+
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {
             Ui.section(this, box, L.t("已配對的裝置"));
@@ -176,6 +191,43 @@ public class TransferActivity extends Activity {
 
     private static final int REQ_PICK = 4101;
     private TransferStore.Peer pickFor;
+
+    private void resumePending(final PendingStore.Entry e) {
+        Toast.makeText(this, L.t("繼續傳…可以在通知列看進度"), Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            String r;
+            try {
+                r = FileTools.resume(this, e);
+            } catch (Exception ex) {
+                r = L.t("沒成功：") + ex.getMessage();
+            }
+            final String msg = r;
+            ui.post(() -> {
+                if (FileTools.NEED_PICK.equals(msg)) {
+                    for (TransferStore.Peer q : TransferStore.peers(this)) {
+                        if (q.id.equals(e.peerId)) {
+                            Toast.makeText(this, L.t("原來的檔案打不開，請重新選同一個檔案，會從斷點繼續"), Toast.LENGTH_LONG).show();
+                            pickFileFor(q);
+                            break;
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                }
+                render();
+            });
+        }).start();
+    }
+
+    private void discardPending(final PendingStore.Entry e) {
+        new android.app.AlertDialog.Builder(this).setTitle(L.t("丟掉這個沒傳完的檔案？"))
+                .setMessage(e.name + "\n" + L.t("已經收到的部分會刪掉，之後要重新從頭傳。"))
+                .setPositiveButton(L.t("丟掉"), (d, w) -> new Thread(() -> {
+                    FileTools.discardPending(this, e);
+                    ui.post(this::render);
+                }).start())
+                .setNegativeButton(L.t("取消"), null).show();
+    }
 
     private void pickFileFor(TransferStore.Peer p) {
         pickFor = p;

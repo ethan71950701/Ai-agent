@@ -59,13 +59,14 @@ final class FileTools {
                     TransferStore.inbox().mkdirs();
                     purgeOldParts(TransferStore.inbox());
                     File dest = destForGet(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
+                    PendingTransfers.track(c, cl, PendingTransfers.entry("down", peerNamed(c, dev), dest.getName(), "", p, 0));   // 登記進「沒傳完」清單
                     long n;
                     try {
                         n = cl.download(p, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + dev + L.t(" 取回"),
                                 L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
                     } catch (TransferNotify.Stopped s) {
-                        TransferNotify.finish(c, L.t("已停止，已收到的部分有保留，再取一次會從斷點繼續"));
-                        return "已停止，已收到的部分有保留，再取一次同一個檔案會從斷點繼續";
+                        TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
+                        return "已停止，未完成的檔案已刪除";
                     }
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
                     TransferNotify.finishFile(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl), dest);   // 點通知開啟檔案
@@ -89,6 +90,7 @@ final class FileTools {
                         TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
                         return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
                     }
+                    PendingTransfers.track(c, cl2, PendingTransfers.entry("up", peerNamed(c, dev), src.getName(), src.getAbsolutePath(), "", src.length()));
                     try {
                         saved = cl2.putResumable(() -> new java.io.FileInputStream(src), src.length(), src.getName(), (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
                                 L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
@@ -209,6 +211,7 @@ final class FileTools {
             }
             if (c.getContentResolver().openInputStream(uri) == null) throw new Exception("打不開這個檔案");   // 先確認打得開（會馬上關掉）
             String saved;
+            PendingTransfers.track(c, cl, PendingTransfers.entry("up", p, name, uri.toString(), "", total));
             try {
                 saved = cl.putResumable(() -> {
                     java.io.InputStream st = c.getContentResolver().openInputStream(uri);
@@ -259,11 +262,14 @@ final class FileTools {
     /** 手動取回：從已配對的裝置取一個檔案到 下載/PhoneAI。 */
     static String fetch(Context c, TransferStore.Peer p, String remotePath) throws Exception {
         String name = new File(remotePath.replace('\\', '/')).getName();
-        File dest = unique(TransferStore.inbox(), name);
-        dest.getParentFile().mkdirs();
+        TransferStore.inbox().mkdirs();
+        purgeOldParts(TransferStore.inbox());
+        File dest = destForGet(TransferStore.inbox(), name);
         TransferNotify.begin();
         try {
-            long n = clientFor(c, p).download(remotePath, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + p.name + L.t(" 取回"),
+            TransferClient cl = clientFor(c, p);
+            PendingTransfers.track(c, cl, PendingTransfers.entry("down", p, dest.getName(), "", remotePath, 0));
+            long n = cl.download(remotePath, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + p.name + L.t(" 取回"),
                     L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
             TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
             TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）");
@@ -278,7 +284,9 @@ final class FileTools {
     static String sendLocal(Context c, TransferStore.Peer p, File f) throws Exception {
         TransferNotify.begin();
         try {
-            String saved = clientFor(c, p).put(f, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
+            TransferClient cl = clientFor(c, p);
+            PendingTransfers.track(c, cl, PendingTransfers.entry("up", p, f.getName(), f.getAbsolutePath(), "", f.length()));
+            String saved = cl.putResumable(() -> new java.io.FileInputStream(f), f.length(), f.getName(), (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
                     L.t("傳到：") + p.name + L.t(" 的收件匣"), f.getName(), d, t));
             TransferStore.log(c, L.t("傳出 ") + f.getName() + " → " + p.name);
             TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved);
@@ -286,6 +294,53 @@ final class FileTools {
         } catch (TransferNotify.Stopped s) {
             TransferNotify.finish(c, L.t("已停止傳給 ") + p.name);
             return null;
+        }
+    }
+
+    /** 「沒傳完」清單按「繼續」要重新選檔案時回傳的記號。 */
+    static final String NEED_PICK = "NEED_PICK";
+
+    /** 繼續一筆沒傳完的傳輸（要在背景執行緒呼叫）。傳到這台裝置的來源檔案如果打不開，回 NEED_PICK，請使用者重新選同一個檔案（對方的半成品靠檔案指紋自動接上）。 */
+    static String resume(Context c, PendingStore.Entry e) throws Exception {
+        TransferStore.Peer peer = null;
+        for (TransferStore.Peer q : TransferStore.peers(c)) if (q.id.equals(e.peerId)) peer = q;
+        if (peer == null) {
+            PendingTransfers.store(c).remove(e.id);
+            return L.t("找不到這台裝置（可能已經移除配對）");
+        }
+        if (e.kind.equals("down")) {
+            String saved = fetch(c, peer, e.remotePath);
+            return saved == null ? L.t("已停止") : L.t("已存到 下載/PhoneAI/") + saved;
+        }
+        if (e.source.startsWith("content://")) {
+            android.net.Uri u = android.net.Uri.parse(e.source);
+            try (java.io.InputStream t = c.getContentResolver().openInputStream(u)) {
+                if (t == null) return NEED_PICK;
+            } catch (Exception ex) {
+                return NEED_PICK;   // 授權過期或檔案不在了
+            }
+            sendUri(c, peer, u);
+            return L.t("已傳完");
+        }
+        File f = new File(e.source);
+        if (!f.isFile()) return NEED_PICK;
+        sendLocal(c, peer, f);
+        return L.t("已傳完");
+    }
+
+    /** 丟掉一筆沒傳完的：刪掉本機或對方那邊已經收到的半成品，並從清單移除。 */
+    static void discardPending(Context c, PendingStore.Entry e) {
+        try {
+            if (e.kind.equals("down")) {
+                TransferClient.partOf(new File(TransferStore.inbox(), e.name)).delete();
+            } else if (Resume.validFp(e.fp)) {
+                for (TransferStore.Peer q : TransferStore.peers(c)) {
+                    if (!q.id.equals(e.peerId)) continue;
+                    try { clientFor(c, q).discardRemote(e.fp); } catch (Exception ignored) { }   // 連不上就算了，對方的半成品三天後會被清掉
+                }
+            }
+        } finally {
+            PendingTransfers.store(c).remove(e.id);
         }
     }
 
@@ -390,12 +445,7 @@ final class FileTools {
     }
 
     /** 清掉三天前留下的半成品（沒人要接著收的）。 */
-    static void purgeOldParts(File inbox) {
-        File[] kids = inbox.listFiles();
-        if (kids == null) return;
-        long old = System.currentTimeMillis() - 3L * 24 * 3600 * 1000;
-        for (File f : kids) if (f.isFile() && f.getName().startsWith(".") && f.getName().endsWith(".part") && f.lastModified() < old) f.delete();
-    }
+    static void purgeOldParts(File inbox) { Resume.purgeOldParts(inbox, System.currentTimeMillis()); }
 
     private static File unique(File dir, String name) {
         File f = new File(dir, name);

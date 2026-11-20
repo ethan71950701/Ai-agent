@@ -890,6 +890,18 @@ final class LEn {
         m.put("收「", "Receiving \"");
         m.put("」時出錯：", "\" failed: ");
         m.put("已停止，已收到的部分有保留，再取一次會從斷點繼續", "Stopped; what was received is kept and will resume from there next time");
+        m.put("已停止", "Stopped");
+        m.put("已傳完", "Sent");
+        m.put("找不到這台裝置（可能已經移除配對）", "That device was not found (maybe the pairing was removed)");
+        m.put("有 %d 個檔案沒傳完，點這裡繼續", "%d file(s) not finished, tap to continue");
+        m.put("丟掉", "Discard");
+        m.put("丟掉這個沒傳完的檔案？", "Discard this unfinished file?");
+        m.put("傳給 ", "To ");
+        m.put("原來的檔案打不開，請重新選同一個檔案，會從斷點繼續", "The original file can't be opened; pick the same file again and it will continue from where it stopped");
+        m.put("取自 ", "From ");
+        m.put("已經收到的部分會刪掉，之後要重新從頭傳。", "What was already received will be deleted; the next try starts from the beginning.");
+        m.put("沒傳完的檔案", "Unfinished files");
+        m.put("繼續傳…可以在通知列看進度", "Continuing… see progress in the notification");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

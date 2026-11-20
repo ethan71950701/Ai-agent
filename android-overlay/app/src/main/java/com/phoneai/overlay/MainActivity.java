@@ -932,6 +932,13 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-1, -2);
         ap.bottomMargin = Ui.dp(this, 16);
         box.addView(answerView, ap);
+        int unfinished = PendingTransfers.count(this);
+        if (unfinished > 0) {   // 有沒傳完的檔案：首頁提醒，點下去到互傳檔案頁按「繼續」
+            LinearLayout.LayoutParams up = new LinearLayout.LayoutParams(-2, -2);
+            up.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+            up.bottomMargin = Ui.dp(this, 12);
+            box.addView(Ui.tonal(this, String.format(L.t("有 %d 個檔案沒傳完，點這裡繼續"), unfinished), v -> startActivity(new Intent(this, TransferActivity.class))), up);
+        }
         // 英雄區：用普通的 LinearLayout 加圓角背景（不用 MaterialCardView，避免它被撐高）
         hero = new LinearLayout(this);
         hero.setOrientation(LinearLayout.VERTICAL);

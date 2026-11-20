@@ -193,6 +193,21 @@ final class TransferClient {
      * 全部失敗時 .part 還在，之後再取同一個檔案會從斷點繼續。回傳這個檔案的總位元組數。
      */
     long download(String remotePath, File dest, Progress cb) throws IOException {
+        try {
+            long n = downloadWithRetries(remotePath, dest, tracked(cb));
+            trackEnd(false);
+            return n;
+        } catch (TransferNotify.Stopped stop) {
+            partOf(dest).delete();   // 使用者手動停止：已收到的也刪掉（意外斷線才保留續傳）
+            trackEnd(false);
+            throw stop;
+        } catch (IOException e) {
+            trackEnd(!String.valueOf(e.getMessage()).startsWith("校驗碼不符"));   // 內容壞掉的半成品已經刪了，不用留；其他（斷線）留著讓使用者按「繼續」
+            throw e;
+        }
+    }
+
+    private long downloadWithRetries(String remotePath, File dest, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
             try {
@@ -267,6 +282,45 @@ final class TransferClient {
     /** 可以重新打開的來源（續傳要從頭或中間再讀一次）。 */
     interface Source { InputStream open() throws IOException; }
 
+    /** 請對方把這個指紋的半成品刪掉（使用者手動停止、或按「丟掉」）。盡力而為：連不上或對方是舊版就算了。 */
+    void discardRemote(String fp) {
+        try { getText("/v1/discard?fp=" + enc(fp)); } catch (Exception ignored) { }
+    }
+
+    // ---- 「沒傳完的檔案」清單：呼叫端用 track() 登記這一次傳輸；成功或手動停止就移除，意外失敗就留著讓使用者按「繼續」
+    private PendingStore pend;
+    private PendingStore.Entry pendEntry;
+    private volatile long pendDone, pendTotal;
+
+    void track(PendingStore store, PendingStore.Entry e) {
+        pend = store;
+        pendEntry = e;
+        pendDone = 0;
+        pendTotal = e.size;
+        store.begin(e);
+    }
+
+    private Progress tracked(final Progress cb) {
+        if (pend == null) return cb;
+        final PendingStore st = pend;
+        final String id = pendEntry.id;
+        return (d, t) -> {
+            pendDone = d;
+            pendTotal = t;
+            st.progress(id, d, t, lastFp, System.currentTimeMillis(), false);
+            if (cb != null) cb.onBytes(d, t);
+        };
+    }
+
+    private void trackEnd(boolean keep) {
+        if (pend == null) return;
+        if (keep) pend.progress(pendEntry.id, pendDone, pendTotal, lastFp, System.currentTimeMillis(), true);
+        else pend.remove(pendEntry.id);
+    }
+
+    /** 最近一次可續傳的傳送用的指紋（呼叫端要記進「沒傳完」清單，之後才能請對方丟掉半成品）。 */
+    volatile String lastFp = "";
+
     /** 對方的半成品現在收了幾個位元組；問不到（舊版對方、網路問題）就當 0，從頭來。 */
     long remoteOffset(String fp) {
         try {
@@ -289,6 +343,22 @@ final class TransferClient {
             while (got < head.length && (r = in.read(head, got, head.length - got)) > 0) got += r;
             fp = Resume.fingerprint(head, got, size, name);
         }
+        lastFp = fp;
+        try {
+            String r = putWithRetries(src, size, name, fp, tracked(cb));
+            trackEnd(false);
+            return r;
+        } catch (TransferNotify.Stopped stop) {
+            discardRemote(fp);   // 使用者手動停止：對方收到一半的也刪掉（意外斷線才保留續傳）
+            trackEnd(false);
+            throw stop;
+        } catch (IOException e) {
+            trackEnd(true);   // 意外失敗：留在「沒傳完」清單，使用者可以按「繼續」
+            throw e;
+        }
+    }
+
+    private String putWithRetries(Source src, long size, String name, String fp, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
             long offset = remoteOffset(fp);
