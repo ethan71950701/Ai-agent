@@ -67,17 +67,16 @@ public class FcmLabActivity extends Activity {
                 Toast.makeText(this, "已儲存", Toast.LENGTH_SHORT).show();
             }).setNegativeButton("取消", null).show();
         })));
-        col.addView(button("把我的 token 交給已配對裝置（兩邊都開著互傳）", v -> new Thread(() -> {
-            String my = myToken;
-            if (!Doorbell.validToken(my)) { runOnUiThread(() -> Toast.makeText(this, "這支手機還沒有 token（先載入設定檔）", Toast.LENGTH_LONG).show()); return; }
-            StringBuilder sb = new StringBuilder();
-            for (TransferStore.Peer peerX : TransferStore.peers(this)) {
-                try { FileTools.clientFor(this, peerX).sendFcmToken(my); sb.append("✓ ").append(peerX.name).append('\n'); }
-                catch (Exception e) { sb.append("✗ ").append(peerX.name).append("：").append(e.getMessage()).append('\n'); }
-            }
-            final String res = sb.length() == 0 ? "沒有已配對的裝置" : sb.toString();
-            runOnUiThread(() -> Toast.makeText(this, res, Toast.LENGTH_LONG).show());
-        }).start()));
+        col.addView(button("把我的 token 交給某台已配對裝置（兩邊都開著互傳）", v -> {
+            if (!Doorbell.validToken(myToken)) { Toast.makeText(this, "這支手機還沒有 token（先載入設定檔）", Toast.LENGTH_LONG).show(); return; }
+            pickPeer(peer -> new Thread(() -> {
+                String res;
+                try { FileTools.clientFor(this, peer).sendFcmToken(myToken); res = "✓ 已交給「" + peer.name + "」"; }
+                catch (Exception e) { res = "✗ 「" + peer.name + "」：" + e.getMessage(); }
+                final String r = res;
+                runOnUiThread(() -> Toast.makeText(this, r, Toast.LENGTH_LONG).show());
+            }).start());
+        }));
         EditText nameQ = new EditText(this);
         nameQ.setHint("要傳的檔名關鍵字（本機共享資料夾裡找）");
         col.addView(nameQ);
@@ -112,7 +111,11 @@ public class FcmLabActivity extends Activity {
         final java.util.List<TransferStore.Peer> ps = TransferStore.peers(this);
         if (ps.isEmpty()) { Toast.makeText(this, "還沒有配對過的裝置（設定 → 互傳檔案）", Toast.LENGTH_LONG).show(); return; }
         String[] names = new String[ps.size()];
-        for (int i = 0; i < names.length; i++) names[i] = ps.get(i).name + (ps.get(i).fcmToken == null ? "（沒存 token）" : "");
+        for (int i = 0; i < names.length; i++) {
+            TransferStore.Peer q = ps.get(i);
+            String where = q.ip != null ? q.ip : (q.tsIp != null ? q.tsIp : "位址未知");
+            names[i] = q.name + "\n" + where + "｜編號 " + (q.id.length() > 6 ? q.id.substring(0, 6) : q.id) + (q.fcmToken == null ? "｜沒存 token" : "｜已存 token");
+        }
         new android.app.AlertDialog.Builder(this).setTitle("選裝置").setItems(names, (d, w) -> then.accept(ps.get(w))).show();
     }
 
