@@ -115,9 +115,19 @@ final class FcmLab {
             try (OutputStream o = con.getOutputStream()) { o.write(body); }
             int code = con.getResponseCode();
             if (code / 100 == 2) return null;
-            return "HTTP " + code + "：" + LlmErrors.redact(slurp(con.getErrorStream()));
+            return "HTTP " + code + "：" + errText(slurp(con.getErrorStream()));
         } catch (Throwable e) {
             return String.valueOf(e);
+        }
+    }
+
+    /** Google 的錯誤是一大段 JSON：只取 error.status 與 error.message（不含 token），顯示得完整、好讀。 */
+    private static String errText(String body) {
+        try {
+            JSONObject e = new JSONObject(body).getJSONObject("error");
+            return e.optString("status") + " — " + LlmErrors.redact(e.optString("message"));
+        } catch (Exception ex) {
+            return LlmErrors.redact(body);
         }
     }
 
