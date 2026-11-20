@@ -5,9 +5,11 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正：在接收端按「停止」或「暫停」，送出端現在會收到明確的通知並停下來，不會當成斷線一直自動重傳（停止會刪掉接收端的半成品，暫停會保留）｜Fix: pressing Stop or Pause on the receiving phone now tells the sender clearly and it stops, instead of treating it as a dropped connection and retrying (Stop deletes the partial file, Pause keeps it)
+
+## 1.0.1750
+
 - 外網：我們開的 Tailscale 改成兩端共用同一套「閒置 60 秒就關回去」，而且「是我們開的」會記下來——App 被殺掉重開、開的時候逾時之後才連上、被叫醒時伺服器本來就開著，這幾種情況都不會漏關｜Remote: the "turn our own Tailscale off after 60 s idle" logic is now shared by both ends and remembers that we turned it on — it no longer gets missed if the app is killed, if Tailscale connects only after the wait timed out, or if the server was already running when woken
 - 修正：被推播叫醒的手機，傳輸超過 10 分鐘不再被切斷（以前大檔案會連伺服器和 Tailscale 一起被關掉）；網路閃斷時，對方還占著半成品會自動等一下再續傳，不再直接失敗｜Fix: a phone woken by push no longer cuts a transfer off after 10 minutes (big files used to lose the server and Tailscale); after a network blip, a partial file still held by the old connection is now waited out and resumed automatically instead of failing
-
 
 ## 1.0.1748
 
