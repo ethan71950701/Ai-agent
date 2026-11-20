@@ -111,6 +111,13 @@ final class ChatEngine {
     static volatile boolean handoff;
     /** 串流回答：設了之後（面板的聊天），Claude 的請求改用串流，文字邊收邊交給它（已去掉 <work> 推算過程）。別家服務、網頁搜尋、沒設的呼叫端照舊一次收完。 */
     static volatile java.util.function.Consumer<String> onPartial;
+    /** 只有真正在「回答使用者」的那一次請求才邊收邊顯示；路由判斷、排程、整理通知…這些內部請求回的是給程式看的 JSON，不能顯示出來。 */
+    private static final ThreadLocal<Boolean> CHAT_STREAM = ThreadLocal.withInitial(() -> false);
+
+    /** 要不要用串流：要有顯示回呼、是回答使用者的那次請求、沒有伺服器端工具（搜尋要等整段）、遠端開關沒關。 */
+    static boolean shouldStream(boolean chatAnswer, boolean hasCallback, boolean serverTools, boolean killSwitch) {
+        return chatAnswer && hasCallback && !serverTools && !killSwitch;
+    }
     private static long lastPartialAt;
 
     private static void emitPartial(String text) {
@@ -278,7 +285,12 @@ final class ChatEngine {
         JSONObject body = new JSONObject().put("model", model).put("max_tokens", search || !toolsOn ? 1500 : 1000).put("system", system)
                 .put("messages", messages);
         if (tools.length() > 0) body.put("tools", tools);
-        return post(body, key);
+        CHAT_STREAM.set(true);   // 這是聊天助理的回答：可以邊收邊顯示
+        try {
+            return post(body, key);
+        } finally {
+            CHAT_STREAM.set(false);
+        }
     }
 
     /** 使用者明說要查資料（幫我查、搜尋一下、上網查…）才開網頁搜尋：聊天每句話都走這裡，搜尋又要另外計費，不能預設開。 */
@@ -420,7 +432,7 @@ final class ChatEngine {
             if (slot.openai()) return postOpenAi(app, body, slot, key);
             if (!slot.model.isEmpty()) { body.put("model", slot.model); lastModel = slot.model; }   // 使用者自己選了 Claude 的模型：用他選的（沒選就用程式內建的）
         }
-        final boolean stream = onPartial != null && !hasServerTools(body) && !Announcements.off("chat_stream");
+        final boolean stream = shouldStream(CHAT_STREAM.get(), onPartial != null, hasServerTools(body), Announcements.off("chat_stream"));
         if (stream) body.put("stream", true);
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;

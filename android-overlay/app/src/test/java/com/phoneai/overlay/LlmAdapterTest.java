@@ -441,6 +441,15 @@ public class LlmAdapterTest {
         org.junit.Assert.assertEquals("天氣", c.getJSONObject(1).getJSONObject("input").getString("query"));
     }
 
+    @org.junit.Test
+    public void onlyTheChatAnswerIsStreamedToTheScreen() {
+        org.junit.Assert.assertTrue(ChatEngine.shouldStream(true, true, false, false));
+        org.junit.Assert.assertFalse("路由判斷等內部請求不能顯示", ChatEngine.shouldStream(false, true, false, false));
+        org.junit.Assert.assertFalse("沒有顯示回呼", ChatEngine.shouldStream(true, false, false, false));
+        org.junit.Assert.assertFalse("有搜尋這類伺服器端工具", ChatEngine.shouldStream(true, true, true, false));
+        org.junit.Assert.assertFalse("遠端開關關掉", ChatEngine.shouldStream(true, true, false, true));
+    }
+
     @org.junit.Test(expected = java.io.IOException.class)
     public void streamCutBeforeTheEndIsAnErrorNotAHalfAnswer() throws Exception {
         ChatEngine.readStream(sse(
