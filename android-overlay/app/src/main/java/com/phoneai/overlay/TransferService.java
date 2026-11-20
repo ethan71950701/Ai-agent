@@ -144,6 +144,20 @@ public class TransferService extends Service {
 
             @Override public String myFcmToken() { return FcmLab.myToken(c); }
 
+            @Override public boolean fcmSetupOffer(String peerId, String configJson, String keyJson) {
+                String who = TransferStore.nameOf(c, peerId);
+                boolean yes = ConfirmActivity.ask(c, L.t("「") + who + L.t("」想把推播喚醒的設定（Firebase 設定檔和發送金鑰）傳給這支手機。接受後，這支手機就能叫醒、也能被它叫醒。要接受嗎？"));
+                if (!yes) return false;
+                String e1 = FcmLab.storeAuto(c, configJson);
+                if (e1 != null) { TransferStore.log(c, L.t("收到的推播設定存不進去：") + e1); return false; }
+                String e2 = FcmLab.storeAuto(c, keyJson);
+                if (e2 != null) { TransferStore.log(c, L.t("收到的推播設定存不進去：") + e2); return false; }
+                FcmLab.init(c);
+                FcmLab.refreshMyToken(c);
+                TransferStore.log(c, L.t("已接受「") + who + L.t("」傳來的推播喚醒設定"));
+                return true;
+            }
+
             @Override public void peerFcm(String peerId, String token) {
                 TransferStore.setFcmToken(c, peerId, token);
                 TransferStore.log(c, "已收到「" + TransferStore.nameOf(c, peerId) + "」的推播 token");

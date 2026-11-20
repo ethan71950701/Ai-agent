@@ -67,6 +67,46 @@ final class FcmLab {
         }
     }
 
+    /** 目前存的設定檔原文；沒有回 null。 */
+    static String configJson(Context c) {
+        try { return read(c, CONFIG); } catch (Exception e) { return null; }
+    }
+
+    /** 存設定檔或發送金鑰（內容自己判斷是哪一種，也檢查格式）。回 null 成功，否則原因。 */
+    static String storeAuto(Context c, String json) {
+        FcmFiles.Kind k = FcmFiles.classify(json);
+        if (k == FcmFiles.Kind.UNKNOWN) return "不是 Firebase 設定檔，也不是服務帳戶金鑰";
+        if (k == FcmFiles.Kind.CONFIG) {
+            String bad = FcmFiles.configProblem(json);
+            if (bad != null) return bad;
+        }
+        String other = k == FcmFiles.Kind.CONFIG ? FcmVault.get(c) : configJson(c);
+        String mm = k == FcmFiles.Kind.CONFIG ? FcmFiles.mismatch(json, other) : FcmFiles.mismatch(other, json);
+        if (mm != null) return mm;
+        return store(c, new java.io.ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), k == FcmFiles.Kind.CONFIG ? CONFIG : SENDER);
+    }
+
+    /** 這支手機的推播設定準備好了嗎（兩個檔案都有，可以傳給別台）。 */
+    static boolean canShareSetup(Context c) { return hasConfig(c) && FcmVault.has(c); }
+
+    /** 把兩個檔案傳給已配對裝置（背景執行緒呼叫）。回 null＝對方接受，否則原因。 */
+    static String shareSetup(Context c, TransferStore.Peer peer) {
+        try {
+            String key = FcmVault.get(c), cfg = configJson(c);
+            if (key == null || cfg == null) return "這支手機還沒有完整的設定（要有設定檔和發送金鑰）";
+            boolean ok = FileTools.clientFor(c, peer).sendFcmSetup(cfg, key);
+            if (!ok) return "對方拒絕了，或沒有按確認";
+            exchangeAfterSetup(c, peer);
+            return null;
+        } catch (Exception e) {
+            return String.valueOf(e.getMessage());
+        }
+    }
+
+    private static void exchangeAfterSetup(Context c, TransferStore.Peer peer) {
+        try { refreshMyToken(c); Thread.sleep(1500); exchangeAfterPairing(c, FileTools.clientFor(c, peer), peer.id); } catch (Exception ignored) { }
+    }
+
     static boolean hasConfig(Context c) { return file(c, CONFIG).isFile(); }
 
     static boolean hasSenderKey(Context c) { return FcmVault.has(c); }

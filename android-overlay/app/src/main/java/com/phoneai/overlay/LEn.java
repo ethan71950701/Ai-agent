@@ -810,6 +810,10 @@ final class LEn {
         m.put("設定檔：", "Config file: ");
         m.put("推播叫醒失敗，改用直接連線：", "Push wake-up failed, trying a direct connection: ");
         m.put("推播叫醒失敗：", "Push wake-up failed: ");
+        m.put("」傳來的推播喚醒設定", "\" sent push wake-up settings");
+        m.put("」想把推播喚醒的設定（Firebase 設定檔和發送金鑰）傳給這支手機。接受後，這支手機就能叫醒、也能被它叫醒。要接受嗎？", "\" wants to send push wake-up settings (Firebase config file and sender key) to this phone. If you accept, this phone can wake it and be woken by it. Accept?");
+        m.put("已接受「", "Accepted \"");
+        m.put("收到的推播設定存不進去：", "Could not save the received push settings: ");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

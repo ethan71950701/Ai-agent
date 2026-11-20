@@ -60,6 +60,8 @@ final class TransferServer {
         default void peerFcm(String peerId, String token) { }
         /** 我自己的推播 token（回給剛送來 token 的對方）；沒有回 null。 */
         default String myFcmToken() { return null; }
+        /** 已驗證的對方想把推播設定（Firebase 設定檔＋發送金鑰）傳給我：要使用者確認並存起來；接受回 true。會等使用者按（可能很久）。 */
+        default boolean fcmSetupOffer(String peerId, String configJson, String keyJson) { return false; }
     }
 
     private final Host host;
@@ -217,6 +219,9 @@ final class TransferServer {
                     sendText(out, au, "ok\t" + (Doorbell.validToken(mine) ? mine : ""));   // 同一次請求互換：把我的 token 一起回給對方
                     break;
                 }
+                case "/v1/fcmsetup":
+                    receiveFcmSetup(in, out, au, params.get("size"));
+                    break;
                 case "/v1/put":
                     try { receive(in, out, au, params.get("name"), params.get("size")); } finally { host.transferEnded(); }
                     break;
@@ -302,6 +307,33 @@ final class TransferServer {
         }
         out.flush();
         host.event(au.peer, "get", rel(f), total);
+    }
+
+    /** 對方傳來推播設定（兩個小 JSON，加密傳輸，最多 32 KB）：驗證格式後交給 host 問使用者；接受才存。 */
+    private void receiveFcmSetup(InputStream in, OutputStream out, Auth au, String size) throws IOException {
+        long expect;
+        try { expect = Long.parseLong(size == null ? "" : size.trim()); } catch (Exception e) { expect = -1; }
+        if (expect <= 0 || expect > 32 * 1024) { reply(out, 413, "bad size"); return; }
+        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+        try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce))) {
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = body.read(buf)) > 0) {
+                bo.write(buf, 0, n);
+                if (bo.size() > expect) { reply(out, 413, "larger than declared"); return; }
+            }
+        }
+        if (bo.size() != expect) { reply(out, 400, "size mismatch"); return; }
+        String config, key;
+        try {
+            org.json.JSONObject j = new org.json.JSONObject(bo.toString("UTF-8"));
+            config = j.getString("config");
+            key = j.getString("key");
+        } catch (Exception e) { reply(out, 400, "bad body"); return; }
+        if (FcmFiles.classify(config) != FcmFiles.Kind.CONFIG || FcmFiles.classify(key) != FcmFiles.Kind.SERVICE_ACCOUNT
+                || FcmFiles.configProblem(config) != null || FcmFiles.mismatch(config, key) != null) { reply(out, 400, "bad files"); return; }
+        boolean ok = host.fcmSetupOffer(au.peer, config, key);
+        sendText(out, au, ok ? "accepted" : "declined");
     }
 
     private void receive(InputStream in, OutputStream out, Auth au, String name, String size) throws IOException {

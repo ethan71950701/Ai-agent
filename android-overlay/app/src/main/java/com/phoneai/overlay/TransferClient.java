@@ -122,6 +122,32 @@ final class TransferClient {
         return Doorbell.validToken(theirs) ? theirs : null;
     }
 
+    /** 把推播設定（設定檔＋發送金鑰）傳給對方，等對方的使用者按接受或拒絕（最多等 90 秒）。回傳 true＝接受。 */
+    boolean sendFcmSetup(String configJson, String keyJson) throws IOException {
+        final byte[] body;
+        try {
+            body = new org.json.JSONObject().put("config", configJson).put("key", keyJson).toString().getBytes(StandardCharsets.UTF_8);
+        } catch (org.json.JSONException e) {
+            throw new IOException(e);
+        }
+        String target = "/v1/fcmsetup?size=" + body.length;
+        try (Socket s = new Socket()) {
+            s.connect(new InetSocketAddress(ip, port), 4000);
+            s.setSoTimeout(90000);
+            OutputStream out = new BufferedOutputStream(s.getOutputStream());
+            String nonce = writeHead(out, "PUT", target);
+            try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(key, nonce))) {
+                so.write(body);
+            }
+            out.flush();
+            InputStream in = new BufferedInputStream(s.getInputStream());
+            readStatus(in);
+            try (InputStream r = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+                return "accepted".equals(new String(readAll(r), StandardCharsets.UTF_8).trim());
+            }
+        }
+    }
+
     String list(String path) throws IOException { return getText("/v1/list?path=" + enc(path)); }
 
     String find(String name) throws IOException { return getText("/v1/find?name=" + enc(name)); }
