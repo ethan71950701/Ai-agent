@@ -131,8 +131,8 @@ final class FcmLab {
         }
     }
 
-    /** 本機「Wi-Fi 上」的區網 IPv4（10.x／172.16–31.x／192.168.x）。只看 Wi-Fi 網路：行動數據、VPN 有時也是私有位址，不能拿來當區網位址。沒有回 null。 */
-    static String lanIp() {
+    /** 本機「Wi-Fi 上」的區網位址與網段大小，格式「位址/前綴長度」（例如 192.168.1.20/24）；只看 Wi-Fi，行動數據與 VPN 不算。沒有回 null。 */
+    static String lanNet() {
         try {
             android.net.ConnectivityManager cm = App.ctx.getSystemService(android.net.ConnectivityManager.class);
             for (android.net.Network n : cm.getAllNetworks()) {
@@ -142,11 +142,16 @@ final class FcmLab {
                 if (lp == null) continue;
                 for (android.net.LinkAddress la : lp.getLinkAddresses()) {
                     String h = la.getAddress().getHostAddress();
-                    if (la.getAddress() instanceof java.net.Inet4Address && Doorbell.isPrivateLan(h)) return h;
+                    if (la.getAddress() instanceof java.net.Inet4Address && Doorbell.isPrivateLan(h)) return h + "/" + la.getPrefixLength();
                 }
             }
         } catch (Exception ignored) { }
         return null;
+    }
+
+    static String lanIp() {
+        String n = lanNet();
+        return n == null ? null : n.substring(0, n.indexOf('/'));
     }
 
     /** 按門鈴：A（本機）請這個已配對裝置來取檔案（relPath 是共享根目錄底下的相對路徑，檔案要先存在）。回 null 成功，否則錯誤。 */
