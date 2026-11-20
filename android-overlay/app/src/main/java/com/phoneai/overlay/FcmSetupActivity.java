@@ -76,6 +76,7 @@ public class FcmSetupActivity extends Activity {
             c3.addView(Ui.body(this, line));
         }
         c3.addView(Ui.button(this, L.t("測試叫醒對方"), v -> pickPeer(p -> testWake(p))));
+        c3.addView(Ui.tonal(this, L.t("只送一則測試推播（看對方有沒有跳通知）"), v -> pickPeer(p -> plainPush(p))));
         Ui.buttons(this, c3,
                 Ui.tonal(this, L.t("電池設定"), v -> openBattery()),
                 Ui.tonal(this, L.t("這個 App 的設定"), v -> openAppSettings()));
@@ -183,6 +184,18 @@ public class FcmSetupActivity extends Activity {
         new Thread(() -> {
             final String report = FcmLab.diagnoseWake(this, p);
             ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("叫醒診斷")).setMessage(report)
+                    .setPositiveButton(L.t("好"), null).show());
+        }).start();
+    }
+
+    /** 只測「推播有沒有送到對方」：不驗證、不開伺服器。對方收到會跳「FCM 實驗：被叫醒了」。 */
+    private void plainPush(TransferStore.Peer p) {
+        if (p.fcmToken == null) { Toast.makeText(this, L.t("還沒有對方的 token"), Toast.LENGTH_LONG).show(); return; }
+        new Thread(() -> {
+            String err = FcmLab.send(this, p.fcmToken, "plain test " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date()));
+            ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("測試推播"))
+                    .setMessage(err == null ? L.t("Google 收下了。請看「") + p.name + L.t("」有沒有跳出「FCM 實驗：被叫醒了」的通知。有的話，推播本身是通的；沒有的話，推播到不了那支手機（見說明）。")
+                            : L.t("送出失敗：") + err)
                     .setPositiveButton(L.t("好"), null).show());
         }).start();
     }

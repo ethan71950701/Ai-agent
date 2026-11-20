@@ -880,6 +880,12 @@ final class LEn {
         m.put("拿這裡的編號和 token 結尾，去對方手機的「已配對裝置」選單核對，看有沒有對到同一台。", "Compare this ID and token ending with the entry in the other phone's paired-device list to see if they match the same device.");
         m.put("token 結尾 ", "token ends ");
         m.put("編號 ", "ID ");
+        m.put("只送一則測試推播（看對方有沒有跳通知）", "Send a plain test push (see if the other device shows a notification)");
+        m.put("還沒有對方的 token", "No token for the other device yet");
+        m.put("測試推播", "Test push");
+        m.put("Google 收下了。請看「", "Google accepted it. Check whether \"");
+        m.put("」有沒有跳出「FCM 實驗：被叫醒了」的通知。有的話，推播本身是通的；沒有的話，推播到不了那支手機（見說明）。", "\" shows a \"FCM 實驗：被叫醒了\" notification. If it does, push delivery works; if not, the push never reaches that phone.");
+        m.put("送出失敗：", "Send failed: ");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
