@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1753
+
 - 修正：對方換了推播 token（重裝、清資料）後，只要兩支手機連得上就會自動更新，不用手動重新互換；我們自己換 token 時也會馬上通知已配對的裝置｜Fix: when the peer's push token changes (reinstall, cleared data) it is now updated automatically as soon as the phones can reach each other, no manual re-swap needed; our own token change is pushed to paired devices right away
 
 ## 1.0.1752
