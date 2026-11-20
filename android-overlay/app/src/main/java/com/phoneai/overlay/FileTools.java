@@ -56,15 +56,16 @@ final class FileTools {
                     String p = a.optString("path").trim();
                     if (p.isEmpty()) return "錯誤：要給檔案路徑（先用 file_find 找到）";
                     TransferClient cl = client(c, dev);
-                    File dest = unique(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
-                    dest.getParentFile().mkdirs();
+                    TransferStore.inbox().mkdirs();
+                    purgeOldParts(TransferStore.inbox());
+                    File dest = destForGet(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
                     long n;
                     try {
                         n = cl.download(p, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + dev + L.t(" 取回"),
                                 L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
                     } catch (TransferNotify.Stopped s) {
-                        TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
-                        return "已停止，未完成的檔案已刪除";
+                        TransferNotify.finish(c, L.t("已停止，已收到的部分有保留，再取一次會從斷點繼續"));
+                        return "已停止，已收到的部分有保留，再取一次同一個檔案會從斷點繼續";
                     }
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
                     TransferNotify.finishFile(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl), dest);   // 點通知開啟檔案
@@ -89,7 +90,7 @@ final class FileTools {
                         return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
                     }
                     try {
-                        saved = cl2.put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
+                        saved = cl2.putResumable(() -> new java.io.FileInputStream(src), src.length(), src.getName(), (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
                                 L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
                     } catch (TransferNotify.Stopped s) {
                         TransferNotify.finish(c, L.t("已停止傳給 ") + dev);
@@ -206,11 +207,14 @@ final class FileTools {
                 TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
                 return;
             }
-            java.io.InputStream in = c.getContentResolver().openInputStream(uri);
-            if (in == null) throw new Exception("打不開這個檔案");
+            if (c.getContentResolver().openInputStream(uri) == null) throw new Exception("打不開這個檔案");   // 先確認打得開（會馬上關掉）
             String saved;
             try {
-                saved = cl.put(in, total, name, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
+                saved = cl.putResumable(() -> {
+                    java.io.InputStream st = c.getContentResolver().openInputStream(uri);
+                    if (st == null) throw new java.io.IOException("打不開這個檔案");
+                    return st;
+                }, total, name, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
                         L.t("傳到：") + p.name + L.t(" 的收件匣"), shown, d, t));
             } catch (java.io.IOException io) {
                 if (!isConnectFailure(io) || !FcmLab.canRing(c, p)) throw io;   // 一開始就連不上、而且能用推播：改叫醒對方
@@ -376,6 +380,21 @@ final class FileTools {
         if (hit.isEmpty()) throw new Exception("沒有叫「" + dev + "」的已配對裝置；用 device_list 看有哪些");
         if (hit.size() > 1) throw new Exception("有多台符合「" + dev + "」，請說清楚是哪一台");
         return clientFor(c, hit.get(0));
+    }
+
+    /** 取檔的存檔位置：如果上次沒收完留下了這個檔名的半成品，就沿用同一個檔名好接著收；否則找不重複的檔名。 */
+    static File destForGet(File inbox, String name) {
+        File plain = new File(inbox, name);
+        if (TransferClient.partOf(plain).isFile() && !plain.exists()) return plain;
+        return unique(inbox, name);
+    }
+
+    /** 清掉三天前留下的半成品（沒人要接著收的）。 */
+    static void purgeOldParts(File inbox) {
+        File[] kids = inbox.listFiles();
+        if (kids == null) return;
+        long old = System.currentTimeMillis() - 3L * 24 * 3600 * 1000;
+        for (File f : kids) if (f.isFile() && f.getName().startsWith(".") && f.getName().endsWith(".part") && f.lastModified() < old) f.delete();
     }
 
     private static File unique(File dir, String name) {

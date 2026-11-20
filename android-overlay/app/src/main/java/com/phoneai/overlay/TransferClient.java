@@ -185,22 +185,59 @@ final class TransferClient {
         }
     }
 
-    /** 從對方取一個檔案，存到 dest（先寫 .part，完整收到才改名）。回傳位元組數。 */
+    /** 半成品的檔名（固定，下次才找得到）。 */
+    static File partOf(File dest) { return new File(dest.getParentFile(), "." + dest.getName() + ".part"); }
+
+    /**
+     * 從對方取一個檔案，存到 dest：先寫 .part，完整收到並核對校驗碼才改名。傳到一半斷線會自動接著收（最多 MAX_ATTEMPTS 次），
+     * 全部失敗時 .part 還在，之後再取同一個檔案會從斷點繼續。回傳這個檔案的總位元組數。
+     */
     long download(String remotePath, File dest, Progress cb) throws IOException {
-        String target = "/v1/file?path=" + enc(remotePath);
-        File tmp = new File(dest.getParentFile(), "." + dest.getName() + ".part");
+        IOException last = null;
+        for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            try {
+                return downloadOnce(remotePath, dest, cb);
+            } catch (IOException e) {
+                last = e;
+                if (!Resume.retryable(e)) throw e;
+                if (attempt == Resume.MAX_ATTEMPTS) break;
+                try { Thread.sleep(Resume.backoffMs(attempt)); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
+            }
+        }
+        throw new IOException("取檔到一半斷線，已自動重試 " + Resume.MAX_ATTEMPTS + " 次還是不行：" + (last == null ? "" : last.getMessage())
+                + "（已收到的部分有保留，再取一次同一個檔案會從斷點繼續）");
+    }
+
+    private long downloadOnce(String remotePath, File dest, Progress cb) throws IOException {
+        File tmp = partOf(dest);
+        long have = tmp.isFile() ? tmp.length() : 0;
+        String target = "/v1/file?path=" + enc(remotePath) + (have > 0 ? "&offset=" + have : "");
+        boolean ok = false;
         try (Socket s = open()) {
             OutputStream out = s.getOutputStream();
             String nonce = writeHead(out, "GET", target);
             out.flush();
             InputStream in = new BufferedInputStream(s.getInputStream());
             Map<String, String> h = readStatus(in);
-            long total = 0;
+            long total = 0, start = 0;
             try { total = Long.parseLong(h.get("x-size")); } catch (Exception ignored) { }
-            long done = 0;
+            try { start = Long.parseLong(h.get("x-offset")); } catch (Exception ignored) { }   // 對方是舊版沒回這個：當作從頭送
+            if (start != have) have = 0;   // 對方沒照我們要的起點送（舊版、或檔案變了）：整個重來
             java.security.MessageDigest md = Checksum.newDigest();
+            if (have > 0) {   // 整檔校驗碼要涵蓋已經收下的那一段
+                try (InputStream old = new FileInputStream(tmp)) {
+                    byte[] b = new byte[64 * 1024];
+                    long left = have;
+                    int n;
+                    while (left > 0 && (n = old.read(b, 0, (int) Math.min(b.length, left))) > 0) { md.update(b, 0, n); left -= n; }
+                    if (left > 0) have = 0;
+                }
+                if (have == 0) md = Checksum.newDigest();
+            }
+            long done = have;
+            if (cb != null) cb.onBytes(done, total);
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce));
-                 FileOutputStream fo = new FileOutputStream(tmp)) {
+                 FileOutputStream fo = new FileOutputStream(tmp, have > 0)) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
                 while ((n = body.read(buf)) > 0) {
@@ -210,6 +247,7 @@ final class TransferClient {
                     if (cb != null) cb.onBytes(done, total);
                 }
             }
+            if (total > 0 && done != total) throw new java.io.EOFException("download ended early: " + done + " of " + total);   // 對方中途斷線：半成品留著，之後接著收
             final String mine = Checksum.hex(md.digest());
             String theirs = "";
             try { theirs = remoteSha(remotePath); } catch (IOException ignored) { }   // 對方是舊版（沒有這個端點）或不給：略過校驗
@@ -217,10 +255,97 @@ final class TransferClient {
             lastVerified = !theirs.isEmpty();
             if (lastVerified && !Checksum.same(mine, theirs)) throw new IOException("校驗碼不符：收到的檔案和對方送出的不一樣（已丟棄）");
             if (!tmp.renameTo(dest)) throw new IOException("無法存成 " + dest.getName());
+            ok = true;
             return done;
-        } catch (IOException | RuntimeException e) {
-            tmp.delete();   // 失敗或被停止：未完成的檔案刪掉
+        } catch (IOException e) {
+            String m = String.valueOf(e.getMessage());
+            if (m.startsWith("校驗碼不符") || m.startsWith("無法存成")) tmp.delete();   // 內容不對或改名失敗：半成品沒用了。其他（斷線等）留著續傳
             throw e;
+        }
+    }
+
+    /** 可以重新打開的來源（續傳要從頭或中間再讀一次）。 */
+    interface Source { InputStream open() throws IOException; }
+
+    /** 對方的半成品現在收了幾個位元組；問不到（舊版對方、網路問題）就當 0，從頭來。 */
+    long remoteOffset(String fp) {
+        try {
+            return Math.max(0, Long.parseLong(getText("/v1/offset?fp=" + enc(fp)).trim()));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * 送檔案，傳到一半斷線會自動接著傳（對方保留半成品，這邊問斷點再從那裡繼續）：最多重試 MAX_ATTEMPTS 次，
+     * 全部失敗時對方的半成品還在，使用者再傳同一個檔案會從斷點繼續。大小不明（≤0）就沒辦法續傳，走一般的單次傳送。
+     */
+    String putResumable(Source src, long size, String name, Progress cb) throws IOException {
+        if (size <= 0) return put(src.open(), size, name, cb);
+        String fp;
+        try (InputStream in = src.open()) {
+            byte[] head = new byte[(int) Math.min(Resume.HEAD_BYTES, size)];
+            int got = 0, r;
+            while (got < head.length && (r = in.read(head, got, head.length - got)) > 0) got += r;
+            fp = Resume.fingerprint(head, got, size, name);
+        }
+        IOException last = null;
+        for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            long offset = remoteOffset(fp);
+            if (offset > size) offset = 0;
+            String why = spaceProblem(size - offset);   // 只要看「還要收的那一段」
+            if (why != null) throw new IOException(why);
+            try {
+                return putOnce(src, size, name, fp, offset, cb);
+            } catch (IOException e) {
+                last = e;
+                boolean mismatch = e.getMessage() != null && e.getMessage().contains("offset mismatch");
+                if (!Resume.retryable(e) && !mismatch) throw e;
+                if (attempt == Resume.MAX_ATTEMPTS) break;
+                try { Thread.sleep(Resume.backoffMs(attempt)); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
+            }
+        }
+        throw new IOException("傳到一半斷線，已自動重試 " + Resume.MAX_ATTEMPTS + " 次還是不行：" + (last == null ? "" : last.getMessage())
+                + "（對方已收下的部分有保留，再傳一次同一個檔案會從斷點繼續）");
+    }
+
+    private String putOnce(Source srcOpen, long size, String name, String fp, long offset, Progress cb) throws IOException {
+        String target = "/v1/put?name=" + enc(name) + "&size=" + size + "&fp=" + fp + "&offset=" + offset;
+        try (Socket s = open()) {
+            OutputStream out = new BufferedOutputStream(s.getOutputStream());
+            String nonce = writeHead(out, "PUT", target);
+            long done = offset;
+            java.security.MessageDigest md = Checksum.newDigest();
+            try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(key, nonce));
+                 InputStream src = srcOpen.open()) {
+                byte[] buf = new byte[32 * 1024];
+                long left = offset;
+                while (left > 0) {   // 對方已經有的部分：不再傳，但整檔校驗碼要算進去
+                    int n = src.read(buf, 0, (int) Math.min(buf.length, left));
+                    if (n < 0) throw new IOException("來源檔案比對方已收到的部分還短（檔案被改過？）");
+                    md.update(buf, 0, n);
+                    left -= n;
+                }
+                if (cb != null) cb.onBytes(done, size);
+                int n;
+                while ((n = src.read(buf)) > 0) {
+                    so.write(buf, 0, n);
+                    md.update(buf, 0, n);
+                    done += n;
+                    if (cb != null) cb.onBytes(done, size);
+                }
+            }
+            out.flush();
+            InputStream in = new BufferedInputStream(s.getInputStream());
+            readStatus(in);
+            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+                String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
+                lastSha = Checksum.hex(md.digest());
+                lastVerified = p.length > 3 && !p[3].trim().isEmpty();
+                if (lastVerified && !Checksum.same(lastSha, p[3].trim()))
+                    throw new IOException("校驗碼不符：對方存下的檔案和送出的不一樣（請重傳，必要時刪掉對方收件匣裡的那個檔案）");
+                return p.length > 1 ? p[1] : name;
+            }
         }
     }
 

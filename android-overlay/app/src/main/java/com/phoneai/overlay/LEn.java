@@ -889,6 +889,7 @@ final class LEn {
         m.put("最近一次收到推播：", "Last push received: ");
         m.put("收「", "Receiving \"");
         m.put("」時出錯：", "\" failed: ");
+        m.put("已停止，已收到的部分有保留，再取一次會從斷點繼續", "Stopped; what was received is kept and will resume from there next time");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

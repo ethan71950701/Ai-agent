@@ -109,6 +109,8 @@ final class TransferServer {
     static final long MAX_UPLOAD_BYTES = 64L * 1024 * 1024 * 1024;
     private static final long KEEP_FREE_BYTES = 200L * 1024 * 1024;   // 接收後至少還要剩這麼多空間
     private static final Object RENAME_LOCK = new Object();
+    /** 正在接收的續傳半成品（同一份不能同時被兩個連線寫）。 */
+    private static final java.util.Set<String> ACTIVE_PARTS = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
     private static final SpaceReserver RESERVER = new SpaceReserver();
 
     private void loop() {
@@ -212,7 +214,20 @@ final class TransferServer {
                 case "/v1/file": {
                     File f = resolve(params.get("path"));
                     if (!f.isFile()) { reply(out, 404, "not a file"); return; }
-                    try { sendFile(out, au, f); } finally { host.transferEnded(); }
+                    long off = 0;
+                    try { off = Long.parseLong(params.get("offset") == null ? "0" : params.get("offset").trim()); } catch (Exception ignored) { }
+                    if (off < 0 || off > f.length()) off = 0;   // 要的起點不合理：從頭送（對方看回應的 X-Offset 就知道）
+                    try { sendFile(out, au, f, off); } finally { host.transferEnded(); }
+                    break;
+                }
+                case "/v1/offset": {   // 續傳：這個指紋的半成品現在收了幾個位元組（沒有回 0）
+                    String fp = params.get("fp");
+                    long have = 0;
+                    if (Resume.validFp(fp)) {
+                        File part = new File(host.inbox(), Resume.partName(au.peer, fp));
+                        if (part.isFile() && insideRoot(host.root(), host.inbox())) have = part.length();
+                    }
+                    sendText(out, au, String.valueOf(have));
                     break;
                 }
                 case "/v1/fcm": {
@@ -242,7 +257,7 @@ final class TransferServer {
                     receiveFcmSetup(in, out, au, params.get("size"));
                     break;
                 case "/v1/put":
-                    try { receive(in, out, au, params.get("name"), params.get("size")); } finally { host.transferEnded(); }
+                    try { receive(in, out, au, params.get("name"), params.get("size"), params.get("fp"), params.get("offset")); } finally { host.transferEnded(); }
                     break;
                 default:
                     reply(out, 404, "unknown");
@@ -310,14 +325,20 @@ final class TransferServer {
         out.flush();
     }
 
-    private void sendFile(OutputStream out, Auth au, File f) throws IOException {
-        out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: " + f.length() + "\r\nConnection: close\r\n\r\n")
+    private void sendFile(OutputStream out, Auth au, File f, long offset) throws IOException {
+        out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: " + f.length() + "\r\nX-Offset: " + offset + "\r\nConnection: close\r\n\r\n")
                 .getBytes(StandardCharsets.ISO_8859_1));
-        long total = 0;
-        java.security.MessageDigest md = Checksum.newDigest();   // 邊送邊算整檔校驗碼；送完存起來，對方之後來問就不用再讀一遍
+        long total = offset;
+        java.security.MessageDigest md = Checksum.newDigest();   // 邊送邊算整檔校驗碼；送完存起來，對方之後來問就不用再讀一遍（只有從頭送才算得出整檔的）
         final long lenAtStart = f.length(), mtimeAtStart = f.lastModified();
         try (InputStream fin = new FileInputStream(f);
              TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(au.key, au.nonce))) {
+            long skipped = 0;
+            while (skipped < offset) {   // 續傳：跳過對方已經有的部分
+                long k = fin.skip(offset - skipped);
+                if (k <= 0) throw new IOException("cannot seek to " + offset);
+                skipped += k;
+            }
             byte[] buf = new byte[32 * 1024];
             int n;
             while ((n = fin.read(buf)) > 0) {
@@ -328,9 +349,10 @@ final class TransferServer {
             }
         }
         out.flush();
-        if (total == lenAtStart && f.length() == lenAtStart && f.lastModified() == mtimeAtStart) SENT_SHA.put(f, Checksum.hex(md.digest()));   // 送的過程中檔案沒被改過才記
-        host.event(au.peer, "get", rel(f), total);
+        if (offset == 0 && total == lenAtStart && f.length() == lenAtStart && f.lastModified() == mtimeAtStart) SENT_SHA.put(f, Checksum.hex(md.digest()));
+        host.event(au.peer, "get", rel(f), total - offset);
     }
+
 
     /** 對方傳來推播設定（兩個小 JSON，加密傳輸，最多 32 KB）：驗證格式後交給 host 問使用者；接受才存。 */
     private void receiveFcmSetup(InputStream in, OutputStream out, Auth au, String size) throws IOException {
@@ -359,7 +381,7 @@ final class TransferServer {
         sendText(out, au, ok ? "accepted" : "declined");
     }
 
-    private void receive(InputStream in, OutputStream out, Auth au, String name, String size) throws IOException {
+    private void receive(InputStream in, OutputStream out, Auth au, String name, String size, String fpParam, String offsetParam) throws IOException {
         long expect;
         try { expect = Long.parseLong(size == null ? "" : size.trim()); } catch (Exception e) { expect = -1; }
         if (expect < 0) { reply(out, 411, "size required"); return; }   // 沒給大小或不是數字：不收（以前沒給大小就跳過空間檢查）
@@ -369,40 +391,73 @@ final class TransferServer {
         if (!inbox.isDirectory() && !inbox.mkdirs()) { reply(out, 500, "no inbox"); return; }
         if (expect > MAX_UPLOAD_BYTES) { reply(out, 413, "too large"); return; }
         if (!insideRoot(host.root(), inbox)) { reply(out, 500, "inbox outside root"); return; }   // 收件匣本身是指到共享根目錄外面的符號連結：不寫
-        if (!RESERVER.tryReserve(inbox.getUsableSpace(), expect, KEEP_FREE_BYTES)) { reply(out, 507, "not enough space"); return; }   // 預留空間：同時好幾個上傳各自看到「夠用」、一起寫滿的情形，要把已答應的量算進去
-        long total = 0;
-        File tmp = null;
-        try {   // 不管成功、失敗、被中斷（含 Error），預留的空間與暫存檔一定要處理掉
+
+        // 續傳：對方帶了指紋就把半成品留在固定名稱的暫存檔，下次從斷點接著收；沒帶（舊版）就維持原本的隨機暫存檔、失敗就刪
+        final boolean resumable = Resume.validFp(fpParam);
+        long offset = 0;
+        File tmp;
+        String activeKey = null;
+        if (resumable) {
+            tmp = new File(inbox, Resume.partName(au.peer, fpParam));
+            long want = 0;
+            try { want = Long.parseLong(offsetParam == null ? "0" : offsetParam.trim()); } catch (Exception e) { want = -1; }
+            long have = tmp.isFile() ? tmp.length() : 0;
+            if (!Resume.offsetOk(have, want, expect)) { reply(out, 409, "offset mismatch: have " + have); return; }   // 對不上：對方重新問一次斷點再來
+            offset = want;
+            activeKey = tmp.getName();
+            if (!ACTIVE_PARTS.add(activeKey)) { reply(out, 409, "busy: same upload in progress"); return; }
+        } else {
             tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
+        }
+        final long toReceive = expect - offset;   // 這一次還要收多少（只預留這一段的空間）
+        if (!RESERVER.tryReserve(inbox.getUsableSpace(), toReceive, KEEP_FREE_BYTES)) {   // 預留空間：同時好幾個上傳各自看到「夠用」、一起寫滿的情形，要把已答應的量算進去
+            if (activeKey != null) ACTIVE_PARTS.remove(activeKey);
+            reply(out, 507, "not enough space");
+            return;
+        }
+        long total = offset;
+        boolean keepPart = resumable;   // 斷線這類可以接著傳的失敗，半成品留著；大小對不上、改名失敗這類才刪
+        File finalTmp = tmp;
+        try {   // 不管成功、失敗、被中斷（含 Error），預留的空間與暫存檔一定要處理掉
             java.security.MessageDigest md = Checksum.newDigest();
+            if (offset > 0) {   // 整檔校驗碼要涵蓋已經收下的那一段：把它讀一遍算進去
+                try (InputStream old = new FileInputStream(tmp)) {
+                    byte[] b = new byte[64 * 1024];
+                    long left = offset;
+                    int n;
+                    while (left > 0 && (n = old.read(b, 0, (int) Math.min(b.length, left))) > 0) { md.update(b, 0, n); left -= n; }
+                    if (left > 0) { keepPart = false; throw new IOException("partial file shorter than expected"); }
+                }
+            }
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
-                 FileOutputStream fo = new FileOutputStream(tmp)) {
+                 FileOutputStream fo = new FileOutputStream(tmp, offset > 0)) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
                 while ((n = body.read(buf)) > 0) {
                     fo.write(buf, 0, n);
                     md.update(buf, 0, n);
                     total += n;
-                    if (total > MAX_UPLOAD_BYTES || total > expect) throw new IOException("upload larger than declared");   // 超過上限或比宣告的大小多一個位元組：中止
+                    if (total > MAX_UPLOAD_BYTES || total > expect) { keepPart = false; throw new IOException("upload larger than declared"); }   // 超過上限或比宣告的大小多一個位元組：中止
                     if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
                     host.progress(au.peer, false, base, total, expect);
                 }
             }
-            if (total != expect) throw new IOException("upload size mismatch: declared " + expect + ", got " + total);   // 提早結束或大小對不上：不當成成功的檔案（finally 會刪暫存檔、釋放預留）
+            if (total != expect) throw new IOException("upload size mismatch: declared " + expect + ", got " + total);   // 提早結束（對方斷線）：半成品留著給續傳；大小多出來的上面已經處理
             File dest;
             synchronized (RENAME_LOCK) {   // 取不重複的檔名與改名要一起做，兩個同名上傳才不會搶到同一個名字
                 dest = unique(inbox, base);
-                if (!tmp.renameTo(dest)) { reply(out, 500, "rename failed"); return; }
+                if (!tmp.renameTo(dest)) { keepPart = false; reply(out, 500, "rename failed"); return; }
                 tmp = null;   // 已經改名成正式檔案，不要在 finally 刪掉
             }
-            host.event(au.peer, "put", rel(dest), total);
+            host.event(au.peer, "put", rel(dest), total - offset);
             sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + Checksum.hex(md.digest()));
         } catch (IOException e) {
-            host.serverError(au.peer, L.t("收「") + base + L.t("」時出錯：") + e.getMessage());   // 留記錄，也盡量告訴對方原因
+            if (!keepPart) host.serverError(au.peer, L.t("收「") + base + L.t("」時出錯：") + e.getMessage());   // 留記錄，也盡量告訴對方原因（斷線這種之後會續傳的不算錯誤）
             try { reply(out, 500, String.valueOf(e.getMessage())); } catch (IOException ignored) { }
         } finally {
-            if (tmp != null) tmp.delete();   // 中斷、被停止或改名失敗：未完成的檔案刪掉
-            RESERVER.release(expect);
+            if (tmp != null && !keepPart) tmp.delete();   // 不能續傳的失敗：未完成的檔案刪掉
+            RESERVER.release(toReceive);
+            if (activeKey != null) ACTIVE_PARTS.remove(activeKey);
         }
     }
 
