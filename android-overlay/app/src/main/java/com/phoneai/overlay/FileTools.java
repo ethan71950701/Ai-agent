@@ -77,8 +77,19 @@ final class FileTools {
                     if (!src.isFile() || !src.getCanonicalPath().startsWith(TransferStore.root().getCanonicalPath() + File.separator))
                         return "錯誤：找不到這個檔案：" + p;
                     String saved;
+                    TransferClient cl2;
                     try {
-                        saved = client(c, dev).put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
+                        cl2 = client(c, dev);
+                    } catch (Exception notFound) {
+                        TransferStore.Peer peer = peerNamed(c, dev);
+                        if (!FcmLab.canRing(c, peer)) throw notFound;   // 連不上對方：有推播就改叫醒它來取
+                        String err = FcmLab.ring(c, peer, p.startsWith("/sdcard/") ? p.substring(8) : p);
+                        if (err != null) return "錯誤：對方連不上，改用推播叫醒也失敗：" + err;
+                        TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
+                        return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
+                    }
+                    try {
+                        saved = cl2.put(src, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
                                 L.t("傳到：") + dev + L.t(" 的收件匣"), src.getName(), d, t));
                     } catch (TransferNotify.Stopped s) {
                         TransferNotify.finish(c, L.t("已停止傳給 ") + dev);
@@ -168,7 +179,19 @@ final class FileTools {
         final String shown = name;
         TransferNotify.begin();
         try {
-            TransferClient cl = clientFor(c, p);
+            TransferClient cl;
+            try {
+                cl = clientFor(c, p);
+            } catch (Exception notFound) {
+                if (!FcmLab.canRing(c, p)) throw notFound;   // 找不到對方：有推播就改按門鈴，沒有就維持原本的錯誤
+                java.io.InputStream src = c.getContentResolver().openInputStream(uri);
+                if (src == null) throw new Exception("打不開這個檔案");
+                String err = FcmLab.sendViaDoorbell(c, p, src, name);
+                if (err != null) throw new Exception(L.t("對方連不上，改用推播叫醒也失敗：") + err);
+                TransferStore.log(c, L.t("推播叫醒 ") + p.name + L.t(" 來取 ") + name);
+                TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
+                return;
+            }
             java.io.InputStream in = c.getContentResolver().openInputStream(uri);
             if (in == null) throw new Exception("打不開這個檔案");
             String saved = cl.put(in, total, name, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
@@ -269,6 +292,15 @@ final class FileTools {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /** 依名稱（包含比對）找已配對的裝置；找不到或有多台符合回 null。 */
+    private static TransferStore.Peer peerNamed(Context c, String dev) {
+        List<TransferStore.Peer> peers = TransferStore.peers(c), hit = new ArrayList<>();
+        String q = dev.toLowerCase(Locale.ROOT);
+        for (TransferStore.Peer p : peers) if (p.name.toLowerCase(Locale.ROOT).contains(q) || q.contains(p.name.toLowerCase(Locale.ROOT))) hit.add(p);
+        if (hit.isEmpty() && peers.size() == 1) hit.add(peers.get(0));
+        return hit.size() == 1 ? hit.get(0) : null;
     }
 
     private static TransferClient client(Context c, String dev) throws Exception {

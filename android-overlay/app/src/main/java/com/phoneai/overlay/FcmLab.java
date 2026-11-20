@@ -163,6 +163,60 @@ final class FcmLab {
         return n == null ? null : n.substring(0, n.indexOf('/'));
     }
 
+    /** 這台已配對裝置可以用推播叫醒嗎：對方存過 token、這支手機有設定檔，也有（加密存放的）發送金鑰。 */
+    static boolean canRing(Context c, TransferStore.Peer p) {
+        return p != null && p.fcmToken != null && hasConfig(c) && FcmVault.has(c);
+    }
+
+    static File outbox() { return new File(TransferStore.root(), "Download/PhoneAI/outbox"); }
+
+    /** 清掉超過一小時的待取檔案（沒人來取、或之前沒清掉的）。 */
+    static void purgeOutbox() {
+        File[] kids = outbox().listFiles();
+        if (kids == null) return;
+        long old = System.currentTimeMillis() - 3600_000L;
+        for (File f : kids) if (f.isFile() && f.lastModified() < old) f.delete();
+    }
+
+    /**
+     * 對方連不上時的備援：把檔案放進共享資料夾的待取區（Download/PhoneAI/outbox），再按門鈴請對方來取；
+     * 十分鐘後（或之前沒清掉的、超過一小時的）刪掉待取檔案。回傳 null 成功，否則錯誤。
+     */
+    static String sendViaDoorbell(Context c, TransferStore.Peer peer, java.io.InputStream in, String name) {
+        File dest = null;
+        try {
+            if (!TransferStore.hasAllFiles()) return "沒有「所有檔案存取」權限";
+            purgeOutbox();
+            File dir = outbox();
+            dir.mkdirs();
+            String base = new File(name == null || name.isEmpty() ? "file" : name.replace('\\', '/')).getName();
+            dest = new File(dir, base);
+            int dot = base.lastIndexOf('.');
+            String stem = dot > 0 ? base.substring(0, dot) : base, ext = dot > 0 ? base.substring(dot) : "";
+            for (int i = 2; dest.exists(); i++) dest = new File(dir, stem + " (" + i + ")" + ext);
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {
+                byte[] buf = new byte[64 * 1024];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            }
+            String err = ring(c, peer, "Download/PhoneAI/outbox/" + dest.getName());
+            if (err != null) { dest.delete(); return err; }
+            final File d = dest;
+            Thread t = new Thread(() -> {
+                try { Thread.sleep(600_000L); } catch (InterruptedException ignored) { }
+                d.delete();
+            }, "fcm-outbox-cleanup");
+            t.setDaemon(true);
+            t.start();
+            return null;
+        } catch (Exception e) {
+            if (dest != null) dest.delete();
+            return String.valueOf(e.getMessage());
+        } finally {
+            try { in.close(); } catch (Exception ignored) { }
+        }
+    }
+
     /** 按門鈴：A（本機）請這個已配對裝置來取檔案（relPath 是共享根目錄底下的相對路徑，檔案要先存在）。回 null 成功，否則錯誤。 */
     static String ring(Context c, TransferStore.Peer peer, String relPath) {
         if (peer.fcmToken == null) return "還沒有存這台裝置的 token";
