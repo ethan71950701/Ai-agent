@@ -65,6 +65,52 @@ final class TailscaleControl {
         return isOn();
     }
 
+    // ---- 發送端：我們開的 Tailscale，閒置一段時間後關回去（你自己開的不會動）
+    static final long IDLE_MS = 60_000;
+    private static volatile boolean ours;
+    private static volatile long lastUse;
+    private static Thread watcher;
+
+    /** 要不要把 Tailscale 關回去：只有「我們開的」、而且現在沒有傳輸在跑、而且閒置夠久。 */
+    static boolean shouldTurnOff(boolean ours, boolean busy, long nowMs, long lastUseMs, long idleMs) {
+        return ours && !busy && nowMs - lastUseMs >= idleMs;
+    }
+
+    /** 連線前用：把 Tailscale 開起來；如果本來是關的、是我們開的，之後閒置 60 秒會自動關回去。 */
+    static synchronized boolean turnOnForSession(Context c, long waitMs) {
+        boolean was = isOn();
+        boolean ok = turnOn(c, waitMs);
+        lastUse = System.currentTimeMillis();
+        if (ok && !was) {
+            ours = true;
+            startWatcher(c.getApplicationContext());
+        }
+        return ok;
+    }
+
+    /** 又用了一次 Tailscale 連線：重新計閒置時間。 */
+    static void noteUse() { lastUse = System.currentTimeMillis(); }
+
+    private static synchronized void startWatcher(final Context app) {
+        if (watcher != null && watcher.isAlive()) return;
+        watcher = new Thread(() -> {
+            while (ours) {
+                try { Thread.sleep(5000); } catch (InterruptedException e) { Thread.currentThread().interrupt(); return; }
+                if (!isOn()) { ours = false; return; }   // 使用者自己關掉了
+                boolean busy = TransferNotify.active() || TransferServer.activeConnections() > 0;
+                if (busy) { lastUse = System.currentTimeMillis(); continue; }
+                if (shouldTurnOff(ours, false, System.currentTimeMillis(), lastUse, IDLE_MS)) {
+                    turnOff(app);
+                    ours = false;
+                    LifeLog.add(app, "外網：我們開的 Tailscale 閒置 " + IDLE_MS / 1000 + " 秒，已關回去");
+                    return;
+                }
+            }
+        }, "tailscale-restore");
+        watcher.setDaemon(true);
+        watcher.start();
+    }
+
     /** 戳一下 Tailscale：它顯示開著、但可能被系統凍住（收不到封包）時，對它發一次連線廣播讓它醒過來。已經連著不會有任何變化。不等結果。 */
     static void nudge(Context c) {
         if (!TailscaleLauncher.installed(c) || !Root.available()) return;

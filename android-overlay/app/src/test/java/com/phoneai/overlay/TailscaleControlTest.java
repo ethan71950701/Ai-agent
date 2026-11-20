@@ -37,4 +37,13 @@ public class TailscaleControlTest {
         assertEquals("other", FcmLab.classifyConnectError(new java.io.IOException("something else")));
         assertEquals("other", FcmLab.classifyConnectError(null));
     }
+
+    @Test
+    public void onlyOurOwnIdleTailscaleIsTurnedOff() {
+        assertTrue(TailscaleControl.shouldTurnOff(true, false, 100_000, 30_000, 60_000));    // 我們開的、沒在傳、閒置 70 秒
+        assertEquals(false, TailscaleControl.shouldTurnOff(true, false, 80_000, 30_000, 60_000));    // 才閒置 50 秒
+        assertEquals(false, TailscaleControl.shouldTurnOff(true, true, 500_000, 30_000, 60_000));    // 還在傳
+        assertEquals(false, TailscaleControl.shouldTurnOff(false, false, 500_000, 30_000, 60_000));  // 使用者自己開的：不動
+        assertTrue(TailscaleControl.shouldTurnOff(true, false, 90_000, 30_000, 60_000));     // 剛好 60 秒
+    }
 }
