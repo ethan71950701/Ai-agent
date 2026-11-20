@@ -236,6 +236,7 @@ public class DiagActivity extends Activity {
                 "for t in global system secure; do echo \"-- $t\"; settings list $t | grep -i 'power\\|press\\|assist\\|xiao\\|voice'; done")).append('\n');
         sb.append(L.t("按鈕透鏡：")).append(GlassBar.lensInfo).append('\n');
         sb.append(L.t("\n【最近事件（離開、回來、回收記憶體、螢幕開關）】\n")).append(LifeLog.read(this)).append("\n\n");
+        sb.append(L.t("【送給 AI 的請求大小（最近 100 次，按來源平均）】\n")).append(PromptStats.summary(this)).append("\n\n");
         try {   // 送給 AI 的筆記索引：每一則的編號、有沒有 📌、字數、標題（診斷「AI 說是永久記憶」「找不到那則筆記」用）
             sb.append(L.t("【記憶筆記（AI 看到的）】\n"));
             boolean any = false;

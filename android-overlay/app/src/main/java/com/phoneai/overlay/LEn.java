@@ -910,6 +910,7 @@ final class LEn {
         m.put("中斷", "Cut off");
         m.put("已中斷", "Interrupted");
         m.put("已暫停", "Paused");
+        m.put("【送給 AI 的請求大小（最近 100 次，按來源平均）】\n", "[Size of requests sent to the AI (last 100, averaged per source)]\n");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

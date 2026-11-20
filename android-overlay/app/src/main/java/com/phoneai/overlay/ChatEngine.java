@@ -464,7 +464,13 @@ final class ChatEngine {
         for (int attempt = 1; attempt <= 3; attempt++) {
             long started = android.os.SystemClock.uptimeMillis();
             try {
-                return postOnce(attempt == 1 ? body : new JSONObject(snapshot), key);   // 重試用原本的請求內容（postOnce 會改 body 裡的模型名）
+                final JSONObject sent = attempt == 1 ? body : new JSONObject(snapshot);   // 重試用原本的請求內容（postOnce 會改 body 裡的模型名）
+                final String src = PromptStats.sourceOf(new Throwable().getStackTrace());
+                JSONObject res = postOnce(sent, key);
+                if (App.ctx != null) {   // 只量不改：這次請求各部分有多大、實際花了多少輸入 token（診斷頁看）
+                    try { PromptStats.record(App.ctx, PromptStats.measure(src, sent, res == null ? null : res.optJSONObject("usage"), android.os.SystemClock.uptimeMillis() - started, System.currentTimeMillis())); } catch (Throwable ignored) { }
+                }
+                return res;
             } catch (Exception e) {
                 last = e;
                 inflight = null;
