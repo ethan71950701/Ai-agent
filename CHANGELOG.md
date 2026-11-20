@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1726
+
 - 推播喚醒：叫醒對方時，等的 25 秒內每 8 秒補送一則新門鈴（對方的推播連線時好時壞也比較容易叫得到）；設定頁顯示最近一次收到推播的時間與延遲｜Push wake-up: while waiting up to 25 s the wake doorbell is re-sent every 8 s (helps when the other phone's push connection flaps); the settings page shows when the last push arrived and how late it was
 
 ## 1.0.1725
