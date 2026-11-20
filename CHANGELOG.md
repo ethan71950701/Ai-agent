@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1734
+
 - 互傳：傳輸通知多了「暫停」（保留已傳的部分）；意外斷線或暫停後，通知會留在通知列／Now Bar，顯示「已中斷」或「已暫停」加百分比，並有「繼續」和「丟掉」按鈕｜File transfer: the progress notification now has Pause (keeps what was sent); after a cut-off or a pause the notification stays in the shade / Now Bar showing "Interrupted" or "Paused" with a percentage and Continue / Discard buttons
 
 ## 1.0.1733
