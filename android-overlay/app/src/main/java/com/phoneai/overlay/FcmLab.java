@@ -131,14 +131,18 @@ final class FcmLab {
         }
     }
 
-    /** 本機的區網 IPv4（10.x／172.16–31.x／192.168.x）；沒有回 null。 */
+    /** 本機「Wi-Fi 上」的區網 IPv4（10.x／172.16–31.x／192.168.x）。只看 Wi-Fi 網路：行動數據、VPN 有時也是私有位址，不能拿來當區網位址。沒有回 null。 */
     static String lanIp() {
         try {
-            for (java.net.NetworkInterface ni : java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces())) {
-                if (!ni.isUp() || ni.isLoopback()) continue;
-                for (java.net.InetAddress a : java.util.Collections.list(ni.getInetAddresses())) {
-                    String h = a.getHostAddress();
-                    if (a instanceof java.net.Inet4Address && Doorbell.isPrivateLan(h)) return h;
+            android.net.ConnectivityManager cm = App.ctx.getSystemService(android.net.ConnectivityManager.class);
+            for (android.net.Network n : cm.getAllNetworks()) {
+                android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(n);
+                if (caps == null || !caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)) continue;
+                android.net.LinkProperties lp = cm.getLinkProperties(n);
+                if (lp == null) continue;
+                for (android.net.LinkAddress la : lp.getLinkAddresses()) {
+                    String h = la.getAddress().getHostAddress();
+                    if (la.getAddress() instanceof java.net.Inet4Address && Doorbell.isPrivateLan(h)) return h;
                 }
             }
         } catch (Exception ignored) { }
