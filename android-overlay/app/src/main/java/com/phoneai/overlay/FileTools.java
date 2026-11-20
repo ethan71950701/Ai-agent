@@ -384,13 +384,15 @@ final class FileTools {
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
-        if (f == null && FcmLab.canRing(c, p) && FcmLab.lanIp() != null && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
+        if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
+            if (FcmLab.lanIp() == null && p.tsIp != null && !TailscaleControl.isOn()) TailscaleControl.turnOn(c, 12000);   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = FcmLab.wake(c, p);
             if (err == null) {
                 long t0 = System.currentTimeMillis(), until = t0 + 25000, nextRing = t0 + 8000;
                 while (f == null && System.currentTimeMillis() < until) {
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
+                    if (f == null && p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
                     if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
                         FcmLab.wake(c, p);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
                         nextRing += 8000;

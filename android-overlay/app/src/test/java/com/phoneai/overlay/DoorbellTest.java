@@ -140,6 +140,50 @@ public class DoorbellTest {
     }
 
     @Test
+    public void serveDoorbellWorksFromOutsideTheLanOverTailscale() {
+        Map<String, String> ts = Doorbell.makeServe(key, "phoneA", "100.101.102.103", 47321, NOW, true);
+        Doorbell.Result r = v.verify(ts, NOW, "192.168.1.55/24");   // 對方在別的網路：不看網段
+        assertTrue(r.error, r.ok());
+        assertTrue(r.ring.remote);
+        assertEquals("100.101.102.103", r.ring.ip);
+        Doorbell.Verifier v2 = new Doorbell.Verifier(id -> key);
+        Doorbell.Result none = v2.verify(Doorbell.makeServe(key, "phoneA", "", 47321, NOW, true), NOW, "192.168.1.55/24");   // 叫醒用不到位址，空的也行
+        assertTrue(none.error, none.ok());
+        Doorbell.Verifier v3 = new Doorbell.Verifier(id -> key);
+        Doorbell.Result other = v3.verify(Doorbell.makeServe(key, "phoneA", "10.9.9.9", 47321, NOW), NOW, "192.168.1.55/24");   // 別的區網：叫醒不看網段
+        assertTrue(other.error, other.ok());
+        assertFalse(other.ring.remote);
+    }
+
+    @Test
+    public void serveDoorbellStillRejectsPublicAddressesAndForgeries() {
+        assertFalse(new Doorbell.Verifier(id -> key).verify(Doorbell.makeServe(key, "phoneA", "8.8.8.8", 47321, NOW, true), NOW, null).ok());
+        assertFalse(new Doorbell.Verifier(id -> key).verify(Doorbell.makeServe(key, "phoneA", "evil.example.com", 47321, NOW, true), NOW, null).ok());
+        assertFalse(new Doorbell.Verifier(id -> key).verify(Doorbell.makeServe(TransferCrypto.random(32), "phoneA", "100.64.0.1", 47321, NOW, true), NOW, null).ok());   // 金鑰不對
+        assertFalse(new Doorbell.Verifier(id -> key).verify(Doorbell.makeServe(key, "phoneA", "100.64.0.1", 47321, NOW - 90_000, true), NOW, null).ok());   // 過期
+        Doorbell.Verifier once = new Doorbell.Verifier(id -> key);
+        Map<String, String> m = Doorbell.makeServe(key, "phoneA", "100.64.0.1", 47321, NOW, true);
+        assertTrue(once.verify(m, NOW, null).ok());
+        assertFalse(once.verify(m, NOW, null).ok());   // 只認一次
+    }
+
+    @Test
+    public void tailnetRange() {
+        assertTrue(Doorbell.isTailnet("100.64.0.1"));
+        assertTrue(Doorbell.isTailnet("100.127.255.254"));
+        assertFalse(Doorbell.isTailnet("100.63.0.1"));
+        assertFalse(Doorbell.isTailnet("100.128.0.1"));
+        assertFalse(Doorbell.isTailnet("192.168.1.1"));
+        assertFalse(Doorbell.isTailnet(null));
+    }
+
+    @Test
+    public void fileDoorbellStillNeedsTheLanAndTheSameSubnet() {
+        Map<String, String> m = Doorbell.make(key, "phoneA", "100.101.102.103", 47321, "/x", "x", 1, NOW);
+        assertFalse("取檔的門鈴要連回發送端，Tailscale 位址不收", new Doorbell.Verifier(id -> key).verify(m, NOW, null).ok());
+    }
+
+    @Test
     public void fcmTokenFormatCheck() {
         String ok = "dXJ0Z2R3cWV0bW1yZ2Y6QVBBOTFiR2xvbmdmY210b2tlbl8tYWJjMTIz:APA91bGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
         assertTrue(Doorbell.validToken(ok));

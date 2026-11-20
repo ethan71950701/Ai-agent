@@ -364,8 +364,12 @@ final class FcmLab {
     static String wake(Context c, TransferStore.Peer peer) {
         if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";
         String ip = lanIp();
-        if (ip == null) return "找不到本機的區網位址（要連上 Wi-Fi）";
-        return sendData(c, peer.fcmToken, Doorbell.makeServe(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, System.currentTimeMillis()));
+        boolean remote = ip == null;   // 沒連 Wi-Fi（行動數據或其他網路）：從外面來，走 Tailscale
+        if (remote) {
+            String ts = TransferClient.localTailnetIp();
+            ip = ts == null ? "" : ts;
+        }
+        return sendData(c, peer.fcmToken, Doorbell.makeServe(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, System.currentTimeMillis(), remote));
     }
 
     /** 逐步診斷「叫醒對方」：每一步的結果都寫出來（不含 token 全文與金鑰），看是哪一步斷掉。回傳多行文字。 */
@@ -375,8 +379,8 @@ final class FcmLab {
         sb.append("1. 對方的 token：").append(p.fcmToken == null ? "❌ 沒有（先互換 token）" : "✅ 有（結尾 " + p.fcmToken.substring(Math.max(0, p.fcmToken.length() - 6)) + "）").append('\n');
         sb.append("2. 這支手機的設定檔：").append(hasConfig(c) ? "✅" : "❌").append("；發送金鑰：").append(FcmVault.has(c) ? "✅" : "❌").append('\n');
         String ip = lanNet();
-        sb.append("3. 這支手機的 Wi-Fi 位址：").append(ip == null ? "❌ 沒有" : "✅ " + ip).append('\n');
-        if (p.fcmToken == null || !hasConfig(c) || !FcmVault.has(c) || ip == null) { sb.append("→ 上面有 ❌，先處理它").append('\n'); return sb.toString(); }
+        sb.append("3. 這支手機的 Wi-Fi 位址：").append(ip != null ? "✅ " + ip : p.tsIp != null ? "（沒連 Wi-Fi，改走 Tailscale 外網；對方的 Tailscale 位址 " + p.tsIp + "）" : "❌ 沒有（也沒有對方的 Tailscale 位址）").append('\n');
+        if (p.fcmToken == null || !hasConfig(c) || !FcmVault.has(c) || (ip == null && p.tsIp == null)) { sb.append("→ 上面有 ❌，先處理它").append('\n'); return sb.toString(); }
         TransferDiscovery.Found already = FileTools.scanPeer(p, 1200);
         if (already != null) { sb.append("4. 對方現在其實已經在線上（").append(already.ip).append("），沒有休眠，這次測不出叫醒。請讓它休眠幾分鐘再測。").append('\n'); return sb.toString(); }
         sb.append("4. 對方目前不在線上（找不到），開始叫醒\n");
@@ -397,23 +401,35 @@ final class FcmLab {
     }
 
     /** 被「叫醒」的這一端：把互傳伺服器開起來，沒人用了就自動關（瀏覽時最後一個連線結束後多留 60 秒）。 */
-    static String serveForAWhile(Context c) {
+    static String serveForAWhile(Context c) { return serveForAWhile(c, false); }
+
+    /** remote＝對方從外面來：要走 Tailscale，先確定自己的 Tailscale 開著（沒開就盡力開起來；是我們開的，用完會關回去）。 */
+    static String serveForAWhile(Context c, boolean remote) {
         final Context app = c.getApplicationContext();
         if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return "互傳總開關沒開，所以沒有開伺服器（到「設定 → 互傳檔案」打開）"; }
+        String note = "";
+        boolean weTurnedTailscaleOn = false;
+        if (remote && !TailscaleControl.isOn()) {
+            weTurnedTailscaleOn = TailscaleControl.turnOn(app, 12000);
+            note = weTurnedTailscaleOn ? "，已幫你把 Tailscale 開起來" : "，但 Tailscale 開不起來（對方從外面連不進來）";
+            LifeLog.add(app, "FCM 叫醒（外網）：Tailscale " + (weTurnedTailscaleOn ? "已開起來" : "開不起來"));
+        }
+        final boolean restore = weTurnedTailscaleOn;
         final boolean startedHere = !TransferService.running;
         TransferService.start(app);
-        if (!startedHere) return "互傳本來就開著，等對方連進來";   // 本來就開著（使用者自己開的）：不去關它
+        if (!startedHere) return "互傳本來就開著，等對方連進來" + note;   // 本來就開著（使用者自己開的）：不去關它
         Thread t = new Thread(() -> {
             IdleWatch w = new IdleWatch(System.currentTimeMillis(), 60_000);
             try {
                 while (!w.tick(System.currentTimeMillis(), TransferServer.activeConnections())) Thread.sleep(3000);
             } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
             TransferService.stop(app);
-            TransferStore.log(app, "被叫醒而開起的互傳伺服器已自動關閉");
+            if (restore) TailscaleControl.turnOff(app);   // 我們開的 Tailscale 用完關回去
+            TransferStore.log(app, "被叫醒而開起的互傳伺服器已自動關閉" + (restore ? "（Tailscale 也關回去了）" : ""));
         }, "fcm-serve-autostop");
         t.setDaemon(true);
         t.start();
-        return "已把互傳伺服器開起來，等對方連進來（沒人用會自動關）";
+        return "已把互傳伺服器開起來，等對方連進來（沒人用會自動關）" + note;
     }
 
     /** 臨時開起的伺服器，沒人來或傳完就關（IdleWatch）。門鈴沒送成功就不用等，直接關。 */

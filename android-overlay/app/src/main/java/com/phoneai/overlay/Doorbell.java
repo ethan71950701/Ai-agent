@@ -29,6 +29,7 @@ final class Doorbell {
 
     /** 驗證通過的內容。 */
     static final class Ring {
+        boolean remote;   // serve 模式：發送端不在同一個區網（用 Tailscale 從外面來）
         String from, ip, path, name, mode = "file";   // mode：file＝請來取這個檔案；serve＝請把互傳伺服器開起來
         int port;
         long size, ts;
@@ -65,11 +66,14 @@ final class Doorbell {
     }
 
     /** 「請把你的互傳伺服器開起來」：之後的傳檔、瀏覽、找檔都照原本的直連方式，推播只負責叫醒。 */
-    static Map<String, String> makeServe(byte[] key, String fromId, String ip, int port, long nowMs) {
+    static Map<String, String> makeServe(byte[] key, String fromId, String ip, int port, long nowMs) { return makeServe(key, fromId, ip, port, nowMs, false); }
+
+    /** remote：發送端不在對方的區網（從外面用 Tailscale 連），接收端看到會先把自己的 Tailscale 開起來。ip 可以是區網位址、Tailscale 位址或空的（叫醒用不到它）。 */
+    static Map<String, String> makeServe(byte[] key, String fromId, String ip, int port, long nowMs, boolean remote) {
         try {
             String nonce = TransferCrypto.hex(TransferCrypto.random(16));
             String ts = String.valueOf(nowMs);
-            JSONObject body = new JSONObject().put("mode", "serve").put("ip", ip).put("port", port).put("path", "").put("name", "").put("size", 0);
+            JSONObject body = new JSONObject().put("mode", "serve").put("ip", ip == null ? "" : ip).put("port", port).put("path", "").put("name", "").put("size", 0).put("remote", remote);
             byte[] ct = crypt(Cipher.ENCRYPT_MODE, key, nonce, aad(VERSION, fromId, ts, nonce), body.toString().getBytes(StandardCharsets.UTF_8));
             Map<String, String> m = new LinkedHashMap<>();
             m.put("kind", "doorbell");
@@ -121,6 +125,7 @@ final class Doorbell {
             r.name = o.optString("name");
             r.size = o.optLong("size", -1);
             r.mode = o.optString("mode", "file");
+            r.remote = o.optBoolean("remote", false);
             if (!r.mode.equals("file") && !r.mode.equals("serve")) return fail("不認得的門鈴類型");
             String bad = checkFields(r, myIpOrNull);
             if (bad != null) return fail(bad);
@@ -147,14 +152,24 @@ final class Doorbell {
 
     /** 內容欄位檢查：位址必須是區網私有位址，大小、路徑、檔名有上限，不接受控制字元。 */
     static String checkFields(Ring r, String myIpOrNull) {
+        if ("serve".equals(r.mode)) {   // 只是叫醒：位址用不到，空的、區網、Tailscale 都可以；其他（公開網路位址、亂格式）不收
+            if (!r.ip.isEmpty() && !isPrivateLan(r.ip) && !isTailnet(r.ip)) return "位址不是區網或 Tailscale 位址";
+            if (r.port < 1 || r.port > 65535) return "埠號不對";
+            return null;
+        }
         if (!isPrivateLan(r.ip)) return "位址不是區網私有位址";
         if (myIpOrNull != null && !sameSubnet(myIpOrNull, r.ip)) return "位址不在目前的網段（門鈴 " + r.ip + "，本機 " + myIpOrNull + "）";
         if (r.port < 1 || r.port > 65535) return "埠號不對";
-        if ("serve".equals(r.mode)) return null;   // 只是叫醒：沒有檔案欄位要檢查
         if (r.size < 0 || r.size > MAX_SIZE) return "檔案大小不對或超過 64 GiB";
         if (r.path.isEmpty() || r.path.length() > 1024 || hasControl(r.path)) return "路徑不對";
         if (r.name.length() > 255 || hasControl(r.name)) return "檔名不對";
         return null;
+    }
+
+    /** Tailscale 的位址範圍 100.64.0.0/10。 */
+    static boolean isTailnet(String ip) {
+        int[] p = octets(ip);
+        return p != null && p[0] == 100 && p[1] >= 64 && p[1] <= 127;
     }
 
     private static boolean hasControl(String s) {

@@ -47,7 +47,7 @@ public class FcmLabService extends FirebaseMessagingService {
         }
         if ("serve".equals(r.ring.mode)) {   // 只是叫醒：把伺服器開起來，對方再用原本的方式連進來
             LifeLog.add(this, "FCM 叫醒通過：" + TransferStore.nameOf(this, r.ring.from) + " 要連進來");
-            String st = FcmLab.serveForAWhile(this);
+            String st = FcmLab.serveForAWhile(this, r.ring.remote);
             notifyLab("收到「" + TransferStore.nameOf(this, r.ring.from) + "」的叫醒：" + st);   // 每次被叫醒都讓人看得到結果（也符合高優先級推播要有可見通知的建議）
             return;
         }
