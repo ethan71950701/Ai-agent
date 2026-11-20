@@ -121,7 +121,7 @@ final class Doorbell {
     /** 內容欄位檢查：位址必須是區網私有位址，大小、路徑、檔名有上限，不接受控制字元。 */
     static String checkFields(Ring r, String myIpOrNull) {
         if (!isPrivateLan(r.ip)) return "位址不是區網私有位址";
-        if (myIpOrNull != null && !sameSubnet24(myIpOrNull, r.ip)) return "位址不在目前的網段";
+        if (myIpOrNull != null && !sameSubnet(myIpOrNull, r.ip)) return "位址不在目前的網段（門鈴 " + r.ip + "，本機 " + myIpOrNull + "）";
         if (r.port < 1 || r.port > 65535) return "埠號不對";
         if (r.size < 0 || r.size > MAX_SIZE) return "檔案大小不對或超過 2 GiB";
         if (r.path.isEmpty() || r.path.length() > 1024 || hasControl(r.path)) return "路徑不對";
@@ -143,9 +143,29 @@ final class Doorbell {
         return p[0] == 192 && p[1] == 168;
     }
 
-    static boolean sameSubnet24(String a, String b) {
-        int[] x = octets(a), y = octets(b);
-        return x != null && y != null && x[0] == y[0] && x[1] == y[1] && x[2] == y[2];
+    static boolean sameSubnet24(String a, String b) { return sameSubnet(stripPrefix(a) + "/24", b); }
+
+    /** a 可以是「位址」（當成 /24）或「位址/前綴長度」（手機實際回報的網段大小，例如 172.23.4.118/22）。 */
+    static boolean sameSubnet(String a, String b) {
+        int prefix = 24;
+        String ip = a;
+        int slash = a == null ? -1 : a.indexOf('/');
+        if (slash >= 0) {
+            ip = a.substring(0, slash);
+            try { prefix = Integer.parseInt(a.substring(slash + 1)); } catch (NumberFormatException e) { return false; }
+        }
+        if (prefix < 8 || prefix > 30) return false;   // 太大（/8 以下）或太小的網段不合理，不當成同網段
+        int[] x = octets(ip), y = octets(b);
+        if (x == null || y == null) return false;
+        long xi = ((long) x[0] << 24) | (x[1] << 16) | (x[2] << 8) | x[3];
+        long yi = ((long) y[0] << 24) | (y[1] << 16) | (y[2] << 8) | y[3];
+        long mask = (0xFFFFFFFFL << (32 - prefix)) & 0xFFFFFFFFL;
+        return (xi & mask) == (yi & mask);
+    }
+
+    private static String stripPrefix(String a) {
+        int slash = a == null ? -1 : a.indexOf('/');
+        return slash >= 0 ? a.substring(0, slash) : a;
     }
 
     private static int[] octets(String ip) {

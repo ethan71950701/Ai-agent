@@ -127,8 +127,15 @@ public class DoorbellTest {
         Map<String, String> m = ring();
         assertTrue(v.verify(m, NOW, "192.168.1.99").ok());
         Doorbell.Verifier v2 = new Doorbell.Verifier(id -> key);
-        assertEquals("位址不在目前的網段", v2.verify(ring(), NOW, "192.168.7.99").error);
+        assertTrue(v2.verify(ring(), NOW, "192.168.7.99").error.startsWith("位址不在目前的網段"));
         assertTrue(Doorbell.sameSubnet24("10.1.2.3", "10.1.2.250"));
+        assertTrue(Doorbell.sameSubnet("172.23.4.118/22", "172.23.5.20"));
+        assertFalse(Doorbell.sameSubnet("172.23.4.118/24", "172.23.5.20"));
+        assertTrue(Doorbell.sameSubnet("172.23.4.118/16", "172.23.200.9"));
+        assertFalse(Doorbell.sameSubnet("172.23.4.118/22", "172.23.8.20"));
+        assertFalse(Doorbell.sameSubnet("192.168.1.5/0", "10.0.0.1"));   // 前綴太小不當成同網段
+        assertFalse(Doorbell.sameSubnet("192.168.1.5/abc", "192.168.1.9"));
+        assertFalse(Doorbell.sameSubnet(null, "192.168.1.9"));
         assertFalse(Doorbell.sameSubnet24("10.1.2.3", "10.1.3.3"));
     }
 
