@@ -808,6 +808,7 @@ final class LEn {
         m.put("沒有（只有要叫醒別人的那支需要）", "none (only the device that wakes others needs it)");
         m.put("發送金鑰：", "Sender key: ");
         m.put("設定檔：", "Config file: ");
+        m.put("推播叫醒失敗，改用直接連線：", "Push wake-up failed, trying a direct connection: ");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
