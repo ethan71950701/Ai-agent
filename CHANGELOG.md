@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1720
+
 - 互傳檔案：新增「推播喚醒」——對方沒開互傳、App 被滑掉也能被叫醒來傳檔、瀏覽、找檔（需要先在「設定 → 互傳檔案 → 推播喚醒設定」匯入 Firebase 設定檔與發送金鑰；沒設定的人完全不受影響）｜File transfer: new push wake-up so a paired device can be woken to send, browse and search files even when its transfer is off or the app was swiped away (set up Firebase files first in Settings → File transfer → Push wake-up settings; nothing changes if you don't set it up)
 - 推播喚醒設定頁：一次匯入兩個檔案、一鍵把設定傳給另一台已配對裝置（對方要確認）、配對時自動互換 token、健康檢查與依手機品牌的自啟動／電池提示、測試叫醒｜Push wake-up settings: import both files at once, send the setup to a paired device in one tap (the other side confirms), automatic token exchange when pairing, a health check with brand-specific autostart/battery hints, and a wake test
 - 互傳檔案加上整檔 SHA-256 校驗：傳完兩邊比對，不一致就丟棄；通知與記錄顯示前 8 碼｜File transfers now verify a whole-file SHA-256 on both sides and discard mismatches; notifications and logs show the first 8 characters
