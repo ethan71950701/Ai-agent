@@ -48,7 +48,7 @@ final class FcmHealth {
         out.add(in.lanIp != null ? new Item("Wi-Fi", Level.OK, "")
                 : new Item("Wi-Fi", Level.WARN, "沒有連上 Wi-Fi：叫醒與傳檔只在同一個 Wi-Fi 有效。"));
         out.add(new Item("自啟動", Level.INFO, autostartHint(in.manufacturer)));
-        out.add(new Item("Tailscale（外網用）", Level.INFO, "要在外面（行動數據）用才需要：Tailscale 也要給「自啟動」和電池「無限制」，系統才讓它收到 App 發的開關廣播；按下面的「測試開關 Tailscale」可以在這支手機上實際驗證。"));
+        out.add(new Item("Tailscale（外網用）", Level.INFO, "要在外面（行動數據）用才需要：Tailscale 也要給「自啟動」和電池「無限制」，系統才讓它收到 App 發的開關廣播；按下面的「測試開關 Tailscale」可以在這支手機上實際驗證。小米（HyperOS）上如果顯示開著卻連不到（外網連線檢查逾時），多半是系統把 Tailscale 凍住了，要像保護 Google Play 服務一樣，把 Tailscale 也加進「不限制背景」的保護（第三方小工具 FCM Guard 可以，使用者實測有效）。"));
         return out;
     }
 

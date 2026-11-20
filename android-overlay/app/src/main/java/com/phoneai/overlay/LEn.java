@@ -915,7 +915,7 @@ final class LEn {
         m.put("測試中…（最久約 30 秒，會短暫開關 Tailscale）", "Testing… (up to ~30 s, Tailscale is briefly switched)");
         m.put("Tailscale 開關測試", "Tailscale switch test");
         m.put("Tailscale（外網用）", "Tailscale (for remote use)");
-        m.put("要在外面（行動數據）用才需要：Tailscale 也要給「自啟動」和電池「無限制」，系統才讓它收到 App 發的開關廣播；按下面的「測試開關 Tailscale」可以在這支手機上實際驗證。", "Only needed away from home (mobile data): give Tailscale Autostart and unrestricted battery too, otherwise the system won't let it receive the app's on/off broadcast; tap \"Test turning Tailscale on/off\" below to verify it on this phone.");
+        m.put("要在外面（行動數據）用才需要：Tailscale 也要給「自啟動」和電池「無限制」，系統才讓它收到 App 發的開關廣播；按下面的「測試開關 Tailscale」可以在這支手機上實際驗證。小米（HyperOS）上如果顯示開著卻連不到（外網連線檢查逾時），多半是系統把 Tailscale 凍住了，要像保護 Google Play 服務一樣，把 Tailscale 也加進「不限制背景」的保護（第三方小工具 FCM Guard 可以，使用者實測有效）。", "Only needed away from home (mobile data): give Tailscale Autostart and unrestricted battery too, otherwise the system won't let it receive the app's on/off broadcast; tap \"Test turning Tailscale on/off\" below to verify it on this phone. On Xiaomi (HyperOS), if it shows as on but cannot be reached (the remote connection check times out), the system has most likely frozen Tailscale: protect Tailscale in the no-restrict background list the same way as Google Play services (the third-party tool FCM Guard can do this; confirmed by a user).");
         m.put("外網連線檢查（看斷在哪一步）", "Remote connection check (see which step fails)");
         m.put("檢查中…（最久約 10 秒）", "Checking… (up to ~10 s)");
         m.put("外網連線檢查", "Remote connection check");
