@@ -87,7 +87,12 @@ public class FcmSetupActivity extends Activity {
         in.batteryUnrestricted = getSystemService(android.os.PowerManager.class).isIgnoringBatteryOptimizations(getPackageName());
         List<TransferStore.Peer> ps = TransferStore.peers(this);
         in.paired = ps.size();
-        for (TransferStore.Peer p : ps) if (p.fcmToken != null) in.pairedWithToken++;
+        StringBuilder miss = new StringBuilder();
+        for (TransferStore.Peer p : ps) {
+            if (p.fcmToken != null) in.pairedWithToken++;
+            else miss.append(miss.length() == 0 ? "" : "、").append(p.name);
+        }
+        in.missingNames = miss.toString();
         in.manufacturer = Build.MANUFACTURER;
         return in;
     }

@@ -23,6 +23,7 @@ final class FcmHealth {
         String myToken;          // 沒有是 null
         String lanIp;            // Wi-Fi 位址；沒有是 null
         int paired, pairedWithToken;
+        String missingNames = "";   // 還沒互換 token 的裝置名稱（用「、」分開）
         String manufacturer = "";
     }
 
@@ -41,7 +42,8 @@ final class FcmHealth {
                 : new Item("電池不受限制", Level.WARN, "沒有設成不受限制：休眠時可能收不到叫醒。到「電池」把 Vertex 設成不受限制。"));
         if (in.paired == 0) out.add(new Item("已配對的裝置", Level.BAD, "還沒有。先到互傳頁面配對另一台。"));
         else if (in.pairedWithToken < in.paired) out.add(new Item("已配對的裝置", Level.WARN,
-                (in.paired - in.pairedWithToken) + " 台還沒互換推播 token：按「互換 token」（兩邊要連得上），或重新配對。"));
+                (in.paired - in.pairedWithToken) + " 台還沒互換推播 token" + (in.missingNames.isEmpty() ? "" : "（" + in.missingNames + "）")
+                        + "：按「互換 token」（兩邊要連得上），或重新配對。電腦版沒有推播，所以電腦一定會在這裡。"));
         else out.add(new Item("已配對的裝置", Level.OK, ""));
         out.add(in.lanIp != null ? new Item("Wi-Fi", Level.OK, "")
                 : new Item("Wi-Fi", Level.WARN, "沒有連上 Wi-Fi：叫醒與傳檔只在同一個 Wi-Fi 有效。"));

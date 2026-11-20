@@ -313,7 +313,9 @@ final class FileTools {
             TransferStore.updateAddress(c, p.id, ip, port);
             TransferStore.updateName(c, p.id, f.name);
         }
-        return new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+        TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+        if (f != null) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時，順便補齊還缺的推播 token
+        return cl;
     }
 
     private static boolean canPing(Context c, TransferStore.Peer p, String ip, int port) {

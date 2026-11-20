@@ -64,6 +64,19 @@ public class FcmHealthTest {
     }
 
     @Test
+    public void namesTheDevicesWithoutToken() {
+        FcmHealth.Input in = good();
+        in.pairedWithToken = 0;
+        in.missingNames = "客廳電腦、小米13";
+        for (FcmHealth.Item i : FcmHealth.evaluate(in)) {
+            if (i.label.equals("已配對的裝置")) {
+                assertTrue(i.hint.contains("客廳電腦、小米13"));
+                assertTrue(i.hint.contains("電腦版沒有推播"));
+            }
+        }
+    }
+
+    @Test
     public void autostartHintFollowsTheBrand() {
         assertTrue(FcmHealth.autostartHint("Xiaomi").contains("自啟動"));
         assertTrue(FcmHealth.autostartHint("samsung").contains("休眠"));

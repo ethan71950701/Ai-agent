@@ -54,6 +54,32 @@ final class FcmLab {
         } catch (Throwable ignored) { }
     }
 
+    private static final java.util.Map<String, Long> LAST_AUTO_EXCHANGE = new java.util.HashMap<>();
+
+    /** 能連上這台已配對裝置、但它還沒有我們的 token（對方當時還沒設定、或之前只通一個方向）時，順便在背景互換一次。每台 10 分鐘最多試一次；不支援的（電腦版）會失敗，直接忽略。 */
+    static void healTokenAsync(Context c, TransferStore.Peer p, TransferClient client) {
+        if (p == null || p.fcmToken != null || myToken(c) == null) return;
+        synchronized (LAST_AUTO_EXCHANGE) {
+            long now = System.currentTimeMillis();
+            Long last = LAST_AUTO_EXCHANGE.get(p.id);
+            if (last != null && now - last < 600_000L) return;
+            LAST_AUTO_EXCHANGE.put(p.id, now);
+        }
+        final Context app = c.getApplicationContext();
+        final String id = p.id;
+        Thread t = new Thread(() -> {
+            try {
+                String theirs = client.exchangeFcmToken(myToken(app));
+                if (theirs != null) {
+                    TransferStore.setFcmToken(app, id, theirs);
+                    TransferStore.log(app, "已自動和「" + TransferStore.nameOf(app, id) + "」補互換推播 token");
+                }
+            } catch (Throwable ignored) { }
+        }, "fcm-heal-token");
+        t.setDaemon(true);
+        t.start();
+    }
+
     /** 配對剛成功時呼叫（要在背景執行緒）：用同一次請求跟對方互換 token。失敗不影響配對本身。 */
     static void exchangeAfterPairing(Context c, TransferClient client, String peerId) {
         try {
