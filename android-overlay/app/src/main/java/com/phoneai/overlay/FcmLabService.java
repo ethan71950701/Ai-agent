@@ -61,6 +61,10 @@ public class FcmLabService extends FirebaseMessagingService {
 
     @Override public void onNewToken(String token) {
         FcmLab.saveMyToken(this, token);
-        LifeLog.add(this, "FCM 實驗：裝置 token 更新（對方存的舊 token 會失效，需要重新互換）");
+        LifeLog.add(this, "FCM：裝置 token 更新，正在通知已配對的裝置");
+        final android.content.Context app = getApplicationContext();
+        Thread t = new Thread(() -> FcmLab.pushTokenToPeers(app), "fcm-push-token");
+        t.setDaemon(true);
+        t.start();
     }
 }

@@ -399,7 +399,7 @@ final class FileTools {
                     }
                 }
             } else {
-                TransferStore.log(c, L.t("推播叫醒失敗：") + err);
+                TransferStore.log(c, L.t("推播叫醒失敗：") + err + (FcmLab.tokenGone(err) ? L.t("（對方的 token 已失效；兩支手機都在線的時候會自動更新，也可以在「推播喚醒設定」重新互換）") : ""));
             }
         }
         String ip;

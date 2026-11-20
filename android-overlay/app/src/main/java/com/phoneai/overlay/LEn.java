@@ -810,6 +810,7 @@ final class LEn {
         m.put("設定檔：", "Config file: ");
         m.put("推播叫醒失敗，改用直接連線：", "Push wake-up failed, trying a direct connection: ");
         m.put("推播叫醒失敗：", "Push wake-up failed: ");
+        m.put("（對方的 token 已失效；兩支手機都在線的時候會自動更新，也可以在「推播喚醒設定」重新互換）", " (the peer's token is no longer valid; it updates automatically when both phones are online, or swap again in \"Push wake-up setup\")");
         m.put("」傳來的推播喚醒設定", "\" sent push wake-up settings");
         m.put("」想把推播喚醒的設定（Firebase 設定檔和發送金鑰）傳給這支手機。接受後，這支手機就能叫醒、也能被它叫醒。要接受嗎？", "\" wants to send push wake-up settings (Firebase config file and sender key) to this phone. If you accept, this phone can wake it and be woken by it. Accept?");
         m.put("已接受「", "Accepted \"");

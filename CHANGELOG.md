@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：對方換了推播 token（重裝、清資料）後，只要兩支手機連得上就會自動更新，不用手動重新互換；我們自己換 token 時也會馬上通知已配對的裝置｜Fix: when the peer's push token changes (reinstall, cleared data) it is now updated automatically as soon as the phones can reach each other, no manual re-swap needed; our own token change is pushed to paired devices right away
 - 修正：檔案其實已經傳完、只是「收到了」的回覆掉了，不會再整個重傳變成「檔名 (1)」的重複檔案；傳完核對校驗碼發現不一樣時，會請對方把壞檔刪掉，不再留在收件匣｜Fix: if a file arrived but the "received" reply was lost, it is no longer re-sent as a duplicate "name (1)"; when the checksum doesn't match after transfer, the peer is asked to delete the bad file instead of leaving it in the inbox
 
 ## 1.0.1751

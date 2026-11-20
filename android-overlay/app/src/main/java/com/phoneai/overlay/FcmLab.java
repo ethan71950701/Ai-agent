@@ -76,9 +76,19 @@ final class FcmLab {
 
     private static final java.util.Map<String, Long> LAST_AUTO_EXCHANGE = new java.util.HashMap<>();
 
-    /** 能連上這台已配對裝置、但它還沒有我們的 token（對方當時還沒設定、或之前只通一個方向）時，順便在背景互換一次。每台 10 分鐘最多試一次；不支援的（電腦版）會失敗，直接忽略。 */
+    /** 收到的對方 token 要不要換掉我們存的：格式正確、而且和存的不一樣（對方換過 token，舊的叫不醒它了）。 */
+    static boolean shouldAdopt(String stored, String received) {
+        return Doorbell.validToken(received) && !received.equals(stored);
+    }
+
+    /** 送推播的錯誤是不是「這個 token 已經失效」（對方重裝、清過資料或換了 token）。 */
+    static boolean tokenGone(String err) {
+        return err != null && (err.contains("UNREGISTERED") || err.contains("NOT_FOUND") || err.contains("HTTP 404"));
+    }
+
+    /** 能連上這台已配對裝置時，順便在背景互換一次 token：我們沒有它的、或它換過新的，我們的新 token 它也會同時收到。每台 10 分鐘最多試一次；不支援的（電腦版）會失敗，直接忽略。 */
     static void healTokenAsync(Context c, TransferStore.Peer p, TransferClient client) {
-        if (p == null || p.fcmToken != null || myToken(c) == null) return;
+        if (p == null || myToken(c) == null) return;
         synchronized (LAST_AUTO_EXCHANGE) {
             long now = System.currentTimeMillis();
             Long last = LAST_AUTO_EXCHANGE.get(p.id);
@@ -90,14 +100,33 @@ final class FcmLab {
         Thread t = new Thread(() -> {
             try {
                 String theirs = client.exchangeFcmToken(myToken(app));
-                if (theirs != null) {
+                if (shouldAdopt(p.fcmToken, theirs)) {
                     TransferStore.setFcmToken(app, id, theirs);
-                    TransferStore.log(app, "已自動和「" + TransferStore.nameOf(app, id) + "」補互換推播 token");
+                    TransferStore.log(app, "已自動和「" + TransferStore.nameOf(app, id) + "」" + (p.fcmToken == null ? "補互換" : "更新（對方換過）") + "推播 token");
                 }
             } catch (Throwable ignored) { }
         }, "fcm-heal-token");
         t.setDaemon(true);
         t.start();
+    }
+
+    /** 我們的 token 換了：趁還連得上，馬上告訴每一台已配對裝置（用上次記下的區網或 Tailscale 位址，連不上就算了；之後連得上時 healTokenAsync 也會補）。要在背景執行緒。 */
+    static void pushTokenToPeers(Context c) {
+        final String mine = myToken(c);
+        if (mine == null) return;
+        for (TransferStore.Peer p : TransferStore.peers(c)) {
+            String[][] addrs = {{p.ip, String.valueOf(p.port)}, {p.tsIp, String.valueOf(p.tsPort)}};
+            for (String[] a : addrs) {
+                if (a[0] == null || a[1].equals("0")) continue;
+                try {
+                    TransferClient cl = new TransferClient(a[0], Integer.parseInt(a[1]), TransferStore.myId(c), TransferStore.myName(c), p.key);
+                    String theirs = cl.exchangeFcmToken(mine);
+                    if (shouldAdopt(p.fcmToken, theirs)) TransferStore.setFcmToken(c, p.id, theirs);
+                    TransferStore.log(c, "我們的推播 token 換了，已通知「" + p.name + "」");
+                    break;
+                } catch (Exception ignored) { }
+            }
+        }
     }
 
     /** 配對剛成功時呼叫（要在背景執行緒）：用同一次請求跟對方互換 token。失敗不影響配對本身。 */
