@@ -24,6 +24,7 @@ public class ResumeTransferTest {
     private TransferServer server;
     private byte[] key;
     private TransferClient client;
+    private volatile int receiverAction;   // 1＝接收端的使用者按停止，2＝按暫停（在收到一段之後）
     private final AtomicLong sentByServer = new AtomicLong();   // 伺服器「送出」的位元組（取檔時）
     private final AtomicLong receivedByServer = new AtomicLong();   // 伺服器「收到」的位元組（傳檔時）
 
@@ -48,7 +49,9 @@ public class ResumeTransferTest {
                 if (kind.equals("put")) receivedByServer.addAndGet(size);
             }
             @Override public void peerName(String peerId, String name) { }
-            @Override public void progress(String peerId, boolean toPeer, String name, long done, long total) { }
+            @Override public void progress(String peerId, boolean toPeer, String name, long done, long total) {
+                if (!toPeer && receiverAction != 0 && done > 80_000) throw new TransferServer.Aborted(receiverAction == 2);
+            }
             @Override public void transferEnded() { }
             @Override public void peerSeen(String peerId, String ip) { }
         });
@@ -192,6 +195,48 @@ public class ResumeTransferTest {
         assertArrayEquals(d, Files.readAllBytes(new File(inbox, "busy.bin").toPath()));
         assertTrue(second.lastVerified);
         assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+    }
+
+    /** 接收端的使用者按了「停止」：送出端要收到明確的回覆、不重試，接收端的半成品要刪掉。 */
+    @Test
+    public void receiverPressingStopEndsTheTransferWithoutRetries() throws Exception {
+        byte[] d = data(400_000, 11);
+        int[] opens = new int[1];
+        receiverAction = 1;
+        try {
+            client.putResumable(() -> { opens[0]++; return new ByteArrayInputStream(d); }, d.length, "stopme.bin", null);
+            throw new AssertionError("should have been stopped");
+        } catch (IOException e) {
+            assertTrue(String.valueOf(e.getMessage()), String.valueOf(e.getMessage()).startsWith("499"));
+        }
+        assertEquals("不能重試：只有算指紋與第一次傳，共 2 次打開來源（" + opens[0] + "）", 2, opens[0]);
+        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);   // 半成品已刪
+        assertFalse(new File(inbox, "stopme.bin").exists());
+        // 立刻再傳同一個檔案（對方重新同意）要能成功：停止的記憶只管幾秒內的自動重連
+        receiverAction = 0;
+        Thread.sleep(TransferServer.STOPPED_MEMORY_MS + 500);
+        client.putResumable(() -> new ByteArrayInputStream(d), d.length, "stopme.bin", null);
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "stopme.bin").toPath()));
+    }
+
+    /** 接收端按「暫停」：送出端不重試，接收端的半成品保留，之後可以接著傳。 */
+    @Test
+    public void receiverPressingPauseKeepsThePartialAndDoesNotRetry() throws Exception {
+        byte[] d = data(400_000, 12);
+        int[] opens = new int[1];
+        receiverAction = 2;
+        try {
+            client.putResumable(() -> { opens[0]++; return new ByteArrayInputStream(d); }, d.length, "pauseme.bin", null);
+            throw new AssertionError("should have been paused");
+        } catch (IOException e) {
+            assertTrue(String.valueOf(e.getMessage()), String.valueOf(e.getMessage()).startsWith("499"));
+        }
+        assertEquals(2, opens[0]);
+        assertEquals(1, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+        receiverAction = 0;
+        client.putResumable(() -> new ByteArrayInputStream(d), d.length, "pauseme.bin", null);
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "pauseme.bin").toPath()));
+        assertTrue(client.lastVerified);
     }
 
     @Test

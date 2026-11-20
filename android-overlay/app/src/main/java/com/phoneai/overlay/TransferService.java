@@ -171,8 +171,16 @@ public class TransferService extends Service {
             @Override
             public void progress(String peerId, boolean toPeer, String name, long done, long total) {
                 String who = TransferStore.nameOf(c, peerId);
-                if (toPeer) TransferNotify.progress(c, L.t("正在傳給 ") + who, L.t("傳到：") + who, name, done, total);
-                else TransferNotify.progress(c, L.t("正在收 ") + who + L.t(" 傳來的檔案"), L.t("存到：下載/PhoneAI"), name, done, total);
+                try {
+                    if (toPeer) TransferNotify.progress(c, L.t("正在傳給 ") + who, L.t("傳到：") + who, name, done, total);
+                    else TransferNotify.progress(c, L.t("正在收 ") + who + L.t(" 傳來的檔案"), L.t("存到：下載/PhoneAI"), name, done, total);
+                } catch (TransferNotify.Stopped s) {
+                    if (!toPeer) throw new TransferServer.Aborted(false);   // 收檔時被按停止：告訴對方，並刪掉半成品
+                    throw s;
+                } catch (TransferNotify.Paused pz) {
+                    if (!toPeer) throw new TransferServer.Aborted(true);
+                    throw pz;
+                }
             }
 
             @Override

@@ -66,6 +66,16 @@ final class TransferServer {
         default boolean fcmSetupOffer(String peerId, String configJson, String keyJson) { return false; }
     }
 
+    /** 接收端的使用者按了「停止」（keep=false）或「暫停」（keep=true）：host.progress 丟這個，伺服器會明確告訴對方，對方就不會當成斷線一直重試。 */
+    static final class Aborted extends RuntimeException {
+        final boolean keepPartial;
+        Aborted(boolean keepPartial) { super(keepPartial ? "paused by receiver" : "stopped by receiver"); this.keepPartial = keepPartial; }
+    }
+
+    /** 剛被接收端停掉的上傳（對方編號|指紋 → 時間）：對方在這幾秒內重連要直接回「已停止」，不能接著收。 */
+    private static final java.util.Map<String, Long> STOPPED = new java.util.concurrent.ConcurrentHashMap<>();
+    static final long STOPPED_MEMORY_MS = 5_000;
+
     private final Host host;
     private ServerSocket server;
     private volatile boolean running;
@@ -414,6 +424,8 @@ final class TransferServer {
         String activeKey = null;
         if (resumable) {
             tmp = new File(inbox, Resume.partName(au.peer, fpParam));
+            Long stoppedAt = STOPPED.get(au.peer + "|" + fpParam);
+            if (stoppedAt != null && System.currentTimeMillis() - stoppedAt < STOPPED_MEMORY_MS) { reply(out, 499, "stopped by receiver"); return; }
             long want = 0;
             try { want = Long.parseLong(offsetParam == null ? "0" : offsetParam.trim()); } catch (Exception e) { want = -1; }
             long have = tmp.isFile() ? tmp.length() : 0;
@@ -466,6 +478,10 @@ final class TransferServer {
             }
             host.event(au.peer, "put", rel(dest), total - offset);
             sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + Checksum.hex(md.digest()));
+        } catch (Aborted a) {   // 這一端的使用者按了停止／暫停：明確回覆（對方才不會當成斷線一直重試）；停止就把半成品刪掉
+            keepPart = a.keepPartial;
+            if (!a.keepPartial && resumable) STOPPED.put(au.peer + "|" + fpParam, System.currentTimeMillis());
+            try { reply(out, 499, a.getMessage()); } catch (IOException ignored) { }
         } catch (IOException e) {
             if (!keepPart) host.serverError(au.peer, L.t("收「") + base + L.t("」時出錯：") + e.getMessage());   // 留記錄，也盡量告訴對方原因（斷線這種之後會續傳的不算錯誤）
             try { reply(out, 500, String.valueOf(e.getMessage())); } catch (IOException ignored) { }

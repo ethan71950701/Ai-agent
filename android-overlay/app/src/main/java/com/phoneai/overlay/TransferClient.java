@@ -363,6 +363,8 @@ final class TransferClient {
             trackEnd(true);   // 使用者按「暫停」：對方的半成品與清單都保留
             throw pz;
         } catch (IOException e) {
+            String m499 = String.valueOf(e.getMessage());
+            if (m499.startsWith("499")) { trackEnd(m499.contains("paused") || m499.contains("暫停")); throw e; }   // 對方的使用者按了停止／暫停：不是斷線，不重試；停止不留在清單
             trackEnd(true);   // 意外失敗：留在「沒傳完」清單，使用者可以按「繼續」
             throw e;
         }
@@ -397,6 +399,7 @@ final class TransferClient {
             String nonce = writeHead(out, "PUT", target);
             long done = offset;
             java.security.MessageDigest md = Checksum.newDigest();
+            try {
             try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(key, nonce));
                  InputStream src = srcOpen.open()) {
                 byte[] buf = new byte[32 * 1024];
@@ -416,6 +419,9 @@ final class TransferClient {
                     if (cb != null) cb.onBytes(done, size);
                 }
             }
+            } catch (IOException w) {   // 寫到一半被對方掛斷：看看對方有沒有留一句「我按了停止」（有的話不是斷線，不要重試）
+                throw explainWriteFailure(s, w);
+            }
             out.flush();
             InputStream in = new BufferedInputStream(s.getInputStream());
             readStatus(in);
@@ -428,6 +434,17 @@ final class TransferClient {
                 return p.length > 1 ? p[1] : name;
             }
         }
+    }
+
+    private static IOException explainWriteFailure(Socket s, IOException write) {
+        try {
+            s.setSoTimeout(2000);
+            readStatus(new BufferedInputStream(s.getInputStream()));
+        } catch (IOException r) {
+            String m = r.getMessage();
+            if (m != null && m.startsWith("499")) return new IOException(m.contains("paused") ? "499 對方暫停了，這次傳輸先停下（等對方繼續後，在這邊按「繼續」）" : "499 對方按了停止，這次傳輸取消");
+        }
+        return write;
     }
 
     /** 把本機的檔案送到對方的收件匣。回傳對方存成的檔名。 */
