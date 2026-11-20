@@ -97,10 +97,19 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | grep -E "Verifies|SHA-256 digest|Number of signers" || true
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"   # 簽名無效就讓這一步失敗
           sha256sum "$APK"
+      - name: Write SHA256SUMS.txt
+        run: |
+          set -euo pipefail
+          cd android-overlay/app/build/outputs/apk/release
+          sha256sum PhoneAI.apk > SHA256SUMS.txt   # 檔名用相對的：使用者下載到同一個資料夾就能 sha256sum -c 核對
+          sha256sum -c SHA256SUMS.txt
+          cat SHA256SUMS.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: phoneai-overlay-apk
-          path: android-overlay/app/build/outputs/apk/release/PhoneAI.apk
+          path: |
+            android-overlay/app/build/outputs/apk/release/PhoneAI.apk
+            android-overlay/app/build/outputs/apk/release/SHA256SUMS.txt
           if-no-files-found: error
 
   release:
@@ -117,6 +126,12 @@ jobs:
         with:
           name: phoneai-overlay-apk
           path: apk
+      - name: Verify artifact checksum
+        run: |
+          set -euo pipefail
+          cd apk
+          ls -l
+          sha256sum -c SHA256SUMS.txt   # 兩個 job 之間檔案被換掉或損壞就中止，不發布
       # 發布 Release：App 與 update_app.py 都從「最新的 Release」下載，不需要權杖。只在 main 上、且有簽名金鑰時發布。
       - name: Publish release
         env:
@@ -143,8 +158,11 @@ jobs:
             fi
             echo
             echo "自動編譯的 APK（用專案固定金鑰簽名，可直接覆蓋安裝）｜Automatically built APK, signed with the project's fixed key; it installs over the previous version."
+            echo
+            echo "校驗碼｜Checksum（SHA-256）：\`sha256sum -c SHA256SUMS.txt\`"
+            sed 's/^/    /' apk/SHA256SUMS.txt
           } > "$RUNNER_TEMP/notes.md"
-          gh release create "$TAG" apk/PhoneAI.apk \
+          gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
             --notes-file "$RUNNER_TEMP/notes.md"
           # 只留最近 10 個 Release，舊的連同 tag 刪掉
