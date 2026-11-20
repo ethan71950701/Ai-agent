@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 小米（HyperOS）上推播常常晚很久才到時，檢查頁的提示多一句：可能是 Google Play 服務被凍住，可以試第三方小工具 FCM Guard｜On Xiaomi (HyperOS), when push messages often arrive very late the check page now hints that Google Play services may be frozen and mentions the third-party tool FCM Guard
 
 ## 1.0.1726
 

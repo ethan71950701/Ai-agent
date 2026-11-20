@@ -819,7 +819,7 @@ final class LEn {
         m.put("系統無法偵測，請確認：設定 → 電池 → 後台耗電管理 → Vertex 設為「允許後台高耗電」，並在「自啟動」打開。", "Can't be detected; please make sure: Settings → Battery → Background power management → Vertex set to \"Allow high background power use\", and turn on Autostart.");
         m.put("系統無法偵測，請確認：設定 → 電池 → 應用耗電管理 → Vertex → 允許自動啟動、允許背景活動。", "Can't be detected; please make sure: Settings → Battery → App power management → Vertex → allow auto-start and background activity.");
         m.put("系統無法偵測，請確認：設定 → 電池 → 背景使用限制，Vertex 不在「休眠中的 App」，並加入「永不休眠的 App」。", "Can't be detected; please make sure: Settings → Battery → Background usage limits: Vertex isn't in \"Sleeping apps\" and is added to \"Never sleeping apps\".");
-        m.put("系統無法偵測，請確認已開：設定 → 應用設定 → 應用管理 → Vertex → 自啟動（開）；省電策略選「無限制」。", "Can't be detected; please make sure: Settings → Apps → Manage apps → Vertex → Autostart (on); battery saver: No restrictions.");
+        m.put("系統無法偵測，請確認已開：設定 → 應用設定 → 應用管理 → Vertex → 自啟動（開）；省電策略選「無限制」。如果推播常常晚很久才到（App 一打開才一次收到），多半是 HyperOS 把「Google Play 服務」凍住了：可以試第三方小工具 FCM Guard（把 Google Play 服務加進不限制清單，不需要 root；是別人做的專案，請自己判斷要不要裝）。", "Can't be detected; please make sure: Settings → Apps → Manage apps → Vertex → Autostart (on); battery saver: No restrictions. If push messages often arrive very late (all at once when you open the app), HyperOS is probably freezing Google Play services: you can try the third-party tool FCM Guard (it adds Google Play services to the no-restrict list, no root needed; it is someone else's project, so judge for yourself whether to install it).");
         m.put("自啟動", "Autostart");
         m.put("沒有連上 Wi-Fi：叫醒與傳檔只在同一個 Wi-Fi 有效。", "Not on Wi-Fi: waking and transfers only work on the same Wi-Fi.");
         m.put("Wi-Fi", "Wi-Fi");

@@ -55,7 +55,7 @@ final class FcmHealth {
     static String autostartHint(String manufacturer) {
         String m = manufacturer == null ? "" : manufacturer.toLowerCase(Locale.ROOT);
         if (m.contains("xiaomi") || m.contains("redmi") || m.contains("poco"))
-            return "系統無法偵測，請確認已開：設定 → 應用設定 → 應用管理 → Vertex → 自啟動（開）；省電策略選「無限制」。";
+            return "系統無法偵測，請確認已開：設定 → 應用設定 → 應用管理 → Vertex → 自啟動（開）；省電策略選「無限制」。如果推播常常晚很久才到（App 一打開才一次收到），多半是 HyperOS 把「Google Play 服務」凍住了：可以試第三方小工具 FCM Guard（把 Google Play 服務加進不限制清單，不需要 root；是別人做的專案，請自己判斷要不要裝）。";
         if (m.contains("samsung"))
             return "系統無法偵測，請確認：設定 → 電池 → 背景使用限制，Vertex 不在「休眠中的 App」，並加入「永不休眠的 App」。";
         if (m.contains("oppo") || m.contains("realme") || m.contains("oneplus"))
