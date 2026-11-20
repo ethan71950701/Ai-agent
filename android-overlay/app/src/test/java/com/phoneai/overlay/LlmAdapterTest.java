@@ -450,6 +450,20 @@ public class LlmAdapterTest {
         org.junit.Assert.assertFalse("遠端開關關掉", ChatEngine.shouldStream(true, true, false, true));
     }
 
+    @org.junit.Test
+    public void fileTransferRequestsGoStraightToChat() {
+        java.util.List<String> peers = java.util.Arrays.asList("小米13", "客廳電腦", "25091RP04G");
+        for (String yes : new String[]{"把這個檔案傳給另一台手機", "把下載的 zip 傳到我的電腦", "把照片傳給小米13", "幫我從客廳電腦拿那個PDF",
+                "send the video to my other phone", "把影片傳送到另一台裝置", "我要把檔案發給平板", "從小米13取回昨天的照片"}) {
+            org.junit.Assert.assertTrue(yes, Router.isFileTransfer(yes, peers));
+        }
+        for (String no : new String[]{"傳訊息給媽媽", "把照片傳給小明", "打開檔案管理", "幫我開 Wi-Fi", "今天天氣如何", "打開相簿", "", "傳給我媽"}) {
+            org.junit.Assert.assertFalse(no, Router.isFileTransfer(no, peers));
+        }
+        org.junit.Assert.assertFalse(Router.isFileTransfer(null, peers));
+        org.junit.Assert.assertTrue(Router.isFileTransfer("把文件傳到手機", null));
+    }
+
     @org.junit.Test(expected = java.io.IOException.class)
     public void streamCutBeforeTheEndIsAnErrorNotAHalfAnswer() throws Exception {
         ChatEngine.readStream(sse(
