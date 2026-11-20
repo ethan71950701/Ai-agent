@@ -201,6 +201,9 @@ final class TransferClient {
             partOf(dest).delete();   // 使用者手動停止：已收到的也刪掉（意外斷線才保留續傳）
             trackEnd(false);
             throw stop;
+        } catch (TransferNotify.Paused pz) {
+            trackEnd(true);   // 使用者按「暫停」：半成品保留
+            throw pz;
         } catch (IOException e) {
             trackEnd(!String.valueOf(e.getMessage()).startsWith("校驗碼不符"));   // 內容壞掉的半成品已經刪了，不用留；其他（斷線）留著讓使用者按「繼續」
             throw e;
@@ -210,6 +213,7 @@ final class TransferClient {
     private long downloadWithRetries(String remotePath, File dest, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
             try {
                 return downloadOnce(remotePath, dest, cb);
             } catch (IOException e) {
@@ -312,6 +316,9 @@ final class TransferClient {
         };
     }
 
+    /** 這次傳輸在「沒傳完」清單裡的編號；沒登記回 null。 */
+    String trackedId() { return pendEntry == null ? null : pendEntry.id; }
+
     private void trackEnd(boolean keep) {
         if (pend == null) return;
         if (keep) pend.progress(pendEntry.id, pendDone, pendTotal, lastFp, System.currentTimeMillis(), true);
@@ -352,6 +359,9 @@ final class TransferClient {
             discardRemote(fp);   // 使用者手動停止：對方收到一半的也刪掉（意外斷線才保留續傳）
             trackEnd(false);
             throw stop;
+        } catch (TransferNotify.Paused pz) {
+            trackEnd(true);   // 使用者按「暫停」：對方的半成品與清單都保留
+            throw pz;
         } catch (IOException e) {
             trackEnd(true);   // 意外失敗：留在「沒傳完」清單，使用者可以按「繼續」
             throw e;
@@ -361,6 +371,7 @@ final class TransferClient {
     private String putWithRetries(Source src, long size, String name, String fp, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();   // 重試等待中按了暫停
             long offset = remoteOffset(fp);
             if (offset > size) offset = 0;
             String why = spaceProblem(size - offset);   // 只要看「還要收的那一段」

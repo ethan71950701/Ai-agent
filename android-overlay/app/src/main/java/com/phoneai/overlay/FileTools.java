@@ -67,6 +67,12 @@ final class FileTools {
                     } catch (TransferNotify.Stopped s) {
                         TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
                         return "已停止，未完成的檔案已刪除";
+                    } catch (TransferNotify.Paused pz) {
+                        TransferNotify.haltedById(c, cl.trackedId(), L.t("已暫停，已收到的部分有保留，按「繼續」接著收"), true);
+                        return "已暫停，已收到的部分有保留，到「互傳檔案」頁或通知按「繼續」";
+                    } catch (java.io.IOException io) {
+                        TransferNotify.haltedById(c, cl.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
+                        throw io;
                     }
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
                     TransferNotify.finishFile(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl), dest);   // 點通知開啟檔案
@@ -97,9 +103,15 @@ final class FileTools {
                     } catch (TransferNotify.Stopped s) {
                         TransferNotify.finish(c, L.t("已停止傳給 ") + dev);
                         return "已停止，檔案沒有傳出";
+                    } catch (TransferNotify.Paused pz) {
+                        TransferNotify.haltedById(c, cl2.trackedId(), L.t("已暫停，對方已收到的部分有保留，按「繼續」接著傳"), true);
+                        return "已暫停，到「互傳檔案」頁或通知按「繼續」";
                     } catch (java.io.IOException io) {
                         TransferStore.Peer peer = peerNamed(c, dev);
-                        if (!isConnectFailure(io) || !FcmLab.canRing(c, peer)) throw io;   // 一開始就連不上：改叫醒對方來取
+                        if (!isConnectFailure(io) || !FcmLab.canRing(c, peer)) {
+                            TransferNotify.haltedById(c, cl2.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
+                            throw io;
+                        }   // 一開始就連不上：改叫醒對方來取
                         String err = FcmLab.ring(c, peer, p.startsWith("/sdcard/") ? p.substring(8) : p);
                         if (err != null) return "錯誤：對方連不上，改用推播叫醒也失敗：" + err;
                         TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
@@ -219,8 +231,14 @@ final class FileTools {
                     return st;
                 }, total, name, (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
                         L.t("傳到：") + p.name + L.t(" 的收件匣"), shown, d, t));
+            } catch (TransferNotify.Paused pz) {
+                TransferNotify.haltedById(c, cl.trackedId(), L.t("已暫停，對方已收到的部分有保留，按「繼續」接著傳"), true);
+                return;
             } catch (java.io.IOException io) {
-                if (!isConnectFailure(io) || !FcmLab.canRing(c, p)) throw io;   // 一開始就連不上、而且能用推播：改叫醒對方
+                if (!isConnectFailure(io) || !FcmLab.canRing(c, p)) {
+                    TransferNotify.haltedById(c, cl.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
+                    throw io;
+                }   // 一開始就連不上、而且能用推播：改叫醒對方
                 java.io.InputStream again = c.getContentResolver().openInputStream(uri);
                 if (again == null) throw io;
                 String err = FcmLab.sendViaDoorbell(c, p, again, name);
@@ -265,10 +283,12 @@ final class FileTools {
         TransferStore.inbox().mkdirs();
         purgeOldParts(TransferStore.inbox());
         File dest = destForGet(TransferStore.inbox(), name);
+        final String[] trackedId = new String[1];
         TransferNotify.begin();
         try {
             TransferClient cl = clientFor(c, p);
             PendingTransfers.track(c, cl, PendingTransfers.entry("down", p, dest.getName(), "", remotePath, 0));
+            trackedId[0] = cl.trackedId();
             long n = cl.download(remotePath, dest, (d, t) -> TransferNotify.progress(c, L.t("正在從 ") + p.name + L.t(" 取回"),
                     L.t("存到：下載/PhoneAI"), dest.getName(), d, t));
             TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
@@ -277,15 +297,23 @@ final class FileTools {
         } catch (TransferNotify.Stopped s) {
             TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
             return null;
+        } catch (TransferNotify.Paused pz) {
+            TransferNotify.haltedById(c, trackedId[0], L.t("已暫停，已收到的部分有保留，按「繼續」接著收"), true);
+            return null;
+        } catch (java.io.IOException io) {
+            TransferNotify.haltedById(c, trackedId[0], io.getMessage(), false);
+            throw io;
         }
     }
 
     /** 手動傳：把手機上的一個檔案送到已配對的裝置。 */
     static String sendLocal(Context c, TransferStore.Peer p, File f) throws Exception {
+        final String[] trackedId = new String[1];
         TransferNotify.begin();
         try {
             TransferClient cl = clientFor(c, p);
             PendingTransfers.track(c, cl, PendingTransfers.entry("up", p, f.getName(), f.getAbsolutePath(), "", f.length()));
+            trackedId[0] = cl.trackedId();
             String saved = cl.putResumable(() -> new java.io.FileInputStream(f), f.length(), f.getName(), (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + p.name,
                     L.t("傳到：") + p.name + L.t(" 的收件匣"), f.getName(), d, t));
             TransferStore.log(c, L.t("傳出 ") + f.getName() + " → " + p.name);
@@ -294,6 +322,12 @@ final class FileTools {
         } catch (TransferNotify.Stopped s) {
             TransferNotify.finish(c, L.t("已停止傳給 ") + p.name);
             return null;
+        } catch (TransferNotify.Paused pz) {
+            TransferNotify.haltedById(c, trackedId[0], L.t("已暫停，對方已收到的部分有保留，按「繼續」接著傳"), true);
+            return null;
+        } catch (java.io.IOException io) {
+            TransferNotify.haltedById(c, trackedId[0], io.getMessage(), false);
+            throw io;
         }
     }
 

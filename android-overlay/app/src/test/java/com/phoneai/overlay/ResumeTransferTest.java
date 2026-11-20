@@ -243,4 +243,55 @@ public class ResumeTransferTest {
         assertEquals(0, client.remoteOffset(fp));
         assertFalse(part.exists());
     }
+
+    @Test
+    public void pausedDownloadKeepsThePartialAndResumesLater() throws Exception {
+        byte[] d = data(500_000, 11);
+        Files.write(new File(root, "pause.bin").toPath(), d);
+        File dest = new File(inbox, "pause.bin");
+        try {
+            client.download("pause.bin", dest, (done, total) -> { if (done > 150_000) throw new TransferNotify.Paused(); });
+            throw new AssertionError("should have paused");
+        } catch (TransferNotify.Paused expected) { }
+        File part = TransferClient.partOf(dest);
+        assertTrue("暫停：已收到的要保留", part.isFile() && part.length() > 0 && part.length() < d.length);
+        long kept = part.length();
+        sentByServer.set(0);
+        assertEquals(d.length, client.download("pause.bin", dest, null));   // 按「繼續」
+        assertArrayEquals(d, Files.readAllBytes(dest.toPath()));
+        assertEquals("續傳只收剩下的", d.length - kept, sentByServer.get());
+        assertTrue(client.lastVerified);
+    }
+
+    @Test
+    public void pausedUploadKeepsThePeersPartialAndResumesLater() throws Exception {
+        byte[] d = data(500_000, 12);
+        try {
+            client.putResumable(() -> new ByteArrayInputStream(d), d.length, "pup.bin", (done, total) -> { if (done > 200_000) throw new TransferNotify.Paused(); });
+            throw new AssertionError("should have paused");
+        } catch (TransferNotify.Paused expected) { }
+        // 對方（伺服器）發現斷線需要一點時間；等它收尾後半成品應該在
+        long have = 0, prev = -1;
+        for (int i = 0; i < 50 && !(have > 0 && have == prev); i++) { prev = have; Thread.sleep(100); have = client.remoteOffset(client.lastFp); }   // 等它長度不再增加
+        assertTrue("暫停：對方的半成品要保留，實際 " + have, have > 0 && have < d.length);
+        receivedByServer.set(0);
+        client.putResumable(() -> new ByteArrayInputStream(d), d.length, "pup.bin", null);   // 按「繼續」
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "pup.bin").toPath()));
+        assertEquals("續傳只送剩下的", d.length - have, receivedByServer.get());
+        assertTrue(client.lastVerified);
+    }
+
+    @Test
+    public void pauseFlagStopsRetriesBeforeTheyStart() throws Exception {
+        byte[] d = data(10_000, 13);
+        TransferNotify.requestPause();
+        try {
+            client.putResumable(() -> new ByteArrayInputStream(d), d.length, "never.bin", null);
+            throw new AssertionError("should be paused before even trying");
+        } catch (TransferNotify.Paused expected) {
+        } finally {
+            TransferNotify.begin();   // 清掉旗標，不影響其他測試
+        }
+        assertFalse(new File(inbox, "never.bin").exists());
+    }
 }

@@ -902,6 +902,14 @@ final class LEn {
         m.put("已經收到的部分會刪掉，之後要重新從頭傳。", "What was already received will be deleted; the next try starts from the beginning.");
         m.put("沒傳完的檔案", "Unfinished files");
         m.put("繼續傳…可以在通知列看進度", "Continuing… see progress in the notification");
+        m.put("已暫停，對方已收到的部分有保留，按「繼續」接著傳", "Paused; what the other side received is kept, tap Continue to go on");
+        m.put("已暫停，已收到的部分有保留，按「繼續」接著收", "Paused; what was received is kept, tap Continue to go on");
+        m.put("原來的檔案打不開：到「互傳檔案」頁按「繼續」，重新選同一個檔案，會從斷點繼續", "The original file can't be opened: on the File transfer page tap Continue and pick the same file again; it will continue from where it stopped");
+        m.put("繼續傳輸…", "Resuming transfer…");
+        m.put("正在傳輸中。「暫停」會保留已傳的部分，之後可以繼續；「停止」會把未完成的檔案刪掉。", "Transferring. Pause keeps what was already sent so you can continue later; Stop deletes the unfinished file.");
+        m.put("中斷", "Cut off");
+        m.put("已中斷", "Interrupted");
+        m.put("已暫停", "Paused");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

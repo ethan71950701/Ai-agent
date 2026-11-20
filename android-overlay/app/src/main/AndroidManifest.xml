@@ -90,6 +90,11 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Fetches one file the user's own paired device announced, over the local network, then stops." />
         </service>
+        <receiver android:name=".TransferActionReceiver" android:exported="false" />
+        <service android:name=".ResumeService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Resumes an unfinished file transfer to or from the user's own paired device after the user taps Continue, then stops." />
+        </service>
         <activity android:name=".NoticeActivity" android:theme="@style/AppTheme.Sub" android:exported="false" />
         <activity android:name=".FcmSetupActivity" android:theme="@style/AppTheme.Sub" android:exported="false" />
         <activity android:name=".FcmLabActivity" android:exported="false" android:label="FCM 喚醒實驗" />

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 互傳：傳輸通知多了「暫停」（保留已傳的部分）；意外斷線或暫停後，通知會留在通知列／Now Bar，顯示「已中斷」或「已暫停」加百分比，並有「繼續」和「丟掉」按鈕｜File transfer: the progress notification now has Pause (keeps what was sent); after a cut-off or a pause the notification stays in the shade / Now Bar showing "Interrupted" or "Paused" with a percentage and Continue / Discard buttons
 - 互傳：手動按「停止」就把已收到的部分刪掉（傳檔也會請對方刪）；意外斷線、重試後還是失敗的，留在「互傳檔案」頁的「沒傳完的檔案」，可以按「繼續」或「丟掉」，首頁也會提醒有幾個沒傳完｜File transfer: tapping Stop now deletes what was already received (the other side is asked to delete too); transfers that were cut off and still failed after retries stay in an "Unfinished files" list on the transfer page where you can Continue or Discard, and the home page shows how many are unfinished
 
 ## 1.0.1732

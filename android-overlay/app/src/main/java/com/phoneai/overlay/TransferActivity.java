@@ -99,8 +99,9 @@ public class TransferActivity extends Activity {
 
         if (TransferNotify.active()) {
             LinearLayout now = Ui.card(this, box);
-            now.addView(Ui.body(this, L.t("正在傳輸中，可以在這裡停止（未完成的檔案會被刪掉）。")));
-            now.addView(Ui.button(this, L.t("停止傳輸"), v -> TransferNotify.requestStop()));
+            now.addView(Ui.body(this, L.t("正在傳輸中。「暫停」會保留已傳的部分，之後可以繼續；「停止」會把未完成的檔案刪掉。")));
+            Ui.buttons(this, now, Ui.button(this, L.t("暫停"), v -> TransferNotify.requestPause()),
+                    Ui.tonal(this, L.t("停止傳輸"), v -> TransferNotify.requestStop()));
         }
 
         LinearLayout me = Ui.card(this, box);
