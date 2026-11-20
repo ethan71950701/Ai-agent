@@ -377,12 +377,12 @@ final class FcmLab {
     }
 
     /** 被「叫醒」的這一端：把互傳伺服器開起來，沒人用了就自動關（瀏覽時最後一個連線結束後多留 60 秒）。 */
-    static void serveForAWhile(Context c) {
+    static String serveForAWhile(Context c) {
         final Context app = c.getApplicationContext();
-        if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return; }
+        if (!TransferStore.enabled(app)) { LifeLog.add(app, "FCM 叫醒：互傳總開關沒開，不開伺服器"); return "互傳總開關沒開，所以沒有開伺服器（到「設定 → 互傳檔案」打開）"; }
         final boolean startedHere = !TransferService.running;
         TransferService.start(app);
-        if (!startedHere) return;   // 本來就開著（使用者自己開的）：不去關它
+        if (!startedHere) return "互傳本來就開著，等對方連進來";   // 本來就開著（使用者自己開的）：不去關它
         Thread t = new Thread(() -> {
             IdleWatch w = new IdleWatch(System.currentTimeMillis(), 60_000);
             try {
@@ -393,6 +393,7 @@ final class FcmLab {
         }, "fcm-serve-autostop");
         t.setDaemon(true);
         t.start();
+        return "已把互傳伺服器開起來，等對方連進來（沒人用會自動關）";
     }
 
     /** 臨時開起的伺服器，沒人來或傳完就關（IdleWatch）。門鈴沒送成功就不用等，直接關。 */

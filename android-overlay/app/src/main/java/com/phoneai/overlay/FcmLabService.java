@@ -37,6 +37,7 @@ public class FcmLabService extends FirebaseMessagingService {
 
     private void onDoorbell(RemoteMessage m) {
         LifeLog.add(this, "FCM 門鈴：收到（尚未驗證），欄位 " + m.getData().keySet());
+        notifyLab("收到叫醒推播，驗證中…");
         Doorbell.Result r = BELL.verify(m.getData(), System.currentTimeMillis(), FcmLab.lanNet());
         if (!r.ok()) {   // 驗證不過：不連線。實驗版才跳通知講原因（正式版只留記錄）
             LifeLog.add(this, "FCM 門鈴被拒絕：" + r.error);
@@ -45,7 +46,8 @@ public class FcmLabService extends FirebaseMessagingService {
         }
         if ("serve".equals(r.ring.mode)) {   // 只是叫醒：把伺服器開起來，對方再用原本的方式連進來
             LifeLog.add(this, "FCM 叫醒通過：" + TransferStore.nameOf(this, r.ring.from) + " 要連進來");
-            FcmLab.serveForAWhile(this);
+            String st = FcmLab.serveForAWhile(this);
+            notifyLab("收到「" + TransferStore.nameOf(this, r.ring.from) + "」的叫醒：" + st);   // 每次被叫醒都讓人看得到結果（也符合高優先級推播要有可見通知的建議）
             return;
         }
         notifyLab("門鈴通過，準備取檔：" + r.ring.name);
