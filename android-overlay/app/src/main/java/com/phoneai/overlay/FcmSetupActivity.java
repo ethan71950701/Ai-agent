@@ -60,6 +60,14 @@ public class FcmSetupActivity extends Activity {
         b2.addView(Ui.body(this, L.t("配對請到「互傳檔案」頁面。配對成功時會自動互換推播 token；如果之前配對過、或有一邊當時還沒設定，可以在這裡補互換（兩邊要連得上）。")));
         b2.addView(Ui.tonal(this, L.t("和某台已配對裝置互換 token"), v -> pickPeer(p -> exchange(p))));
 
+        Ui.section(this, box, L.t("這支手機"));
+        LinearLayout me = Ui.card(this, box);
+        String mid = TransferStore.myId(this), mt = FcmLab.myToken(this);
+        me.addView(Ui.body(this, L.t("名稱：") + TransferStore.myName(this) + "\n" + L.t("裝置編號：") + (mid.length() > 8 ? mid.substring(0, 8) : mid)
+                + "\n" + L.t("推播 token 結尾：") + (mt == null ? L.t("還沒有") : mt.substring(Math.max(0, mt.length() - 6)))
+                + "\n" + L.t("版本：") + getString(R.string.build_id)
+                + "\n" + L.t("拿這裡的編號和 token 結尾，去對方手機的「已配對裝置」選單核對，看有沒有對到同一台。")));
+
         Ui.section(this, box, L.t("3. 檢查"));
         LinearLayout c3 = Ui.card(this, box);
         for (FcmHealth.Item it : items) {
@@ -140,7 +148,8 @@ public class FcmSetupActivity extends Activity {
         for (int i = 0; i < names.length; i++) {
             TransferStore.Peer q = ps.get(i);
             String where = q.ip != null ? q.ip : (q.tsIp != null ? q.tsIp : L.t("位址未知"));
-            names[i] = q.name + "\n" + where + "｜" + (q.fcmToken == null ? L.t("沒存 token") : L.t("已存 token"));
+            String tk = q.fcmToken == null ? L.t("沒存 token") : L.t("token 結尾 ") + q.fcmToken.substring(Math.max(0, q.fcmToken.length() - 6));
+            names[i] = q.name + "\n" + where + "｜" + L.t("編號 ") + (q.id.length() > 8 ? q.id.substring(0, 8) : q.id) + "｜" + tk;
         }
         new android.app.AlertDialog.Builder(this).setTitle(L.t("選裝置")).setItems(names, (d, w) -> then.accept(ps.get(w))).show();
     }

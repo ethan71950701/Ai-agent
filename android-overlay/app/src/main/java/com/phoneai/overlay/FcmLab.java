@@ -351,7 +351,7 @@ final class FcmLab {
     /** 逐步診斷「叫醒對方」：每一步的結果都寫出來（不含 token 全文與金鑰），看是哪一步斷掉。回傳多行文字。 */
     static String diagnoseWake(Context c, TransferStore.Peer p) {
         StringBuilder sb = new StringBuilder();
-        sb.append("對象：").append(p.name).append('\n');
+        sb.append("對象：").append(p.name).append("（編號 ").append(p.id.length() > 8 ? p.id.substring(0, 8) : p.id).append("，上次的位址 ").append(p.ip == null ? "未知" : p.ip).append("）\n");
         sb.append("1. 對方的 token：").append(p.fcmToken == null ? "❌ 沒有（先互換 token）" : "✅ 有（結尾 " + p.fcmToken.substring(Math.max(0, p.fcmToken.length() - 6)) + "）").append('\n');
         sb.append("2. 這支手機的設定檔：").append(hasConfig(c) ? "✅" : "❌").append("；發送金鑰：").append(FcmVault.has(c) ? "✅" : "❌").append('\n');
         String ip = lanNet();

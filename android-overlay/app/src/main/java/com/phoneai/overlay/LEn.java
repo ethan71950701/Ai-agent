@@ -872,6 +872,14 @@ final class LEn {
         m.put("診斷中…（最久約 30 秒）", "Diagnosing… (up to ~30 s)");
         m.put("叫醒診斷", "Wake-up diagnosis");
         m.put("好", "OK");
+        m.put("這支手機", "This phone");
+        m.put("名稱：", "Name: ");
+        m.put("裝置編號：", "Device ID: ");
+        m.put("推播 token 結尾：", "Push token ends with: ");
+        m.put("版本：", "Version: ");
+        m.put("拿這裡的編號和 token 結尾，去對方手機的「已配對裝置」選單核對，看有沒有對到同一台。", "Compare this ID and token ending with the entry in the other phone's paired-device list to see if they match the same device.");
+        m.put("token 結尾 ", "token ends ");
+        m.put("編號 ", "ID ");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
