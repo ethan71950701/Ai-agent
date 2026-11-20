@@ -66,8 +66,8 @@ final class FileTools {
                         TransferNotify.finish(c, L.t("已停止，未完成的檔案已刪除"));
                         return "已停止，未完成的檔案已刪除";
                     }
-                    TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）");
-                    TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）");
+                    TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
+                    TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
                     return "已存到 下載/PhoneAI/" + dest.getName() + "（" + TransferStore.size(n) + "）";
                 }
                 case "file_send": {
@@ -102,9 +102,9 @@ final class FileTools {
                         TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
                         return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
                     }
-                    TransferStore.log(c, L.t("傳出 ") + src.getName() + " → " + dev);
-                    TransferNotify.finish(c, L.t("已傳到 ") + dev + "：" + src.getName());
-                    return "已傳到對方的收件匣，檔名：" + saved + "（" + TransferStore.size(src.length()) + "）";
+                    TransferStore.log(c, L.t("傳出 ") + src.getName() + " → " + dev + shaNote(cl2));
+                    TransferNotify.finish(c, L.t("已傳到 ") + dev + "：" + src.getName() + shaNote(cl2));
+                    return "已傳到對方的收件匣，檔名：" + saved + "（" + TransferStore.size(src.length()) + "）" + shaNote(cl2);
                 }
                 default:
                     return "錯誤：未知工具 " + name;
@@ -215,8 +215,8 @@ final class FileTools {
                 TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
                 return;
             }
-            TransferStore.log(c, L.t("傳出 ") + name + " → " + p.name);
-            TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved);
+            TransferStore.log(c, L.t("傳出 ") + name + " → " + p.name + shaNote(cl));
+            TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved + shaNote(cl));
         } catch (TransferNotify.Stopped s) {
             TransferNotify.finish(c, L.t("已停止傳給 ") + p.name);
         } catch (Exception e) {
@@ -323,6 +323,12 @@ final class FileTools {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /** 校驗碼的一小段說明，放在記錄與通知後面：前 8 碼，以及有沒有跟對方核對過。 */
+    static String shaNote(TransferClient cl) {
+        if (cl == null || cl.lastSha.isEmpty()) return "";
+        return " SHA-256 " + Checksum.shortOf(cl.lastSha) + (cl.lastVerified ? L.t(" ✓已核對") : L.t("（對方沒提供，未核對）"));
     }
 
     /** 是不是「一開始就連不上對方」（還沒傳任何資料）：這種情況才可以安全地改用推播叫醒。傳到一半斷線不算。 */

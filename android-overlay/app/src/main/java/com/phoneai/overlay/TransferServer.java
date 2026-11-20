@@ -96,6 +96,9 @@ final class TransferServer {
 
     /** 同時最多幾個連線（含傳輸中的），超過就拒絕新的。 */
     static final int MAX_CONNECTIONS = 8;
+    private static final Checksum.Cache SENT_SHA = new Checksum.Cache(64);
+    /** 沒有現成校驗碼時，超過這個大小就不替對方現算（讀太久），回空的，對方略過校驗。 */
+    static final long SHA_ON_DEMAND_MAX = 512L * 1024 * 1024;
     /** 目前正在處理的連線數（臨時開的伺服器用它判斷什麼時候可以關）。 */
     static int activeConnections() { return ACTIVE.get(); }
 
@@ -219,6 +222,17 @@ final class TransferServer {
                     sendText(out, au, "ok\t" + (Doorbell.validToken(mine) ? mine : ""));   // 同一次請求互換：把我的 token 一起回給對方
                     break;
                 }
+                case "/v1/sha": {
+                    File f = resolve(params.get("path"));
+                    if (!f.isFile()) { reply(out, 404, "not a file"); return; }
+                    String have = SENT_SHA.get(f);
+                    if (have == null && f.length() <= SHA_ON_DEMAND_MAX) {
+                        have = Checksum.sha256(f);
+                        SENT_SHA.put(f, have);
+                    }
+                    sendText(out, au, have == null ? "" : have);
+                    break;
+                }
                 case "/v1/fcmsetup":
                     receiveFcmSetup(in, out, au, params.get("size"));
                     break;
@@ -295,17 +309,21 @@ final class TransferServer {
         out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: " + f.length() + "\r\nConnection: close\r\n\r\n")
                 .getBytes(StandardCharsets.ISO_8859_1));
         long total = 0;
+        java.security.MessageDigest md = Checksum.newDigest();   // 邊送邊算整檔校驗碼；送完存起來，對方之後來問就不用再讀一遍
+        final long lenAtStart = f.length(), mtimeAtStart = f.lastModified();
         try (InputStream fin = new FileInputStream(f);
              TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(au.key, au.nonce))) {
             byte[] buf = new byte[32 * 1024];
             int n;
             while ((n = fin.read(buf)) > 0) {
                 so.write(buf, 0, n);
+                md.update(buf, 0, n);
                 total += n;
                 host.progress(au.peer, true, f.getName(), total, f.length());
             }
         }
         out.flush();
+        if (total == lenAtStart && f.length() == lenAtStart && f.lastModified() == mtimeAtStart) SENT_SHA.put(f, Checksum.hex(md.digest()));   // 送的過程中檔案沒被改過才記
         host.event(au.peer, "get", rel(f), total);
     }
 
@@ -351,12 +369,14 @@ final class TransferServer {
         File tmp = null;
         try {   // 不管成功、失敗、被中斷（含 Error），預留的空間與暫存檔一定要處理掉
             tmp = new File(inbox, "." + java.util.UUID.randomUUID() + ".part");   // 暫存檔用隨機名稱：同名檔案同時上傳不會互相蓋掉
+            java.security.MessageDigest md = Checksum.newDigest();
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(au.key, au.nonce));
                  FileOutputStream fo = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
                 while ((n = body.read(buf)) > 0) {
                     fo.write(buf, 0, n);
+                    md.update(buf, 0, n);
                     total += n;
                     if (total > MAX_UPLOAD_BYTES || total > expect) throw new IOException("upload larger than declared");   // 超過上限或比宣告的大小多一個位元組：中止
                     if ((total & 0x3FFFFF) < n && inbox.getUsableSpace() < KEEP_FREE_BYTES / 2) throw new IOException("out of space");   // 每約 4MB 看一次剩餘空間
@@ -371,7 +391,7 @@ final class TransferServer {
                 tmp = null;   // 已經改名成正式檔案，不要在 finally 刪掉
             }
             host.event(au.peer, "put", rel(dest), total);
-            sendText(out, au, "saved\t" + dest.getName() + "\t" + total);
+            sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + Checksum.hex(md.digest()));
         } finally {
             if (tmp != null) tmp.delete();   // 中斷、被停止或改名失敗：未完成的檔案刪掉
             RESERVER.release(expect);

@@ -24,6 +24,10 @@ import java.util.Map;
 final class TransferClient {
     interface Progress { void onBytes(long done, long total); }
 
+    /** 最近一次傳輸（取檔或送檔）的整檔校驗碼；對方不支援校驗時 verified 是 false。 */
+    volatile String lastSha = "";
+    volatile boolean lastVerified;
+
     private final String ip;
     private final int port;
     private final String myId;
@@ -122,6 +126,12 @@ final class TransferClient {
         return Doorbell.validToken(theirs) ? theirs : null;
     }
 
+    /** 向對方要它剛送出的那個檔案的整檔校驗碼；對方沒有現成的又太大時回空字串。 */
+    String remoteSha(String path) throws IOException {
+        String r = getText("/v1/sha?path=" + enc(path)).trim();
+        return r.matches("[0-9a-fA-F]{64}") ? r : "";
+    }
+
     /** 把推播設定（設定檔＋發送金鑰）傳給對方，等對方的使用者按接受或拒絕（最多等 90 秒）。回傳 true＝接受。 */
     boolean sendFcmSetup(String configJson, String keyJson) throws IOException {
         final byte[] body;
@@ -178,16 +188,24 @@ final class TransferClient {
             long total = 0;
             try { total = Long.parseLong(h.get("x-size")); } catch (Exception ignored) { }
             long done = 0;
+            java.security.MessageDigest md = Checksum.newDigest();
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce));
                  FileOutputStream fo = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
                 while ((n = body.read(buf)) > 0) {
                     fo.write(buf, 0, n);
+                    md.update(buf, 0, n);
                     done += n;
                     if (cb != null) cb.onBytes(done, total);
                 }
             }
+            final String mine = Checksum.hex(md.digest());
+            String theirs = "";
+            try { theirs = remoteSha(remotePath); } catch (IOException ignored) { }   // 對方是舊版（沒有這個端點）或不給：略過校驗
+            lastSha = mine;
+            lastVerified = !theirs.isEmpty();
+            if (lastVerified && !Checksum.same(mine, theirs)) throw new IOException("校驗碼不符：收到的檔案和對方送出的不一樣（已丟棄）");
             if (!tmp.renameTo(dest)) throw new IOException("無法存成 " + dest.getName());
             return done;
         } catch (IOException | RuntimeException e) {
@@ -208,12 +226,14 @@ final class TransferClient {
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
             String nonce = writeHead(out, "PUT", target);
             long total = size, done = 0;
+            java.security.MessageDigest md = Checksum.newDigest();
             try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(key, nonce));
                  InputStream src = fin) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
                 while ((n = src.read(buf)) > 0) {
                     so.write(buf, 0, n);
+                    md.update(buf, 0, n);
                     done += n;
                     if (cb != null) cb.onBytes(done, total);
                 }
@@ -223,6 +243,10 @@ final class TransferClient {
             readStatus(in);
             try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
                 String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
+                lastSha = Checksum.hex(md.digest());
+                lastVerified = p.length > 3 && !p[3].trim().isEmpty();
+                if (lastVerified && !Checksum.same(lastSha, p[3].trim()))
+                    throw new IOException("校驗碼不符：對方存下的檔案和送出的不一樣（請重傳，必要時刪掉對方收件匣裡的那個檔案）");
                 return p.length > 1 ? p[1] : name;
             }
         }
