@@ -55,7 +55,7 @@ public class App extends Application {
         return a instanceof MainActivity || a instanceof OnboardingActivity || a instanceof DiagActivity || a instanceof MemoryActivity
                 || a instanceof LogActivity || a instanceof DigestActivity || a instanceof GuideActivity || a instanceof ConfirmActivity || a instanceof TransferActivity
                 || a instanceof TaskDetailActivity || a instanceof BrowseActivity || a instanceof FileSearchActivity
-                || a instanceof FcmSetupActivity || a instanceof FcmLabActivity;
+                || a instanceof FcmSetupActivity || a instanceof FcmLabActivity || a instanceof NoticeActivity;
     }
 
     static android.content.Context ctx;   // 給 Root 找 App 資料夾用

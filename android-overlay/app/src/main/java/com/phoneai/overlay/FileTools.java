@@ -67,7 +67,7 @@ final class FileTools {
                         return "已停止，未完成的檔案已刪除";
                     }
                     TransferStore.log(c, L.t("取回 ") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
-                    TransferNotify.finish(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl));
+                    TransferNotify.finishFile(c, L.t("已存到 下載/PhoneAI/") + dest.getName() + "（" + TransferStore.size(n) + "）" + shaNote(cl), dest);   // 點通知開啟檔案
                     return "已存到 下載/PhoneAI/" + dest.getName() + "（" + TransferStore.size(n) + "）";
                 }
                 case "file_send": {

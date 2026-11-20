@@ -193,9 +193,12 @@ public class TransferService extends Service {
                     case "get":
                         note(c, who + L.t(" 取走了：") + what + sz);
                         break;
-                    case "put":
-                        note(c, who + L.t(" 傳來了：") + what + sz);
+                    case "put": {
+                        String text = who + L.t(" 傳來了：") + what + sz;
+                        TransferStore.log(c, text);
+                        TransferNotify.finishFile(c, text, new File(TransferStore.root(), what));   // 點通知就開啟這個檔案
                         break;
+                    }
                     case "list":
                         TransferStore.log(c, who + L.t(" 查看了資料夾：") + (what.isEmpty() ? "/" : what));
                         break;

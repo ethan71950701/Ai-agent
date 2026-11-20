@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="update" path="." />
+    <!-- 互傳收到的檔案：點完成通知就用別的 App 開啟；只開放這個收件匣資料夾，不是整個儲存空間 -->
+    <external-path name="received" path="Download/PhoneAI/" />
 </paths>

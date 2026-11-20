@@ -3,6 +3,8 @@ package com.phoneai.overlay;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.os.Build;
@@ -32,12 +34,34 @@ final class Notify {
         if (c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("tts_on", true)) speak(c, Md.spoken(text));
     }
 
-    static void notifyText(Context c, String title, String text, int id) {
+    static void notifyText(Context c, String title, String text, int id) { notifyWith(c, title, text, id, null); }
+
+    /** 完成通知：點它直接用適合的 App 開啟這個檔案（互傳收到的檔案）；沒有 App 能開時，系統會告訴使用者。 */
+    static void notifyFile(Context c, String title, String text, int id, java.io.File file) {
+        PendingIntent pi = null;
+        try {
+            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(c, "com.phoneai.overlay.update", file);
+            String ext = android.webkit.MimeTypeMap.getFileExtensionFromUrl(file.getName());
+            String mime = ext == null || ext.isEmpty() ? null : android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext.toLowerCase(Locale.ROOT));
+            Intent it = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime == null ? "*/*" : mime)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            pi = PendingIntent.getActivity(c, id, it, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        } catch (Exception ignored) { }   // 檔案不在收件匣資料夾（路徑不在 FileProvider 範圍）：退回點開看完整文字
+        notifyWith(c, title, text, id, pi);
+    }
+
+    private static void notifyWith(Context c, String title, String text, int id, PendingIntent tap) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("助理"), NotificationManager.IMPORTANCE_LOW));
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, CHANNEL) : new Notification.Builder(c);
         b.setSmallIcon(R.drawable.ic_stat).setContentTitle(title).setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text)).setAutoCancel(true);
+        if (tap == null) {   // 預設：點通知打開完整文字（通知列放不下的部分）
+            Intent it = new Intent(c, NoticeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra("title", title).putExtra("text", text == null ? "" : text.length() > 20000 ? text.substring(0, 20000) : text);
+            tap = PendingIntent.getActivity(c, id, it, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        }
+        b.setContentIntent(tap);
         nm.notify(id, b.build());
     }
 

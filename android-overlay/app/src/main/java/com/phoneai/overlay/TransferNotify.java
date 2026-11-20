@@ -85,4 +85,10 @@ final class TransferNotify {
         cancel(c);
         Notify.notifyText(c, L.t("互傳檔案"), text, DONE_BASE + (doneCount++ % 20));
     }
+
+    /** 收到檔案：收起進度，再發完成通知；點通知直接開啟那個檔案。 */
+    static void finishFile(Context c, String text, java.io.File file) {
+        cancel(c);
+        Notify.notifyFile(c, L.t("互傳檔案"), text, DONE_BASE + (doneCount++ % 20), file);
+    }
 }
