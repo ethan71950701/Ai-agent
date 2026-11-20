@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1721
+
 - 推播喚醒：連得上已配對的裝置、但它還沒有你的 token 時，會自動在背景補互換（解決「一台叫得醒、另一台叫不醒」）；檢查頁會列出還缺 token 的裝置名稱｜Push wake-up: when a paired device is reachable but doesn't have your token yet, tokens are now exchanged automatically in the background (fixes "one phone can wake the other but not vice versa"); the check page names the devices still missing a token
 
 ## 1.0.1720
