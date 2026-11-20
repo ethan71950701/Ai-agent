@@ -165,27 +165,6 @@ final class Router {
                     + "\\b(open|turn|go to|goto|tap|click|launch|switch|send|call|volume|brightness|screenshot|enable|disable)\\b",
             Pattern.CASE_INSENSITIVE);
 
-    // 傳檔案：動作（傳、拿、取、發…）＋東西（檔案、照片…）＋對象（手機、電腦、裝置，或已配對裝置的名字）三樣都有，才算
-    private static final Pattern XFER_VERB = Pattern.compile("傳|拿|取回|取|發給|發送|寄給|抓|下載|搬|同步|(?i:\\b(send|transfer|copy|get|fetch|move|share)\\b)");
-    private static final Pattern XFER_THING = Pattern.compile("檔案|檔|文件|照片|相片|圖片|影片|錄影|錄音|音檔|音樂|資料夾|(?i:pdf|zip|apk|docx?|xlsx?|pptx?|mp[34]|jpe?g|png|\\bfiles?\\b|\\bphotos?\\b|\\bvideos?\\b)");
-    private static final Pattern XFER_WHERE = Pattern.compile("手機|電腦|平板|裝置|設備|另一台|別台|那台|這台|(?i:\\b(phone|computer|pc|laptop|tablet|device)\\b)");
-
-    /** 這句話是不是要在自己的裝置之間傳檔案、找檔案：是就直接交給聊天助理（它有傳檔案工具），不要讓便宜模型猜成「操作螢幕」。peerNames 是已配對裝置的名字。 */
-    static boolean isFileTransfer(String text, java.util.Collection<String> peerNames) {
-        if (text == null || text.trim().isEmpty()) return false;
-        if (!XFER_VERB.matcher(text).find() || !XFER_THING.matcher(text).find()) return false;
-        if (XFER_WHERE.matcher(text).find()) return true;
-        String low = text.toLowerCase(java.util.Locale.ROOT);
-        if (peerNames != null) for (String n : peerNames) if (n != null && n.length() >= 2 && low.contains(n.toLowerCase(java.util.Locale.ROOT))) return true;
-        return false;
-    }
-
-    static boolean isFileTransfer(Context c, String text) {
-        java.util.List<String> names = new java.util.ArrayList<>();
-        try { for (TransferStore.Peer p : TransferStore.peers(c)) names.add(p.name); } catch (Throwable ignored) { }
-        return isFileTransfer(text, names);
-    }
-
     private static final Pattern SCHED_HINT = Pattern.compile("每天|每隔|每[0-9一二三四五六七八九十兩]+天|每週|每周|定時|排程|(?i:\\b(every day|every \\d+ days|daily|schedule)\\b)");
 
     /** 這句話看起來可能是要操作手機：先問路由（一次判斷固定指令、開 App、操作畫面）。不像的就直接聊天，聊天助理真的需要操作時會自己呼叫 phone_action 交出去。 */

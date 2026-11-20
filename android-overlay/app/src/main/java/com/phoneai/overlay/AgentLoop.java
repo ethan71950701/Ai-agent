@@ -118,6 +118,7 @@ final class AgentLoop {
     private static boolean operatesPhone(String name) {
         switch (name) {
             case "done": case "fail": case "ask_user": case "ask": case "search": case "remember": case "note_add": case "wait": case "": return false;
+            case "device_list": case "file_find": case "file_list": case "file_get": case "file_send": return false;   // 傳檔案不操作螢幕，面板不用收起來
             default: return true;
         }
     }
@@ -474,6 +475,13 @@ final class AgentLoop {
                         }
                         history.add(log.toString());
                         recordStep(recorded, macroValid, action, tree, useTree, allOk);
+                        break;
+                    }
+                    case "device_list": case "file_find": case "file_list": case "file_get": case "file_send": {
+                        macroValid[0] = false;   // 每次要找、要傳的檔案都不同：不記成可重播的步驟
+                        String fr = FileTools.run(c, name, action, msg -> false);   // 刪除沒有開放給自動操作（這裡的確認一律當不同意）
+                        if (fr.length() > 1500) fr = fr.substring(0, 1500) + "…（太長已截斷）";
+                        history.add(step + ". " + name + " " + action + " → " + fr);
                         break;
                     }
                     case "look":

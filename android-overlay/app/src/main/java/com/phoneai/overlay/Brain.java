@@ -66,10 +66,8 @@ final class Brain {
         }
         String over = Usage.overLimit(act);   // 超過用量上限：不送出 Claude 的請求
         if (over != null) return over;
-        final boolean fileXfer = Router.isFileTransfer(act, t);   // 在自己的裝置之間傳檔案：直接聊天（有傳檔案工具），不問路由，也不會被判成「操作螢幕」
-        final boolean likely = !fileXfer && Router.likelyAction(t);
-        Router.Decision d = likely ? Router.decide(act, t) : null;
-        if (fileXfer) Router.lastNote = L.t("路由：傳檔案，直接聊天（用傳檔案工具，沒有問路由）");   // 不像操作手機的話直接聊天（省掉路由那一次又長又慢的請求）；聊天助理覺得需要操作時會用 phone_action 交出去
+        final boolean likely = Router.likelyAction(t);
+        Router.Decision d = likely ? Router.decide(act, t) : null;   // 不像操作手機的話直接聊天（省掉路由那一次又長又慢的請求）；聊天助理覺得需要操作時會用 phone_action 交出去
         if (!likely) Router.lastNote = L.t("路由：看起來是聊天，直接聊天（沒有問路由）");
         String kind = d == null ? Router.CHAT : d.kind;
         switch (kind) {

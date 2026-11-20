@@ -39,6 +39,12 @@ final class AgentPrompt {
             "{\"action\":\"note_add\",\"title\":\"12字內標題\",\"brief\":\"一句話摘要\",\"text\":\"筆記內容\"}，使用者要你把畫面上看到的資訊（課表、地址、號碼、重點…）記起來時用：把內容整理成簡短文字（300字內）存成他的筆記，不用再開任何畫面；存完用 done 告訴他記了什麼\n" +
             "{\"action\":\"reminder_create\",\"title\":\"提醒內容\",\"date\":\"yyyy-MM-dd\",\"time\":\"HH:mm\"}，使用者要在「三星提醒」新增提醒時優先用這個：直接新增好，不用開畫面（需要root或Shizuku；date、time依提示裡的現在時間算出「明天」「下週三」等，time用24小時制，沒說時間可省略time成為全天，沒說日期兩個都省略）；回「新增失敗」或說沒有root時才改用下一行的reminder_draft\n" +
             "{\"action\":\"reminder_draft\",\"title\":\"提醒內容\"}，使用者要在「三星提醒」新增提醒時，第一步用這個：直接開新增畫面並填好標題，之後你只要設定日期時間、按儲存（不用自己找App、點新增、打字）\n" +
+            "{\"action\":\"device_list\"}，列出已配對、可以傳檔案的其他裝置（手機、電腦）和它們現在在不在線。\n" +
+            "{\"action\":\"file_find\",\"device\":\"裝置名稱，空白＝這支手機\",\"name\":\"檔名關鍵字\"}，找檔案，回傳完整路徑、大小、日期（最新的在前面）。\n" +
+            "{\"action\":\"file_list\",\"device\":\"裝置名稱，空白＝這支手機\",\"path\":\"資料夾\"}，列出資料夾裡有什麼。\n" +
+            "{\"action\":\"file_get\",\"device\":\"對方裝置名稱\",\"path\":\"對方那邊的檔案路徑\"}，把另一台裝置上的檔案取到這支手機（存在 下載/PhoneAI）；路徑要先用 file_find 找到。\n" +
+            "{\"action\":\"file_send\",\"device\":\"對方裝置名稱\",\"path\":\"這支手機上的檔案路徑\"}，把這支手機上的檔案傳到另一台裝置；路徑要先用 file_find 找到。\n" +
+            "在使用者自己的裝置之間傳檔案、找檔案、拿檔案，一律用上面這幾個動作，不要用畫面操作去相簿或檔案管理員找、也不要用 LINE 之類的 App 傳。有好幾個符合的檔案、不確定要傳給哪一台裝置、或找不到時，用 ask_user 把選項列出來問使用者，不要自己亂猜；動作回傳錯誤就把原因告訴使用者。\n" +
             "{\"action\":\"wait\",\"wait\":秒數}，什麼都不做，只等待（App或遊戲載入中、廣告倒數時用，0.5到6秒）\n" +
             "{\"action\":\"back\"}、{\"action\":\"home\"}\n" +
             "{\"action\":\"ask\",\"why\":\"原因\",\"manual\":false}，下一步涉及付款、轉帳、刪除、安裝App、傳送訊息、登入或其他不可逆/敏感操作時用，why要寫清楚要做什麼；需要使用者自己動手（輸入密碼、畫解鎖圖形、輸入PIN、驗證碼、指紋、人機驗證、授權）時一定要用manual:true（會暫停讓使用者直接操作畫面，做完按通知的「繼續」，你不要自己猜或重試）；ask只能問「是／否」的問題（使用者只能按是或否，沒辦法打字回答）：需要使用者選擇做法、補充說明，或任務太模糊不知道怎麼做時，不要用ask，也不要自己猜著動手，改用下一行的ask_user問他\n" +
@@ -69,6 +75,12 @@ final class AgentPrompt {
             "{\"action\":\"batch\",\"actions\":[...]}  (up to 10 actions in a row (e.g. tapping the build number 7 times fits in one batch) without looking at the screen between them)\n" +
             "Any action may add \"remember\":\"one general lesson\" to save a rule you worked out, so later steps see it.\n" +
             "{\"action\":\"type\",\"text\":\"text\",\"clear\":true,\"enter\":false}  (tap the input box first)\n" +
+            "{\"action\":\"device_list\"}  (lists the paired devices you can transfer files with, and whether they are online)\n" +
+            "{\"action\":\"file_find\",\"device\":\"device name, empty = this phone\",\"name\":\"file name keyword\"}  (finds files; returns full path, size, date, newest first)\n" +
+            "{\"action\":\"file_list\",\"device\":\"device name, empty = this phone\",\"path\":\"folder\"}\n" +
+            "{\"action\":\"file_get\",\"device\":\"other device\",\"path\":\"path on that device\"}  (fetch a file from another device to this phone; find the path with file_find first)\n" +
+            "{\"action\":\"file_send\",\"device\":\"other device\",\"path\":\"path on this phone\"}  (send a file from this phone to another device; find the path with file_find first)\n" +
+            "To send, find or fetch files between the user's own devices ALWAYS use these actions; do not browse the gallery or a file manager with taps, and do not send through apps like LINE. If several files match, you are unsure which device, or nothing is found, list the options with ask_user instead of guessing; if an action returns an error, tell the user why.\n" +
             "{\"action\":\"enter\"}  {\"action\":\"back\"}  {\"action\":\"home\"}  {\"action\":\"wait\",\"wait\":seconds}  (0.5 to 6)\n" +
             "{\"action\":\"open\",\"name\":\"App name\",\"pkg\":\"package name\"}  (open an installed app directly; always give name)\n" +
             "{\"action\":\"cmd\",\"name\":\"wifi_on|wifi_off|bluetooth_on|bluetooth_off|volume_up|volume_down|dark_mode_on|dark_mode_off|dnd_on|dnd_off|auto_rotate_on|auto_rotate_off|location_on|location_off|notifications_open|quick_settings_open|panels_close\"}  (use these first for these settings)\n" +

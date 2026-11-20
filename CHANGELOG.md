@@ -7,7 +7,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## 1.0.1738
 
-- 修正：叫助理把檔案傳給另一台手機時，會被當成「操作螢幕」。現在句子裡有「傳／拿」加檔案或照片、加手機或電腦（或已配對裝置的名字）時，直接交給有傳檔案工具的聊天助理；助理的規則也寫明傳檔案不是操作手機，工具失敗要回報原因｜Fix: asking the assistant to send a file to another phone was treated as "operate the screen". Requests with send/get + a file or photo + a phone or computer (or a paired device's name) now go straight to the chat assistant that has the file tools, and its rules say file transfer is not phone operation: report tool errors instead
+- 自動操作也有傳檔案功能（找檔案、列裝置、傳過去、取回來）：叫助理把檔案傳給另一台手機，就算被判成「操作螢幕」，也會直接用檔案工具做；有好幾個符合的檔案、不確定傳給哪台、找不到時，會問你｜Auto-operate now has the file transfer actions too (list devices, find files, send, fetch): asking the assistant to send a file to another phone works even when the request is routed to screen operation, and it asks you when several files match, the target device is unclear or nothing is found
 
 ## 1.0.1737
 

@@ -910,7 +910,6 @@ final class LEn {
         m.put("中斷", "Cut off");
         m.put("已中斷", "Interrupted");
         m.put("已暫停", "Paused");
-        m.put("路由：傳檔案，直接聊天（用傳檔案工具，沒有問路由）", "Routing: file transfer, straight to chat (file tools, router not asked)");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");
