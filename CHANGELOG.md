@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1735
+
 - 修正：請助理找檔案這類要呼叫工具的對話，Claude 會回「HTTP 400 … each thinking block must contain thinking」。原因是串流回應的思考內容與簽章沒有保留；現在會完整保留，思考內容被省略時也會帶上必要的欄位｜Fix: asking the assistant to do things that use tools (e.g. find a file) failed with "HTTP 400 … each thinking block must contain thinking" because streamed thinking text and signatures were dropped; they are now kept, and omitted thinking still carries the required fields
 
 ## 1.0.1734
