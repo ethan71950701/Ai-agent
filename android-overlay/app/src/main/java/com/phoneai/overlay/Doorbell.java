@@ -29,7 +29,7 @@ final class Doorbell {
 
     /** 驗證通過的內容。 */
     static final class Ring {
-        String from, ip, path, name;
+        String from, ip, path, name, mode = "file";   // mode：file＝請來取這個檔案；serve＝請把互傳伺服器開起來
         int port;
         long size, ts;
     }
@@ -55,6 +55,26 @@ final class Doorbell {
             m.put("kind", "doorbell");
             m.put("v", VERSION);
             m.put("src", fromId);   // 不能叫 from：那是 FCM 的保留字，會被 HTTP 400 拒絕
+            m.put("ts", ts);
+            m.put("nonce", nonce);
+            m.put("ct", Base64.getEncoder().encodeToString(ct));
+            return m;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /** 「請把你的互傳伺服器開起來」：之後的傳檔、瀏覽、找檔都照原本的直連方式，推播只負責叫醒。 */
+    static Map<String, String> makeServe(byte[] key, String fromId, String ip, int port, long nowMs) {
+        try {
+            String nonce = TransferCrypto.hex(TransferCrypto.random(16));
+            String ts = String.valueOf(nowMs);
+            JSONObject body = new JSONObject().put("mode", "serve").put("ip", ip).put("port", port).put("path", "").put("name", "").put("size", 0);
+            byte[] ct = crypt(Cipher.ENCRYPT_MODE, key, nonce, aad(VERSION, fromId, ts, nonce), body.toString().getBytes(StandardCharsets.UTF_8));
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("kind", "doorbell");
+            m.put("v", VERSION);
+            m.put("src", fromId);
             m.put("ts", ts);
             m.put("nonce", nonce);
             m.put("ct", Base64.getEncoder().encodeToString(ct));
@@ -100,6 +120,8 @@ final class Doorbell {
             r.path = o.optString("path");
             r.name = o.optString("name");
             r.size = o.optLong("size", -1);
+            r.mode = o.optString("mode", "file");
+            if (!r.mode.equals("file") && !r.mode.equals("serve")) return fail("不認得的門鈴類型");
             String bad = checkFields(r, myIpOrNull);
             if (bad != null) return fail(bad);
             seen.put(from + nonce, nowMs);   // 驗證全部通過才記，亂送的壞訊息不佔位置
@@ -123,6 +145,7 @@ final class Doorbell {
         if (!isPrivateLan(r.ip)) return "位址不是區網私有位址";
         if (myIpOrNull != null && !sameSubnet(myIpOrNull, r.ip)) return "位址不在目前的網段（門鈴 " + r.ip + "，本機 " + myIpOrNull + "）";
         if (r.port < 1 || r.port > 65535) return "埠號不對";
+        if ("serve".equals(r.mode)) return null;   // 只是叫醒：沒有檔案欄位要檢查
         if (r.size < 0 || r.size > MAX_SIZE) return "檔案大小不對或超過 2 GiB";
         if (r.path.isEmpty() || r.path.length() > 1024 || hasControl(r.path)) return "路徑不對";
         if (r.name.length() > 255 || hasControl(r.name)) return "檔名不對";
