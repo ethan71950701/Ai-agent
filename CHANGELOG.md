@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1737
+
 - 修正：問問題時畫面中間會閃出像 {"route":"ch… 的一串程式碼（那是判斷要聊天還是操作手機的內部回覆）；現在只有真正的回答才會邊收邊顯示｜Fix: a snippet like {"route":"ch… flashed in the middle of the screen when asking something (it was the internal chat-or-act routing reply); now only the real answer is streamed to the screen
 
 ## 1.0.1736
