@@ -81,7 +81,10 @@ final class Brain {
             default: {
                 String reply = scheduleAnswer(act, t);   // 定時任務（建立、列出、取消）程式自己處理
                 long c0 = android.os.SystemClock.uptimeMillis();
-                if (reply == null) reply = ChatEngine.ask(act, t, msg -> confirm(act, msg));
+                if (reply == null) {
+                    ChatEngine.phoneRunner = task -> handOff(act, task, ui);   // 聊天中的 phone_task：做完手機上的事，把結果交回聊天繼續
+                    try { reply = ChatEngine.ask(act, t, msg -> confirm(act, msg)); } finally { ChatEngine.phoneRunner = null; }
+                }
                 if (ChatEngine.handoff) return handOff(act, t, ui);   // 聊天助理說這是要操作手機
                 if (!Router.lastNote.isEmpty()) Router.lastNote += "；" + L.t("聊天回答") + " " + (android.os.SystemClock.uptimeMillis() - c0) + " ms";   // 診斷：慢的時候看是路由慢還是回答慢
                 if (reply == null) reply = Schedule.quickAnswer(act, t);   // 連不上 AI（沒網路）時，才用關鍵字直接回答電量、儲存空間、幾點這類短問題

@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 聊天助理新增 phone_task：需要操作手機、做完還要根據結果接著回答或做下一步時，聊天可以叫自動操作做一件事、拿到結果後繼續（一輪最多 2 次，不能一層套一層；敏感操作照舊要確認）｜Chat gets a phone_task tool: when it needs to operate the phone and then continue based on the result, chat can run one automatic-operation task and carry on with the outcome (max 2 per turn, no nesting; sensitive actions still ask for confirmation)
 - 修正：對方換了推播 token（重裝、清資料）後，只要兩支手機連得上就會自動更新，不用手動重新互換；我們自己換 token 時也會馬上通知已配對的裝置｜Fix: when the peer's push token changes (reinstall, cleared data) it is now updated automatically as soon as the phones can reach each other, no manual re-swap needed; our own token change is pushed to paired devices right away
 
 ## 1.0.1752

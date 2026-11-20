@@ -101,6 +101,8 @@ final class ChatEngine {
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"query\":{\"type\":\"string\",\"description\":\"要查什麼，寫成完整的搜尋問題\"},\"hour\":{\"type\":\"integer\",\"description\":\"幾點，24 小時制\"},\"minute\":{\"type\":\"integer\"},\"every_days\":{\"type\":\"integer\",\"description\":\"每隔幾天，每天是 1\"}},\"required\":[\"query\",\"hour\"]}},"
             + "{\"name\":\"phone_action\",\"description\":\"使用者要你「做」手機上的動作、而上面其他工具都做不到時呼叫：開關 Wi-Fi／藍牙／音量／亮度等系統開關、打開某個 App、點畫面、在某個 App 裡查東西或操作、傳訊息。呼叫後由自動操作接手，你不用再回答，也不要說自己做不到。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{}}},"
+            + "{\"name\":\"phone_task\",\"description\":\"需要操作手機、而且做完之後你還要根據結果繼續回答或做下一步時呼叫（例如：先在 App 裡查到資料，再用工具記下來或回答；操作完再問使用者）。由自動操作做完這件事，把結果回報給你，你再接著處理。單純要操作、不需要後續時用 phone_action。每一輪最多呼叫 2 次，task 要寫成完整的一句話。\","
+            + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"task\":{\"type\":\"string\",\"description\":\"要在手機上做的事，完整一句話\"}},\"required\":[\"task\"]}},"
             + "{\"name\":\"memory_list\",\"description\":\"列出記憶（含編號）。提示裡已有未完成的項目；要看已完成的才需要呼叫。\","
             + "\"input_schema\":{\"type\":\"object\",\"properties\":{\"include_done\":{\"type\":\"boolean\"}}}}"
             + "]";
@@ -109,6 +111,39 @@ final class ChatEngine {
 
     /** 這一輪聊天助理判斷「這是要操作手機」，呼叫了 phone_action：Brain 看到這個旗標就改走路由／自動操作。每次 ask 開頭會清掉。 */
     static volatile boolean handoff;
+
+    /** 聊天助理的 phone_task 工具：做完手機上的事、把結果交還給聊天繼續。由 Brain 在聊天期間設定（需要 Activity 與介面），沒設就不能用。 */
+    interface PhoneRunner { String run(String task); }
+    static volatile PhoneRunner phoneRunner;
+    static final int MAX_PHONE_TASKS = 2;
+    private static int phoneTasksUsed;
+    private static volatile boolean inPhoneTask;
+
+    /** phone_task 能不能執行：回 null＝可以，否則是要告訴模型的原因。純邏輯。 */
+    static String phoneTaskProblem(boolean hasRunner, boolean nested, int used, String task) {
+        if (!hasRunner) return "錯誤：這裡沒辦法操作手機";
+        if (nested) return "錯誤：已經在操作手機了，不能再開一層";
+        if (task == null || task.trim().isEmpty()) return "錯誤：task 不能是空的";
+        if (used >= MAX_PHONE_TASKS) return "錯誤：這一輪操作手機的次數用完了，請根據目前的結果回答使用者";
+        return null;
+    }
+
+    private static String phoneTask(String task) {
+        PhoneRunner r = phoneRunner;
+        String bad = phoneTaskProblem(r != null, inPhoneTask, phoneTasksUsed, task);
+        if (bad != null) return bad;
+        phoneTasksUsed++;
+        inPhoneTask = true;
+        try {
+            String out = r.run(task.trim());
+            if (out == null || out.trim().isEmpty()) out = "（操作完成，沒有文字結果）";
+            return out.length() > 1500 ? out.substring(0, 1500) + "…" : out;
+        } catch (Throwable t) {
+            return "錯誤：操作手機失敗：" + t.getMessage();
+        } finally {
+            inPhoneTask = false;
+        }
+    }
     /** 串流回答：設了之後（面板的聊天），Claude 的請求改用串流，文字邊收邊交給它（已去掉 <work> 推算過程）。別家服務、網頁搜尋、沒設的呼叫端照舊一次收完。 */
     static volatile java.util.function.Consumer<String> onPartial;
     /** 只有真正在「回答使用者」的那一次請求才邊收邊顯示；路由判斷、排程、整理通知…這些內部請求回的是給程式看的 JSON，不能顯示出來。 */
@@ -221,8 +256,8 @@ final class ChatEngine {
     }
     private static final String SCHED_RULE_ZH = "\n13c. 使用者要「每天／每隔幾天、幾點，自動去查某個資訊」（價格、新聞、天氣、營業時間…）→ 用 schedule_web_query 建立（會跳確認框）。它只能用網路搜尋查公開資料；使用者要查自己的訂單、需要登入的內容，老實說目前做不到，可以建議改查公開的資訊。查看或取消定時，叫他說「我的定時」「取消定時 1」。\n";
     private static final String SCHED_RULE_EN = "\n13c. If the user wants something looked up automatically every day / every N days at a time (prices, news, weather, opening hours...) use schedule_web_query (a confirmation box appears). It only does web searches of public information; for the user's own orders or anything behind a login, honestly say that is not possible yet and suggest a public lookup. To view or cancel, tell them to say \"my scheduled tasks\" / \"cancel schedule 1\".\n";
-    private static final String ACT_RULE_ZH = "\n13b. 如果使用者其實是要你操作手機（開關 Wi-Fi／藍牙／音量／亮度、打開 App、點畫面、在 App 裡找東西或操作、傳訊息），而上面的工具做不到，就呼叫 phone_action 交給自動操作，不要說「我不能操作手機」。但「在自己的裝置之間傳檔案、找檔案、拿檔案」不是操作手機：一定用 device_list、file_find、file_get、file_send、file_list；工具失敗就把錯誤原因照實告訴使用者，不要改叫 phone_action。\n";
-    private static final String ACT_RULE_EN = "\n13b. If the user actually wants you to operate the phone (toggle Wi-Fi/Bluetooth/volume/brightness, open an app, tap the screen, look something up or act inside an app, send a message) and your other tools cannot do it, call phone_action to hand over to automatic operation; do not say you cannot operate the phone. But sending, finding or fetching files between the user's own devices is NOT operating the phone: always use device_list, file_find, file_get, file_send, file_list; if a tool fails, report the error honestly and do not fall back to phone_action.\n";
+    private static final String ACT_RULE_ZH = "\n13b. 如果使用者其實是要你操作手機（開關 Wi-Fi／藍牙／音量／亮度、打開 App、點畫面、在 App 裡找東西或操作、傳訊息），而上面的工具做不到，就呼叫 phone_action 交給自動操作，不要說「我不能操作手機」。但「在自己的裝置之間傳檔案、找檔案、拿檔案」不是操作手機：一定用 device_list、file_find、file_get、file_send、file_list；工具失敗就把錯誤原因照實告訴使用者，不要改叫 phone_action。\n13c. 要操作手機、而且做完還要根據結果接著回答或做下一步（例如先在 App 裡查到、再記下來或回答）時，用 phone_task：它做完會把結果回報給你，你再接著處理；單純操作、不需要後續就用 phone_action。\n";
+    private static final String ACT_RULE_EN = "\n13b. If the user actually wants you to operate the phone (toggle Wi-Fi/Bluetooth/volume/brightness, open an app, tap the screen, look something up or act inside an app, send a message) and your other tools cannot do it, call phone_action to hand over to automatic operation; do not say you cannot operate the phone. But sending, finding or fetching files between the user's own devices is NOT operating the phone: always use device_list, file_find, file_get, file_send, file_list; if a tool fails, report the error honestly and do not fall back to phone_action.\n13c. If you need to operate the phone AND then continue based on the result (e.g. look something up in an app, then save it or answer), use phone_task: it runs the task and reports the result back to you so you can carry on; for a plain operation with no follow-up use phone_action.\n";
 
     private static File history(Context c) { return new File(c.getFilesDir(), "chat_history.json"); }
 
@@ -277,6 +312,7 @@ final class ChatEngine {
                             : tn.equals("dial") ? SystemIntents.dial(c, ti.optString("number"))
                             : tn.equals("samsung_reminder") ? AgentLoop.reminderForChat(c, ti)
                             : tn.equals("schedule_web_query") ? Schedule.addWeb(c, ti.optString("query"), ti.optInt("hour", -1), ti.optInt("minute", 0), ti.optInt("every_days", 1), confirm)
+                            : tn.equals("phone_task") ? phoneTask(ti.optString("task"))
                             : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
                             : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
     }
@@ -288,7 +324,7 @@ final class ChatEngine {
             JSONArray a = new JSONArray(TOOLS);
             for (int i = 0; i < a.length(); i++) {
                 String n = a.getJSONObject(i).optString("name");
-                if (!n.equals("phone_action") && !n.equals("run_shell") && !n.equals("samsung_reminder")) out.add(n);
+                if (!n.equals("phone_action") && !n.equals("phone_task") && !n.equals("run_shell") && !n.equals("samsung_reminder")) out.add(n);
             }
         } catch (Exception ignored) { }
         return out;
@@ -617,6 +653,7 @@ final class ChatEngine {
         final String model = hasImg ? AgentLoop.MODEL : MODEL;   // 看圖欄位的模型
         lastError = "";
         handoff = false;
+        phoneTasksUsed = 0;
         String key = key(c);
         if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
         try {

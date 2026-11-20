@@ -2,6 +2,8 @@ package com.phoneai.overlay;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
@@ -18,7 +20,7 @@ public class AgentToolsTest {
                 "device_list", "file_find", "file_list", "file_get", "file_send", "file_delete"}) {
             assertTrue(must, n.contains(must));
         }
-        for (String not : new String[]{"phone_action", "run_shell", "samsung_reminder", "tap", "type"}) assertFalse(not, n.contains(not));
+        for (String not : new String[]{"phone_action", "phone_task", "run_shell", "samsung_reminder", "tap", "type"}) assertFalse(not, n.contains(not));
         assertTrue(ChatEngine.isAgentTool("file_send"));
         assertFalse(ChatEngine.isAgentTool("phone_action"));
         assertFalse(ChatEngine.isAgentTool(""));
@@ -58,5 +60,21 @@ public class AgentToolsTest {
         for (String w : new String[]{"file_delete", "file_send", "memory_add", "memory_delete", "set_alarm", "dial", "schedule_web_query"}) {
             assertFalse(w, ChatEngine.readOnlyTool(w));
         }
+    }
+
+    @Test
+    public void phoneTaskIsGuarded() {
+        assertNull(ChatEngine.phoneTaskProblem(true, false, 0, "打開地圖查附近的餐廳"));
+        assertNull(ChatEngine.phoneTaskProblem(true, false, 1, "x"));
+        assertNotNull("沒有執行器（不在聊天面板裡）不能用", ChatEngine.phoneTaskProblem(false, false, 0, "x"));
+        assertNotNull("已經在操作手機時不能再開一層", ChatEngine.phoneTaskProblem(true, true, 0, "x"));
+        assertNotNull("空的任務", ChatEngine.phoneTaskProblem(true, false, 0, "  "));
+        assertNotNull("一輪最多 " + ChatEngine.MAX_PHONE_TASKS + " 次", ChatEngine.phoneTaskProblem(true, false, ChatEngine.MAX_PHONE_TASKS, "x"));
+    }
+
+    @Test
+    public void phoneTaskIsAChatToolButNotAnAutomaticOperationAction() {
+        assertFalse(ChatEngine.isAgentTool("phone_task"));
+        assertFalse(ChatEngine.agentToolPrompt().contains("phone_task"));
     }
 }
