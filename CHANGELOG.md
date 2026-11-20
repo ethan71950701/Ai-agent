@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1730
+
 - 互傳：單檔接收上限從 2 GB 提高到 64 GB（收完仍要保留 200 MB 空間，傳之前會先檢查）｜File transfer: the per-file receive limit is raised from 2 GB to 64 GB (200 MB must still stay free, and free space is checked before sending)
 
 ## 1.0.1729
