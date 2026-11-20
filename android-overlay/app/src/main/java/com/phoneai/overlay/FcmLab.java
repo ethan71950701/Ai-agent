@@ -157,6 +157,15 @@ final class FcmLab {
     /** 按門鈴：A（本機）請這個已配對裝置來取檔案（relPath 是共享根目錄底下的相對路徑，檔案要先存在）。回 null 成功，否則錯誤。 */
     static String ring(Context c, TransferStore.Peer peer, String relPath) {
         if (peer.fcmToken == null) return "還沒有存這台裝置的 token";
+        if (!TransferStore.enabled(c)) return "互傳總開關沒開（設定 → 互傳檔案）";
+        if (!TransferService.running) {   // 互傳伺服器沒在跑（系統可能把它收掉了）：先臨時把它開起來，等它真的在聽才按門鈴
+            TransferService.start(c);
+            long until = System.currentTimeMillis() + 5000;
+            while (!TransferService.running && System.currentTimeMillis() < until) {
+                try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+            }
+            if (!TransferService.running) return "互傳伺服器啟動失敗" + (TransferService.lastError.isEmpty() ? "" : "：" + TransferService.lastError);
+        }
         String ip = lanIp();
         if (ip == null) return "找不到本機的區網位址（要連上 Wi-Fi）";
         File f = new File(TransferStore.root(), relPath);

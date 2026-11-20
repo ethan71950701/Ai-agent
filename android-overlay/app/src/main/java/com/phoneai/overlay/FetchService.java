@@ -45,7 +45,7 @@ public class FetchService extends Service {
             }
             LifeLog.add(this, "FCM 門鈴取檔：" + result);
             nm.notify(7713, new Notification.Builder(this, CHANNEL).setSmallIcon(android.R.drawable.stat_sys_download_done)
-                    .setContentTitle("互傳檔案").setContentText(result).setAutoCancel(true).build());
+                    .setContentTitle("互傳檔案").setContentText(result).setStyle(new Notification.BigTextStyle().bigText(result)).setAutoCancel(true).build());
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
         }, "fetch-service").start();
