@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1723
+
 - 推播喚醒：被叫醒時會跳一則通知說明結果（驗證中、已開啟互傳、互傳總開關沒開、或被拒絕的原因），不再靜靜地做事｜Push wake-up: when woken, a notification now tells you the outcome (verifying, transfer started, transfer switch is off, or why it was rejected) instead of acting silently
 
 ## 1.0.1722
