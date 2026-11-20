@@ -140,6 +140,18 @@ public class DoorbellTest {
     }
 
     @Test
+    public void fcmTokenFormatCheck() {
+        String ok = "dXJ0Z2R3cWV0bW1yZ2Y6QVBBOTFiR2xvbmdmY210b2tlbl8tYWJjMTIz:APA91bGxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+        assertTrue(Doorbell.validToken(ok));
+        assertFalse(Doorbell.validToken(null));
+        assertFalse(Doorbell.validToken(""));
+        assertFalse(Doorbell.validToken("short"));
+        assertFalse(Doorbell.validToken(ok + "&x=1"));
+        assertFalse(Doorbell.validToken(ok + "\n"));
+        assertFalse(Doorbell.validToken(new String(new char[401]).replace('\0', 'a')));
+    }
+
+    @Test
     public void badFieldsAreRejected() {
         byte[] k = key;
         Object[][] bad = {

@@ -67,6 +67,17 @@ public class FcmLabActivity extends Activity {
                 Toast.makeText(this, "已儲存", Toast.LENGTH_SHORT).show();
             }).setNegativeButton("取消", null).show();
         })));
+        col.addView(button("把我的 token 交給已配對裝置（兩邊都開著互傳）", v -> new Thread(() -> {
+            String my = myToken;
+            if (!Doorbell.validToken(my)) { runOnUiThread(() -> Toast.makeText(this, "這支手機還沒有 token（先載入設定檔）", Toast.LENGTH_LONG).show()); return; }
+            StringBuilder sb = new StringBuilder();
+            for (TransferStore.Peer peerX : TransferStore.peers(this)) {
+                try { FileTools.clientFor(this, peerX).sendFcmToken(my); sb.append("✓ ").append(peerX.name).append('\n'); }
+                catch (Exception e) { sb.append("✗ ").append(peerX.name).append("：").append(e.getMessage()).append('\n'); }
+            }
+            final String res = sb.length() == 0 ? "沒有已配對的裝置" : sb.toString();
+            runOnUiThread(() -> Toast.makeText(this, res, Toast.LENGTH_LONG).show());
+        }).start()));
         EditText nameQ = new EditText(this);
         nameQ.setHint("要傳的檔名關鍵字（本機共享資料夾裡找）");
         col.addView(nameQ);

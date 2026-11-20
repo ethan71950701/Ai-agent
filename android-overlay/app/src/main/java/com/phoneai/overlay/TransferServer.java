@@ -56,6 +56,8 @@ final class TransferServer {
         void transferEnded();
         /** 已驗證的對方連上來：記下它的來源位址（區網或 Tailscale），之後我們也能連回去。 */
         void peerSeen(String peerId, String ip);
+        /** 已驗證的對方送來它的推播 token（叫醒它用）。 */
+        default void peerFcm(String peerId, String token) { }
     }
 
     private final Host host;
@@ -202,6 +204,13 @@ final class TransferServer {
                     File f = resolve(params.get("path"));
                     if (!f.isFile()) { reply(out, 404, "not a file"); return; }
                     try { sendFile(out, au, f); } finally { host.transferEnded(); }
+                    break;
+                }
+                case "/v1/fcm": {
+                    String tk = params.get("token");
+                    if (!Doorbell.validToken(tk)) { reply(out, 400, "bad token"); return; }
+                    host.peerFcm(au.peer, tk);
+                    sendText(out, au, "ok");
                     break;
                 }
                 case "/v1/put":

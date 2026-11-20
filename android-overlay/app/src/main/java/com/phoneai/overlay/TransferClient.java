@@ -111,6 +111,9 @@ final class TransferClient {
         return t.startsWith("ok\t") ? t.substring(3) : t;
     }
 
+    /** 把我的推播 token 交給對方（對方存起來，之後才叫得醒我）。 */
+    String sendFcmToken(String token) throws IOException { return getText("/v1/fcm?token=" + enc(token)); }
+
     String list(String path) throws IOException { return getText("/v1/list?path=" + enc(path)); }
 
     String find(String name) throws IOException { return getText("/v1/find?name=" + enc(name)); }

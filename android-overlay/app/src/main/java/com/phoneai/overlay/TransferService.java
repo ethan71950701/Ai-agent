@@ -142,6 +142,11 @@ public class TransferService extends Service {
                 return p != null && p.peerId.equals(peerId) ? p.state : "none";
             }
 
+            @Override public void peerFcm(String peerId, String token) {
+                TransferStore.setFcmToken(c, peerId, token);
+                TransferStore.log(c, "已收到「" + TransferStore.nameOf(c, peerId) + "」的推播 token");
+            }
+
             @Override
             public void progress(String peerId, boolean toPeer, String name, long done, long total) {
                 String who = TransferStore.nameOf(c, peerId);

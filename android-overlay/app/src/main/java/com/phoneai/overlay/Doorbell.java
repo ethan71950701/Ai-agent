@@ -116,6 +116,11 @@ final class Doorbell {
         }
     }
 
+    /** FCM 裝置 token 的格式檢查：英數字、冒號、底線、減號，長度合理（只擋明顯不對的，不保證 Google 認得）。 */
+    static boolean validToken(String t) {
+        return t != null && t.matches("[A-Za-z0-9:_\\-]{50,400}");
+    }
+
     private static Result fail(String why) { return new Result(null, why); }
 
     /** 內容欄位檢查：位址必須是區網私有位址，大小、路徑、檔名有上限，不接受控制字元。 */
