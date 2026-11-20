@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 互傳：接收端收檔出錯時，會把原因回報給對方並寫進記錄（以前只會默默斷線，對方只看到 Connection reset）｜File transfer: when receiving fails, the receiver now tells the sender why and logs it (it used to drop the connection silently, so the sender only saw "Connection reset")
+
+## 1.0.1727
+
 - 小米（HyperOS）上推播常常晚很久才到時，檢查頁的提示多一句：可能是 Google Play 服務被凍住，可以試第三方小工具 FCM Guard｜On Xiaomi (HyperOS), when push messages often arrive very late the check page now hints that Google Play services may be frozen and mentions the third-party tool FCM Guard
 
 ## 1.0.1726
