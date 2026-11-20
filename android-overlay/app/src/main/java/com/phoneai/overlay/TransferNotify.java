@@ -98,6 +98,10 @@ final class TransferNotify {
     }
 
     static synchronized void cancel(Context c) {
+        if (active || pauseRequested) {   // 診斷：傳輸通知被收掉時記下是誰收的（查「Now Bar 不見了」用）
+            StackTraceElement[] st = new Throwable().getStackTrace();
+            LifeLog.add(c, "傳輸通知：被收掉，呼叫者 " + (st.length > 1 ? st[1].getClassName().replace("com.phoneai.overlay.", "") + "." + st[1].getMethodName() : "?"));
+        }
         lastAt = 0;
         stopRequested = false;
         pauseRequested = false;
@@ -132,7 +136,11 @@ final class TransferNotify {
         stopRequested = false;
         pauseRequested = false;
         active = false;
-        if (e == null) { cancel(c); return; }
+        if (e == null) {   // 找不到對應的「沒傳完」紀錄（沒登記到、或已被清掉）：沒有東西可以繼續，只好收掉通知，並記下來方便查
+            LifeLog.add(c, "傳輸通知：" + (paused ? "已暫停" : "已中斷") + "但找不到對應的未完成紀錄，所以收掉通知");
+            cancel(c);
+            return;
+        }
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
         int pct = e.percent();
@@ -142,7 +150,7 @@ final class TransferNotify {
                 .setContentTitle((e.kind.equals("up") ? L.t("傳給 ") : L.t("取自 ")) + e.peerName).setContentText(head)
                 .setSubText(TransferProgress.ellipsizeMiddle(e.name, 24))
                 .setStyle(new Notification.BigTextStyle().bigText(full))
-                .setCategory(Notification.CATEGORY_STATUS).setShowWhen(false)
+                .setCategory(Notification.CATEGORY_PROGRESS).setShowWhen(false)   // 跟傳輸中同一種類別：Now Bar／超級島才會繼續顯示
                 .setProgress(100, Math.min(100, pct), false)
                 .addAction(new Notification.Action.Builder(Icon.createWithResource(c, android.R.drawable.ic_media_play),
                         L.t("繼續"), action(c, ACTION_RESUME, e.id)).build())
@@ -154,8 +162,9 @@ final class TransferNotify {
         android.os.Bundle ex = new android.os.Bundle();
         ex.putBoolean("android.requestPromotedOngoing", true);
         nb.addExtras(ex);
-        if (android.os.Build.VERSION.SDK_INT >= 36) nb.setShortCriticalText(paused ? L.t("暫停") : L.t("中斷"));
+        if (android.os.Build.VERSION.SDK_INT >= 36) nb.setShortCriticalText(pct + "%");   // 膠囊上跟傳輸中一樣只放百分比
         nm.notify(PROGRESS_ID, nb.build());
+        LifeLog.add(c, "傳輸通知：顯示「" + (paused ? "已暫停" : "已中斷") + "」" + e.name + " " + pct + "%");
     }
 
     /** 把「沒傳完」的那一筆（用 id 找）顯示成中斷或暫停的通知。 */

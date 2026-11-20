@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：按「暫停」或傳輸意外中斷後，Now Bar 上的傳輸膠囊會消失；現在「已暫停／已中斷」的通知跟傳輸中用同一種形式，會繼續留著（並在診斷頁記錄通知被顯示或收掉的原因）｜Fix: the transfer chip in the Now Bar disappeared after Pause or an interruption; the Paused / Interrupted notification now uses the same form as the progress one so it stays (and the diagnostics page logs why the notification was shown or removed)
 
 ## 1.0.1735
 
