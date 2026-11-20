@@ -141,6 +141,7 @@ final class ChatEngine {
         java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(in, StandardCharsets.UTF_8));
         java.util.TreeMap<Integer, JSONObject> blocks = new java.util.TreeMap<>();
         java.util.HashMap<Integer, StringBuilder> acc = new java.util.HashMap<>();
+        java.util.HashMap<Integer, String> sig = new java.util.HashMap<>();
         JSONObject usage = new JSONObject();
         String stop = "";
         StringBuilder all = new StringBuilder();
@@ -173,6 +174,8 @@ final class ChatEngine {
                         for (Integer k : blocks.keySet()) if ("text".equals(blocks.get(k).optString("type")) && acc.get(k) != null) all.append(acc.get(k));
                         emitPartial(all.toString());
                     } else if ("input_json_delta".equals(d.optString("type"))) acc.get(idx).append(d.optString("partial_json"));
+                    else if ("thinking_delta".equals(d.optString("type"))) acc.get(idx).append(d.optString("thinking"));   // 思考內容
+                    else if ("signature_delta".equals(d.optString("type"))) sig.put(idx, d.optString("signature"));        // 思考區塊的簽章：下一輪要原封不動送回去
                     break;
                 }
                 case "content_block_stop": {
@@ -180,7 +183,13 @@ final class ChatEngine {
                     JSONObject b = blocks.get(idx);
                     if (b == null) break;
                     if ("text".equals(b.optString("type"))) b.put("text", acc.get(idx).toString());
-                    else if ("tool_use".equals(b.optString("type"))) {
+                    else if ("thinking".equals(b.optString("type"))) {
+                        // 思考區塊一定要有 thinking 欄位（可以是空字串）與簽章，少了任何一個，下一輪帶著它送出去就會被 400 拒絕
+                        b.put("thinking", acc.get(idx).toString());
+                        if (sig.containsKey(idx)) b.put("signature", sig.get(idx));
+                        else if (!b.has("signature")) b.put("signature", "");
+                    }
+                    else if ("tool_use".equals(b.optString("type")) || "server_tool_use".equals(b.optString("type"))) {
                         String js = acc.get(idx).toString().trim();
                         b.put("input", js.isEmpty() ? new JSONObject() : new JSONObject(js));
                     }

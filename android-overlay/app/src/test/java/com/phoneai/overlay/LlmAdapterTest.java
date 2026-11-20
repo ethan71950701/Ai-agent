@@ -389,6 +389,58 @@ public class LlmAdapterTest {
         org.junit.Assert.assertEquals(7, r.getJSONObject("usage").getInt("output_tokens"));
     }
 
+    @org.junit.Test
+    public void streamKeepsThinkingTextAndSignatureForTheNextTurn() throws Exception {
+        org.json.JSONObject r = ChatEngine.readStream(sse(
+                "{\"type\":\"message_start\",\"message\":{\"usage\":{\"input_tokens\":10}}}",
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"先找檔案，\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"再回答。\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EqQBCgIYAhIM-sig\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":0}",
+                "{\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"t1\",\"name\":\"file_find\",\"input\":{}}}",
+                "{\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"name\\\":\\\"a\\\"}\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":1}",
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\"},\"usage\":{\"output_tokens\":7}}"));
+        org.json.JSONArray c = r.getJSONArray("content");
+        org.junit.Assert.assertEquals("thinking", c.getJSONObject(0).getString("type"));
+        org.junit.Assert.assertEquals("先找檔案，再回答。", c.getJSONObject(0).getString("thinking"));
+        org.junit.Assert.assertEquals("EqQBCgIYAhIM-sig", c.getJSONObject(0).getString("signature"));
+        org.junit.Assert.assertEquals("a", c.getJSONObject(1).getJSONObject("input").getString("name"));
+    }
+
+    @org.junit.Test
+    public void emptyOrOmittedThinkingStillHasTheRequiredFields() throws Exception {
+        // 思考內容被省略時串流只有簽章、沒有 thinking_delta：區塊仍然要有 thinking（空字串）和 signature，不然下一輪被 400 拒絕
+        org.json.JSONObject r = ChatEngine.readStream(sse(
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\"}}",
+                "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"sigOnly\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":0}",
+                "{\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"thinking\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":1}",
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}"));
+        org.json.JSONArray c = r.getJSONArray("content");
+        org.junit.Assert.assertTrue(c.getJSONObject(0).has("thinking"));
+        org.junit.Assert.assertEquals("", c.getJSONObject(0).getString("thinking"));
+        org.junit.Assert.assertEquals("sigOnly", c.getJSONObject(0).getString("signature"));
+        org.junit.Assert.assertTrue(c.getJSONObject(1).has("thinking"));
+        org.junit.Assert.assertTrue(c.getJSONObject(1).has("signature"));
+    }
+
+    @org.junit.Test
+    public void redactedThinkingAndServerToolInputSurvive() throws Exception {
+        org.json.JSONObject r = ChatEngine.readStream(sse(
+                "{\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"redacted_thinking\",\"data\":\"opaque\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":0}",
+                "{\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"server_tool_use\",\"id\":\"s1\",\"name\":\"web_search\",\"input\":{}}}",
+                "{\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"{\\\"query\\\":\\\"天氣\\\"}\"}}",
+                "{\"type\":\"content_block_stop\",\"index\":1}",
+                "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}"));
+        org.json.JSONArray c = r.getJSONArray("content");
+        org.junit.Assert.assertEquals("opaque", c.getJSONObject(0).getString("data"));
+        org.junit.Assert.assertEquals("天氣", c.getJSONObject(1).getJSONObject("input").getString("query"));
+    }
+
     @org.junit.Test(expected = java.io.IOException.class)
     public void streamCutBeforeTheEndIsAnErrorNotAHalfAnswer() throws Exception {
         ChatEngine.readStream(sse(
