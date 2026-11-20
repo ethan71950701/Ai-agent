@@ -372,6 +372,69 @@ final class FcmLab {
         return sendData(c, peer.fcmToken, Doorbell.makeServe(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, System.currentTimeMillis(), remote));
     }
 
+    /** 連線失敗的類型（純邏輯，診斷頁用）：refused＝對方的網路通了但那個埠沒人聽；timeout＝連不到（對方沒開 Tailscale、不在同一個網路、被擋）；noroute＝本機沒有路由；其他。 */
+    static String classifyConnectError(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof java.net.SocketTimeoutException) return "timeout";
+            if (t instanceof java.net.NoRouteToHostException || t instanceof java.net.UnknownHostException) return "noroute";
+            String m = String.valueOf(t.getMessage()).toLowerCase(java.util.Locale.ROOT);
+            if (m.contains("econnrefused") || m.contains("connection refused")) return "refused";
+            if (m.contains("etimedout") || m.contains("timed out")) return "timeout";
+            if (m.contains("enetunreach") || m.contains("ehostunreach") || m.contains("network is unreachable") || m.contains("no route")) return "noroute";
+        }
+        return "other";
+    }
+
+    /** 外網連線檢查：本機 Tailscale、對方的位址紀錄、實際連一次，並依失敗類型說明斷在哪一環。要在背景執行緒呼叫。 */
+    static String diagnoseRemote(Context c, TransferStore.Peer p) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("對象：").append(p.name).append('\n');
+        String mine = TransferClient.localTailnetIp();
+        sb.append("1. 本機 Tailscale：").append(mine != null ? "✅ 開著（" + mine + "）" : "❌ 沒開（外網要先開；可按「測試開關 Tailscale」確認這支手機開得起來）").append('\n');
+        String lan = lanIp();
+        sb.append("2. 本機網路：").append(lan != null ? "Wi-Fi（" + lan + "）" : "行動數據或沒有 Wi-Fi").append('\n');
+        sb.append("3. 對方的 Tailscale 位址紀錄：").append(p.tsIp != null ? "✅ " + p.tsIp + ":" + p.tsPort : "❌ 沒有").append('\n');
+        sb.append("4. 對方的區網位址紀錄：").append(p.ip != null ? p.ip + ":" + p.port : "沒有").append('\n');
+        sb.append("5. 對方的推播 token：").append(p.fcmToken != null ? "✅ 有（沒開互傳時可以叫醒它）" : "❌ 沒有（沒辦法叫醒它，對方的互傳頁面要自己開著）").append('\n');
+        if (p.tsIp == null || p.tsPort <= 0) {
+            sb.append("→ 沒有對方的 Tailscale 位址：要先在家讓兩台**同時開著 Tailscale**，各自開互傳頁連一次，才會記下來。\n");
+            return sb.toString();
+        }
+        long t0 = System.currentTimeMillis();
+        String cls;
+        try (java.net.Socket sock = new java.net.Socket()) {
+            sock.connect(new java.net.InetSocketAddress(p.tsIp, p.tsPort), 5000);
+            cls = "ok";
+        } catch (Exception e) {
+            cls = classifyConnectError(e);
+        }
+        long ms = System.currentTimeMillis() - t0;
+        switch (cls) {
+            case "ok": {
+                boolean ping = false;
+                try { new TransferClient(p.tsIp, p.tsPort, TransferStore.myId(c), TransferStore.myName(c), p.key).ping(); ping = true; } catch (Exception ignored) { }
+                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：✅ 連得上（").append(ms).append(" 毫秒）\n");
+                sb.append(ping ? "7. 互傳伺服器有回應 ✅ → 外網是通的，可以直接傳檔案\n"
+                        : "7. ❌ 連得上埠，但伺服器沒有正常回應（驗證失敗？對方的程式版本太舊？）：先把兩支都更新到最新版\n");
+                break;
+            }
+            case "refused":
+                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：對方拒絕連線\n");
+                sb.append("→ 對方的 Tailscale 通了，**但它的互傳伺服器沒在跑**。").append(p.fcmToken != null ? "要靠推播叫醒它（傳檔案時會自動做）；叫不醒就看「測試叫醒對方」的診斷。" : "沒有它的推播 token，沒辦法叫醒：請在那支手機打開互傳頁面，或補互換 token。").append('\n');
+                break;
+            case "timeout":
+                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：逾時（").append(ms).append(" 毫秒）\n");
+                sb.append("→ 連不到對方：最常見是**對方的 Tailscale 沒開**（平常關著的話就是這樣）、或兩台不在同一個 Tailscale 帳號。").append(p.fcmToken != null ? "傳檔案時 App 會先叫醒對方並請它開 Tailscale（要 root，也要給 Tailscale 自啟動）。" : "沒有它的推播 token，沒辦法請它開：請在那支手機手動開 Tailscale。").append('\n');
+                break;
+            case "noroute":
+                sb.append("6. 直接連 ").append(p.tsIp).append("：沒有路由\n→ 本機的 Tailscale 沒開或沒連上，先把本機的 Tailscale 開起來。\n");
+                break;
+            default:
+                sb.append("6. 直接連 ").append(p.tsIp).append("：失敗（原因不明）\n");
+        }
+        return sb.toString();
+    }
+
     /** 逐步診斷「叫醒對方」：每一步的結果都寫出來（不含 token 全文與金鑰），看是哪一步斷掉。回傳多行文字。 */
     static String diagnoseWake(Context c, TransferStore.Peer p) {
         StringBuilder sb = new StringBuilder();

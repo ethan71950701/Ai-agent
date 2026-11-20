@@ -916,6 +916,9 @@ final class LEn {
         m.put("Tailscale 開關測試", "Tailscale switch test");
         m.put("Tailscale（外網用）", "Tailscale (for remote use)");
         m.put("要在外面（行動數據）用才需要：Tailscale 也要給「自啟動」和電池「無限制」，系統才讓它收到 App 發的開關廣播；按下面的「測試開關 Tailscale」可以在這支手機上實際驗證。", "Only needed away from home (mobile data): give Tailscale Autostart and unrestricted battery too, otherwise the system won't let it receive the app's on/off broadcast; tap \"Test turning Tailscale on/off\" below to verify it on this phone.");
+        m.put("外網連線檢查（看斷在哪一步）", "Remote connection check (see which step fails)");
+        m.put("檢查中…（最久約 10 秒）", "Checking… (up to ~10 s)");
+        m.put("外網連線檢查", "Remote connection check");
         m.put("API Key（已存過、或本機服務可留空）", "API key (leave empty if already saved or for a local service)");
         m.put("儲存並查詢模型", "Save and look up models");
         m.put("可以自己填模型名稱（空白＝保留目前的）。", "You can type the model name yourself (empty = keep the current one).");

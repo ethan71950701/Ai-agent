@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 推播喚醒設定頁新增「外網連線檢查」：列出本機 Tailscale、對方的位址紀錄與推播 token，並實際連一次，依失敗類型（被拒絕、逾時、沒有路由）告訴你外網斷在哪一步｜Push wake-up settings: new "Remote connection check" that lists this phone's Tailscale state, the other device's address records and push token, tries a real connection and, by failure type (refused, timeout, no route), tells you which step of the remote path is broken
 
 ## 1.0.1743
 

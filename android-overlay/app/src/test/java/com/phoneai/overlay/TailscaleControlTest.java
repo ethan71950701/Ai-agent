@@ -26,4 +26,15 @@ public class TailscaleControlTest {
         assertEquals(java.util.Arrays.asList(0, 1), TailscaleControl.order(0, 2));
         assertEquals(java.util.Arrays.asList(0, 1), TailscaleControl.order(9, 2));   // 記的編號不合理：照原順序
     }
+
+    @Test
+    public void connectErrorsAreClassified() {
+        assertEquals("refused", FcmLab.classifyConnectError(new java.net.ConnectException("failed to connect to /100.1.2.3 (port 47321) after 5000ms: isConnectionFailed: ECONNREFUSED (Connection refused)")));
+        assertEquals("timeout", FcmLab.classifyConnectError(new java.net.SocketTimeoutException("failed to connect to /100.1.2.3 (port 47321) after 5000ms")));
+        assertEquals("timeout", FcmLab.classifyConnectError(new java.io.IOException("wrapped", new java.net.SocketTimeoutException("connect timed out"))));
+        assertEquals("noroute", FcmLab.classifyConnectError(new java.net.NoRouteToHostException("No route to host")));
+        assertEquals("noroute", FcmLab.classifyConnectError(new java.net.ConnectException("connect failed: ENETUNREACH (Network is unreachable)")));
+        assertEquals("other", FcmLab.classifyConnectError(new java.io.IOException("something else")));
+        assertEquals("other", FcmLab.classifyConnectError(null));
+    }
 }

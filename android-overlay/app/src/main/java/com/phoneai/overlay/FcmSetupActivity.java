@@ -78,6 +78,7 @@ public class FcmSetupActivity extends Activity {
         }
         c3.addView(Ui.button(this, L.t("測試叫醒對方"), v -> pickPeer(p -> testWake(p))));
         c3.addView(Ui.tonal(this, L.t("只送一則測試推播（看對方有沒有跳通知）"), v -> pickPeer(p -> plainPush(p))));
+        c3.addView(Ui.tonal(this, L.t("外網連線檢查（看斷在哪一步）"), v -> pickPeer(p -> remoteCheck(p))));
         c3.addView(Ui.tonal(this, L.t("測試開關 Tailscale（外網用）"), v -> testTailscale()));
         Ui.buttons(this, c3,
                 Ui.tonal(this, L.t("電池設定"), v -> openBattery()),
@@ -199,6 +200,15 @@ public class FcmSetupActivity extends Activity {
                     .setMessage(err == null ? L.t("Google 收下了。請看「") + p.name + L.t("」有沒有跳出「FCM 實驗：被叫醒了」的通知。有的話，推播本身是通的；沒有的話，推播到不了那支手機（見說明）。")
                             : L.t("送出失敗：") + err)
                     .setPositiveButton(L.t("好"), null).show());
+        }).start();
+    }
+
+    /** 外網連不上時：本機 Tailscale、對方的位址紀錄、實際連一次，依失敗類型告訴你斷在哪。 */
+    private void remoteCheck(TransferStore.Peer p) {
+        Toast.makeText(this, L.t("檢查中…（最久約 10 秒）"), Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            final String r = FcmLab.diagnoseRemote(this, p);
+            ui.post(() -> new android.app.AlertDialog.Builder(this).setTitle(L.t("外網連線檢查")).setMessage(r).setPositiveButton(L.t("好"), null).show());
         }).start();
     }
 
