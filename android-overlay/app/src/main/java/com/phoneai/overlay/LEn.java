@@ -1478,6 +1478,9 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("AI 想再讀另一個網站：", "The AI wants to read another website: ");
+        m.put("（這一輪已經讀過：", "(already read this turn: ");
+        m.put("要允許嗎？", "Allow it?");
         m.put("上一個問題還在處理中，請等它回答完再問。", "The previous question is still being answered; wait for it to finish.");
         m.put("已經有一個操作正在進行，請等它做完（或在通知上按「停止」）再試。", "An operation is already running; wait for it to finish (or tap Stop in the notification) and try again.");
         m.put("重新整理", "Refresh");
