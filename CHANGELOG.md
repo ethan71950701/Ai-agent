@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1770
+
 - 下拉重新整理：讀完後等圓圈收完、畫面靜止了，才更新上面的文字與清單，不在清單還被拉著時改動版面｜Pull-to-refresh: after a reload, the text and list are updated only once the circle has retracted and the screen is still, instead of changing the layout while the list is still pulled down
 
 ## 1.0.1769
