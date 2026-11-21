@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 穩定與安全：傳檔案時按停止／暫停會直接關掉那條連線，對方不再收資料、寫入卡住時也能立刻停下；傳輸服務的請求標頭有行數、大小與時間上限，不會被慢慢送資料的人占滿連線；聊天一次只處理一個（交接旗標改成每個聊天各自的）；續傳暫存檔是符號連結時拒絕；自訂 AI 服務只有主機名稱剛好是 api.openai.com 才當成官方｜Stability and safety: pressing Stop/Pause while sending or receiving now closes that connection, so a write stuck on a peer that stopped reading ends at once; the transfer server limits request-header lines, size and time so a slow sender can't hog all connections; chat handles one question at a time (the hand-off flag is now per chat); a resume partial that is a symlink is refused; a custom AI service counts as official OpenAI only when its host is exactly api.openai.com
+
+## 1.0.1772
+
 - 安全與穩定：刪除資料夾時遇到符號連結只刪連結本身，不會進去刪到共享資料夾以外的東西；自動操作一次只跑一個，助理面板與首頁同時送出時後來的會被擋下並提示，不會互相蓋掉狀態｜Safety and stability: deleting a folder no longer follows symbolic links out of the shared folder (the link itself is removed); automatic operation now runs one task at a time, so submitting from the panel and the home screen together blocks the later one with a message instead of overwriting each other's state
 
 ## 1.0.1770
