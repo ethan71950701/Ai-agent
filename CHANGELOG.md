@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1756
+
 - 互換推播 token 更常自動發生：不論是誰先連誰（對方連進來也算）、走區網或 Tailscale，連上時都會順便互換一次（每台 10 分鐘最多一次），改名、換 token 後下次連線就補齊｜Push tokens now swap automatically more often: whichever phone connects first (an incoming connection counts too), over LAN or Tailscale, they exchange once on contact (at most every 10 minutes per device), so renames and token changes are caught up on the next connection
 
 ## 1.0.1755
