@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 互傳頁：「沒傳完的檔案」移到最上面，而且每一筆會寫「停下來的原因」（你按了暫停、或連不上的錯誤訊息），點通知進來不會再看不出發生什麼事｜Transfer page: the "unfinished files" list is now at the top and each entry says why it stopped (you paused it, or the error), so tapping the notification no longer leaves you guessing
+
+## 1.0.1761
+
 - 選完檔案後不再馬上說「開始傳了」：先顯示「準備傳送」，通知列會即時顯示現在在做什麼（正在找對方、用推播叫醒、開 Tailscale、已連上），叫醒等待時也能按「停止」｜After picking a file it no longer claims it has started sending: it says "getting ready" and the notification shows what is happening (looking for the phone, waking it by push, turning on Tailscale, connected), and Stop works while waiting for it to wake
 
 ## 1.0.1760
