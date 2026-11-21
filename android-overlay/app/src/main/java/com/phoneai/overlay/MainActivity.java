@@ -671,6 +671,17 @@ public class MainActivity extends Activity {
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams cvp = new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, Ui.dp(this, 110));
         cvp.gravity = android.view.Gravity.BOTTOM;
         ((android.view.ViewGroup) root).addView(cover, 1, cvp);
+        // 手勢導覽的小白條那一條（系統導覽列的高度）：以前這層純色只蓋到它上面，那一條露出底下的光暈，變成一條彩色細線。讓純色一路蓋到螢幕最底
+        ((android.view.ViewGroup) root).setClipToPadding(false);
+        final int coverBase = Ui.dp(this, 110);
+        root.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or2, ob) -> {
+            int pb = root.getPaddingBottom();
+            if (cvp.bottomMargin != -pb) {
+                cvp.bottomMargin = -pb;
+                cvp.height = coverBase + pb;
+                cover.setLayoutParams(cvp);
+            }
+        });
         root.post(this::kickGlass);
         homeFx = new android.view.View[]{aurora, cover};
 
