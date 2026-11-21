@@ -71,6 +71,7 @@ final class TailscaleControl {
     private static volatile boolean ours;
     private static volatile long lastUse, holdUntil;
     private static Thread watcher;
+    private static int offFailures;
 
     /** 要不要把 Tailscale 關回去：只有「我們開的」、而且現在沒有傳輸在跑、而且閒置夠久。 */
     static boolean shouldTurnOff(boolean ours, boolean busy, long nowMs, long lastUseMs, long idleMs) {
@@ -82,21 +83,46 @@ final class TailscaleControl {
         return transferActive || connections > 0 || nowMs < holdUntilMs;
     }
 
+    /** 「是我們開的」記號最多留這麼久：程序被殺掉沒來得及清的話，過了這段時間就當作過期（之後你自己開的 Tailscale 才不會被誤關）。 */
+    static final long OURS_VALID_MS = 30 * 60_000L;
+
+    /** 啟動時要不要接手上次的記號：有記號、而且還沒過期。 */
+    static boolean oursStillValid(boolean flag, long markedAtMs, long nowMs) {
+        return flag && markedAtMs > 0 && nowMs - markedAtMs >= 0 && nowMs - markedAtMs < OURS_VALID_MS;
+    }
+
+    /** 關完之後下一步：已經關了＝done；沒關掉而且還沒試滿次數＝retry；試滿了＝giveup（照實記下來，請使用者手動關）。 */
+    static String afterTurnOff(boolean isOff, int failures) {
+        if (isOff) return "done";
+        return failures >= MAX_OFF_TRIES ? "giveup" : "retry";
+    }
+
+    static final int MAX_OFF_TRIES = 3;
+    private static volatile long persistedAt;
+
     private static void markOurs(Context c) {
+        offFailures = 0;
         ours = true;
         lastUse = System.currentTimeMillis();
-        cfg(c).edit().putBoolean("ts_ours", true).apply();
+        persistOurs(c);
         startWatcher(c.getApplicationContext());
+    }
+
+    private static void persistOurs(Context c) {
+        persistedAt = System.currentTimeMillis();
+        cfg(c).edit().putBoolean("ts_ours", true).putLong("ts_ours_at", persistedAt).apply();
     }
 
     private static void clearOurs(Context c) {
         ours = false;
-        cfg(c).edit().putBoolean("ts_ours", false).apply();
+        cfg(c).edit().putBoolean("ts_ours", false).putLong("ts_ours_at", 0).apply();
     }
 
     /** App 啟動時呼叫：上次是我們開的、但程序被殺掉沒來得及關，就接手繼續負責（閒置後關回去）；已經不在了就清掉記號。要在背景執行緒。 */
     static void reconcile(Context c) {
-        if (!cfg(c).getBoolean("ts_ours", false)) return;
+        boolean flag = cfg(c).getBoolean("ts_ours", false);
+        if (!flag) return;
+        if (!oursStillValid(true, cfg(c).getLong("ts_ours_at", 0), System.currentTimeMillis())) { clearOurs(c); return; }   // 記號太舊：不知道現在的 Tailscale 是誰開的，不去動它
         if (!isOn()) { clearOurs(c); return; }
         ours = true;
         lastUse = System.currentTimeMillis();
@@ -126,12 +152,26 @@ final class TailscaleControl {
                     continue;
                 }
                 boolean busy = busy(TransferNotify.active(), TransferServer.activeConnections(), System.currentTimeMillis(), holdUntil);
-                if (busy) { lastUse = System.currentTimeMillis(); continue; }
+                if (busy) {
+                    lastUse = System.currentTimeMillis();
+                    if (lastUse - persistedAt > 60_000) persistOurs(app);   // 還在用：記號的時間跟著更新，不會因為傳很久而過期
+                    continue;
+                }
                 if (shouldTurnOff(ours, false, System.currentTimeMillis(), lastUse, IDLE_MS)) {
-                    turnOff(app);
-                    clearOurs(app);
-                    LifeLog.add(app, "外網：我們開的 Tailscale 閒置 " + IDLE_MS / 1000 + " 秒，已關回去");
-                    return;
+                    boolean off = turnOff(app);   // 會等它真的斷線；沒關掉就不能清掉記號，不然之後沒人會再關
+                    String next = afterTurnOff(off, ++offFailures);
+                    if (next.equals("done")) {
+                        clearOurs(app);
+                        LifeLog.add(app, "外網：我們開的 Tailscale 閒置 " + IDLE_MS / 1000 + " 秒，已關回去");
+                        return;
+                    }
+                    if (next.equals("giveup")) {
+                        clearOurs(app);
+                        LifeLog.add(app, "外網：我們開的 Tailscale 試了 " + MAX_OFF_TRIES + " 次都關不掉（沒 root、沒安裝，或被系統凍住），請手動關閉");
+                        return;
+                    }
+                    LifeLog.add(app, "外網：Tailscale 還沒關掉，30 秒後再試（第 " + offFailures + " 次）");
+                    lastUse = System.currentTimeMillis() - IDLE_MS + 30_000;   // 30 秒後再試
                 }
             }
         }, "tailscale-restore");
@@ -165,8 +205,15 @@ final class TailscaleControl {
     }
 
     /** 關掉（我們自己開的才關回去）。盡力而為。 */
-    static void turnOff(Context c) {
-        if (!TailscaleLauncher.installed(c) || !Root.available()) return;
+    static boolean turnOff(Context c) {
+        if (!isOn()) return true;
+        if (!TailscaleLauncher.installed(c) || !Root.available()) return false;
         for (String cmd : disconnectCommands()) Maintenance.suRun(cmd);
+        long until = System.currentTimeMillis() + 6000;   // 等它真的斷線再回報
+        while (System.currentTimeMillis() < until) {
+            if (!isOn()) return true;
+            try { Thread.sleep(300); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+        }
+        return !isOn();
     }
 }

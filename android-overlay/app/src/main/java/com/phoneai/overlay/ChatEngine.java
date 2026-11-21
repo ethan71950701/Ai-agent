@@ -114,10 +114,14 @@ final class ChatEngine {
 
     /** 聊天助理的 phone_task 工具：做完手機上的事、把結果交還給聊天繼續。由 Brain 在聊天期間設定（需要 Activity 與介面），沒設就不能用。 */
     interface PhoneRunner { String run(String task); }
-    static volatile PhoneRunner phoneRunner;
+    /** 這幾個狀態都是「這條聊天執行緒」自己的（兩個聊天同時進行時不會互相清掉對方的）；工具在 ask 同一條執行緒上執行。 */
+    private static final ThreadLocal<PhoneRunner> PHONE_RUNNER = new ThreadLocal<>();
+    private static final ThreadLocal<int[]> PHONE_USED = new ThreadLocal<int[]>() { @Override protected int[] initialValue() { return new int[1]; } };
+    private static final ThreadLocal<Boolean> IN_PHONE_TASK = new ThreadLocal<>();
     static final int MAX_PHONE_TASKS = 2;
-    private static int phoneTasksUsed;
-    private static volatile boolean inPhoneTask;
+
+    /** 呼叫端（Brain）在聊天前設定、聊天後清掉（傳 null）。 */
+    static void setPhoneRunner(PhoneRunner r) { if (r == null) PHONE_RUNNER.remove(); else PHONE_RUNNER.set(r); }
 
     /** phone_task 能不能執行：回 null＝可以，否則是要告訴模型的原因。純邏輯。 */
     static String phoneTaskProblem(boolean hasRunner, boolean nested, int used, String task) {
@@ -129,11 +133,11 @@ final class ChatEngine {
     }
 
     private static String phoneTask(String task) {
-        PhoneRunner r = phoneRunner;
-        String bad = phoneTaskProblem(r != null, inPhoneTask, phoneTasksUsed, task);
+        PhoneRunner r = PHONE_RUNNER.get();
+        String bad = phoneTaskProblem(r != null, Boolean.TRUE.equals(IN_PHONE_TASK.get()), PHONE_USED.get()[0], task);
         if (bad != null) return bad;
-        phoneTasksUsed++;
-        inPhoneTask = true;
+        PHONE_USED.get()[0]++;
+        IN_PHONE_TASK.set(true);
         try {
             String out = r.run(task.trim());
             if (out == null || out.trim().isEmpty()) out = "（操作完成，沒有文字結果）";
@@ -141,7 +145,7 @@ final class ChatEngine {
         } catch (Throwable t) {
             return "錯誤：操作手機失敗：" + t.getMessage();
         } finally {
-            inPhoneTask = false;
+            IN_PHONE_TASK.remove();
         }
     }
     /** 串流回答：設了之後（面板的聊天），Claude 的請求改用串流，文字邊收邊交給它（已去掉 <work> 推算過程）。別家服務、網頁搜尋、沒設的呼叫端照舊一次收完。 */
@@ -653,7 +657,7 @@ final class ChatEngine {
         final String model = hasImg ? AgentLoop.MODEL : MODEL;   // 看圖欄位的模型
         lastError = "";
         handoff = false;
-        phoneTasksUsed = 0;
+        PHONE_USED.get()[0] = 0;
         String key = key(c);
         if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
         try {

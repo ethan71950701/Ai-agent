@@ -77,4 +77,25 @@ public class AgentToolsTest {
         assertFalse(ChatEngine.isAgentTool("phone_task"));
         assertFalse(ChatEngine.agentToolPrompt().contains("phone_task"));
     }
+
+    @Test
+    public void phoneTaskStateBelongsToTheChatThread() throws Exception {
+        final org.json.JSONObject in = new org.json.JSONObject().put("task", "x");
+        final String[] other = new String[1];
+        ChatEngine.setPhoneRunner(t -> "done:" + t);
+        try {
+            assertEquals("done:x", ChatEngine.runTool(null, "phone_task", in, null));
+            Thread t = new Thread(() -> other[0] = ChatEngine.runTool(null, "phone_task", in, null));   // 另一個聊天（沒設執行器）
+            t.start();
+            t.join();
+            assertTrue("別條執行緒看不到這條的執行器：" + other[0], other[0].startsWith("錯誤"));
+            Thread clear = new Thread(() -> ChatEngine.setPhoneRunner(null));   // 別條執行緒清掉自己的，不影響這條
+            clear.start();
+            clear.join();
+            assertEquals("done:x", ChatEngine.runTool(null, "phone_task", in, null));
+            assertEquals("一輪最多 2 次，第 3 次被擋", true, ChatEngine.runTool(null, "phone_task", in, null).startsWith("錯誤"));
+        } finally {
+            ChatEngine.setPhoneRunner(null);
+        }
+    }
 }

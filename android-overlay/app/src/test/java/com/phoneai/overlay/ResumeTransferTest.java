@@ -419,4 +419,13 @@ public class ResumeTransferTest {
         }
         assertFalse(new File(inbox, "never.bin").exists());
     }
+
+    @Test
+    public void expiredJustStoppedEntriesArePruned() {
+        java.util.Map<String, Long> m = new java.util.HashMap<>();
+        m.put("a|old", 1_000L);
+        m.put("a|new", 9_000L);
+        assertEquals(1, TransferServer.pruneStopped(m, 1_000L + TransferServer.STOPPED_MEMORY_MS));
+        assertEquals(java.util.Collections.singleton("a|new"), m.keySet());
+    }
 }

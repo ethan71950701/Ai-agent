@@ -554,6 +554,11 @@ final class FcmLab {
         final boolean startedHere = !TransferService.running;
         TransferService.start(app);
         if (!startedHere) return "互傳本來就開著，等對方連進來" + note;   // 本來就開著（使用者自己開的）：不去關它
+        if (!Waits.until(() -> TransferService.running, 5000, 100)) {   // 要等它真的在聽才算開起來；啟動失敗（前景服務被擋、埠被占用）要照實說
+            String why = TransferService.lastError.isEmpty() ? "沒有回應" : TransferService.lastError;
+            LifeLog.add(app, "FCM 叫醒：互傳伺服器啟動失敗：" + why);
+            return "互傳伺服器啟動失敗（" + why + "），對方連不進來" + note;
+        }
         Thread t = new Thread(() -> {
             IdleWatch w = new IdleWatch(System.currentTimeMillis(), 60_000);
             try {

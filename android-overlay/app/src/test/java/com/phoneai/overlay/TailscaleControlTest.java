@@ -54,4 +54,22 @@ public class TailscaleControlTest {
         assertTrue("等對方連進來的保留期內不算閒置", TailscaleControl.busy(false, 0, 1000, 5000));
         assertEquals(false, TailscaleControl.busy(false, 0, 5000, 5000));
     }
+
+    @Test
+    public void ownershipIsOnlyClearedWhenTailscaleReallyWentOff() {
+        assertEquals("done", TailscaleControl.afterTurnOff(true, 1));
+        assertEquals("關不掉要再試，不能清掉記號", "retry", TailscaleControl.afterTurnOff(false, 1));
+        assertEquals("retry", TailscaleControl.afterTurnOff(false, TailscaleControl.MAX_OFF_TRIES - 1));
+        assertEquals("試滿了才放棄", "giveup", TailscaleControl.afterTurnOff(false, TailscaleControl.MAX_OFF_TRIES));
+    }
+
+    @Test
+    public void staleOwnershipMarkIsNotTrusted() {
+        long now = 10_000_000L;
+        assertTrue(TailscaleControl.oursStillValid(true, now - 60_000, now));
+        assertEquals("過期的記號不能接手（那可能是你自己開的）", false, TailscaleControl.oursStillValid(true, now - TailscaleControl.OURS_VALID_MS, now));
+        assertEquals(false, TailscaleControl.oursStillValid(false, now - 1000, now));
+        assertEquals("沒有時間（舊版留下的）不信", false, TailscaleControl.oursStillValid(true, 0, now));
+        assertEquals("時鐘倒退不信", false, TailscaleControl.oursStillValid(true, now + 5000, now));
+    }
 }

@@ -76,6 +76,13 @@ final class TransferServer {
     private static final java.util.Map<String, Long> STOPPED = new java.util.concurrent.ConcurrentHashMap<>();
     static final long STOPPED_MEMORY_MS = 5_000;
 
+    /** 把過期的「剛停止」紀錄清掉（放進新的之前順便做，Map 不會一直變大）。回傳清了幾筆。 */
+    static int pruneStopped(java.util.Map<String, Long> m, long nowMs) {
+        int n = 0;
+        for (java.util.Iterator<Long> it = m.values().iterator(); it.hasNext();) if (nowMs - it.next() >= STOPPED_MEMORY_MS) { it.remove(); n++; }
+        return n;
+    }
+
     /** 剛收完的上傳（對方編號|指紋 → 結果）：送出端沒收到「收到了」的回覆時，可以來問一聲，不必整個重傳（會變成「檔名 (1)」的重複檔案）；校驗碼對不上時也靠它請我們刪掉那個檔案。 */
     static final class Done {
         final String name, sha;
@@ -514,7 +521,7 @@ final class TransferServer {
             sendText(out, au, "saved\t" + dest.getName() + "\t" + total + "\t" + finalSha);
         } catch (Aborted a) {   // 這一端的使用者按了停止／暫停：明確回覆（對方才不會當成斷線一直重試）；停止就把半成品刪掉
             keepPart = a.keepPartial;
-            if (!a.keepPartial && resumable) STOPPED.put(au.peer + "|" + fpParam, System.currentTimeMillis());
+            if (!a.keepPartial && resumable) { pruneStopped(STOPPED, System.currentTimeMillis()); STOPPED.put(au.peer + "|" + fpParam, System.currentTimeMillis()); }
             try { reply(out, 499, a.getMessage()); } catch (IOException ignored) { }
         } catch (IOException e) {
             if (!keepPart) host.serverError(au.peer, L.t("收「") + base + L.t("」時出錯：") + e.getMessage());   // 留記錄，也盡量告訴對方原因（斷線這種之後會續傳的不算錯誤）
