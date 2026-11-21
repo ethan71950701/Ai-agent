@@ -588,16 +588,45 @@ final class TransferServer {
 
     private String list(File dir) { return listIn(host.root(), dir); }
 
-    /** 目錄內容：符號連結與指到共享根目錄以外的項目不列出（不然會洩漏外面的檔名與絕對路徑）。 */
+    /**
+     * 目錄內容：符號連結與指到共享根目錄以外的項目不列出（不然會洩漏外面的檔名與絕對路徑）。
+     * 每個項目只讀一次檔案屬性（以前每項要查十幾次，手機的共用儲存空間很慢，一個資料夾要好幾百毫秒）；
+     * 資料夾本身已經確認在根目錄之內，所以裡面不是符號連結的項目一定也在裡面，不用逐項解析真實路徑。
+     */
     static String listIn(File rootDir, File dir) {
         File[] all = dir.listFiles();
         if (all == null) return "";
-        List<File> okKids = new ArrayList<>();
-        for (File k : all) if (!java.nio.file.Files.isSymbolicLink(k.toPath()) && insideRoot(rootDir, k)) okKids.add(k);
-        File[] kids = okKids.toArray(new File[0]);
-        Arrays.sort(kids, (x, y) -> x.isDirectory() != y.isDirectory() ? (x.isDirectory() ? -1 : 1) : x.getName().compareToIgnoreCase(y.getName()));
+        String relDir;
+        try {
+            String root = rootDir.getCanonicalPath(), p = dir.getCanonicalPath();
+            if (p.equals(root)) relDir = "";
+            else if (p.startsWith(root + File.separator)) relDir = p.substring(root.length() + 1) + File.separator;
+            else return "";   // 資料夾在根目錄之外：不列
+        } catch (IOException e) {
+            return "";
+        }
+        final class Item {
+            final String name;
+            final boolean dir;
+            final long size, mtime;
+            Item(String name, boolean dir, long size, long mtime) { this.name = name; this.dir = dir; this.size = size; this.mtime = mtime; }
+        }
+        List<Item> items = new ArrayList<>();
+        for (File k : all) {
+            try {
+                java.nio.file.attribute.BasicFileAttributes a = java.nio.file.Files.readAttributes(k.toPath(), java.nio.file.attribute.BasicFileAttributes.class, java.nio.file.LinkOption.NOFOLLOW_LINKS);
+                if (a.isSymbolicLink()) continue;
+                items.add(new Item(k.getName(), a.isDirectory(), a.isRegularFile() ? a.size() : 0, a.lastModifiedTime().toMillis()));
+            } catch (IOException | RuntimeException e) {
+                // 讀不到屬性的項目（剛被刪掉、沒權限）就略過
+            }
+        }
+        Collections.sort(items, (x, y) -> x.dir != y.dir ? (x.dir ? -1 : 1) : x.name.compareToIgnoreCase(y.name));
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < kids.length && i < 500; i++) sb.append(lineOf(rootDir, kids[i]));
+        for (int i = 0; i < items.size() && i < 500; i++) {
+            Item it = items.get(i);
+            sb.append(it.dir ? "D" : "F").append('\t').append(it.size).append('\t').append(it.mtime).append('\t').append(relDir).append(it.name).append('\n');
+        }
         return sb.toString();
     }
 

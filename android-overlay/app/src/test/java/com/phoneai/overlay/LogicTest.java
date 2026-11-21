@@ -510,6 +510,25 @@ public class LogicTest {
     }
 
     @Test
+    public void transferListGivesTheSameLinesAsTheSlowWay() throws Exception {
+        java.nio.file.Path root = java.nio.file.Files.createTempDirectory("share3");
+        java.nio.file.Path sub = java.nio.file.Files.createDirectories(root.resolve("DCIM/Camera"));
+        java.nio.file.Files.write(sub.resolve("b.jpg"), new byte[1234]);
+        java.nio.file.Files.write(sub.resolve("A.jpg"), new byte[5]);
+        java.nio.file.Files.createDirectory(sub.resolve("zdir"));
+        java.nio.file.Files.createDirectory(sub.resolve("Adir"));
+        java.nio.file.Files.write(root.resolve("top.txt"), new byte[9]);
+        for (java.nio.file.Path d : new java.nio.file.Path[]{root, root.resolve("DCIM"), sub}) {
+            java.io.File[] kids = d.toFile().listFiles();
+            java.util.Arrays.sort(kids, (x, y) -> x.isDirectory() != y.isDirectory() ? (x.isDirectory() ? -1 : 1) : x.getName().compareToIgnoreCase(y.getName()));
+            StringBuilder expect = new StringBuilder();
+            for (java.io.File k : kids) expect.append(TransferServer.lineOf(root.toFile(), k));
+            assertEquals(expect.toString(), TransferServer.listIn(root.toFile(), d.toFile()));
+        }
+        assertEquals("資料夾在根目錄之外不列", "", TransferServer.listIn(sub.toFile(), root.toFile()));
+    }
+
+    @Test
     public void readOnlyShellBlocksQuotesWhitelistsServicesAndPaths() {
         assertFalse(AgentLoop.readOnly("dumpsys \"notification\""));
         assertFalse(AgentLoop.readOnly("dumpsys 'notification'"));
