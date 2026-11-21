@@ -121,9 +121,12 @@ final class PullRefresh {
     }
 
     /** 重新讀取完了：圓圈縮回去。 */
-    void done() {
-        if (!loading) return;
-        springTo(0, () -> { loading = false; stopLoadingAnim(); }, SpringForce.DAMPING_RATIO_NO_BOUNCY);   // 收回去不要彈：彈過頭會讓清單往上衝一下
+    void done() { done(null); }
+
+    /** after：圓圈收完、一切靜止之後才執行（呼叫端把會改動版面的更新放在這裡，不要在清單還被拉著、還在動的時候更新文字或重建清單）。 */
+    void done(Runnable after) {
+        if (!loading) { if (after != null) after.run(); return; }
+        springTo(0, () -> { loading = false; stopLoadingAnim(); if (after != null) after.run(); }, SpringForce.DAMPING_RATIO_NO_BOUNCY);   // 收回去不要彈：彈過頭會讓清單往上衝一下
         loading = true;   // 彈回去的過程中不接受新的下拉
     }
 

@@ -124,13 +124,23 @@ public class BrowseActivity extends Activity {
                 ui.post(() -> {
                     if (seq != navSeq) return;   // 讀的時候使用者已經按返回、去別的資料夾了
                     loading = false;
-                    show(target, rows);
-                    long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
-                    status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
-                    if (pullPending) { pullPending = false; if (pull != null) pull.done(); }   // 清單與文字都穩定了才把圓圈收回去
+                    final Runnable apply = () -> {
+                        if (seq != navSeq) return;   // 等圓圈收完的這段時間，使用者又去了別的地方
+                        show(target, rows);
+                        long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
+                        status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
+                    };
+                    if (pullPending && pull != null) { pullPending = false; pull.done(apply); }   // 下拉重讀：等圓圈收完、畫面靜止了才更新文字與清單（拉著的時候改版面會讓清單瞬間跳回最上面又回來）
+                    else { pullPending = false; apply.run(); }
                 });
             } catch (Exception e) {
-                ui.post(() -> { if (seq == navSeq) { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); } if (pullPending) { pullPending = false; if (pull != null) pull.done(); } });
+                ui.post(() -> {
+                    if (seq != navSeq) return;
+                    loading = false;
+                    final String msg = L.t("讀取失敗：") + e.getMessage();
+                    if (pullPending && pull != null) { pullPending = false; pull.done(() -> status.setText(msg)); }
+                    else { pullPending = false; status.setText(msg); }
+                });
             }
         }).start();
     }
