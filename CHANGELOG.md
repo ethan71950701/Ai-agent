@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1760
+
 - 移除舊的「推播叫醒對方來取檔案」備援（outbox 待取區）：傳檔一律由發送端直接連線，推播只負責叫醒；不再多複製一份檔案到共享資料夾。兩支手機請都更新到最新版｜Removed the old "push the other phone to come and fetch the file" fallback (the outbox): files are always sent over a direct connection and push only wakes the other phone; no more extra copy of the file in the shared folder. Please update both phones
 
 ## 1.0.1759
