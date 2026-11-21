@@ -108,7 +108,7 @@ public class BrowseActivity extends Activity {
         loading = true;
         final int seq = ++navSeq;
         tapAt = System.currentTimeMillis();
-        status.setText(L.t("讀取中…"));
+        if (!pullPending) status.setText(L.t("讀取中…"));   // 下拉重新整理時圓圈就是「讀取中」，不要改文字（換行數一變，清單會跳一下）
         final long t0 = System.currentTimeMillis();
         new Thread(() -> {
             try {

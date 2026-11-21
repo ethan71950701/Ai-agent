@@ -44,14 +44,14 @@ final class PullRefresh {
         this.onRefresh = onRefresh;
         threshold = Ui.dp(a, 80);
         limit = Ui.dp(a, 150);
-        holdAt = Ui.dp(a, 58);
+        holdAt = Ui.dp(a, 66);   // 轉圈時清單停在這個位置：要讓圓圈整個在清單上面，不壓到第一張卡片
         slop = ViewConfiguration.get(a).getScaledTouchSlop();
         holder = new FrameLayout(a);
         GradientDrawable bg = new GradientDrawable();
         bg.setShape(GradientDrawable.OVAL);
-        bg.setColor(Ui.attr(a, com.google.android.material.R.attr.colorSurfaceContainerHigh));
+        bg.setColor(Ui.attr(a, com.google.android.material.R.attr.colorSurfaceContainerHighest));   // 和卡片（ContainerHigh）不同色，圓底才看得出來
         holder.setBackground(bg);
-        holder.setElevation(Ui.dp(a, 6));
+        holder.setElevation(Ui.dp(a, 8));
         holder.setAlpha(0f);
         spinner = new CircularProgressIndicator(a);
         spinner.setIndicatorSize(Ui.dp(a, 24));
@@ -112,7 +112,7 @@ final class PullRefresh {
     private void release() {
         if (PullMath.triggers(pulled, threshold)) {
             loading = true;
-            spinner.setIndeterminate(true);   // 轉圈：弧線一長一短、轉速忽快忽慢（Material 的不確定進度）
+            startLoadingAnim();   // 從目前的弧線與角度接著轉：弧線一長一短、轉速忽快忽慢；不切換成系統的不確定進度（它會從頭開始，弧線縮成一個點再長出來，看起來像閃一下）
             springTo(holdAt, null);
             onRefresh.run();
         } else {
@@ -123,8 +123,35 @@ final class PullRefresh {
     /** 重新讀取完了：圓圈縮回去。 */
     void done() {
         if (!loading) return;
-        springTo(0, () -> { loading = false; spinner.setIndeterminate(false); });
+        springTo(0, () -> { loading = false; stopLoadingAnim(); });
         loading = true;   // 彈回去的過程中不接受新的下拉
+    }
+
+    private android.animation.ValueAnimator arcAnim, spinAnim;
+
+    private void startLoadingAnim() {
+        stopLoadingAnim();
+        final float rot0 = holder.getRotation();
+        arcAnim = android.animation.ValueAnimator.ofFloat(0.75f, 0.22f);   // 從現在的四分之三圈縮短、再拉長，來回
+        arcAnim.setDuration(750);
+        arcAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        arcAnim.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+        arcAnim.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        arcAnim.addUpdateListener(an -> spinner.setProgressCompat(Math.round((float) an.getAnimatedValue() * 100), false));
+        arcAnim.start();
+        spinAnim = android.animation.ValueAnimator.ofFloat(rot0, rot0 + 720f);   // 轉兩圈剛好接回起點，重複時看不出接縫；加減速讓速度忽快忽慢
+        spinAnim.setDuration(1600);
+        spinAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        spinAnim.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        spinAnim.addUpdateListener(an -> holder.setRotation((float) an.getAnimatedValue()));
+        spinAnim.start();
+    }
+
+    private void stopLoadingAnim() {
+        if (arcAnim != null) { arcAnim.cancel(); arcAnim = null; }
+        if (spinAnim != null) { spinAnim.cancel(); spinAnim = null; }
+        holder.setRotation(0);
+        spinner.setProgressCompat(0, false);
     }
 
     private void springTo(float target, Runnable end) {
@@ -143,7 +170,7 @@ final class PullRefresh {
         sv.setTranslationY(p);
         
         int top = bar.getBottom();
-        holder.setTranslationY(top + Math.max(-holder.getHeight() - 8, p - holder.getHeight() - Ui.dp(act, 4)));
+        holder.setTranslationY(top + Math.max(-holder.getHeight() - 8, p - holder.getHeight() - Ui.dp(act, 6)));
         holder.setAlpha(Math.min(1f, p / Ui.dp(act, 36)));
         float scale = 0.6f + 0.4f * Math.min(1f, p / Ui.dp(act, 50));
         holder.setScaleX(scale);
