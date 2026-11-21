@@ -18,4 +18,13 @@ final class PullMath {
 
     /** 放手時算不算「拉夠了」：到門檻的九成就算，免得差一點點白拉。 */
     static boolean triggers(float pulled, float threshold) { return pulled >= threshold * 0.9f; }
+
+    /**
+     * 圓圈上弧線的長度（0～1 圈）：從一小段慢慢變長，但最多約四分之三圈，不會封成「整個圓」
+     * （封成整圈看起來就像已經完成或壞掉；超過門檻後靠旋轉表示還在回應手指）。
+     */
+    static float arcFraction(float pulled, float threshold) {
+        if (pulled <= 0) return 0f;
+        return 0.05f + 0.70f * progress(pulled, threshold);
+    }
 }

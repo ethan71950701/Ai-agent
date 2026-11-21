@@ -41,4 +41,17 @@ public class PullMathTest {
         assertTrue(PullMath.triggers(72, 80));
         assertFalse(PullMath.triggers(71, 80));
     }
+
+    @Test
+    public void arcNeverClosesIntoAFullCircle() {
+        assertEquals(0f, PullMath.arcFraction(0, 80), 0f);
+        float prev = 0;
+        for (int p = 1; p <= 400; p += 5) {
+            float f = PullMath.arcFraction(p, 80);
+            assertTrue(f >= prev);
+            assertTrue("拉再多也不能封成整圈：" + f, f <= 0.75f + 0.0001f);
+            prev = f;
+        }
+        assertTrue("拉到門檻時已經是一大段弧", PullMath.arcFraction(80, 80) > 0.7f);
+    }
 }

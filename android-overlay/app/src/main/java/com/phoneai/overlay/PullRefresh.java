@@ -58,6 +58,7 @@ final class PullRefresh {
         spinner.setTrackThickness(Ui.dp(a, 3));
         spinner.setIndeterminate(false);
         spinner.setMax(100);
+        spinner.setTrackColor(android.graphics.Color.TRANSPARENT);   // 不畫底下那圈整圓的軌道，只留會長的弧線
         FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER);
         holder.addView(spinner, sp);
         int size = Ui.dp(a, 40);
@@ -140,7 +141,7 @@ final class PullRefresh {
     private void paint(float p) {
         pulled = p;
         sv.setTranslationY(p);
-        float prog = PullMath.progress(p, threshold);
+        
         int top = bar.getBottom();
         holder.setTranslationY(top + Math.max(-holder.getHeight() - 8, p - holder.getHeight() - Ui.dp(act, 4)));
         holder.setAlpha(Math.min(1f, p / Ui.dp(act, 36)));
@@ -148,6 +149,6 @@ final class PullRefresh {
         holder.setScaleX(scale);
         holder.setScaleY(scale);
         holder.setRotation(loading ? 0 : p * 0.9f);   // 拉到底也還會慢慢轉，看得出還在回應手指
-        if (!loading) spinner.setProgressCompat(Math.round(prog * 100), false);
+        if (!loading) spinner.setProgressCompat(Math.round(PullMath.arcFraction(p, threshold) * 100), false);
     }
 }
