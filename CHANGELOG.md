@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正：下拉重新整理拉到比較下面時，圓圈上的弧線會封成一整圈；現在弧線最多約四分之三圈，也不再畫底下的整圈軌道｜Fix: pulling further down in pull-to-refresh closed the arc into a full circle; the arc now stops at about three quarters and the full-circle track behind it is no longer drawn
+
+## 1.0.1765
+
 - 瀏覽對方資料夾：改成從清單最上面往下拉來重新整理（圓圈跟著手指滑出來、弧線慢慢畫出，拉過門檻放手才重讀；越拉越吃力但不會突然卡住，放手有彈簧的彈性），取代「重新整理」按鈕｜Browsing the other phone's folders: pull down from the top of the list to refresh (a circle follows your finger and its arc fills in; release past the threshold to reload; resistance grows but never hits a wall, and release springs back), replacing the Refresh button
 
 ## 1.0.1764
