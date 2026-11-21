@@ -1479,6 +1479,11 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("重新整理", "Refresh");
+        m.put("（暫存的內容", " (cached");
+        m.put("，背景更新中", ", updating in the background");
+        m.put("；要重新讀取請按「重新整理」）", "; tap Refresh to reload)");
+        m.put("（內容有更新）", "(updated)");
         m.put("找對方", "Finding");
         m.put("開外網", "Remote");
         m.put("叫醒中", "Waking");

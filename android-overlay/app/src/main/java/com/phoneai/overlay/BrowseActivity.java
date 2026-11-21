@@ -23,6 +23,9 @@ public class BrowseActivity extends Activity {
     private boolean loading;   // 讀取中不接受重複點擊，避免同時發好幾個請求而慢、亂序
     private TextView where, status;
     private LinearLayout list;
+    private final BrowseCache cache = new BrowseCache();
+    private int navSeq;   // 每次換資料夾加一：舊的讀取回來時如果已經不是目前這次，就只存暫存、不畫面
+    private android.window.OnBackInvokedCallback backCb;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -42,6 +45,7 @@ public class BrowseActivity extends Activity {
         where = Ui.body(this, "");
         top.addView(where);
         Ui.buttons(this, top, Ui.tonal(this, L.t("上一層"), v -> load(parentOf(path))),
+                Ui.tonal(this, L.t("重新整理"), v -> load(path, true)),
                 Ui.tonal(this, L.t("搜尋這台"), v -> { Ui.rememberTap(v); startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id)); }));
         status = Ui.body(this, "");
         box.addView(status);
@@ -63,9 +67,24 @@ public class BrowseActivity extends Activity {
         return par;
     }
 
-    private void load(String target) {
+    private void load(String target) { load(target, false); }
+
+    /** force＝重新整理：不看暫存，一定重新讀。 */
+    private void load(String target, boolean force) {
+        BrowseCache.Page hit = force ? null : cache.get(target);
+        if (hit != null) {   // 讀過的資料夾（含返回上一層）直接顯示，不用再問對方
+            navSeq++;
+            loading = false;
+            show(target, hit.rows);
+            boolean fresh = BrowseCache.fresh(hit, System.currentTimeMillis());
+            status.setText(rows0(hit).isEmpty() ? L.t("這個資料夾是空的") : "");
+            status.setText(status.getText() + (status.getText().length() > 0 ? "　" : "") + L.t("（暫存的內容") + (fresh ? "" : L.t("，背景更新中")) + L.t("；要重新讀取請按「重新整理」）"));
+            if (!fresh) refreshQuietly(target, hit.rows);
+            return;
+        }
         if (loading) return;
         loading = true;
+        final int seq = ++navSeq;
         tapAt = System.currentTimeMillis();
         status.setText(L.t("讀取中…"));
         final long t0 = System.currentTimeMillis();
@@ -74,22 +93,52 @@ public class BrowseActivity extends Activity {
                 if (client == null) client = FileTools.clientFor(this, peer);
                 long t1 = System.currentTimeMillis();
                 List<String[]> rows = FileTools.rows(client.list(target));
-                long ms = System.currentTimeMillis() - t0;
+                cache.put(target, rows, System.currentTimeMillis());
                 String timing = L.t("（連線 ") + (t1 - t0) + L.t(" 毫秒，讀取 ") + (System.currentTimeMillis() - t1) + L.t(" 毫秒）");
                 ui.post(() -> {
+                    if (seq != navSeq) return;   // 讀的時候使用者已經按返回、去別的資料夾了
                     loading = false;
                     show(target, rows);
                     long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
                     status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
                 });
             } catch (Exception e) {
-                ui.post(() -> { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); });
+                ui.post(() -> { if (seq == navSeq) { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); } });
             }
         }).start();
     }
 
+    private static List<String[]> rows0(BrowseCache.Page e) { return e.rows; }
+
+    /** 暫存已經放了一陣子：先顯示舊的，背景再讀一次；內容有變而且人還在這個資料夾才重畫。 */
+    private void refreshQuietly(final String target, final List<String[]> old) {
+        final TransferClient cl = client;
+        if (cl == null) return;
+        new Thread(() -> {
+            try {
+                List<String[]> rows = FileTools.rows(cl.list(target));
+                cache.put(target, rows, System.currentTimeMillis());
+                if (!BrowseCache.same(old, rows)) ui.post(() -> { if (target.equals(path) && !loading) { show(target, rows); status.setText(L.t("（內容有更新）")); } });
+            } catch (Exception ignored) { }   // 背景更新失敗就維持顯示暫存的
+        }).start();
+    }
+
+    /** 返回鍵：不在最上層就回上一個資料夾（不是離開這一頁）；在最上層才離開。預測返回要自己註冊，而且要壓過頁面預設的那個。 */
+    private void updateBackHandler() {
+        android.window.OnBackInvokedDispatcher d = getOnBackInvokedDispatcher();
+        boolean needed = !path.isEmpty();
+        if (needed && backCb == null) {
+            backCb = () -> { loading = false; load(parentOf(path)); };   // 讀取中按返回也要能退（舊的讀取回來會因為 navSeq 不一樣被丟掉）
+            d.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_OVERLAY, backCb);
+        } else if (!needed && backCb != null) {
+            d.unregisterOnBackInvokedCallback(backCb);
+            backCb = null;
+        }
+    }
+
     private void show(String target, List<String[]> rows) {
         path = target;
+        updateBackHandler();
         where.setText(L.t("位置：") + (target.isEmpty() ? L.t("（最上層）") : target));
         status.setText(rows.isEmpty() ? L.t("這個資料夾是空的") : "");
         list.removeAllViews();
