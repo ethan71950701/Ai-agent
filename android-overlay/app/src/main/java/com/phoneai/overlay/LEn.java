@@ -1479,6 +1479,10 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("找對方", "Finding");
+        m.put("開外網", "Remote");
+        m.put("叫醒中", "Waking");
+        m.put("已連上", "Linked");
         m.put("停下來的原因：", "Why it stopped: ");
         m.put("你按了暫停", "You paused it");
         m.put("連線中斷", "Connection lost");

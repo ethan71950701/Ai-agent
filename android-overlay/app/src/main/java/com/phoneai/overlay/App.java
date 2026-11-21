@@ -86,8 +86,8 @@ public class App extends Application {
             }
             @Override public void onActivityCreated(Activity a, Bundle b) { }
             @Override public void onActivityStarted(Activity a) { }
-            @Override public void onActivityResumed(Activity a) { }
-            @Override public void onActivityPaused(Activity a) { }
+            @Override public void onActivityResumed(Activity a) { TransferBar.onResumed(a); }   // 傳輸中的懸浮列跟著目前的畫面
+            @Override public void onActivityPaused(Activity a) { TransferBar.onPaused(a); }
             @Override public void onActivityStopped(Activity a) { }
             @Override public void onActivitySaveInstanceState(Activity a, Bundle b) { }
             @Override public void onActivityDestroyed(Activity a) { }

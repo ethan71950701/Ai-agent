@@ -63,7 +63,10 @@ final class TransferNotify {
      * 還沒開始傳之前的階段（找對方、叫醒對方、開 Tailscale、連線中）：通知列先顯示現在在做什麼（轉圈圈，沒有百分比），
      * 不然選完檔案到第一個位元組送出去之間，使用者什麼都看不到。只有「這條執行緒正在做一筆傳輸」（有 begin()）才會顯示；瀏覽、搜尋不會。
      */
-    static synchronized void phase(Context c, String text) {
+    static synchronized void phase(Context c, String text) { phase(c, text, null); }
+
+    /** shortText：Now Bar 膠囊上的短字（Android 16 以上才有），例如「找對方」。 */
+    static synchronized void phase(Context c, String text, String shortText) {
         long now = System.currentTimeMillis();
         TransferSlots.Slot slot = SLOTS.current(now);
         if (slot == null) return;
@@ -74,6 +77,7 @@ final class TransferNotify {
             if (r != null) r.run();
         }
         if (!SLOTS.isPrimary(slot, now)) return;
+        TransferBar.update(text, -1);   // App 在前景時，畫面下方的懸浮列也顯示現在的步驟
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
         Notification.Builder nb = new Notification.Builder(c, CHANNEL).setSmallIcon(R.drawable.ic_stat)
@@ -88,6 +92,7 @@ final class TransferNotify {
         android.os.Bundle ex = new android.os.Bundle();
         ex.putBoolean("android.requestPromotedOngoing", true);
         nb.addExtras(ex);
+        if (android.os.Build.VERSION.SDK_INT >= 36 && shortText != null) nb.setShortCriticalText(shortText);   // 膠囊上顯示目前步驟
         nm.notify(PROGRESS_ID, nb.build());
         lastAt = 0;   // 真正開始傳之後，第一筆進度馬上換掉這則
     }
@@ -110,7 +115,8 @@ final class TransferNotify {
         int pct = total > 0 ? (int) (done * 100 / Math.max(1, total)) : 0;
         double bps = SPEED.update(now, done);
         long eta = TransferProgress.etaSeconds(total, done, bps);
-        String shortLine = TransferProgress.compact(pct, bps, eta);   // 收合時只有一行：太長會被截掉，所以只放百分比、速度、剩餘時間
+        String shortLine = TransferProgress.compact(pct, bps, eta);
+        TransferBar.update(title + "\n" + shortLine, pct);   // 收合時只有一行：太長會被截掉，所以只放百分比、速度、剩餘時間
         String full = name + "\n" + TransferStore.size(done) + " / " + TransferStore.size(total) + "\n" + shortLine + "\n" + where;   // 展開才看得到完整檔名
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
@@ -150,7 +156,7 @@ final class TransferNotify {
         }
         lastAt = 0;
         boolean none = SLOTS.leave(System.currentTimeMillis());   // 只收掉自己這一筆
-        if (none) ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(PROGRESS_ID);   // 還有別筆在傳就留著通知，它的下一次更新會接手顯示
+        if (none) { ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(PROGRESS_ID); TransferBar.hide(); }   // 還有別筆在傳就留著通知，它的下一次更新會接手顯示
     }
 
     /** 傳輸完成：收起進度，再發一則一般通知，讓使用者看到結果。 */
@@ -179,6 +185,7 @@ final class TransferNotify {
         lastAt = 0;
         if (e != null) PendingTransfers.store(c).setReason(e.id, paused ? L.t("你按了暫停") : (reason == null || reason.isEmpty() ? L.t("連線中斷") : reason));   // 傳輸頁的清單要看得到「為什麼停」
         boolean none = SLOTS.leave(System.currentTimeMillis());   // 這一筆結束了（旗標跟著收掉）；別筆還在傳的話，它們不受影響
+        if (none) TransferBar.hide();
         if (e != null && !none) {   // 還有別筆在傳：通知列留給它，這一筆看「沒傳完」清單就好（不然會蓋掉它的進度）
             LifeLog.add(c, "傳輸通知：" + e.name + (paused ? " 已暫停" : " 已中斷") + "，但還有別筆在傳，通知先不換，到「互傳檔案」頁看");
             return;

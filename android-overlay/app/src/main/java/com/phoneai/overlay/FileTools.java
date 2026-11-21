@@ -363,14 +363,14 @@ final class FileTools {
         // 順序：1) 區網搜尋（在同一個 Wi‑Fi 最快）  2) Tailscale 位址（外網）  3) 上次記住的區網位址
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
-        TransferNotify.phase(c, L.t("正在找：") + p.name);
+        TransferNotify.phase(c, L.t("正在找：") + p.name, L.t("找對方"));
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
             if (FcmLab.lanIp() == null && p.tsIp != null && !TailscaleControl.isOn()) {
-                TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"));
+                TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                 TailscaleControl.turnOnForSession(c, 12000);
             }
-            TransferNotify.phase(c, L.t("對方沒回應，正在用推播叫醒：") + p.name);   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
+            TransferNotify.phase(c, L.t("對方沒回應，正在用推播叫醒：") + p.name, L.t("叫醒中"));   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = FcmLab.wake(c, p);
             if (err == null) {
@@ -406,7 +406,7 @@ final class FileTools {
             TransferStore.updateName(c, p.id, f.name);
         }
         if (ip != null && Doorbell.isTailnet(ip)) TailscaleControl.noteUse();   // 走 Tailscale：重新計「閒置多久才關回去」
-        TransferNotify.phase(c, L.t("已連上，開始傳送…"));
+        TransferNotify.phase(c, L.t("已連上，開始傳送…"), L.t("已連上"));
         TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
         if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
