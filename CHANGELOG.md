@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1769
+
 - 修正手機（窄螢幕）上下拉重新整理還會跳動：狀態文字固定剛好兩行、太長就截掉，不會因為毫秒數字變多而多出第三行｜Fix remaining jump on phones (narrow screens) after pull-to-refresh: the status text is now exactly two lines and truncated if too long, so a longer millisecond number can no longer add a third line
 
 ## 1.0.1768
