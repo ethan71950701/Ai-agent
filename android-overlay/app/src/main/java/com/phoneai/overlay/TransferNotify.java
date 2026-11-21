@@ -59,6 +59,39 @@ final class TransferNotify {
     /** 現在有沒有傳輸進行中（互傳檔案頁用來顯示停止按鈕，不必靠通知；Tailscale 的閒置判斷也看它）。 */
     static boolean active() { return SLOTS.active(System.currentTimeMillis()); }
 
+    /**
+     * 還沒開始傳之前的階段（找對方、叫醒對方、開 Tailscale、連線中）：通知列先顯示現在在做什麼（轉圈圈，沒有百分比），
+     * 不然選完檔案到第一個位元組送出去之間，使用者什麼都看不到。只有「這條執行緒正在做一筆傳輸」（有 begin()）才會顯示；瀏覽、搜尋不會。
+     */
+    static synchronized void phase(Context c, String text) {
+        long now = System.currentTimeMillis();
+        TransferSlots.Slot slot = SLOTS.current(now);
+        if (slot == null) return;
+        SLOTS.enter(now);   // 還活著
+        if (!slot.shown) {
+            slot.shown = true;
+            Runnable r = onStart;
+            if (r != null) r.run();
+        }
+        if (!SLOTS.isPrimary(slot, now)) return;
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        nm.createNotificationChannel(new NotificationChannel(CHANNEL, L.t("互傳檔案"), NotificationManager.IMPORTANCE_LOW));
+        Notification.Builder nb = new Notification.Builder(c, CHANNEL).setSmallIcon(R.drawable.ic_stat)
+                .setContentTitle(L.t("互傳檔案")).setContentText(text)
+                .setStyle(new Notification.BigTextStyle().bigText(text))
+                .setCategory(Notification.CATEGORY_PROGRESS).setShowWhen(false)
+                .setProgress(0, 0, true)
+                .addAction(new Notification.Action.Builder(Icon.createWithResource(c, android.R.drawable.ic_menu_close_clear_cancel),
+                        L.t("停止"), PendingIntent.getService(c, 0, new Intent(c, TransferService.class).setAction(ACTION_STOP),
+                        PendingIntent.FLAG_IMMUTABLE)).build())
+                .setOngoing(true).setOnlyAlertOnce(true);
+        android.os.Bundle ex = new android.os.Bundle();
+        ex.putBoolean("android.requestPromotedOngoing", true);
+        nb.addExtras(ex);
+        nm.notify(PROGRESS_ID, nb.build());
+        lastAt = 0;   // 真正開始傳之後，第一筆進度馬上換掉這則
+    }
+
     /** 進度更新：最多每 0.4 秒換一次，免得通知列一直閃。 */
     static synchronized void progress(Context c, String title, String where, String name, long done, long total) {
         long now = System.currentTimeMillis();

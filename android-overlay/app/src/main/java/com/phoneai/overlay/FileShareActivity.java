@@ -46,7 +46,7 @@ public class FileShareActivity extends Activity {
     }
 
     private void send(TransferStore.Peer p, List<Uri> uris) {
-        Toast.makeText(this, L.t("開始傳送…可以在通知列看進度"), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, L.t("準備傳送…（找對方、必要時叫醒它，進度看通知列）"), Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             for (Uri u : uris) {
                 try {

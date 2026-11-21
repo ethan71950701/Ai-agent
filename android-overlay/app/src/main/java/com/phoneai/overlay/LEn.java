@@ -1452,7 +1452,6 @@ final class LEn {
         m.put("傳檔案失敗：", "File transfer failed: ");
         m.put("傳檔案過去", "Send file");
         m.put("選擇要傳過去的檔案", "Choose a file to send");
-        m.put("開始傳檔案…可以在通知列看進度", "Sending… you can follow progress in the notifications");
         m.put(" 筆（點一下操作）", " results (tap one to act)");
         m.put("傳給哪一台", "Send to which device");
         m.put("先輸入檔名關鍵字", "Enter a file name keyword first");
@@ -1478,7 +1477,11 @@ final class LEn {
         m.put("請先到「功能 → 互傳檔案」打開開關", "Please turn on File transfer under Features first");
         m.put("傳給哪一台（", "Send to which device (");
         m.put(" 個檔案）", " files)");
-        m.put("開始傳送…可以在通知列看進度", "Sending… see progress in the notifications");
+        m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
+        m.put("正在找：", "Looking for: ");
+        m.put("對方沒回應，正在用推播叫醒：", "No answer, waking it with a push: ");
+        m.put("正在開 Tailscale（外網）…", "Turning on Tailscale (remote)…");
+        m.put("已連上，開始傳送…", "Connected, starting…");
         m.put("傳送失敗：", "Send failed: ");
         m.put("瀏覽", "Browse");
         m.put("上一層", "Up");

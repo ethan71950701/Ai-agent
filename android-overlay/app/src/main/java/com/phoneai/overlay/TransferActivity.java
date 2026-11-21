@@ -245,7 +245,7 @@ public class TransferActivity extends Activity {
         final TransferStore.Peer p = pickFor;
         final android.net.Uri uri = data.getData();
         pickFor = null;
-        Toast.makeText(this, L.t("開始傳檔案…可以在通知列看進度"), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, L.t("準備傳送…（找對方、必要時叫醒它，進度看通知列）"), Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             try {
                 FileTools.sendUri(this, p, uri);

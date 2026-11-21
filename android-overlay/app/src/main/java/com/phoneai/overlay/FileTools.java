@@ -112,6 +112,9 @@ final class FileTools {
                 default:
                     return "錯誤：未知工具 " + name;
             }
+        } catch (TransferNotify.Stopped s) {   // 還沒開始傳（找對方、叫醒的時候）就按了停止
+            TransferNotify.finish(c, L.t("已停止"));
+            return "已停止";
         } catch (Exception e) {
             TransferNotify.cancel(c);
             return "錯誤：" + e.getMessage();
@@ -360,14 +363,20 @@ final class FileTools {
         // 順序：1) 區網搜尋（在同一個 Wi‑Fi 最快）  2) Tailscale 位址（外網）  3) 上次記住的區網位址
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
+        TransferNotify.phase(c, L.t("正在找：") + p.name);
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
-            if (FcmLab.lanIp() == null && p.tsIp != null && !TailscaleControl.isOn()) TailscaleControl.turnOnForSession(c, 12000);   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
+            if (FcmLab.lanIp() == null && p.tsIp != null && !TailscaleControl.isOn()) {
+                TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"));
+                TailscaleControl.turnOnForSession(c, 12000);
+            }
+            TransferNotify.phase(c, L.t("對方沒回應，正在用推播叫醒：") + p.name);   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = FcmLab.wake(c, p);
             if (err == null) {
                 long t0 = System.currentTimeMillis(), until = t0 + (FcmLab.lanIp() == null ? 45000 : 25000), nextRing = t0 + 8000;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
                 while (f == null && System.currentTimeMillis() < until) {
+                    if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
                     if (f == null && p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
                     if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
@@ -397,6 +406,7 @@ final class FileTools {
             TransferStore.updateName(c, p.id, f.name);
         }
         if (ip != null && Doorbell.isTailnet(ip)) TailscaleControl.noteUse();   // 走 Tailscale：重新計「閒置多久才關回去」
+        TransferNotify.phase(c, L.t("已連上，開始傳送…"));
         TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
         if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
