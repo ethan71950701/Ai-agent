@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 首頁最底下（手勢小白條那一條）不再露出一條彩色的光暈細線：底欄後面的純色一路蓋到螢幕最底｜Home screen: the strip behind the gesture bar no longer shows a thin coloured glow line; the solid colour behind the tab bar now reaches the very bottom of the screen
+
+## 1.0.1775
+
 - 修正手勢導覽（小白條）底下可能出現白邊：App 各頁把導覽列區域塗成頁面底色；按停止後在背景請對方刪半成品，失敗會自動再試 2 次｜Fix a possible white strip under the gesture bar: app pages now paint the navigation-bar area in the page colour; after Stop, the background request to delete the peer's partial file retries up to 2 more times if it fails
 
 ## 1.0.1774
