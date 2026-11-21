@@ -72,7 +72,8 @@ public class BrowseActivity extends Activity {
         Ui.buttons(this, top, Ui.tonal(this, L.t("上一層"), v -> load(parentOf(path))),
                 Ui.tonal(this, L.t("搜尋這台"), v -> { Ui.rememberTap(v); startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id)); }));
         status = Ui.body(this, "");
-        status.setMinLines(2);   // 固定留兩行高：狀態文字（毫秒數）的字數一變就可能少一行或多一行，下面的清單會跟著往上、往下跳
+        status.setLines(2);   // 剛好兩行（不多不少）
+        status.setEllipsize(android.text.TextUtils.TruncateAt.END);   // 太長就截掉尾巴，不要多出第三行把清單往下推   // 固定留兩行高：狀態文字（毫秒數）的字數一變就可能少一行或多一行，下面的清單會跟著往上、往下跳
         box.addView(status);
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
