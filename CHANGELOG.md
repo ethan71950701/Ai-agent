@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正下拉重新整理的閃動：放手轉圈時圓圈不再縮成一個點再長出來，下拉重讀時清單也不再因為狀態文字換行而往上跳一下；圓圈底色和卡片區分開，停的位置也移到清單上方｜Fix flicker in pull-to-refresh: the circle no longer shrinks to a dot and regrows when it starts spinning, the list no longer jumps up when the status text changes line count during a refresh, and the circle now has its own background colour and rests above the list
+
+## 1.0.1766
+
 - 修正：下拉重新整理拉到比較下面時，圓圈上的弧線會封成一整圈；現在弧線最多約四分之三圈，也不再畫底下的整圈軌道｜Fix: pulling further down in pull-to-refresh closed the arc into a full circle; the arc now stops at about three quarters and the full-circle track behind it is no longer drawn
 
 ## 1.0.1765
