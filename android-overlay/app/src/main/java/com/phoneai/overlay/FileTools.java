@@ -55,6 +55,7 @@ final class FileTools {
                     if (local) return "錯誤：file_get 是從另一台裝置取檔案，請指定 device";
                     String p = a.optString("path").trim();
                     if (p.isEmpty()) return "錯誤：要給檔案路徑（先用 file_find 找到）";
+                    TransferNotify.begin();
                     TransferClient cl = client(c, dev);
                     TransferStore.inbox().mkdirs();
                     purgeOldParts(TransferStore.inbox());
@@ -86,6 +87,7 @@ final class FileTools {
                         return "錯誤：找不到這個檔案：" + p;
                     String saved;
                     TransferClient cl2;
+                    TransferNotify.begin();
                     try {
                         cl2 = client(c, dev);
                     } catch (Exception notFound) {
@@ -127,6 +129,8 @@ final class FileTools {
         } catch (Exception e) {
             TransferNotify.cancel(c);
             return "錯誤：" + e.getMessage();
+        } finally {
+            if (name.equals("file_get") || name.equals("file_send")) TransferNotify.release();
         }
     }
 
@@ -254,6 +258,8 @@ final class FileTools {
         } catch (Exception e) {
             TransferNotify.cancel(c);
             throw e;
+        } finally {
+            TransferNotify.release();
         }
     }
 
@@ -303,6 +309,8 @@ final class FileTools {
         } catch (java.io.IOException io) {
             TransferNotify.haltedById(c, trackedId[0], io.getMessage(), false);
             throw io;
+        } finally {
+            TransferNotify.release();
         }
     }
 
@@ -328,6 +336,8 @@ final class FileTools {
         } catch (java.io.IOException io) {
             TransferNotify.haltedById(c, trackedId[0], io.getMessage(), false);
             throw io;
+        } finally {
+            TransferNotify.release();
         }
     }
 

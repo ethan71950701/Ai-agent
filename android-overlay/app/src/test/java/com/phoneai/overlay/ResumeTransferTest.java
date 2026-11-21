@@ -409,6 +409,7 @@ public class ResumeTransferTest {
     @Test
     public void pauseFlagStopsRetriesBeforeTheyStart() throws Exception {
         byte[] d = data(10_000, 13);
+        TransferNotify.begin();   // 這筆傳輸開始（連線等待期間就算進行中）
         TransferNotify.requestPause();
         try {
             client.putResumable(() -> new ByteArrayInputStream(d), d.length, "never.bin", null);

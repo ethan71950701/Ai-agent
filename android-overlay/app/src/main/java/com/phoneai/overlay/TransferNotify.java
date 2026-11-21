@@ -23,7 +23,8 @@ final class TransferNotify {
     static final String ACTION_DISCARD = "com.phoneai.overlay.TRANSFER_DISCARD";
     private static long lastAt;
     private static int doneCount;
-    private static volatile boolean stopRequested, pauseRequested, active;
+    private static final TransferSlots SLOTS = new TransferSlots();   // 同時進行的傳輸各自一格，停止／暫停旗標不再全域共用
+    private static String lastPrimaryId = "";
 
     /** 使用者按了進度通知的「停止」：進行中的傳輸在下一次更新時中斷，未完成的檔案會被刪掉。 */
     static final class Stopped extends RuntimeException {
@@ -39,28 +40,38 @@ final class TransferNotify {
     static volatile Runnable onStart;
     private static TransferProgress SPEED = new TransferProgress();
 
-    static void requestStop() { stopRequested = true; }
+    /** 按了停止／暫停：只作用在通知上顯示的那一筆傳輸。 */
+    static void requestStop() { SLOTS.stopPrimary(System.currentTimeMillis()); }
 
-    static void requestPause() { pauseRequested = true; }
+    static void requestPause() { SLOTS.pausePrimary(System.currentTimeMillis()); }
 
-    static boolean pauseRequested() { return pauseRequested; }
+    /** 這條執行緒上的這筆傳輸有沒有被要求暫停／停止（重試等待中也要看）。 */
+    static boolean pauseRequested() {
+        TransferSlots.Slot s = SLOTS.current(System.currentTimeMillis());
+        return s != null && s.pause;
+    }
 
-    static boolean stopRequested() { return stopRequested; }
+    static boolean stopRequested() {
+        TransferSlots.Slot s = SLOTS.current(System.currentTimeMillis());
+        return s != null && s.stop;
+    }
 
-    /** 現在有沒有傳輸進行中（互傳檔案頁用來顯示停止按鈕，不必靠通知）。 */
-    static boolean active() { return active; }
+    /** 現在有沒有傳輸進行中（互傳檔案頁用來顯示停止按鈕，不必靠通知；Tailscale 的閒置判斷也看它）。 */
+    static boolean active() { return SLOTS.active(System.currentTimeMillis()); }
 
     /** 進度更新：最多每 0.4 秒換一次，免得通知列一直閃。 */
     static synchronized void progress(Context c, String title, String where, String name, long done, long total) {
-        if (stopRequested) throw new Stopped();
-        if (pauseRequested) throw new Paused();
-        if (!active) {
-            active = true;
-            SPEED = new TransferProgress();
+        long now = System.currentTimeMillis();
+        TransferSlots.Slot slot = SLOTS.enter(now);
+        if (slot.stop) throw new Stopped();
+        if (slot.pause) throw new Paused();
+        if (!slot.shown) {
+            slot.shown = true;
             Runnable r = onStart;
             if (r != null) r.run();
         }
-        long now = System.currentTimeMillis();
+        if (!SLOTS.isPrimary(slot, now)) return;   // 同時有好幾筆：通知只顯示最早開始的那一筆，其他的只管自己的旗標
+        if (!slot.id.equals(lastPrimaryId)) { lastPrimaryId = slot.id; SPEED = new TransferProgress(); lastAt = 0; }
         if (done < total && now - lastAt < 400) return;
         lastAt = now;
         int pct = total > 0 ? (int) (done * 100 / Math.max(1, total)) : 0;
@@ -92,21 +103,21 @@ final class TransferNotify {
     /** 傳輸結束（成功或失敗）：收起進度通知。 */
     /** 新的傳輸開始：清掉上一次留下的「停止」。 */
     static synchronized void begin() {
-        stopRequested = false;
-        pauseRequested = false;
-        SPEED = new TransferProgress();
+        SLOTS.begin();   // 只清掉這條執行緒自己上一次的旗標，不影響別的傳輸
+        SLOTS.enter(System.currentTimeMillis());   // 立刻算「進行中」：連線、叫醒對方的等待期間也能按暫停／停止，Tailscale 的閒置判斷也知道在忙（2 分鐘沒動靜會自動當作結束）
     }
 
+    /** 這條執行緒的傳輸收尾（不管怎麼結束都要呼叫，只收掉自己這一筆、不動通知）：有些結束方式（改用推播叫醒、直接 return）不會經過 finish／cancel。 */
+    static void release() { SLOTS.leave(System.currentTimeMillis()); }
+
     static synchronized void cancel(Context c) {
-        if (active || pauseRequested) {   // 診斷：傳輸通知被收掉時記下是誰收的（查「Now Bar 不見了」用）
+        if (SLOTS.current(System.currentTimeMillis()) != null) {   // 診斷：傳輸通知被收掉時記下是誰收的（查「Now Bar 不見了」用）
             StackTraceElement[] st = new Throwable().getStackTrace();
             LifeLog.add(c, "傳輸通知：被收掉，呼叫者 " + (st.length > 1 ? st[1].getClassName().replace("com.phoneai.overlay.", "") + "." + st[1].getMethodName() : "?"));
         }
         lastAt = 0;
-        stopRequested = false;
-        pauseRequested = false;
-        active = false;
-        ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(PROGRESS_ID);
+        boolean none = SLOTS.leave(System.currentTimeMillis());   // 只收掉自己這一筆
+        if (none) ((NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE)).cancel(PROGRESS_ID);   // 還有別筆在傳就留著通知，它的下一次更新會接手顯示
     }
 
     /** 傳輸完成：收起進度，再發一則一般通知，讓使用者看到結果。 */
@@ -133,9 +144,11 @@ final class TransferNotify {
      */
     static synchronized void halted(Context c, PendingStore.Entry e, String reason, boolean paused) {
         lastAt = 0;
-        stopRequested = false;
-        pauseRequested = false;
-        active = false;
+        boolean none = SLOTS.leave(System.currentTimeMillis());   // 這一筆結束了（旗標跟著收掉）；別筆還在傳的話，它們不受影響
+        if (e != null && !none) {   // 還有別筆在傳：通知列留給它，這一筆看「沒傳完」清單就好（不然會蓋掉它的進度）
+            LifeLog.add(c, "傳輸通知：" + e.name + (paused ? " 已暫停" : " 已中斷") + "，但還有別筆在傳，通知先不換，到「互傳檔案」頁看");
+            return;
+        }
         if (e == null) {   // 找不到對應的「沒傳完」紀錄（沒登記到、或已被清掉）：沒有東西可以繼續，只好收掉通知，並記下來方便查
             LifeLog.add(c, "傳輸通知：" + (paused ? "已暫停" : "已中斷") + "但找不到對應的未完成紀錄，所以收掉通知");
             cancel(c);
