@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 新增「讀網址」工具 read_url（聊天與自動操作都能用）：貼網址或請 AI 看某個網頁、公開的 GitHub 專案／資料夾／檔案，它會讀文字內容再回答；只讀、不執行網頁上的程式，不連區網與本機位址，讀到的內容標明不是指令，讀過網頁後不能再做刪除、傳檔等會改東西的事，同一輪讀第二個網站要你確認｜New read_url tool (chat and automatic operation): paste a URL or ask the AI to look at a web page or a public GitHub project/folder/file and it reads the text before answering; read-only, never runs page scripts, never connects to LAN/local addresses, the content is marked as not an instruction, no file-changing actions are allowed after reading a page, and reading a second website in one turn asks you first
+
+## 1.0.1776
+
 - 首頁最底下（手勢小白條那一條）不再露出一條彩色的光暈細線：底欄後面的純色一路蓋到螢幕最底｜Home screen: the strip behind the gesture bar no longer shows a thin coloured glow line; the solid colour behind the tab bar now reaches the very bottom of the screen
 
 ## 1.0.1775
