@@ -177,6 +177,48 @@ public class RippleAccessibilityService extends AccessibilityService {
         return ok[0];
     }
 
+    /** 前景（不是我們自己的面板）App 視窗的快照：標題、網址列、畫面上看得到的文字。給 current_page 工具；只在背景執行緒呼叫。找不到視窗回 null。 */
+    static PageSnapshot.Raw foregroundSnapshot() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return null;
+        java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = s.getWindows();
+        if (wins == null) return null;
+        java.util.List<android.view.accessibility.AccessibilityWindowInfo> apps = new java.util.ArrayList<>();
+        for (android.view.accessibility.AccessibilityWindowInfo w : wins) if (w.getType() == android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION) apps.add(w);
+        java.util.Collections.sort(apps, (a, b) -> Integer.compare(b.getLayer(), a.getLayer()));   // 最上面的先看
+        for (android.view.accessibility.AccessibilityWindowInfo w : apps) {
+            android.view.accessibility.AccessibilityNodeInfo root = w.getRoot();
+            if (root == null || root.getPackageName() == null) continue;
+            String pkg = String.valueOf(root.getPackageName());
+            if (pkg.equals(s.getPackageName()) || pkg.equals("com.android.systemui")) continue;   // 我們自己的助理面板、系統介面不算
+            PageSnapshot.Raw r = new PageSnapshot.Raw();
+            r.pkg = pkg;
+            CharSequence title = w.getTitle();
+            if (title != null) r.title = title.toString().trim();
+            java.util.ArrayDeque<android.view.accessibility.AccessibilityNodeInfo> q = new java.util.ArrayDeque<>();
+            q.add(root);
+            int visited = 0;
+            while (!q.isEmpty() && visited < 4000) {
+                android.view.accessibility.AccessibilityNodeInfo n = q.poll();
+                visited++;
+                if (n == null) continue;
+                CharSequence text = n.getText();
+                String id = n.getViewIdResourceName();
+                if (PageSnapshot.isUrlViewId(id)) {
+                    if (r.urlText.isEmpty() && text != null) r.urlText = text.toString().trim();
+                } else if (n.isVisibleToUser() && text != null && text.length() > 0 && !n.isPassword()) {
+                    r.texts.add(text.toString());
+                }
+                for (int i = 0; i < n.getChildCount(); i++) {   // 依畫面順序（先上後下）：先加的先看
+                    android.view.accessibility.AccessibilityNodeInfo c = n.getChild(i);
+                    if (c != null) q.add(c);
+                }
+            }
+            return r;
+        }
+        return null;
+    }
+
     static void hideHandoff() {
         final RippleAccessibilityService s = instance;
         if (s == null) return;

@@ -287,6 +287,7 @@ public class AssistantSheet {
             bottomInset = Math.max(ime, nav);
             content.setTranslationY(-bottomInset);
             updateGlowY();
+            fitReplyCard();   // 鍵盤出現／收起：回答卡的高度跟著縮放，才不會被鍵盤蓋住
             return ins;
         });
         content.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> updateGlowY());
@@ -1102,8 +1103,8 @@ public class AssistantSheet {
         setText("");
         setStatus(L.t("繼續問…"));
         aurora.setEnergy(0.45f);
-        final int topPad = (int) (56 * d), botPad = (int) (150 * d) + bottomInset;
-        final int maxH = Math.max((int) (160 * d), root.getHeight() - topPad - botPad);   // 狀態列下面到輸入列上面之間能用的高度
+        final int topPad = (int) (CARD_TOP_DP * d), botPad = (int) (CARD_BOTTOM_DP * d) + bottomInset;
+        final int maxH = replyCardMaxH(botPad);   // 狀態列下面到輸入列上面之間能用的高度
         final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH, root);
         replyCard = card;
         // 卡片放在「狀態列下面」到「輸入列上面」這一段的中間偏上，不要貼著底部（使用者回報太偏下）
@@ -1130,6 +1131,25 @@ public class AssistantSheet {
         input.setText(t);
         input.setSelection(input.getText().length());
         programmatic = false;
+    }
+
+    private static final int CARD_TOP_DP = 56, CARD_BOTTOM_DP = 150;
+
+    /** 回答卡可用的高度：狀態列下面到「輸入列＋鍵盤」上面。 */
+    private int replyCardMaxH(int botPad) {
+        return Math.max((int) (160 * d), root.getHeight() - (int) (CARD_TOP_DP * d) - botPad);
+    }
+
+    /** 鍵盤高度變了：回答卡的下緣與可用高度跟著改（以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
+    private void fitReplyCard() {
+        View card = replyCard;
+        if (card == null || !(card.getLayoutParams() instanceof FrameLayout.LayoutParams) || root.getHeight() <= 0) return;
+        int botPad = (int) (CARD_BOTTOM_DP * d) + bottomInset;
+        FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) card.getLayoutParams();
+        if (cp.bottomMargin == botPad) return;
+        cp.bottomMargin = botPad;
+        card.setLayoutParams(cp);
+        ReplyCard.resize(card, replyCardMaxH(botPad));
     }
 
     private void refreshAction() {

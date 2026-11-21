@@ -34,6 +34,18 @@ final class ReplyCard {
         }
     }
 
+    private static final int MAXH_TAG = 0x7f0b7001;   // View.setTag 的鍵（只要不跟資源 id 撞，隨便一個數字）
+
+    /** 可用高度變了（鍵盤出現或收起）：卡片裡捲動區的最大高度跟著改，不然長的回答會被鍵盤蓋住。 */
+    static void resize(View card, int maxHeightPx) {
+        Object o = card.getTag(MAXH_TAG);
+        if (!(o instanceof int[])) return;
+        int[] a = (int[]) o;
+        if (a[0] == maxHeightPx) return;
+        a[0] = maxHeightPx;
+        card.requestLayout();
+    }
+
     static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) { return build(act, title, text, close, maxHeightPx, null); }
 
     /** source 不是 null：卡片用跟輸入列同一種液態玻璃（折射 source 後面的畫面、顏色增強）；null：舊的深色卡片。 */
@@ -99,11 +111,12 @@ final class ReplyCard {
         card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> aurora.setGlowY(glowH - 16 * d));
         }
 
-        final int maxH = maxHeightPx;   // 呼叫端依畫面實際可用的高度算好（卡片從上方排起，長文在裡面捲動，不會超出螢幕）
+        final int[] maxH = {maxHeightPx};   // 呼叫端依畫面實際可用的高度算好（卡片從上方排起，長文在裡面捲動，不會超出螢幕）；鍵盤出現、收起時會用 resize 改它
+        card.setTag(MAXH_TAG, maxH);
         ScrollView sv = new ScrollView(act) {
             @Override
             protected void onMeasure(int w, int h) {
-                super.onMeasure(w, MeasureSpec.makeMeasureSpec(maxH, MeasureSpec.AT_MOST));
+                super.onMeasure(w, MeasureSpec.makeMeasureSpec(maxH[0], MeasureSpec.AT_MOST));
             }
         };
         sv.setVerticalScrollBarEnabled(false);
