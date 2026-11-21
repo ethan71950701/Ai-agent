@@ -26,6 +26,7 @@ final class FileTools {
     }
 
     static String run(Context c, String name, JSONObject a, Memory.Confirm confirm) {
+        final File[] held = new File[1];   // file_get 預訂的存檔位置，結束時要放掉
         try {
             if (!TransferStore.enabled(c)) return "錯誤：傳檔案功能還沒開。請使用者到「設定 → 傳檔案」打開，並和另一台裝置配對。";
             if (!TransferStore.hasAllFiles()) return "錯誤：還沒有「所有檔案存取」權限。請使用者到「設定 → 傳檔案」授權。";
@@ -59,7 +60,8 @@ final class FileTools {
                     TransferClient cl = client(c, dev);
                     TransferStore.inbox().mkdirs();
                     purgeOldParts(TransferStore.inbox());
-                    File dest = destForGet(TransferStore.inbox(), new File(p.replace('\\', '/')).getName());
+                    File dest = reserveDest(TransferStore.inbox(), new File(p.replace('\\', '/')).getName(), reuseNameFor(c, peerNamed(c, dev), p));
+                    held[0] = dest;
                     PendingTransfers.track(c, cl, PendingTransfers.entry("down", peerNamed(c, dev), dest.getName(), "", p, 0));   // 登記進「沒傳完」清單
                     long n;
                     try {
@@ -130,6 +132,7 @@ final class FileTools {
             TransferNotify.cancel(c);
             return "錯誤：" + e.getMessage();
         } finally {
+            releaseDest(held[0]);
             if (name.equals("file_get") || name.equals("file_send")) TransferNotify.release();
         }
     }
@@ -288,7 +291,7 @@ final class FileTools {
         String name = new File(remotePath.replace('\\', '/')).getName();
         TransferStore.inbox().mkdirs();
         purgeOldParts(TransferStore.inbox());
-        File dest = destForGet(TransferStore.inbox(), name);
+        File dest = reserveDest(TransferStore.inbox(), name, reuseNameFor(c, p, remotePath));
         final String[] trackedId = new String[1];
         TransferNotify.begin();
         try {
@@ -310,6 +313,7 @@ final class FileTools {
             TransferNotify.haltedById(c, trackedId[0], io.getMessage(), false);
             throw io;
         } finally {
+            releaseDest(dest);
             TransferNotify.release();
         }
     }
@@ -484,11 +488,44 @@ final class FileTools {
         return clientFor(c, hit.get(0));
     }
 
-    /** 取檔的存檔位置：如果上次沒收完留下了這個檔名的半成品，就沿用同一個檔名好接著收；否則找不重複的檔名。 */
-    static File destForGet(File inbox, String name) {
-        File plain = new File(inbox, name);
-        if (TransferClient.partOf(plain).isFile() && !plain.exists()) return plain;
-        return unique(inbox, name);
+    /** 取檔存檔位置的預訂：同時進行的兩個取檔不會選到同一個檔名（以前各自檢查「檔案存在嗎」，兩個都說不存在、就寫進同一個暫存檔）。 */
+    private static final java.util.Set<String> RESERVED = new java.util.HashSet<>();
+
+    /**
+     * 取檔的存檔位置，並預訂起來（用完要 releaseDest）：
+     * 只有「這個遠端路徑上次沒收完」的那個檔名（reuseName，從未完成清單來的）才沿用它的半成品接著收；
+     * 其他情況一律選一個「檔案不存在、沒有別人的半成品、沒被別的取檔預訂」的新檔名。
+     * （以前只看檔名：不同資料夾的同名檔會接上對方的半成品，拼出壞檔。）
+     */
+    static File reserveDest(File inbox, String name, String reuseName) {
+        synchronized (RESERVED) {
+            if (reuseName != null && !reuseName.isEmpty() && new File(reuseName).getName().equals(reuseName)) {
+                File prev = new File(inbox, reuseName);
+                if (TransferClient.partOf(prev).isFile() && !prev.exists() && !RESERVED.contains(prev.getPath())) {
+                    RESERVED.add(prev.getPath());
+                    return prev;
+                }
+            }
+            File f = unique(inbox, name);
+            RESERVED.add(f.getPath());
+            return f;
+        }
+    }
+
+    static void releaseDest(File f) {
+        if (f == null) return;
+        synchronized (RESERVED) { RESERVED.remove(f.getPath()); }
+    }
+
+    /** 這個遠端路徑上次沒收完的存檔檔名（從未完成清單找）；沒有回 null。 */
+    private static String reuseNameFor(Context c, TransferStore.Peer peer, String remotePath) {
+        try {
+            if (peer == null) return null;
+            PendingStore.Entry e = PendingTransfers.store(c).find(PendingStore.idFor("down", peer.id, remotePath, 0));
+            return e == null ? null : e.name;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     /** 清掉三天前留下的半成品（沒人要接著收的）。 */
@@ -498,7 +535,7 @@ final class FileTools {
         File f = new File(dir, name);
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name, ext = dot > 0 ? name.substring(dot) : "";
-        for (int i = 2; f.exists(); i++) f = new File(dir, base + " (" + i + ")" + ext);
+        for (int i = 2; f.exists() || TransferClient.partOf(f).exists() || RESERVED.contains(f.getPath()); i++) f = new File(dir, base + " (" + i + ")" + ext);
         return f;
     }
 

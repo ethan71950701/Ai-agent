@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：同時取兩個同名檔案不會再寫進同一個暫存檔而拼出壞檔；不同資料夾的同名檔，也不會接上別人沒收完的半成品（只有「這個遠端路徑上次沒收完」的才會接著收）｜Fix: fetching two same-named files at the same time no longer writes into one temp file and produces a corrupt result; same-named files from different folders no longer pick up someone else's partial download (only the one from the same remote path resumes)
 - 同時進行好幾筆傳輸（例如兩支手機互傳、或傳檔時又在收檔）時，暫停、停止和進度不再互相影響：每一筆各自有旗標，按通知上的暫停／停止只作用在通知顯示的那一筆，一筆結束也不會把別筆的進度通知收掉｜With several transfers at once (e.g. two phones sending to each other, or sending while receiving) pause, stop and progress no longer interfere: each transfer has its own flags, the notification's Pause/Stop only act on the transfer it shows, and one finishing no longer clears another's progress notification
 
 ## 1.0.1757
