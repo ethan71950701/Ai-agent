@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1762
+
 - 互傳頁：「沒傳完的檔案」移到最上面，而且每一筆會寫「停下來的原因」（你按了暫停、或連不上的錯誤訊息），點通知進來不會再看不出發生什麼事｜Transfer page: the "unfinished files" list is now at the top and each entry says why it stopped (you paused it, or the error), so tapping the notification no longer leaves you guessing
 
 ## 1.0.1761
