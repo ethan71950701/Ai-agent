@@ -90,16 +90,7 @@ final class FileTools {
                     String saved;
                     TransferClient cl2;
                     TransferNotify.begin();
-                    try {
-                        cl2 = client(c, dev);
-                    } catch (Exception notFound) {
-                        TransferStore.Peer peer = peerNamed(c, dev);
-                        if (!FcmLab.canRing(c, peer)) throw notFound;   // 連不上對方：有推播就改叫醒它來取
-                        String err = FcmLab.ring(c, peer, p.startsWith("/sdcard/") ? p.substring(8) : p);
-                        if (err != null) return "錯誤：對方連不上，改用推播叫醒也失敗：" + err;
-                        TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
-                        return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
-                    }
+                    cl2 = client(c, dev);
                     PendingTransfers.track(c, cl2, PendingTransfers.entry("up", peerNamed(c, dev), src.getName(), src.getAbsolutePath(), "", src.length()));
                     try {
                         saved = cl2.putResumable(() -> new java.io.FileInputStream(src), src.length(), src.getName(), (d, t) -> TransferNotify.progress(c, L.t("正在傳給 ") + dev,
@@ -111,15 +102,8 @@ final class FileTools {
                         TransferNotify.haltedById(c, cl2.trackedId(), L.t("已暫停，對方已收到的部分有保留，按「繼續」接著傳"), true);
                         return "已暫停，到「互傳檔案」頁或通知按「繼續」";
                     } catch (java.io.IOException io) {
-                        TransferStore.Peer peer = peerNamed(c, dev);
-                        if (!isConnectFailure(io) || !FcmLab.canRing(c, peer)) {
-                            TransferNotify.haltedById(c, cl2.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
-                            throw io;
-                        }   // 一開始就連不上：改叫醒對方來取
-                        String err = FcmLab.ring(c, peer, p.startsWith("/sdcard/") ? p.substring(8) : p);
-                        if (err != null) return "錯誤：對方連不上，改用推播叫醒也失敗：" + err;
-                        TransferStore.log(c, L.t("推播叫醒 ") + peer.name + L.t(" 來取 ") + src.getName());
-                        return "對方現在連不上，已用推播叫醒「" + peer.name + "」，請它自己來取：" + src.getName() + "（要同一個 Wi-Fi；它會存到對方的 下載/PhoneAI）";
+                        TransferNotify.haltedById(c, cl2.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
+                        throw io;
                     }
                     TransferStore.log(c, L.t("傳出 ") + src.getName() + " → " + dev + shaNote(cl2));
                     TransferNotify.finish(c, L.t("已傳到 ") + dev + "：" + src.getName() + shaNote(cl2));
@@ -215,19 +199,7 @@ final class FileTools {
         final String shown = name;
         TransferNotify.begin();
         try {
-            TransferClient cl;
-            try {
-                cl = clientFor(c, p);
-            } catch (Exception notFound) {
-                if (!FcmLab.canRing(c, p)) throw notFound;   // 找不到對方：有推播就改按門鈴，沒有就維持原本的錯誤
-                java.io.InputStream src = c.getContentResolver().openInputStream(uri);
-                if (src == null) throw new Exception("打不開這個檔案");
-                String err = FcmLab.sendViaDoorbell(c, p, src, name);
-                if (err != null) throw new Exception(L.t("對方連不上，改用推播叫醒也失敗：") + err);
-                TransferStore.log(c, L.t("推播叫醒 ") + p.name + L.t(" 來取 ") + name);
-                TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
-                return;
-            }
+            TransferClient cl = clientFor(c, p);
             if (c.getContentResolver().openInputStream(uri) == null) throw new Exception("打不開這個檔案");   // 先確認打得開（會馬上關掉）
             String saved;
             PendingTransfers.track(c, cl, PendingTransfers.entry("up", p, name, uri.toString(), "", total));
@@ -242,17 +214,8 @@ final class FileTools {
                 TransferNotify.haltedById(c, cl.trackedId(), L.t("已暫停，對方已收到的部分有保留，按「繼續」接著傳"), true);
                 return;
             } catch (java.io.IOException io) {
-                if (!isConnectFailure(io) || !FcmLab.canRing(c, p)) {
-                    TransferNotify.haltedById(c, cl.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
-                    throw io;
-                }   // 一開始就連不上、而且能用推播：改叫醒對方
-                java.io.InputStream again = c.getContentResolver().openInputStream(uri);
-                if (again == null) throw io;
-                String err = FcmLab.sendViaDoorbell(c, p, again, name);
-                if (err != null) throw new Exception(L.t("對方連不上，改用推播叫醒也失敗：") + err);
-                TransferStore.log(c, L.t("推播叫醒 ") + p.name + L.t(" 來取 ") + name);
-                TransferNotify.finish(c, L.t("已通知 ") + p.name + L.t(" 來取：") + name);
-                return;
+                TransferNotify.haltedById(c, cl.trackedId(), io.getMessage(), false);   // 意外中斷：通知留著，可以按「繼續」
+                throw io;
             }
             TransferStore.log(c, L.t("傳出 ") + name + " → " + p.name + shaNote(cl));
             TransferNotify.finish(c, L.t("已傳到 ") + p.name + "：" + saved + shaNote(cl));
@@ -452,21 +415,6 @@ final class FileTools {
     static String shaNote(TransferClient cl) {
         if (cl == null || cl.lastSha.isEmpty()) return "";
         return " SHA-256 " + Checksum.shortOf(cl.lastSha) + (cl.lastVerified ? L.t(" ✓已核對") : L.t("（對方沒提供，未核對）"));
-    }
-
-    /** 是不是「一開始就連不上對方」（還沒傳任何資料）：這種情況才可以安全地改用推播叫醒。傳到一半斷線不算。 */
-    static boolean isConnectFailure(Throwable e) {
-        for (Throwable t = e; t != null; t = t.getCause()) {
-            if (t instanceof java.net.ConnectException || t instanceof java.net.NoRouteToHostException
-                    || t instanceof java.net.UnknownHostException) return true;
-            if (t instanceof java.net.SocketTimeoutException) {
-                String m = String.valueOf(t.getMessage()).toLowerCase(Locale.ROOT);
-                if (m.contains("connect")) return true;   // 連線逾時；讀取逾時（已經在傳了）不算
-            }
-            String m = t.getMessage();
-            if (m != null && m.startsWith("failed to connect to")) return true;
-        }
-        return false;
     }
 
     /** 依名稱（包含比對）找已配對的裝置；找不到或有多台符合回 null。 */

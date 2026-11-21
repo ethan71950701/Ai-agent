@@ -51,12 +51,7 @@ public class FcmLabService extends FirebaseMessagingService {
             notifyLab("收到「" + TransferStore.nameOf(this, r.ring.from) + "」的叫醒：" + st);   // 每次被叫醒都讓人看得到結果（也符合高優先級推播要有可見通知的建議）
             return;
         }
-        notifyLab("門鈴通過，準備取檔：" + r.ring.name);
-        if (!"serve".equals(r.ring.mode)) LifeLog.add(this, "FCM 門鈴通過：" + r.ring.name + "（" + r.ring.size + " 位元組），來自 " + TransferStore.nameOf(this, r.ring.from));
-        Intent i = new Intent(this, FetchService.class)
-                .putExtra("from", r.ring.from).putExtra("ip", r.ring.ip).putExtra("port", r.ring.port)
-                .putExtra("path", r.ring.path).putExtra("name", r.ring.name).putExtra("size", r.ring.size);
-        try { startForegroundService(i); } catch (Exception e) { LifeLog.add(this, "FCM 門鈴：無法啟動接收服務：" + e); }
+        LifeLog.add(this, "FCM 門鈴：收到舊版的「來取檔案」門鈴，已不支援，忽略（請兩支都更新到最新版）");   // 檔案一律由發送端直接連線傳，推播只負責叫醒
     }
 
     @Override public void onNewToken(String token) {

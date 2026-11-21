@@ -329,78 +329,6 @@ final class FcmLab {
         return p != null && p.fcmToken != null && hasConfig(c) && FcmVault.has(c);
     }
 
-    static File outbox() { return new File(TransferStore.root(), "Download/PhoneAI/outbox"); }
-
-    /** 清掉超過一小時的待取檔案（沒人來取、或之前沒清掉的）。 */
-    static void purgeOutbox() {
-        File[] kids = outbox().listFiles();
-        if (kids == null) return;
-        long old = System.currentTimeMillis() - 3600_000L;
-        for (File f : kids) if (f.isFile() && f.lastModified() < old) f.delete();
-    }
-
-    /**
-     * 對方連不上時的備援：把檔案放進共享資料夾的待取區（Download/PhoneAI/outbox），再按門鈴請對方來取；
-     * 十分鐘後（或之前沒清掉的、超過一小時的）刪掉待取檔案。回傳 null 成功，否則錯誤。
-     */
-    static String sendViaDoorbell(Context c, TransferStore.Peer peer, java.io.InputStream in, String name) {
-        File dest = null;
-        try {
-            if (!TransferStore.hasAllFiles()) return "沒有「所有檔案存取」權限";
-            purgeOutbox();
-            File dir = outbox();
-            dir.mkdirs();
-            String base = new File(name == null || name.isEmpty() ? "file" : name.replace('\\', '/')).getName();
-            dest = new File(dir, base);
-            int dot = base.lastIndexOf('.');
-            String stem = dot > 0 ? base.substring(0, dot) : base, ext = dot > 0 ? base.substring(dot) : "";
-            for (int i = 2; dest.exists(); i++) dest = new File(dir, stem + " (" + i + ")" + ext);
-            try (java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {
-                byte[] buf = new byte[64 * 1024];
-                int n;
-                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-            }
-            String err = ring(c, peer, "Download/PhoneAI/outbox/" + dest.getName());
-            if (err != null) { dest.delete(); return err; }
-            final File d = dest;
-            Thread t = new Thread(() -> {
-                try { Thread.sleep(600_000L); } catch (InterruptedException ignored) { }
-                d.delete();
-            }, "fcm-outbox-cleanup");
-            t.setDaemon(true);
-            t.start();
-            return null;
-        } catch (Exception e) {
-            if (dest != null) dest.delete();
-            return String.valueOf(e.getMessage());
-        } finally {
-            try { in.close(); } catch (Exception ignored) { }
-        }
-    }
-
-    /** 按門鈴：A（本機）請這個已配對裝置來取檔案（relPath 是共享根目錄底下的相對路徑，檔案要先存在）。回 null 成功，否則錯誤。 */
-    static String ring(Context c, TransferStore.Peer peer, String relPath) {
-        if (peer.fcmToken == null) return "還沒有存這台裝置的 token";
-        if (!TransferStore.enabled(c)) return "互傳總開關沒開（設定 → 互傳檔案）";
-        boolean startedHere = !TransferService.running;
-        if (startedHere) {   // 互傳伺服器沒在跑（系統可能把它收掉了）：先臨時把它開起來，等它真的在聽才按門鈴
-            TransferService.start(c);
-            long until = System.currentTimeMillis() + 5000;
-            while (!TransferService.running && System.currentTimeMillis() < until) {
-                try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
-            }
-            if (!TransferService.running) return "互傳伺服器啟動失敗" + (TransferService.lastError.isEmpty() ? "" : "：" + TransferService.lastError);
-        }
-        String ip = lanIp();
-        if (ip == null) return "找不到本機的區網位址（要連上 Wi-Fi）";
-        File f = new File(TransferStore.root(), relPath);
-        if (!f.isFile()) return "找不到檔案：" + relPath;
-        java.util.Map<String, String> m = Doorbell.make(peer.key, TransferStore.myId(c), ip, TransferServer.PORT, relPath, f.getName(), f.length(), System.currentTimeMillis());
-        String err = sendData(c, peer.fcmToken, m);
-        if (startedHere) autoStop(c, err != null);   // 是我們臨時開的：用完自動關
-        return err;
-    }
-
     /** 叫醒對方：送一則「請把互傳伺服器開起來」的門鈴。回 null 成功，否則錯誤。之後的連線都照原本的直連方式。 */
     static String wake(Context c, TransferStore.Peer peer) {
         if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";
@@ -570,22 +498,6 @@ final class FcmLab {
         t.setDaemon(true);
         t.start();
         return "已把互傳伺服器開起來，等對方連進來（沒人用會自動關）" + note;
-    }
-
-    /** 臨時開起的伺服器，沒人來或傳完就關（IdleWatch）。門鈴沒送成功就不用等，直接關。 */
-    private static void autoStop(Context c, boolean now) {
-        final Context app = c.getApplicationContext();
-        if (now) { TransferService.stop(app); return; }
-        Thread t = new Thread(() -> {
-            IdleWatch w = new IdleWatch(System.currentTimeMillis());
-            try {
-                while (!w.tick(System.currentTimeMillis(), TransferServer.activeConnections())) Thread.sleep(3000);
-            } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-            TransferService.stop(app);
-            TransferStore.log(app, "臨時開起的互傳伺服器已自動關閉");
-        }, "fcm-autostop");
-        t.setDaemon(true);
-        t.start();
     }
 
     private static String slurp(InputStream in) throws Exception {

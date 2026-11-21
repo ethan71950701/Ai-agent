@@ -81,25 +81,6 @@ public class FcmLabActivity extends Activity {
                 runOnUiThread(() -> Toast.makeText(this, r, Toast.LENGTH_LONG).show());
             }).start());
         }));
-        EditText nameQ = new EditText(this);
-        nameQ.setHint("要傳的檔名關鍵字（本機共享資料夾裡找）");
-        col.addView(nameQ);
-        col.addView(button("按門鈴：請對方來取這個檔案", v -> {
-            final String q = nameQ.getText().toString().trim();
-            if (q.isEmpty()) { Toast.makeText(this, "先填檔名關鍵字", Toast.LENGTH_SHORT).show(); return; }
-            pickPeer(peer -> new Thread(() -> {
-                String raw;
-                try { raw = TransferServer.findIn(TransferStore.root(), q); } catch (java.io.IOException e) { raw = ""; }
-                String rel = null;
-                for (String line : raw.split("\n")) {
-                    String[] f = line.split("\t");
-                    if (f.length >= 4 && f[0].equals("F")) { rel = f[3]; break; }
-                }
-                final String r = rel == null ? "找不到檔名包含「" + q + "」的檔案" : FcmLab.ring(this, peer, rel);
-                final String shown = rel;
-                runOnUiThread(() -> Toast.makeText(this, r == null ? "已按門鈴：" + shown : r, Toast.LENGTH_LONG).show());
-            }).start());
-        }));
         refresh();
     }
 

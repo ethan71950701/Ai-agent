@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 移除舊的「推播叫醒對方來取檔案」備援（outbox 待取區）：傳檔一律由發送端直接連線，推播只負責叫醒；不再多複製一份檔案到共享資料夾。兩支手機請都更新到最新版｜Removed the old "push the other phone to come and fetch the file" fallback (the outbox): files are always sent over a direct connection and push only wakes the other phone; no more extra copy of the file in the shared folder. Please update both phones
 - 修正：同時取兩個同名檔案不會再寫進同一個暫存檔而拼出壞檔；不同資料夾的同名檔，也不會接上別人沒收完的半成品（只有「這個遠端路徑上次沒收完」的才會接著收）｜Fix: fetching two same-named files at the same time no longer writes into one temp file and produces a corrupt result; same-named files from different folders no longer pick up someone else's partial download (only the one from the same remote path resumes)
 
 ## 1.0.1758
