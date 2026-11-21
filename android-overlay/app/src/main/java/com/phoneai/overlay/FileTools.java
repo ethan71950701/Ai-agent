@@ -421,7 +421,7 @@ final class FileTools {
         }
         if (ip != null && Doorbell.isTailnet(ip)) TailscaleControl.noteUse();   // 走 Tailscale：重新計「閒置多久才關回去」
         TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
-        if (f != null) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時，順便補齊還缺的推播 token
+        if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
     }
 

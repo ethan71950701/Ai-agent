@@ -186,6 +186,7 @@ public class TransferService extends Service {
             @Override
             public void peerSeen(String peerId, String ip) {
                 TransferStore.updateAddress(c, peerId, ip, TransferServer.PORT);
+                FcmLab.healOnInbound(c, peerId, ip);   // 對方連進來：順便反過來互換 token（每台 10 分鐘最多一次）
             }
 
             @Override

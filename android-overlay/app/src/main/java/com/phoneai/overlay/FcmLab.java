@@ -81,6 +81,19 @@ final class FcmLab {
         return Doorbell.validToken(received) && !received.equals(stored);
     }
 
+    /** 距離上次互換 token 超過 10 分鐘（或從沒換過）才再換一次，避免每次連線都換。 */
+    static boolean exchangeDue(Long lastMs, long nowMs) { return lastMs == null || nowMs - lastMs >= 600_000L; }
+
+    /** 對方連進來我們的伺服器（已驗證）：反過來也順便跟它互換一次 token，這樣不論誰先連誰，下次連線雙方的 token 都會補齊、更新。 */
+    static void healOnInbound(Context c, String peerId, String ip) {
+        try {
+            for (TransferStore.Peer p : TransferStore.peers(c)) {
+                if (!p.id.equals(peerId)) continue;
+                healTokenAsync(c, p, new TransferClient(ip, TransferServer.PORT, TransferStore.myId(c), TransferStore.myName(c), p.key));
+            }
+        } catch (Throwable ignored) { }
+    }
+
     /** 送推播的錯誤是不是「這個 token 已經失效」（對方重裝、清過資料或換了 token）。 */
     static boolean tokenGone(String err) {
         return err != null && (err.contains("UNREGISTERED") || err.contains("NOT_FOUND") || err.contains("HTTP 404"));
@@ -91,8 +104,7 @@ final class FcmLab {
         if (p == null || myToken(c) == null) return;
         synchronized (LAST_AUTO_EXCHANGE) {
             long now = System.currentTimeMillis();
-            Long last = LAST_AUTO_EXCHANGE.get(p.id);
-            if (last != null && now - last < 600_000L) return;
+            if (!exchangeDue(LAST_AUTO_EXCHANGE.get(p.id), now)) return;
             LAST_AUTO_EXCHANGE.put(p.id, now);
         }
         final Context app = c.getApplicationContext();

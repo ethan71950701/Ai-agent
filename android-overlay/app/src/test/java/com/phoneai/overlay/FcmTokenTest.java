@@ -32,4 +32,11 @@ public class FcmTokenTest {
         assertFalse(FcmLab.tokenGone("java.net.SocketTimeoutException"));
         assertFalse(FcmLab.tokenGone(null));
     }
+
+    @Test
+    public void exchangeHappensAtMostEveryTenMinutes() {
+        assertTrue(FcmLab.exchangeDue(null, 1_000));
+        assertFalse(FcmLab.exchangeDue(1_000L, 1_000 + 599_000));
+        assertTrue(FcmLab.exchangeDue(1_000L, 1_000 + 600_000));
+    }
 }
