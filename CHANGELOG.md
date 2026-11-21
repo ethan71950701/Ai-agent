@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 安全與穩定：刪除資料夾時遇到符號連結只刪連結本身，不會進去刪到共享資料夾以外的東西；自動操作一次只跑一個，助理面板與首頁同時送出時後來的會被擋下並提示，不會互相蓋掉狀態｜Safety and stability: deleting a folder no longer follows symbolic links out of the shared folder (the link itself is removed); automatic operation now runs one task at a time, so submitting from the panel and the home screen together blocks the later one with a message instead of overwriting each other's state
+
+## 1.0.1770
+
 - 下拉重新整理：讀完後等圓圈收完、畫面靜止了，才更新上面的文字與清單，不在清單還被拉著時改動版面｜Pull-to-refresh: after a reload, the text and list are updated only once the circle has retracted and the screen is still, instead of changing the layout while the list is still pulled down
 
 ## 1.0.1769
