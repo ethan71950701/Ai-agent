@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1775
+
 - 修正手勢導覽（小白條）底下可能出現白邊：App 各頁把導覽列區域塗成頁面底色；按停止後在背景請對方刪半成品，失敗會自動再試 2 次｜Fix a possible white strip under the gesture bar: app pages now paint the navigation-bar area in the page colour; after Stop, the background request to delete the peer's partial file retries up to 2 more times if it fails
 
 ## 1.0.1774
