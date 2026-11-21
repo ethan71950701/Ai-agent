@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1759
+
 - 修正：同時取兩個同名檔案不會再寫進同一個暫存檔而拼出壞檔；不同資料夾的同名檔，也不會接上別人沒收完的半成品（只有「這個遠端路徑上次沒收完」的才會接著收）｜Fix: fetching two same-named files at the same time no longer writes into one temp file and produces a corrupt result; same-named files from different folders no longer pick up someone else's partial download (only the one from the same remote path resumes)
 
 ## 1.0.1758
