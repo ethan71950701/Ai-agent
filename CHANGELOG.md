@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1768
+
 - 修正下拉重新整理收回去時清單瞬間跳動：狀態文字固定留兩行高（毫秒數字數一變、換行數跟著變，清單會往上跳）、內容沒變就不重建清單、圓圈收回去不再彈過頭｜Fix the list jumping when the pull-to-refresh circle retracts: the status text now always reserves two lines (a changing digit count used to change the line count and shift the list), an unchanged folder is not rebuilt, and the circle no longer overshoots when retracting
 
 ## 1.0.1767
