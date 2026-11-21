@@ -352,8 +352,8 @@ public class ResumeTransferTest {
             throw new AssertionError("should have been stopped");
         } catch (TransferNotify.Stopped expected) { }
         assertTrue(Resume.validFp(client.lastFp));
-        assertEquals("對方那邊的半成品也要刪掉", 0, client.remoteOffset(client.lastFp));
-        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+        assertTrue("對方那邊的半成品也要刪掉（背景刪，等一下）", waitNoParts());
+        assertEquals(0, client.remoteOffset(client.lastFp));
         assertFalse(new File(inbox, "up.bin").exists());
     }
 
@@ -445,7 +445,7 @@ public class ResumeTransferTest {
             TransferNotify.begin();
         }
         assertEquals("不能重試：只有算指紋與傳一次", 2, opens[0]);
-        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+        assertTrue("對方的半成品要被刪掉（背景刪，等一下）", waitNoParts());
         assertFalse(new File(inbox, "stopnow.bin").exists());
     }
 
@@ -507,5 +507,15 @@ public class ResumeTransferTest {
         }
         assertEquals("外面的檔案不能被動到", "keep", new String(Files.readAllBytes(outside.toPath())));
         assertFalse(new File(inbox, "evil.bin").exists());
+    }
+
+    /** 背景刪除要一點時間：最多等 5 秒，看收件匣裡的半成品有沒有被清掉。 */
+    private boolean waitNoParts() throws Exception {
+        long until = System.currentTimeMillis() + 5000;
+        while (System.currentTimeMillis() < until) {
+            if (inbox.listFiles((x, n) -> n.endsWith(".part")).length == 0) return true;
+            Thread.sleep(50);
+        }
+        return false;
     }
 }

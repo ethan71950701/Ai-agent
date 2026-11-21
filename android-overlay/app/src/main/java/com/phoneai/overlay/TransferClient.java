@@ -290,6 +290,13 @@ final class TransferClient {
     /** 可以重新打開的來源（續傳要從頭或中間再讀一次）。 */
     interface Source { InputStream open() throws IOException; }
 
+    /** 同 discardRemote，但不讓呼叫端等（按停止後馬上回報「已停止」，刪除在背景完成）。 */
+    void discardRemoteInBackground(final String fp) {
+        Thread t = new Thread(() -> discardRemote(fp), "discard-remote");
+        t.setDaemon(true);
+        t.start();
+    }
+
     /** 請對方把這個指紋的半成品刪掉（使用者手動停止、或按「丟掉」）。盡力而為：連不上或對方是舊版就算了。 */
     void discardRemote(String fp) {
         try { getText("/v1/discard?fp=" + enc(fp)); } catch (Exception ignored) { }
@@ -377,7 +384,7 @@ final class TransferClient {
             trackEnd(false);
             return r;
         } catch (TransferNotify.Stopped stop) {
-            discardRemote(fp);   // 使用者手動停止：對方收到一半的也刪掉（意外斷線才保留續傳）
+            discardRemoteInBackground(fp);   // 使用者手動停止：對方收到一半的也刪掉（意外斷線才保留續傳）。放到背景做：對方最多會等 3 秒讓舊連線放掉半成品，不要讓「已停止」跟著等
             trackEnd(false);
             throw stop;
         } catch (TransferNotify.Paused pz) {

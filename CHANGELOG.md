@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 傳檔案按停止後，馬上回報「已停止」，請對方刪掉半成品改在背景做，不用等對方最多 3 秒的收尾｜After pressing Stop on a send, "stopped" is reported at once; asking the other phone to delete its partial file now happens in the background instead of waiting up to 3 s for it
 - 穩定與安全：傳檔案時按停止／暫停會直接關掉那條連線，對方不再收資料、寫入卡住時也能立刻停下；傳輸服務的請求標頭有行數、大小與時間上限，不會被慢慢送資料的人占滿連線；聊天一次只處理一個（交接旗標改成每個聊天各自的）；續傳暫存檔是符號連結時拒絕；自訂 AI 服務只有主機名稱剛好是 api.openai.com 才當成官方｜Stability and safety: pressing Stop/Pause while sending or receiving now closes that connection, so a write stuck on a peer that stopped reading ends at once; the transfer server limits request-header lines, size and time so a slow sender can't hog all connections; chat handles one question at a time (the hand-off flag is now per chat); a resume partial that is a symlink is refused; a custom AI service counts as official OpenAI only when its host is exactly api.openai.com
 
 ## 1.0.1772
