@@ -177,6 +177,7 @@ final class TransferNotify {
      */
     static synchronized void halted(Context c, PendingStore.Entry e, String reason, boolean paused) {
         lastAt = 0;
+        if (e != null) PendingTransfers.store(c).setReason(e.id, paused ? L.t("你按了暫停") : (reason == null || reason.isEmpty() ? L.t("連線中斷") : reason));   // 傳輸頁的清單要看得到「為什麼停」
         boolean none = SLOTS.leave(System.currentTimeMillis());   // 這一筆結束了（旗標跟著收掉）；別筆還在傳的話，它們不受影響
         if (e != null && !none) {   // 還有別筆在傳：通知列留給它，這一筆看「沒傳完」清單就好（不然會蓋掉它的進度）
             LifeLog.add(c, "傳輸通知：" + e.name + (paused ? " 已暫停" : " 已中斷") + "，但還有別筆在傳，通知先不換，到「互傳檔案」頁看");

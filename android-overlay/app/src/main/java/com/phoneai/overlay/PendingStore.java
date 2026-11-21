@@ -24,6 +24,7 @@ final class PendingStore {
         String source = "";       // up：來源（content:// 位址或檔案路徑）；down：空
         String remotePath = "";   // down：對方那邊的路徑
         String fp = "";           // up：續傳用的指紋（要請對方丟掉半成品時用）
+        String reason = "";       // 最近一次停下來的原因（暫停、或失敗的錯誤訊息），給使用者看
         long size, done, updatedAt;
 
         int percent() { return size > 0 ? (int) Math.min(100, done * 100 / size) : 0; }
@@ -55,6 +56,7 @@ final class PendingStore {
                 e.source = o.optString("source");
                 e.remotePath = o.optString("remotePath");
                 e.fp = o.optString("fp");
+                e.reason = o.optString("reason");
                 e.size = o.optLong("size");
                 e.done = o.optLong("done");
                 e.updatedAt = o.optLong("updatedAt");
@@ -94,6 +96,14 @@ final class PendingStore {
         if (hit) { save(l); lastWrite.put(id, nowMs); }
     }
 
+    /** 記下這一筆停下來的原因（暫停、或失敗的錯誤），之後在「沒傳完」清單顯示。 */
+    synchronized void setReason(String id, String reason) {
+        List<Entry> l = list(System.currentTimeMillis());
+        boolean hit = false;
+        for (Entry e : l) if (e.id.equals(id)) { e.reason = reason == null ? "" : reason; hit = true; }
+        if (hit) save(l);
+    }
+
     synchronized void remove(String id) { remove(id, System.currentTimeMillis()); }
 
     synchronized void remove(String id, long nowMs) {
@@ -116,7 +126,7 @@ final class PendingStore {
             JSONArray a = new JSONArray();
             for (Entry e : l) {
                 a.put(new JSONObject().put("id", e.id).put("kind", e.kind).put("peerId", e.peerId).put("peerName", e.peerName)
-                        .put("name", e.name).put("source", e.source).put("remotePath", e.remotePath).put("fp", e.fp)
+                        .put("name", e.name).put("source", e.source).put("remotePath", e.remotePath).put("fp", e.fp).put("reason", e.reason == null ? "" : e.reason)
                         .put("size", e.size).put("done", e.done).put("updatedAt", e.updatedAt));
             }
             File tmp = new File(file.getPath() + ".tmp");

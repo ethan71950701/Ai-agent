@@ -104,6 +104,22 @@ public class TransferActivity extends Activity {
                     Ui.tonal(this, L.t("停止傳輸"), v -> TransferNotify.requestStop()));
         }
 
+        List<PendingStore.Entry> pend = PendingTransfers.list(this);
+        if (!pend.isEmpty()) {   // 意外斷線、重試後還是失敗的傳輸：留在這裡，可以繼續或丟掉
+            Ui.section(this, box, L.t("沒傳完的檔案"));
+            for (final PendingStore.Entry e : pend) {
+                LinearLayout pc = Ui.card(this, box);
+                String who = e.peerName.isEmpty() ? "?" : e.peerName;
+                pc.addView(Ui.body(this, (e.kind.equals("up") ? "↑ " : "↓ ") + e.name + "\n"
+                        + (e.kind.equals("up") ? L.t("傳給 ") : L.t("取自 ")) + who + "｜" + e.percent() + "%（"
+                        + TransferStore.size(e.done) + " / " + TransferStore.size(e.size) + "）"
+                        + (e.reason == null || e.reason.isEmpty() ? "" : "\n" + L.t("停下來的原因：") + e.reason)));
+                com.google.android.material.button.MaterialButton go = Ui.button(this, L.t("繼續"), v -> resumePending(e));
+                go.setEnabled(!TransferNotify.active());
+                Ui.buttons(this, pc, go, Ui.tonal(this, L.t("丟掉"), v -> discardPending(e)));
+            }
+        }
+
         LinearLayout me = Ui.card(this, box);
         String state = TransferService.running ? L.t("運作中") : L.t("沒有在運作");
         me.addView(Ui.body(this, TransferStore.myName(this) + "　·　" + state));
@@ -132,21 +148,6 @@ public class TransferActivity extends Activity {
                 }));
         remote.addView(Ui.tonal(this, L.t("設定點擊位置"), v -> TailscaleLauncher.captureTap(this)));
 
-
-        List<PendingStore.Entry> pend = PendingTransfers.list(this);
-        if (!pend.isEmpty()) {   // 意外斷線、重試後還是失敗的傳輸：留在這裡，可以繼續或丟掉
-            Ui.section(this, box, L.t("沒傳完的檔案"));
-            for (final PendingStore.Entry e : pend) {
-                LinearLayout pc = Ui.card(this, box);
-                String who = e.peerName.isEmpty() ? "?" : e.peerName;
-                pc.addView(Ui.body(this, (e.kind.equals("up") ? "↑ " : "↓ ") + e.name + "\n"
-                        + (e.kind.equals("up") ? L.t("傳給 ") : L.t("取自 ")) + who + "｜" + e.percent() + "%（"
-                        + TransferStore.size(e.done) + " / " + TransferStore.size(e.size) + "）"));
-                com.google.android.material.button.MaterialButton go = Ui.button(this, L.t("繼續"), v -> resumePending(e));
-                go.setEnabled(!TransferNotify.active());
-                Ui.buttons(this, pc, go, Ui.tonal(this, L.t("丟掉"), v -> discardPending(e)));
-            }
-        }
 
         List<TransferStore.Peer> peers = TransferStore.peers(this);
         if (!peers.isEmpty()) {

@@ -1479,6 +1479,9 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("停下來的原因：", "Why it stopped: ");
+        m.put("你按了暫停", "You paused it");
+        m.put("連線中斷", "Connection lost");
         m.put("對方沒回應，正在用推播叫醒：", "No answer, waking it with a push: ");
         m.put("正在開 Tailscale（外網）…", "Turning on Tailscale (remote)…");
         m.put("已連上，開始傳送…", "Connected, starting…");

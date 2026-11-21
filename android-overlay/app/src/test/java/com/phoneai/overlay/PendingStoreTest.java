@@ -99,4 +99,17 @@ public class PendingStoreTest {
         assertEquals(PendingStore.idFor("up", "p", "a.zip", 5), PendingStore.idFor("up", "p", "a.zip", 5));
         assertTrue(!PendingStore.idFor("up", "p", "a.zip", 5).equals(PendingStore.idFor("down", "p", "a.zip", 5)));
     }
+
+    @Test
+    public void reasonIsStoredAndSurvivesReload() throws Exception {
+        java.io.File f = java.io.File.createTempFile("pend", ".json");
+        PendingStore st = new PendingStore(f);
+        PendingStore.Entry e = new PendingStore.Entry();
+        e.id = "up:p:a.bin:10"; e.kind = "up"; e.peerId = "p"; e.peerName = "P"; e.name = "a.bin"; e.size = 10;
+        st.begin(e);
+        st.setReason(e.id, "連不上對方");
+        assertEquals("連不上對方", new PendingStore(f).find(e.id).reason);
+        st.setReason("nope", "x");   // 沒有這一筆：不出錯
+        assertEquals("連不上對方", new PendingStore(f).find(e.id).reason);
+    }
 }
