@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正下拉重新整理收回去時清單瞬間跳動：狀態文字固定留兩行高（毫秒數字數一變、換行數跟著變，清單會往上跳）、內容沒變就不重建清單、圓圈收回去不再彈過頭｜Fix the list jumping when the pull-to-refresh circle retracts: the status text now always reserves two lines (a changing digit count used to change the line count and shift the list), an unchanged folder is not rebuilt, and the circle no longer overshoots when retracting
+
+## 1.0.1767
+
 - 修正下拉重新整理的閃動：放手轉圈時圓圈不再縮成一個點再長出來，下拉重讀時清單也不再因為狀態文字換行而往上跳一下；圓圈底色和卡片區分開，停的位置也移到清單上方｜Fix flicker in pull-to-refresh: the circle no longer shrinks to a dot and regrows when it starts spinning, the list no longer jumps up when the status text changes line count during a refresh, and the circle now has its own background colour and rests above the list
 
 ## 1.0.1766
