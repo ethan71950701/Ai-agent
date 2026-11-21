@@ -85,6 +85,15 @@ public class App extends Application {
                 DynamicColors.applyToActivityIfAvailable(a, ob.build());
             }
             @Override public void onActivityCreated(Activity a, Bundle b) { }
+            @Override
+            public void onActivityPostCreated(Activity a, Bundle b) {
+                if (!themed(a) || a instanceof ConfirmActivity || a instanceof NoticeActivity) return;
+                // 手勢導覽的小白條底下：導覽列區域塗成跟頁面一樣的底色，不留透明或系統加的白色遮罩（較舊的 Android 不會自動把內容畫到導覽列底下）
+                try {
+                    a.getWindow().setNavigationBarContrastEnforced(false);
+                    a.getWindow().setNavigationBarColor(Ui.attr(a, com.google.android.material.R.attr.colorSurface));
+                } catch (Throwable ignored) { }
+            }
             @Override public void onActivityStarted(Activity a) { }
             @Override public void onActivityResumed(Activity a) { TransferBar.onResumed(a); }   // 傳輸中的懸浮列跟著目前的畫面
             @Override public void onActivityPaused(Activity a) { TransferBar.onPaused(a); }

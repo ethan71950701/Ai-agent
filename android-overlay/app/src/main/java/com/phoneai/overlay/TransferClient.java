@@ -290,16 +290,26 @@ final class TransferClient {
     /** 可以重新打開的來源（續傳要從頭或中間再讀一次）。 */
     interface Source { InputStream open() throws IOException; }
 
+    static final int DISCARD_TRIES = 3;
+
     /** 同 discardRemote，但不讓呼叫端等（按停止後馬上回報「已停止」，刪除在背景完成）。 */
     void discardRemoteInBackground(final String fp) {
-        Thread t = new Thread(() -> discardRemote(fp), "discard-remote");
+        Thread t = new Thread(() -> {
+            for (int i = 0; i < DISCARD_TRIES; i++) {   // 背景做、失敗了不會有人看到：多試幾次；還是不行，對方的半成品三天後也會被自動清掉
+                if (discardOnce(fp)) return;
+                try { Thread.sleep(2000); } catch (InterruptedException e) { return; }
+            }
+        }, "discard-remote");
         t.setDaemon(true);
         t.start();
     }
 
     /** 請對方把這個指紋的半成品刪掉（使用者手動停止、或按「丟掉」）。盡力而為：連不上或對方是舊版就算了。 */
-    void discardRemote(String fp) {
-        try { getText("/v1/discard?fp=" + enc(fp)); } catch (Exception ignored) { }
+    void discardRemote(String fp) { discardOnce(fp); }
+
+    /** 問一次：對方有回話（deleted 或 none）就算成功；連不上、逾時回 false。 */
+    boolean discardOnce(String fp) {
+        try { getText("/v1/discard?fp=" + enc(fp)); return true; } catch (Exception ignored) { return false; }
     }
 
     // ---- 「沒傳完的檔案」清單：呼叫端用 track() 登記這一次傳輸；成功或手動停止就移除，意外失敗就留著讓使用者按「繼續」
