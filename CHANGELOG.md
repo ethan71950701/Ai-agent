@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正手勢導覽（小白條）底下可能出現白邊：App 各頁把導覽列區域塗成頁面底色；按停止後在背景請對方刪半成品，失敗會自動再試 2 次｜Fix a possible white strip under the gesture bar: app pages now paint the navigation-bar area in the page colour; after Stop, the background request to delete the peer's partial file retries up to 2 more times if it fails
+
+## 1.0.1774
+
 - 傳檔案按停止後，馬上回報「已停止」，請對方刪掉半成品改在背景做，不用等對方最多 3 秒的收尾｜After pressing Stop on a send, "stopped" is reported at once; asking the other phone to delete its partial file now happens in the background instead of waiting up to 3 s for it
 
 ## 1.0.1773
