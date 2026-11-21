@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1774
+
 - 傳檔案按停止後，馬上回報「已停止」，請對方刪掉半成品改在背景做，不用等對方最多 3 秒的收尾｜After pressing Stop on a send, "stopped" is reported at once; asking the other phone to delete its partial file now happens in the background instead of waiting up to 3 s for it
 
 ## 1.0.1773
