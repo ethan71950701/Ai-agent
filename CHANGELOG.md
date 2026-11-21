@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 加快瀏覽對方手機的資料夾：列清單時每個項目只讀一次檔案屬性（以前每項要查十幾次，共用儲存空間很慢），內容與格式不變｜Faster browsing of the other phone's folders: the listing now reads each entry's attributes once instead of a dozen times (shared storage is slow); output is unchanged
+
+## 1.0.1754
+
 - 聊天助理新增 phone_task：需要操作手機、做完還要根據結果接著回答或做下一步時，聊天可以叫自動操作做一件事、拿到結果後繼續（一輪最多 2 次，不能一層套一層；敏感操作照舊要確認）｜Chat gets a phone_task tool: when it needs to operate the phone and then continue based on the result, chat can run one automatic-operation task and carry on with the outcome (max 2 per turn, no nesting; sensitive actions still ask for confirmation)
 
 ## 1.0.1753
