@@ -1478,6 +1478,7 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("已經有一個操作正在進行，請等它做完（或在通知上按「停止」）再試。", "An operation is already running; wait for it to finish (or tap Stop in the notification) and try again.");
         m.put("重新整理", "Refresh");
         m.put("（暫存的內容", " (cached");
         m.put("，背景更新中", ", updating in the background");

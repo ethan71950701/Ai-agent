@@ -164,8 +164,19 @@ final class AgentLoop {
     /** preOpen：任務一開始由程式先開啟的 App 套件名稱（路由判斷出來的）；沒有就是 null。 */
     static String run(Context c, String task, Ui ui, String preOpen) { return run(c, task, ui, preOpen, null); }
 
-    /** macroTask：路由認為這句話是某個記住的任務的另一種說法（沒有就 null）。 */
+    private static final SingleRun GATE = new SingleRun();
+
+    /** macroTask：路由認為這句話是某個記住的任務的另一種說法（沒有就 null）。一次只跑一個：助理面板與首頁輸入同時送出時，後來的會被擋下，不會互相蓋掉狀態與搶畫面。 */
     static String run(Context c, String task, Ui ui, String preOpen, String macroTask) {
+        if (!GATE.tryEnter()) return L.t("已經有一個操作正在進行，請等它做完（或在通知上按「停止」）再試。");
+        try {
+            return runExclusive(c, task, ui, preOpen, macroTask);
+        } finally {
+            GATE.exit();
+        }
+    }
+
+    private static String runExclusive(Context c, String task, Ui ui, String preOpen, String macroTask) {
         cancelled = false;
         macroWhy = "";
         showCard = false;

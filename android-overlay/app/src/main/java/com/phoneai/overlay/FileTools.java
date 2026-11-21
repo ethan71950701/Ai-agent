@@ -143,7 +143,9 @@ final class FileTools {
         return "已刪除 " + shown;
     }
 
-    private static boolean deleteTree(File f) {
+    /** 刪資料夾或檔案：遇到符號連結只刪連結本身，不進去它指向的地方（不然會刪到共享資料夾以外的東西）。 */
+    static boolean deleteTree(File f) {
+        if (java.nio.file.Files.isSymbolicLink(f.toPath())) return f.delete();
         File[] kids = f.isDirectory() ? f.listFiles() : null;
         if (kids != null) for (File k : kids) deleteTree(k);
         return f.delete();
