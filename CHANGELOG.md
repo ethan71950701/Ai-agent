@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 瀏覽對方資料夾：改成從清單最上面往下拉來重新整理（圓圈跟著手指滑出來、弧線慢慢畫出，拉過門檻放手才重讀；越拉越吃力但不會突然卡住，放手有彈簧的彈性），取代「重新整理」按鈕｜Browsing the other phone's folders: pull down from the top of the list to refresh (a circle follows your finger and its arc fills in; release past the threshold to reload; resistance grows but never hits a wall, and release springs back), replacing the Refresh button
+
+## 1.0.1764
+
 - 瀏覽對方資料夾：返回鍵／返回手勢改成回上一個資料夾（在最上層才離開這一頁）；讀過的資料夾會暫存，返回上一層或再進去不用重新讀（超過 30 秒的先顯示再在背景更新），並新增「重新整理」鈕｜Browsing the other phone's folders: Back now goes up one folder (it only leaves the page at the top level); folders already read are cached so going back or re-entering doesn't reload (older than 30 s: shown first, then refreshed in the background), plus a new Refresh button
 
 ## 1.0.1763
