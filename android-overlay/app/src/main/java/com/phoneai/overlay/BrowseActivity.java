@@ -25,6 +25,8 @@ public class BrowseActivity extends Activity {
     private LinearLayout list;
     private final BrowseCache cache = new BrowseCache();
     private PullRefresh pull;
+    private String shownPath;
+    private List<String[]> shownRows;
     private boolean pullPending;   // 這一次讀取是下拉觸發的：讀完要把圓圈收回去
 
     @Override public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
@@ -70,6 +72,7 @@ public class BrowseActivity extends Activity {
         Ui.buttons(this, top, Ui.tonal(this, L.t("上一層"), v -> load(parentOf(path))),
                 Ui.tonal(this, L.t("搜尋這台"), v -> { Ui.rememberTap(v); startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id)); }));
         status = Ui.body(this, "");
+        status.setMinLines(2);   // 固定留兩行高：狀態文字（毫秒數）的字數一變就可能少一行或多一行，下面的清單會跟著往上、往下跳
         box.addView(status);
         list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
@@ -120,10 +123,10 @@ public class BrowseActivity extends Activity {
                 ui.post(() -> {
                     if (seq != navSeq) return;   // 讀的時候使用者已經按返回、去別的資料夾了
                     loading = false;
-                    if (pullPending) { pullPending = false; if (pull != null) pull.done(); }
                     show(target, rows);
                     long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
                     status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
+                    if (pullPending) { pullPending = false; if (pull != null) pull.done(); }   // 清單與文字都穩定了才把圓圈收回去
                 });
             } catch (Exception e) {
                 ui.post(() -> { if (seq == navSeq) { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); } if (pullPending) { pullPending = false; if (pull != null) pull.done(); } });
@@ -164,6 +167,9 @@ public class BrowseActivity extends Activity {
         updateBackHandler();
         where.setText(L.t("位置：") + (target.isEmpty() ? L.t("（最上層）") : target));
         status.setText(rows.isEmpty() ? L.t("這個資料夾是空的") : "");
+        if (target.equals(shownPath) && BrowseCache.same(rows, shownRows)) return;   // 重新整理後內容沒變：清單原封不動，不重建（重建會讓畫面瞬間閃一下）
+        shownPath = target;
+        shownRows = rows;
         list.removeAllViews();
         for (String[] r : rows) {
             final boolean folder = "D".equals(r[0]);

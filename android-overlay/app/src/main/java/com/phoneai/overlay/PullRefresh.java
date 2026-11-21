@@ -123,7 +123,7 @@ final class PullRefresh {
     /** 重新讀取完了：圓圈縮回去。 */
     void done() {
         if (!loading) return;
-        springTo(0, () -> { loading = false; stopLoadingAnim(); });
+        springTo(0, () -> { loading = false; stopLoadingAnim(); }, SpringForce.DAMPING_RATIO_NO_BOUNCY);   // 收回去不要彈：彈過頭會讓清單往上衝一下
         loading = true;   // 彈回去的過程中不接受新的下拉
     }
 
@@ -154,11 +154,13 @@ final class PullRefresh {
         spinner.setProgressCompat(0, false);
     }
 
-    private void springTo(float target, Runnable end) {
+    private void springTo(float target, Runnable end) { springTo(target, end, 0.72f); }
+
+    private void springTo(float target, Runnable end, float damping) {
         if (spring != null) spring.cancel();
         FloatValueHolder h = new FloatValueHolder(pulled);
         spring = new SpringAnimation(h);
-        spring.setSpring(new SpringForce(target).setStiffness(SpringForce.STIFFNESS_LOW).setDampingRatio(0.72f));   // 略欠阻尼：有一點彈性
+        spring.setSpring(new SpringForce(target).setStiffness(SpringForce.STIFFNESS_LOW).setDampingRatio(damping));   // 略欠阻尼：有一點彈性
         spring.setStartValue(pulled);
         spring.addUpdateListener((anim, value, velocity) -> paint(value));
         spring.addEndListener((anim, canceled, value, velocity) -> { if (!canceled && end != null) end.run(); });
