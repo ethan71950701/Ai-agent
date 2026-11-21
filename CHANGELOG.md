@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1766
+
 - 修正：下拉重新整理拉到比較下面時，圓圈上的弧線會封成一整圈；現在弧線最多約四分之三圈，也不再畫底下的整圈軌道｜Fix: pulling further down in pull-to-refresh closed the arc into a full circle; the arc now stops at about three quarters and the full-circle track behind it is no longer drawn
 
 ## 1.0.1765
