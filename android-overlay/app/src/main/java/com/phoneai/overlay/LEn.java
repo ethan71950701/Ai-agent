@@ -470,7 +470,6 @@ final class LEn {
         m.put("已儲存", "Saved");
         m.put("＋ 待辦", "+ To-do");
         m.put("＋ 筆記", "+ Note");
-        m.put("重新整理", "Refresh");
         m.put("方式", "method");
         m.put("：結束碼 ", ": exit code ");
         m.put("→ 用方式", " → using method ");
@@ -1482,7 +1481,7 @@ final class LEn {
         m.put("重新整理", "Refresh");
         m.put("（暫存的內容", " (cached");
         m.put("，背景更新中", ", updating in the background");
-        m.put("；要重新讀取請按「重新整理」）", "; tap Refresh to reload)");
+        m.put("；從最上面往下拉可重新讀取）", "; pull down from the top to reload)");
         m.put("（內容有更新）", "(updated)");
         m.put("找對方", "Finding");
         m.put("開外網", "Remote");

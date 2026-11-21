@@ -24,6 +24,23 @@ public class BrowseActivity extends Activity {
     private TextView where, status;
     private LinearLayout list;
     private final BrowseCache cache = new BrowseCache();
+    private PullRefresh pull;
+    private boolean pullPending;   // 這一次讀取是下拉觸發的：讀完要把圓圈收回去
+
+    @Override public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
+        if (pull != null) {
+            int r = pull.handle(ev);
+            if (r == PullRefresh.JUST_STARTED) {   // 剛開始下拉：先取消底下（清單、卡片）的觸控，再自己接手
+                android.view.MotionEvent cancel = android.view.MotionEvent.obtain(ev);
+                cancel.setAction(android.view.MotionEvent.ACTION_CANCEL);
+                super.dispatchTouchEvent(cancel);
+                cancel.recycle();
+                return true;
+            }
+            if (r == PullRefresh.CONSUMED) return true;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
     private int navSeq;   // 每次換資料夾加一：舊的讀取回來時如果已經不是目前這次，就只存暫存、不畫面
     private android.window.OnBackInvokedCallback backCb;
 
@@ -37,7 +54,13 @@ public class BrowseActivity extends Activity {
             return;
         }
         LinearLayout[] c = new LinearLayout[1];
-        setContentView(Ui.screen(this, peer.name, true, c));
+        android.view.View root = Ui.screen(this, peer.name, true, c);
+        setContentView(root);
+        if (root instanceof android.view.ViewGroup && ((android.view.ViewGroup) root).getChildAt(0) instanceof com.google.android.material.appbar.AppBarLayout) {
+            pull = new PullRefresh(this, (android.view.ViewGroup) root, Ui.scroller(root),
+                    (com.google.android.material.appbar.AppBarLayout) ((android.view.ViewGroup) root).getChildAt(0),
+                    () -> { if (loading) { pull.done(); return; } pullPending = true; load(path, true); });   // 從最上面往下拉：重新讀這個資料夾
+        }
         Ui.enterSpring(this);
         LinearLayout box = c[0];
 
@@ -45,7 +68,6 @@ public class BrowseActivity extends Activity {
         where = Ui.body(this, "");
         top.addView(where);
         Ui.buttons(this, top, Ui.tonal(this, L.t("上一層"), v -> load(parentOf(path))),
-                Ui.tonal(this, L.t("重新整理"), v -> load(path, true)),
                 Ui.tonal(this, L.t("搜尋這台"), v -> { Ui.rememberTap(v); startActivity(new Intent(this, FileSearchActivity.class).putExtra("peer_id", peer.id)); }));
         status = Ui.body(this, "");
         box.addView(status);
@@ -78,7 +100,7 @@ public class BrowseActivity extends Activity {
             show(target, hit.rows);
             boolean fresh = BrowseCache.fresh(hit, System.currentTimeMillis());
             status.setText(rows0(hit).isEmpty() ? L.t("這個資料夾是空的") : "");
-            status.setText(status.getText() + (status.getText().length() > 0 ? "　" : "") + L.t("（暫存的內容") + (fresh ? "" : L.t("，背景更新中")) + L.t("；要重新讀取請按「重新整理」）"));
+            status.setText(status.getText() + (status.getText().length() > 0 ? "　" : "") + L.t("（暫存的內容") + (fresh ? "" : L.t("，背景更新中")) + L.t("；從最上面往下拉可重新讀取）"));
             if (!fresh) refreshQuietly(target, hit.rows);
             return;
         }
@@ -98,12 +120,13 @@ public class BrowseActivity extends Activity {
                 ui.post(() -> {
                     if (seq != navSeq) return;   // 讀的時候使用者已經按返回、去別的資料夾了
                     loading = false;
+                    if (pullPending) { pullPending = false; if (pull != null) pull.done(); }
                     show(target, rows);
                     long total = System.currentTimeMillis() - tapAt;   // 含主執行緒排隊與畫面繪製
                     status.setText(status.getText() + " " + timing + L.t("，從點到出現共 ") + total + L.t(" 毫秒"));
                 });
             } catch (Exception e) {
-                ui.post(() -> { if (seq == navSeq) { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); } });
+                ui.post(() -> { if (seq == navSeq) { loading = false; status.setText(L.t("讀取失敗：") + e.getMessage()); } if (pullPending) { pullPending = false; if (pull != null) pull.done(); } });
             }
         }).start();
     }
