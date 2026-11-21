@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 傳輸還沒開始傳的階段（找對方、叫醒、開外網、已連上），Now Bar 膠囊也會顯示目前步驟；人在 App 裡時，畫面下方會有懸浮列顯示步驟與進度，並有「停止」鈕｜Before the transfer starts moving data (finding, waking, remote, connected) the Now Bar capsule shows the current step; while you are inside the app a floating bar at the bottom shows the step and progress, with a Stop button
+
+## 1.0.1762
+
 - 互傳頁：「沒傳完的檔案」移到最上面，而且每一筆會寫「停下來的原因」（你按了暫停、或連不上的錯誤訊息），點通知進來不會再看不出發生什麼事｜Transfer page: the "unfinished files" list is now at the top and each entry says why it stopped (you paused it, or the error), so tapping the notification no longer leaves you guessing
 
 ## 1.0.1761
