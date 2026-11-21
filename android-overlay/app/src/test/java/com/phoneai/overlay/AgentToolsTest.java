@@ -98,4 +98,15 @@ public class AgentToolsTest {
             ChatEngine.setPhoneRunner(null);
         }
     }
+
+    @Test
+    public void toolListsAreBuiltOnceAndCannotBeChanged() {
+        assertTrue("同一份集合（快取）", ChatEngine.agentToolNames() == ChatEngine.agentToolNames());
+        assertTrue(ChatEngine.agentToolPrompt() == ChatEngine.agentToolPrompt());
+        try {
+            ChatEngine.agentToolNames().add("evil");
+            throw new AssertionError("should be read-only");
+        } catch (UnsupportedOperationException expected) { }
+        assertFalse(ChatEngine.isAgentTool("evil"));
+    }
 }

@@ -26,6 +26,13 @@ final class ProcRun {
         p.destroyForcibly();
     }
 
+    /** 文字輸出的結果：結束碼（逾時＝TIMED_OUT）與輸出文字（逾時時最後加一行說明）。 */
+    static final class Text {
+        final int code;
+        final String text;
+        Text(int code, String text) { this.code = code; this.text = text; }
+    }
+
     /** 二進位輸出（截圖）的結果。 */
     static final class Bytes {
         int code = -1;
@@ -86,9 +93,9 @@ final class ProcRun {
 
     /**
      * 讀完程序的輸出（標準輸出；呼叫端要用 redirectErrorStream(true) 把錯誤輸出合進來，不然錯誤輸出沒人讀可能塞滿）。
-     * @return {Integer 結束碼（逾時＝-1）, String 輸出文字（逾時時最後加一行說明）}
+     * @return 結束碼（逾時＝-1）與輸出文字（逾時時最後加一行說明）
      */
-    static Object[] drain(final Process p, final long timeoutMs, final int maxBytes) throws Exception {
+    static Text drain(final Process p, final long timeoutMs, final int maxBytes) throws Exception {
         final ByteArrayOutputStream o = new ByteArrayOutputStream();
         Thread reader = new Thread(() -> {
             try (InputStream in = p.getInputStream()) {
@@ -116,8 +123,8 @@ final class ProcRun {
         }
         String text;
         synchronized (o) { text = o.toString("UTF-8"); }
-        if (!done) return new Object[]{TIMED_OUT, text + "\n(逾時，已強制結束)"};
-        return new Object[]{p.exitValue(), text};
+        if (!done) return new Text(TIMED_OUT, text + "\n(逾時，已強制結束)");
+        return new Text(p.exitValue(), text);
     }
 
     /**

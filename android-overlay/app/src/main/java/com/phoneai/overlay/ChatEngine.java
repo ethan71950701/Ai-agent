@@ -322,7 +322,16 @@ final class ChatEngine {
     }
 
     /** 自動操作也能用的工具名稱：聊天助理的全部工具，扣掉自動操作已經有自己版本的（phone_action 是「交給自動操作」，shell 與三星提醒自動操作有自己的）。 */
-    static java.util.Set<String> agentToolNames() {
+    private static java.util.Set<String> agentToolNamesCache;
+    private static String agentToolPromptCache;
+
+    /** TOOLS 是固定的常數，解析一次就好（每個自動操作步驟都會問「這是不是聊天的工具」）。回傳的集合不能修改。 */
+    static synchronized java.util.Set<String> agentToolNames() {
+        if (agentToolNamesCache == null) agentToolNamesCache = java.util.Collections.unmodifiableSet(buildAgentToolNames());
+        return agentToolNamesCache;
+    }
+
+    private static java.util.Set<String> buildAgentToolNames() {
         java.util.Set<String> out = new java.util.LinkedHashSet<>();
         try {
             JSONArray a = new JSONArray(TOOLS);
@@ -340,7 +349,12 @@ final class ChatEngine {
     static boolean readOnlyTool(String name) { return READ_ONLY_TOOLS.contains(name); }
 
     /** 給自動操作的提示詞：把上面那些工具寫成 {"action":"工具名",參數…} 的格式（從工具定義自動產生，兩邊不會不一致）。 */
-    static String agentToolPrompt() {
+    static synchronized String agentToolPrompt() {
+        if (agentToolPromptCache == null) agentToolPromptCache = buildAgentToolPrompt();   // 內容只看固定的 TOOLS，不分語言，可以快取
+        return agentToolPromptCache;
+    }
+
+    private static String buildAgentToolPrompt() {
         StringBuilder sb = new StringBuilder();
         try {
             JSONArray a = new JSONArray(TOOLS);

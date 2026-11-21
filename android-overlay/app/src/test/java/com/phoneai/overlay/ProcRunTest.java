@@ -15,36 +15,36 @@ public class ProcRunTest {
 
     @Test
     public void normalOutputAndExitCode() throws Exception {
-        Object[] r = ProcRun.drain(sh("echo hello; exit 3"), 5000, 1024);
-        assertEquals(3, r[0]);
-        assertEquals("hello\n", r[1]);
+        ProcRun.Text r = ProcRun.drain(sh("echo hello; exit 3"), 5000, 1024);
+        assertEquals(3, r.code);
+        assertEquals("hello\n", r.text);
     }
 
     @Test
     public void timeoutKillsTheProcessAndReturnsPromptly() throws Exception {
         long t0 = System.currentTimeMillis();
-        Object[] r = ProcRun.drain(sh("echo start; sleep 30"), 400, 1024);
+        ProcRun.Text r = ProcRun.drain(sh("echo start; sleep 30"), 400, 1024);
         long took = System.currentTimeMillis() - t0;
-        assertEquals(ProcRun.TIMED_OUT, r[0]);
-        assertTrue(((String) r[1]).contains("start"));
-        assertTrue(((String) r[1]).contains("逾時"));
+        assertEquals(ProcRun.TIMED_OUT, r.code);
+        assertTrue(r.text.contains("start"));
+        assertTrue(r.text.contains("逾時"));
         assertTrue("took " + took, took < 6000);
     }
 
     @Test
     public void outputIsCappedButProcessStillFinishes() throws Exception {
-        Object[] r = ProcRun.drain(sh("yes abcdefghij | head -c 3000000"), 20000, 100000);
-        assertEquals(0, r[0]);
-        assertEquals(100000, ((String) r[1]).length());
+        ProcRun.Text r = ProcRun.drain(sh("yes abcdefghij | head -c 3000000"), 20000, 100000);
+        assertEquals(0, r.code);
+        assertEquals(100000, r.text.length());
     }
 
     @Test
     public void grandchildHoldingThePipeDoesNotHangTheCaller() throws Exception {
         long t0 = System.currentTimeMillis();
-        Object[] r = ProcRun.drain(sh("sleep 30 & echo hi"), 5000, 1024);   // sh 立刻結束，但背景的 sleep 還握著輸出管道
+        ProcRun.Text r = ProcRun.drain(sh("sleep 30 & echo hi"), 5000, 1024);   // sh 立刻結束，但背景的 sleep 還握著輸出管道
         long took = System.currentTimeMillis() - t0;
-        assertEquals(0, r[0]);
-        assertTrue(((String) r[1]).contains("hi"));
+        assertEquals(0, r.code);
+        assertTrue(r.text.contains("hi"));
         assertTrue("took " + took, took < 6000);
     }
 
@@ -63,10 +63,10 @@ public class ProcRunTest {
     @Test
     public void timeoutAlsoKillsChildProcesses() throws Exception {
         Assume.assumeTrue(new java.io.File("/proc/self").exists());
-        Object[] r = ProcRun.drain(sh("sleep 30 & echo $!; wait"), 500, 1024);
-        assertEquals(ProcRun.TIMED_OUT, r[0]);
-        String pid = ((String) r[1]).trim().split("\\s+")[0];
-        assertTrue("pid line: " + r[1], pid.matches("\\d+"));
+        ProcRun.Text r = ProcRun.drain(sh("sleep 30 & echo $!; wait"), 500, 1024);
+        assertEquals(ProcRun.TIMED_OUT, r.code);
+        String pid = r.text.trim().split("\\s+")[0];
+        assertTrue("pid line: " + r.text, pid.matches("\\d+"));
         java.io.File proc = new java.io.File("/proc/" + pid);
         boolean gone = false;
         for (int k = 0; k < 40 && !gone; k++) {   // 最多等 4 秒讓系統收掉

@@ -33,9 +33,9 @@ final class Maintenance {
             try {
                 p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
                 p.getOutputStream().close();
-                Object[] r = ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES);
-                int code = (Integer) r[0];
-                String out = (String) r[1];
+                ProcRun.Text r = ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES);
+                int code = r.code;
+                String out = r.text;
                 if (code == 0) return out;
                 if (code == ProcRun.TIMED_OUT) return "ERR:" + out;   // 腳本可能已經執行一部分：不換寫法重跑
                 if (!ProcRun.suNotLaunched(code, out)) return "ERR:" + out;   // 腳本跑過了、只是結束碼不是 0：照實回報，絕不重跑（以前會用另外兩種 su 寫法再跑兩次）
@@ -74,7 +74,7 @@ final class Maintenance {
             Process p = new ProcessBuilder(Root.su()).redirectErrorStream(true).start();
             p.getOutputStream().write((script + "\nexit\n").getBytes(StandardCharsets.UTF_8));
             p.getOutputStream().close();
-            return (String) ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES)[1];
+            return ProcRun.drain(p, SU_TIMEOUT_MS, SU_MAX_BYTES).text;
         } catch (Exception e) {
             return "ERR:" + e;
         }

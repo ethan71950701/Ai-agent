@@ -429,20 +429,23 @@ final class FileTools {
         return " SHA-256 " + Checksum.shortOf(cl.lastSha) + (cl.lastVerified ? L.t(" ✓已核對") : L.t("（對方沒提供，未核對）"));
     }
 
-    /** 依名稱（包含比對）找已配對的裝置；找不到或有多台符合回 null。 */
-    private static TransferStore.Peer peerNamed(Context c, String dev) {
+    /** 依名稱（包含比對、不分大小寫）找已配對的裝置；一台都沒對上、但只配對了一台時，就是那一台。可能是 0、1 或多台。 */
+    private static List<TransferStore.Peer> matchPeers(Context c, String dev) {
         List<TransferStore.Peer> peers = TransferStore.peers(c), hit = new ArrayList<>();
         String q = dev.toLowerCase(Locale.ROOT);
         for (TransferStore.Peer p : peers) if (p.name.toLowerCase(Locale.ROOT).contains(q) || q.contains(p.name.toLowerCase(Locale.ROOT))) hit.add(p);
         if (hit.isEmpty() && peers.size() == 1) hit.add(peers.get(0));
+        return hit;
+    }
+
+    /** 找不到或有多台符合回 null（呼叫端用來登記進度，不需要報錯）。 */
+    private static TransferStore.Peer peerNamed(Context c, String dev) {
+        List<TransferStore.Peer> hit = matchPeers(c, dev);
         return hit.size() == 1 ? hit.get(0) : null;
     }
 
     private static TransferClient client(Context c, String dev) throws Exception {
-        List<TransferStore.Peer> peers = TransferStore.peers(c), hit = new ArrayList<>();
-        String q = dev.toLowerCase(Locale.ROOT);
-        for (TransferStore.Peer p : peers) if (p.name.toLowerCase(Locale.ROOT).contains(q) || q.contains(p.name.toLowerCase(Locale.ROOT))) hit.add(p);
-        if (hit.isEmpty() && peers.size() == 1) hit.add(peers.get(0));
+        List<TransferStore.Peer> hit = matchPeers(c, dev);
         if (hit.isEmpty()) throw new Exception("沒有叫「" + dev + "」的已配對裝置；用 device_list 看有哪些");
         if (hit.size() > 1) throw new Exception("有多台符合「" + dev + "」，請說清楚是哪一台");
         return clientFor(c, hit.get(0));
