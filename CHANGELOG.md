@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1755
+
 - 加快瀏覽對方手機的資料夾：列清單時每個項目只讀一次檔案屬性（以前每項要查十幾次，共用儲存空間很慢），內容與格式不變｜Faster browsing of the other phone's folders: the listing now reads each entry's attributes once instead of a dozen times (shared storage is slow); output is unchanged
 
 ## 1.0.1754
