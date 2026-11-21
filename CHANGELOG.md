@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 同時進行好幾筆傳輸（例如兩支手機互傳、或傳檔時又在收檔）時，暫停、停止和進度不再互相影響：每一筆各自有旗標，按通知上的暫停／停止只作用在通知顯示的那一筆，一筆結束也不會把別筆的進度通知收掉｜With several transfers at once (e.g. two phones sending to each other, or sending while receiving) pause, stop and progress no longer interfere: each transfer has its own flags, the notification's Pause/Stop only act on the transfer it shows, and one finishing no longer clears another's progress notification
+
+## 1.0.1757
+
 - 穩定性：Tailscale 要確認真的斷線才算關回去（關不掉會再試 3 次，最後照實記錄請你手動關）；「是我們開的」記號 30 分鐘後過期，不會誤關你自己開的；被叫醒時要等互傳伺服器真的啟動才回報成功；兩個聊天同時進行時，聊天裡的 phone_task 不會互相干擾｜Stability: Tailscale only counts as switched off once it really disconnected (retries 3 times, then logs honestly so you can switch it off yourself); the "we turned it on" mark expires after 30 minutes so it can't switch off one you turned on; a push wake-up only reports success once the transfer server is really listening; phone_task state is per chat so two chats at once don't interfere
 
 ## 1.0.1756
