@@ -100,6 +100,12 @@ final class TransferServer {
         return d != null && System.currentTimeMillis() - d.at < DONE_MEMORY_MS ? d : null;
     }
 
+    static final int MAX_HEADER_LINES = 64, MAX_HEADER_BYTES = 16 * 1024;
+    /** 請求標頭整段最多給多久（毫秒）；測試會調短。 */
+    static volatile long headDeadlineMs = 15_000;
+
+    private static int timeLeft(long deadlineMs) { return (int) Math.max(200, Math.min(20_000, deadlineMs - System.currentTimeMillis())); }
+
     private final Host host;
     private ServerSocket server;
     private volatile boolean running;
@@ -193,24 +199,34 @@ final class TransferServer {
     private void serve(Socket sock) {
         try (Socket s = sock) {
             s.setSoTimeout(20000);
+            TransferNotify.bindCloser(s);   // 這條連線的傳輸被按停止／暫停時，直接關掉它（對方不收資料、寫入卡住時才停得下來）
             InetAddress a = s.getInetAddress();
             if (!allowed(a)) return;   // 只服務區網與 Tailscale（100.64.0.0/10）
             String ip = a.getHostAddress();
             InputStream in = new BufferedInputStream(s.getInputStream());
             OutputStream out = new BufferedOutputStream(s.getOutputStream());
             if (blocked(ip)) { reply(out, 429, "too many failures"); return; }
+            // 請求標頭要在限定時間內、限定大小與行數內送完：以前每次讀取各自逾時 20 秒，有人每 19 秒送一個位元組就能一直占著連線（8 個就占滿）
+            final long headDeadline = System.currentTimeMillis() + headDeadlineMs;
+            int headBytes = 0, headLines = 0;
+            s.setSoTimeout(timeLeft(headDeadline));
             String line = readLine(in);
             if (line == null) return;
+            headBytes += line.length();
             String[] rl = line.split(" ");
             if (rl.length < 2) return;
             String method = rl[0], target = rl[1];
             Map<String, String> h = new HashMap<>();
             for (;;) {
+                s.setSoTimeout(timeLeft(headDeadline));
                 String l = readLine(in);
                 if (l == null || l.isEmpty()) break;
+                headBytes += l.length();
+                if (++headLines > MAX_HEADER_LINES || headBytes > MAX_HEADER_BYTES || System.currentTimeMillis() > headDeadline) return;   // 太多、太大、太慢：直接掛斷
                 int c = l.indexOf(':');
                 if (c > 0) h.put(l.substring(0, c).trim().toLowerCase(Locale.ROOT), l.substring(c + 1).trim());
             }
+            s.setSoTimeout(20000);
             String path = target, query = "";
             int q = target.indexOf('?');
             if (q >= 0) { path = target.substring(0, q); query = target.substring(q + 1); }
@@ -462,6 +478,7 @@ final class TransferServer {
         String activeKey = null;
         if (resumable) {
             tmp = new File(inbox, Resume.partName(au.peer, fpParam));
+            if (java.nio.file.Files.isSymbolicLink(tmp.toPath())) { reply(out, 500, "partial file is a symlink"); return; }   // 開檔會跟著連結寫到收件匣以外的地方
             Long stoppedAt = STOPPED.get(au.peer + "|" + fpParam);
             if (stoppedAt != null && System.currentTimeMillis() - stoppedAt < STOPPED_MEMORY_MS) { reply(out, 499, "stopped by receiver"); return; }
             long want = 0;

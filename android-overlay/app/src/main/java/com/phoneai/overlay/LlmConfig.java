@@ -15,11 +15,21 @@ final class LlmConfig {
     static final String DEF_BASE = "https://api.openai.com/v1", DEF_CHEAP = "gpt-4o-mini", DEF_VISION = "gpt-4o";
     static final String CHEAP = "cheap", VISION = "vision";
 
+    /** 網址的主機名稱剛好是 api.openai.com 才算官方（不是網址裡含有這串字）：官方與其他相容服務用的參數名稱不同。 */
+    static boolean isOfficialOpenAi(String base) {
+        try {
+            String h = new java.net.URI(base == null ? "" : base.trim()).getHost();
+            return h != null && h.equalsIgnoreCase("api.openai.com");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     static final class Slot {
         final String provider, base, model;
         Slot(String provider, String base, String model) { this.provider = provider; this.base = base; this.model = model; }
         boolean openai() { return OPENAI.equals(provider); }
-        boolean official() { return base.contains("api.openai.com"); }
+        boolean official() { return isOfficialOpenAi(base); }
         String label() { return openai() ? model + " @ " + host(base) : model.isEmpty() ? "Claude" : "Claude（" + model + "）"; }
     }
 

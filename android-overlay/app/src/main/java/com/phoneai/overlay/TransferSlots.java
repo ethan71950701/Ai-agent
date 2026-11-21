@@ -10,21 +10,42 @@ import java.util.Map;
  * 久沒更新（卡死、忘了收尾）的格子會被當作已經結束，免得「有傳輸進行中」永遠成立。
  */
 final class TransferSlots {
-    static final long STALE_MS = 120_000;
+    /** 傳輸的執行緒已經結束、卻沒收尾的格子立刻當作結束；執行緒還活著（可能卡在網路寫入）的，放寬到這麼久沒更新才當作結束。 */
+    static final long STALE_MS = 600_000;
 
     static final class Slot {
         final String id;
         volatile boolean stop, pause, shown;   // shown：通知已經為這一筆顯示過（用來只在第一次進度時收起助理面板）
         volatile long touched;
+        volatile java.io.Closeable closer;   // 這一筆目前用的連線：按停止／暫停時直接關掉它，卡住的寫入才會立刻跳出來
+        final Thread owner = Thread.currentThread();
         Slot(String id, long now) { this.id = id; this.touched = now; }
     }
 
     private final Map<String, Slot> slots = new LinkedHashMap<>();
     private final ThreadLocal<Slot> mine = new ThreadLocal<>();
     private int counter;
+    private static final ThreadLocal<java.io.Closeable> THREAD_CLOSER = new ThreadLocal<>();
+
+    /** 這條執行緒現在用的連線：記下來，之後（或現在已經有的）這一格的停止／暫停會把它關掉。 */
+    synchronized void bindCloser(java.io.Closeable c) {
+        THREAD_CLOSER.set(c);
+        Slot s = mine.get();
+        if (s != null && slots.containsKey(s.id)) s.closer = c;
+    }
+
+    private static void closeAsync(final java.io.Closeable c) {
+        if (c == null) return;
+        Thread t = new Thread(() -> { try { c.close(); } catch (Exception ignored) { } }, "transfer-close");   // 另開執行緒：呼叫端可能是主執行緒
+        t.setDaemon(true);
+        t.start();
+    }
 
     private void prune(long now) {
-        for (Iterator<Slot> it = slots.values().iterator(); it.hasNext();) if (now - it.next().touched > STALE_MS) it.remove();
+        for (Iterator<Slot> it = slots.values().iterator(); it.hasNext();) {
+            Slot s = it.next();
+            if (!s.owner.isAlive() || now - s.touched > STALE_MS) it.remove();
+        }
     }
 
     /** 這條執行緒的格子；沒有就開一格（算進「進行中」）。每次呼叫都算「還活著」。 */
@@ -37,6 +58,8 @@ final class TransferSlots {
             slots.put(s.id, s);
         }
         s.touched = now;
+        java.io.Closeable tc = THREAD_CLOSER.get();
+        if (tc != null) s.closer = tc;
         return s;
     }
 
@@ -83,6 +106,7 @@ final class TransferSlots {
         Slot p = primary(now);
         if (p == null) return false;
         p.stop = true;
+        closeAsync(p.closer);
         return true;
     }
 
@@ -90,6 +114,7 @@ final class TransferSlots {
         Slot p = primary(now);
         if (p == null) return false;
         p.pause = true;
+        closeAsync(p.closer);
         return true;
     }
 }

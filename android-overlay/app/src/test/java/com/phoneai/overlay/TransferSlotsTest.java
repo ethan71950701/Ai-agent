@@ -74,13 +74,55 @@ public class TransferSlotsTest {
     }
 
     @Test
-    public void staleSlotsAreTreatedAsFinished() throws Exception {
+    public void aSlotWhoseThreadEndedWithoutCleanupIsFinishedAtOnce() throws Exception {
         TransferSlots s = new TransferSlots();
-        final TransferSlots.Slot[] a = new TransferSlots.Slot[1];
-        onOtherThread(() -> a[0] = s.enter(1000));   // 那一筆開了就沒再更新（卡死、忘了收尾）
-        assertTrue(s.active(1000 + TransferSlots.STALE_MS));
-        assertFalse("太久沒更新就當作結束，不然永遠顯示傳輸中", s.active(1001 + TransferSlots.STALE_MS));
-        assertFalse(s.stopPrimary(1001 + TransferSlots.STALE_MS));
+        onOtherThread(() -> s.enter(1000));   // 執行緒結束了、沒呼叫 leave
+        assertFalse("執行緒都沒了，不能再算進行中", s.active(1001));
+    }
+
+    @Test
+    public void aLiveButSilentThreadStaysActiveUntilTheLongLimit() throws Exception {
+        final TransferSlots s = new TransferSlots();
+        final CountDownLatch up = new CountDownLatch(1), end = new CountDownLatch(1);
+        Thread t = new Thread(() -> { s.enter(1000); up.countDown(); try { end.await(); } catch (InterruptedException ignored) { } });
+        t.start();
+        up.await();
+        assertTrue("卡在網路寫入的執行緒還活著：不能因為幾分鐘沒更新就被當成結束（停止鈕才找得到它）", s.active(1000 + 150_000));
+        assertFalse("太久都沒動靜才放棄", s.active(1001 + TransferSlots.STALE_MS));
+        end.countDown();
+        t.join();
+    }
+
+    @Test
+    public void stopClosesTheConnectionSoABlockedWriteBreaksOut() throws Exception {
+        final TransferSlots s = new TransferSlots();
+        final java.net.ServerSocket srv = new java.net.ServerSocket(0);
+        final java.net.Socket peerSide = new java.net.Socket("127.0.0.1", srv.getLocalPort());
+        final java.net.Socket accepted = srv.accept();   // 對方收下連線但完全不讀資料
+        final java.util.concurrent.atomic.AtomicReference<Throwable> result = new java.util.concurrent.atomic.AtomicReference<>();
+        final CountDownLatch writing = new CountDownLatch(1), finished = new CountDownLatch(1);
+        Thread writer = new Thread(() -> {
+            s.enter(System.currentTimeMillis());
+            s.bindCloser(peerSide);
+            try {
+                byte[] big = new byte[1 << 20];
+                writing.countDown();
+                for (;;) peerSide.getOutputStream().write(big);   // 對方不讀：緩衝區滿了就卡住
+            } catch (Throwable t) {
+                result.set(t);
+            } finally {
+                finished.countDown();
+            }
+        });
+        writer.start();
+        writing.await();
+        Thread.sleep(500);   // 讓它真的卡住
+        assertTrue("寫入卡住中", finished.getCount() == 1);
+        assertTrue(s.stopPrimary(System.currentTimeMillis()));
+        assertTrue("按停止後要在幾秒內跳出來", finished.await(5, java.util.concurrent.TimeUnit.SECONDS));
+        assertTrue(String.valueOf(result.get()), result.get() instanceof java.io.IOException);
+        accepted.close();
+        srv.close();
     }
 
     @Test

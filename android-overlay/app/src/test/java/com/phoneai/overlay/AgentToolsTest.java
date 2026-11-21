@@ -109,4 +109,25 @@ public class AgentToolsTest {
         } catch (UnsupportedOperationException expected) { }
         assertFalse(ChatEngine.isAgentTool("evil"));
     }
+
+    @Test
+    public void handoffFlagIsPerThreadAndTheChatGateAllowsOneAtATime() throws Exception {
+        assertFalse(ChatEngine.handoff());
+        final boolean[] other = new boolean[1];
+        Thread t = new Thread(() -> other[0] = ChatEngine.handoff());
+        t.start();
+        t.join();
+        assertFalse(other[0]);
+    }
+
+    @Test
+    public void onlyTheRealOpenAiHostCountsAsOfficial() {
+        assertTrue(LlmConfig.isOfficialOpenAi("https://api.openai.com/v1"));
+        assertTrue(LlmConfig.isOfficialOpenAi("https://API.OPENAI.COM"));
+        assertFalse(LlmConfig.isOfficialOpenAi("https://example.com/proxy/api.openai.com/v1"));
+        assertFalse(LlmConfig.isOfficialOpenAi("https://api.openai.com.evil.example/v1"));
+        assertFalse(LlmConfig.isOfficialOpenAi("http://192.168.1.5:11434/v1"));
+        assertFalse(LlmConfig.isOfficialOpenAi(null));
+        assertFalse(LlmConfig.isOfficialOpenAi("not a url"));
+    }
 }

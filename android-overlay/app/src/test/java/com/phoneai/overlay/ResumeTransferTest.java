@@ -429,4 +429,83 @@ public class ResumeTransferTest {
         assertEquals(1, TransferServer.pruneStopped(m, 1_000L + TransferServer.STOPPED_MEMORY_MS));
         assertEquals(java.util.Collections.singleton("a|new"), m.keySet());
     }
+
+    /** 上傳到一半按停止：連線被直接關掉，客戶端要當成「停止」而不是斷線重試；對方的半成品也要被請求刪掉。 */
+    @Test
+    public void stopDuringAnUploadClosesTheConnectionAndDoesNotRetry() throws Exception {
+        byte[] d = data(2_000_000, 21);
+        int[] opens = new int[1];
+        TransferNotify.begin();
+        try {
+            client.putResumable(() -> { opens[0]++; return new ByteArrayInputStream(d); }, d.length, "stopnow.bin",
+                    (done, total) -> { if (done > 300_000) TransferNotify.requestStop(); });
+            throw new AssertionError("should have been stopped");
+        } catch (TransferNotify.Stopped expected) {
+        } finally {
+            TransferNotify.begin();
+        }
+        assertEquals("不能重試：只有算指紋與傳一次", 2, opens[0]);
+        assertEquals(0, inbox.listFiles((x, n) -> n.endsWith(".part")).length);
+        assertFalse(new File(inbox, "stopnow.bin").exists());
+    }
+
+    /** 標頭一直不送完（每隔一下送一點）：伺服器要在期限到了就掛斷，不能一直占著連線。 */
+    @Test
+    public void slowHeadersAreCutOffAtTheDeadline() throws Exception {
+        long old = TransferServer.headDeadlineMs;
+        TransferServer.headDeadlineMs = 1200;
+        try (java.net.Socket s = new java.net.Socket("127.0.0.1", server.port())) {
+            s.setSoTimeout(6000);
+            java.io.OutputStream o = s.getOutputStream();
+            o.write("GET /v1/ping HTTP/1.1\r\n".getBytes());
+            long t0 = System.currentTimeMillis();
+            int r = 0;
+            try {
+                for (int i = 0; i < 40 && r != -1; i++) {
+                    o.write(("X-A" + i + ": b\r\n").getBytes());
+                    o.flush();
+                    Thread.sleep(150);
+                    if (s.getInputStream().available() > 0) r = s.getInputStream().read();
+                }
+            } catch (java.io.IOException closed) { r = -1; }
+            if (r != -1) r = s.getInputStream().read();   // 伺服器掛斷後會讀到 -1（或被重設）
+            assertTrue("要在期限（1.2 秒）過後不久被掛斷：" + (System.currentTimeMillis() - t0) + " ms", System.currentTimeMillis() - t0 < 5000);
+        } catch (java.net.SocketException ok) {
+            // 被重設也算掛斷
+        } finally {
+            TransferServer.headDeadlineMs = old;
+        }
+    }
+
+    @Test
+    public void tooManyHeaderLinesAreRefused() throws Exception {
+        try (java.net.Socket s = new java.net.Socket("127.0.0.1", server.port())) {
+            s.setSoTimeout(5000);
+            StringBuilder b = new StringBuilder("GET /v1/ping HTTP/1.1\r\n");
+            for (int i = 0; i < TransferServer.MAX_HEADER_LINES + 20; i++) b.append("X-H").append(i).append(": v\r\n");
+            b.append("\r\n");
+            try { s.getOutputStream().write(b.toString().getBytes()); s.getOutputStream().flush(); } catch (java.io.IOException ignored) { }
+            int r;
+            try { r = s.getInputStream().read(); } catch (java.io.IOException reset) { r = -1; }
+            assertEquals("標頭太多：不回應直接掛斷", -1, r);
+        }
+    }
+
+    /** 續傳暫存檔的位置如果是符號連結，不能跟著寫到別處。 */
+    @Test
+    public void aSymlinkedPartialFileIsRefused() throws Exception {
+        byte[] d = data(50_000, 22);
+        String fp = Resume.fingerprint(d, d.length, d.length, "evil.bin");
+        File outside = File.createTempFile("outside", ".txt");
+        Files.write(outside.toPath(), "keep".getBytes());
+        File part = new File(inbox, Resume.partName("cli", fp));
+        Files.createSymbolicLink(part.toPath(), outside.toPath());
+        try {
+            client.putResumable(() -> new ByteArrayInputStream(d), d.length, "evil.bin", null);
+            throw new AssertionError("should be refused");
+        } catch (IOException expected) {
+        }
+        assertEquals("外面的檔案不能被動到", "keep", new String(Files.readAllBytes(outside.toPath())));
+        assertFalse(new File(inbox, "evil.bin").exists());
+    }
 }

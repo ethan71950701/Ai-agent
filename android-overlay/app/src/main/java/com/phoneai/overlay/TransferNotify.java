@@ -146,6 +146,9 @@ final class TransferNotify {
         SLOTS.enter(System.currentTimeMillis());   // 立刻算「進行中」：連線、叫醒對方的等待期間也能按暫停／停止，Tailscale 的閒置判斷也知道在忙（2 分鐘沒動靜會自動當作結束）
     }
 
+    /** 這條執行緒的傳輸現在用這條連線：按停止／暫停時會直接把它關掉（寫入卡住時也能立刻中斷）。 */
+    static void bindCloser(java.io.Closeable c) { SLOTS.bindCloser(c); }
+
     /** 這條執行緒的傳輸收尾（不管怎麼結束都要呼叫，只收掉自己這一筆、不動通知）：有些結束方式（改用推播叫醒、直接 return）不會經過 finish／cancel。 */
     static void release() { SLOTS.leave(System.currentTimeMillis()); }
 

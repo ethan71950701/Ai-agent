@@ -46,6 +46,7 @@ final class TransferClient {
         Socket s = new Socket();
         s.connect(new InetSocketAddress(ip, port), 4000);
         s.setSoTimeout(20000);
+        TransferNotify.bindCloser(s);   // 按停止／暫停時直接關掉這條連線：SO_TIMEOUT 只管讀取，對方不再收資料時寫入會一直卡住
         return s;
     }
 
@@ -213,10 +214,13 @@ final class TransferClient {
     private long downloadWithRetries(String remotePath, File dest, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();
             if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
             try {
                 return downloadOnce(remotePath, dest, cb);
             } catch (IOException e) {
+                if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 連線是因為按停止／暫停才被關掉的：不是斷線，不要重試
+                if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
                 last = e;
                 if (!Resume.retryable(e)) throw e;
                 if (attempt == Resume.MAX_ATTEMPTS) break;
@@ -390,6 +394,7 @@ final class TransferClient {
     private String putWithRetries(Source src, long size, String name, String fp, Progress cb) throws IOException {
         IOException last = null;
         for (int attempt = 1; attempt <= Resume.MAX_ATTEMPTS; attempt++) {
+            if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 重試等待中按了停止
             if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();   // 重試等待中按了暫停
             bodySha = null;
             long offset = remoteOffset(fp);
@@ -399,6 +404,8 @@ final class TransferClient {
             try {
                 return putOnce(src, size, name, fp, offset, cb);
             } catch (IOException e) {
+                if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 連線是因為按停止／暫停才被關掉的：不是斷線，不要重試
+                if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
                 last = e;
                 boolean mismatch = e.getMessage() != null && e.getMessage().contains("offset mismatch");
                 if (bodySha != null && Resume.retryable(e)) {   // 整個檔案都送出去了才出事：多半只是「收到了」的回覆掉了，先問對方收完沒，免得整個重傳又多一份

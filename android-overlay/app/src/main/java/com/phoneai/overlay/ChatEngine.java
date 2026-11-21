@@ -110,7 +110,9 @@ final class ChatEngine {
     private ChatEngine() { }
 
     /** 這一輪聊天助理判斷「這是要操作手機」，呼叫了 phone_action：Brain 看到這個旗標就改走路由／自動操作。每次 ask 開頭會清掉。 */
-    static volatile boolean handoff;
+    private static final ThreadLocal<Boolean> HANDOFF = new ThreadLocal<>();   // 這條聊天執行緒自己的：兩個聊天同時進行時不會讀到對方的
+    static boolean handoff() { return Boolean.TRUE.equals(HANDOFF.get()); }
+    private static final SingleRun CHAT_GATE = new SingleRun();   // 一次只讓一個聊天在進行：連線、對話紀錄與回答回呼都是共用的
 
     /** 聊天助理的 phone_task 工具：做完手機上的事、把結果交還給聊天繼續。由 Brain 在聊天期間設定（需要 Activity 與介面），沒設就不能用。 */
     interface PhoneRunner { String run(String task); }
@@ -667,10 +669,19 @@ final class ChatEngine {
 
     /** images：使用者這次附的圖片（base64 JPEG）。跟一般聊天完全一樣（記憶、工具、搜尋都能用），只是這一輪改用看圖模型多看一次圖。 */
     static String ask(Context c, String text, java.util.List<String> images, Memory.Confirm confirm) {
+        HANDOFF.set(false);
+        if (!CHAT_GATE.tryEnter()) return L.t("上一個問題還在處理中，請等它回答完再問。");
+        try {
+            return askExclusive(c, text, images, confirm);
+        } finally {
+            CHAT_GATE.exit();
+        }
+    }
+
+    private static String askExclusive(Context c, String text, java.util.List<String> images, Memory.Confirm confirm) {
         final boolean hasImg = images != null && !images.isEmpty();
         final String model = hasImg ? AgentLoop.MODEL : MODEL;   // 看圖欄位的模型
         lastError = "";
-        handoff = false;
         PHONE_USED.get()[0] = 0;
         String key = key(c);
         if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
@@ -747,7 +758,7 @@ final class ChatEngine {
                     JSONObject u = uses.getJSONObject(i);
                     String tn = u.optString("name");
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
-                    if (tn.equals("phone_action")) { handoff = true; return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
+                    if (tn.equals("phone_action")) { HANDOFF.set(true); return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
                     if (tn.equals("read_notifications")) readNotifs = true;
                     String out = runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
