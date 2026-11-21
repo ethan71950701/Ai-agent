@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1776
+
 - 首頁最底下（手勢小白條那一條）不再露出一條彩色的光暈細線：底欄後面的純色一路蓋到螢幕最底｜Home screen: the strip behind the gesture bar no longer shows a thin coloured glow line; the solid colour behind the tab bar now reaches the very bottom of the screen
 
 ## 1.0.1775
