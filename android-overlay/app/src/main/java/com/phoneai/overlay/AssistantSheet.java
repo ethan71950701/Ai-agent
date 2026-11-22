@@ -284,15 +284,28 @@ public class AssistantSheet {
         act.getWindow().setStatusBarContrastEnforced(false);       // 不要讓系統在狀態列/導覽列加一層對比遮罩
         act.getWindow().setNavigationBarContrastEnforced(false);
         root.setOnApplyWindowInsetsListener((v, ins) -> {
-            applyBottomInset(ins);
+            if (!imeAnimating) applyBottomInset(ins);   // 鍵盤動畫進行中：這裡收到的是「最終」的高度（有時一開始就是收起後的 0），套下去回答卡會有一格跳回沒有鍵盤的大小；動畫中只看 onProgress 給的每一格
             return ins;
         });
-        // 鍵盤滑出來、收起來的每一格都跟著動（以前只在開始與結束各算一次，再用自己的動畫補，節奏跟鍵盤對不上，看起來不順）
+        // 鍵盤滑出來、收起來（含側滑返回時鍵盤跟著手勢收）的每一格都跟著動
         root.setWindowInsetsAnimationCallback(new android.view.WindowInsetsAnimation.Callback(android.view.WindowInsetsAnimation.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+            @Override
+            public void onPrepare(android.view.WindowInsetsAnimation animation) {
+                if ((animation.getTypeMask() & WindowInsets.Type.ime()) != 0) imeAnimating = true;
+            }
+
             @Override
             public WindowInsets onProgress(WindowInsets ins, java.util.List<android.view.WindowInsetsAnimation> animations) {
                 applyBottomInset(ins);
                 return ins;
+            }
+
+            @Override
+            public void onEnd(android.view.WindowInsetsAnimation animation) {
+                if ((animation.getTypeMask() & WindowInsets.Type.ime()) == 0) return;
+                imeAnimating = false;
+                WindowInsets w = root.getRootWindowInsets();   // 動畫結束（含手勢取消）：用最後真正的高度校正一次
+                if (w != null) applyBottomInset(w);
             }
         });
         content.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> updateGlowY());
@@ -1161,6 +1174,7 @@ public class AssistantSheet {
     }
 
     private boolean hidingStrayKeyboard;
+    private boolean imeAnimating;   // 鍵盤（含手勢帶動的）動畫進行中
 
     /** 回答卡的下緣與可用高度（直接設，跟著鍵盤動畫的每一格走；以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
     private void fitReplyCard() {
