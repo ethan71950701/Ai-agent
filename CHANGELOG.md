@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正頁面最上面的第一張卡被標題列下緣的陰影蓋掉一截：內容沒捲動時不再顯示那道漸層，捲到標題列下面才慢慢出現｜Fixed the first card being partly covered by the title bar's fade: the fade no longer shows while the content is at the top and fades in only once it scrolls under the bar
+
 - 設定分類頁：每一列都是獨立的卡片、中間留空隙；頂端多留一點空間，第一張卡不再被標題列蓋到｜Settings category pages: every row is its own spaced card; extra top padding so the first card is no longer covered by the title bar
 ## 1.0.1826
 

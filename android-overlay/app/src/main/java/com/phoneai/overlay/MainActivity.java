@@ -461,8 +461,10 @@ public class MainActivity extends Activity {
             }
         });
         androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) ((Object[]) root.getTag())[1];
+        final java.util.function.IntConsumer fadeUp = (java.util.function.IntConsumer) ((Object[]) root.getTag())[2];
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> {
             kickGlass();   // 底欄不收起，只讓折射跟著底下的內容更新
+            fadeUp.accept(y);   // 標題列下緣的漸層：沒捲動時不顯示（不蓋住第一張卡）
         });
         return card;
     }

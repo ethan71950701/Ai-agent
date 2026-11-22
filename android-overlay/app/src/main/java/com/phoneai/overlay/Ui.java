@@ -176,8 +176,12 @@ final class Ui {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, dp(a, 28));
         flp.setBehavior(new FollowBarBehavior());
         root.addView(fade, flp);
+        fade.setAlpha(0f);   // 內容還在最上面（沒捲動）時不要有漸層，不然第一張卡的上緣會被蓋掉一截；捲到標題列下面才慢慢出現
+        final float fadeFull = dp(a, 16);
+        final java.util.function.IntConsumer fadeUpdate = y -> fade.setAlpha(Math.max(0f, Math.min(1f, y / fadeFull)));
+        sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> fadeUpdate.accept(y));
         content[0] = box;
-        root.setTag(new Object[]{ctl, sv});   // 換分頁時改大標題、底欄隨捲動收起
+        root.setTag(new Object[]{ctl, sv, fadeUpdate});   // 換分頁時改大標題、底欄隨捲動收起
         return root;
     }
 
