@@ -1478,6 +1478,21 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("背景螢幕漣漪測試（新舊兩種畫法）", "Background-display ripple test (new and old drawing)");
+        m.put("測試中，約 15 秒。請看預覽小窗裡有沒有漣漪（第一次、第二次）", "Testing, about 15 s. Watch the preview window for ripples (first run, second run)");
+        m.put("背景螢幕漣漪測試", "Background-display ripple test");
+        m.put("背景螢幕建立失敗。", "Could not create the background display.");
+        m.put("第一次（新畫法，畫在預覽卡片上）：", "First run (new drawing, on the preview card): ");
+        m.put("已畫 5 個位置\n", "drew 5 positions\n");
+        m.put("預覽小窗沒有開，沒畫\n", "the preview window is not open, nothing drawn\n");
+        m.put("第二次（舊畫法，畫在背景螢幕的覆蓋層上）：", "Second run (old drawing, on the overlay of the background display): ");
+        m.put("覆蓋層建立失敗", "overlay could not be created");
+        m.put("覆蓋層沒有掛上視窗", "overlay is not attached to a window");
+        m.put("覆蓋層已建立", "overlay created");
+        m.put("沒有動作", "no action");
+        m.put(" 個位置已送出畫\n", " positions sent to draw\n");
+        m.put("請回報：預覽小窗裡，第一次、第二次，哪一次有看到漣漪？（位置應該在中央，以及四個象限的中心）", "Please report: in the preview window, which run showed ripples, the first or the second? (They should be at the centre and the centres of the four quadrants)");
+
         m.put("連不上，重新找對方：", "Cannot connect, looking for it again: ");
         m.put("重找", "Retry");
         m.put("我試了好幾次，畫面都沒有變化，卡在：", "I tried several times and the screen did not change; stuck at: ");
