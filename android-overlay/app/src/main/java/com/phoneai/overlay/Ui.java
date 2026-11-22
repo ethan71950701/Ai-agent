@@ -206,8 +206,12 @@ final class Ui {
      * 列表裡的一列：左邊圖示（線條圖示放在餅乾形底板）、標題、一行說明、右邊 trailing（開關或箭頭，可為 null）。
      * index／count 決定圓角：群組最上、最下的外側是大圓角，中間的列是小圓角，列與列之間留一條細縫（Material 3 Expressive 的分段列表）。
      */
+    /** true：每一列都是獨立的一張圓角卡、中間留空隙（設定的分類頁用），不併成一整塊。 */
+    static boolean standaloneRows;
+
     static MaterialCardView row(Context c, LinearLayout parent, int index, int count,
                                 String icon, String title, String summary, View trailing, View.OnClickListener click) {
+        if (standaloneRows) { index = 0; count = 1; }
         MaterialCardView card = new MaterialCardView(c);
         card.setCardBackgroundColor(attr(c, com.google.android.material.R.attr.colorSurfaceContainerHigh));
         card.setCardElevation(0);
@@ -267,7 +271,7 @@ final class Ui {
             Anim.pressable(card, 0.98f);
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.topMargin = index == 0 ? 0 : dp(c, 2);
+        lp.topMargin = standaloneRows ? dp(c, 8) : index == 0 ? 0 : dp(c, 2);
         parent.addView(card, lp);
         return card;
     }

@@ -242,7 +242,10 @@ public class MainActivity extends Activity {
             return one;
         }
         java.util.List<Runnable> all = settingsSteps(), sub = new java.util.ArrayList<>();
-        for (int idx : (int[]) SET_CATS[settingsCat][3]) sub.add(all.get(idx));
+        for (int idx : (int[]) SET_CATS[settingsCat][3]) {
+            final Runnable st = all.get(idx);
+            sub.add(() -> { Ui.standaloneRows = true; try { st.run(); } finally { Ui.standaloneRows = false; } });   // 分類頁：每一列獨立一張卡，不擠在一起
+        }
         return sub;
     }
 
@@ -524,7 +527,7 @@ public class MainActivity extends Activity {
     private void prepareBox(int tabNow) {
         removeHomeBar();
         box.setGravity(android.view.Gravity.TOP);
-        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 首頁不留底部空間
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, tabNow == 2 ? 12 : 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 設定頁頂端多留一點，第一張卡不會被標題列的漸層蓋到   // 首頁不留底部空間
         setHomeScroll(tabNow != 0);
         box.removeAllViews();
     }
