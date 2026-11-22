@@ -65,6 +65,10 @@ final class PageBuilder {
                 }
             } finally { Ui.standaloneRows = false; }
         }
+        // 沒有動作、只是「關掉」的按鈕（好、知道了、關閉、取消）不放：整頁已經有左上返回箭頭與返回手勢，多一顆沒有意義
+        if (posC == null) posL = null;
+        if (neuC == null) neuL = null;
+        if (negC == null) negL = null;
         if (posL != null || neuL != null || negL != null) {   // 跟其他頁（例如助理的記憶）同一種按鈕：一排等寬，主要動作（實心）在最前面
             java.util.List<com.google.android.material.button.MaterialButton> bs = new java.util.ArrayList<>();
             if (posL != null) bs.add(button(h, posL, posC, DialogInterface.BUTTON_POSITIVE, true));
