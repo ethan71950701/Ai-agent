@@ -121,7 +121,7 @@
             android:taskAffinity=""
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
-            android:windowSoftInputMode="adjustResize"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize"
             android:theme="@style/AssistTheme" />
 
         <!-- 別的 App 的「分享」選單選 Vertex（檔案）：挑裝置後傳出去 -->

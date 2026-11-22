@@ -115,6 +115,7 @@ public class AssistantSheet {
         act = a;
         d = a.getResources().getDisplayMetrics().density;
         root = new FrameLayout(a);
+        root.setFocusableInTouchMode(true);   // 輸入框沒在打字時，焦點放在這裡：不然輸入框會自己拿回焦點，系統就一直把鍵盤叫出來（點回答卡也會）
 
         // 背景：由上到下漸深的暗幕（不是一個黑色方塊），讓字在任何桌布上都看得清楚
         scrim = new View(a);
@@ -208,6 +209,7 @@ public class AssistantSheet {
         input.setBackground(null);                 // 底色由整個面板提供
         input.setPadding((int) (8 * d), (int) (10 * d), (int) (8 * d), (int) (10 * d));
         input.setImeOptions(EditorInfo.IME_ACTION_SEND);
+        if (!L.en()) input.setImeHintLocales(new android.os.LocaleList(java.util.Locale.TRADITIONAL_CHINESE));   // 提示輸入法用繁體中文（不然有時預設英文）
         input.setSingleLine(true);
         input.setEllipsize(android.text.TextUtils.TruncateAt.END);   // 面板窄的時候提示文字太長就用 … 收尾
         input.setOnTouchListener((v, ev) -> {
@@ -1247,6 +1249,7 @@ public class AssistantSheet {
         android.view.inputmethod.InputMethodManager imm = act.getSystemService(android.view.inputmethod.InputMethodManager.class);
         if (imm != null) imm.hideSoftInputFromWindow(input.getWindowToken(), 0);
         input.clearFocus();
+        root.requestFocus();   // 焦點交給外層：輸入框不會自己又拿回焦點、把鍵盤叫出來
     }
 
     // ---------- 小工具 ----------
