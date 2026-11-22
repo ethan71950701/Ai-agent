@@ -258,7 +258,7 @@ public class DiagActivity extends Activity {
             boolean avail = com.google.android.material.color.DynamicColors.isDynamicColorAvailable();
             String sys = String.format("#%06X", getColor(android.R.color.system_accent1_500) & 0xFFFFFF);
             String sys2 = String.format("#%06X", getColor(android.R.color.system_accent2_500) & 0xFFFFFF);
-            String used = String.format("#%06X", App.accentColor(this, 0) & 0xFFFFFF);
+            String used = String.format("#%06X", Ui.attr(this, com.google.android.material.R.attr.colorPrimary) & 0xFFFFFF);   // 這個畫面實際套用的主色
             boolean on = getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("monet_on", true);
             sb.append(L.t("莫奈取色：")).append(on ? L.t("開") : L.t("關（用固定色）")).append(avail ? "" : L.t("，這支手機不支援"))
                     .append(L.t("；系統主色 ")).append(sys).append(" / ").append(sys2).append(L.t("；App 目前主色 ")).append(used)

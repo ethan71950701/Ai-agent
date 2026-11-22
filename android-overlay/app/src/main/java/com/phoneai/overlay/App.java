@@ -35,6 +35,7 @@ public class App extends Application {
         try {
             android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(c.getApplicationContext());
             android.app.WallpaperColors wc = wm.getWallpaperColors(android.app.WallpaperManager.FLAG_SYSTEM);
+            if (wc == null) wc = wm.getWallpaperColors(android.app.WallpaperManager.FLAG_LOCK);   // 桌面讀不到（有些系統是動態桌布或還沒算好）：試鎖屏的
             return wc == null ? 0 : wc.getPrimaryColor().toArgb();
         } catch (Throwable t) { return 0; }
     }
@@ -54,6 +55,10 @@ public class App extends Application {
             android.view.ContextThemeWrapper tc = new android.view.ContextThemeWrapper(base, R.style.AppTheme);
             SharedPreferences sp = base.getSharedPreferences("cfg", MODE_PRIVATE);
             Context use = tc;
+            if (sp.getBoolean("monet_on", true)) {   // 讀得到壁紙色：主色就是用壁紙色算出來的（跟畫面實際的配色一致）；wrapContext 不會套壁紙種子，不能用它
+                int seed = wallpaperSeed(c);
+                if (seed != 0) return com.google.android.material.color.utilities.Scheme.dark(seed).getPrimary();
+            }
             if (!sp.getBoolean("monet_on", true)) {
                 int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
                 tc.getTheme().applyStyle(ACCENTS[i], true);
