@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 設定／功能裡原本是彈窗的入口（AI 服務與 API Key、網頁搜尋、可信任的網站、用量與上限、記住的步驟、AI 比較測試、公告、定時任務、更新內容、通知整理、選要保護的 App）改成真正的整頁（大標題頂欄、左上返回鍵，從右邊滑進來），跟其他整頁一致；頁面裡的確認與編輯小窗仍是彈窗｜The entries in Settings/Features that used to be popups (AI service & API key, web search, trusted sites, usage limits, remembered steps, AI comparison test, announcements, scheduled tasks, what's new, notification digest, protected apps picker) are now real full pages (large title bar, back arrow, sliding in from the right), like the other pages; small confirm/edit popups inside them stay popups
+## 1.0.1830
+
+- 設定／功能裡原本是彈窗的入口（AI 服務與 API Key、網頁搜尋、可信任的網站、用量與上限、記住的步驟、AI 比較測試、公告、定時任務、更新內容、通知整理、選要保護的 App）改成整頁，從右邊滑進來，跟其他整頁一致；裡面的確認與編輯小窗仍是彈窗｜The entries in Settings/Features that used to be popups (AI service & API key, web search, trusted sites, usage limits, remembered steps, AI comparison test, announcements, scheduled tasks, what's new, notification digest, protected apps picker) are now full pages that slide in from the right, like the other pages; small confirm/edit popups inside them stay popups
+
 ## 1.0.1829
 
 - 修正頁面最上面的第一張卡被標題列下緣的漸層蓋掉一截：頁面內容頂端多留一段跟漸層一樣高的空白｜Fixed the first card being partly covered by the title bar's fade: the page content now starts below the fade (same height of extra top padding)
