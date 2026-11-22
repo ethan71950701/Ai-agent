@@ -1246,6 +1246,11 @@ final class LEn {
         m.put("檢查更新、自動檢查、公告", "Check for updates, auto-check, announcements");
         m.put("其他", "Other");
         m.put("設定導覽、解除安裝", "Setup guide, uninstall");
+        m.put("莫奈取色：", "Monet colors: ");
+        m.put("關（用固定色）", "off (fixed color)");
+        m.put("，這支手機不支援", ", not supported on this phone");
+        m.put("；系統主色 ", "; system accent ");
+        m.put("；App 目前主色 ", "; app accent now ");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
         m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");

@@ -254,6 +254,15 @@ public class DiagActivity extends Activity {
             if (!any) sb.append(L.t("（沒有）\n"));
             sb.append('\n');
         } catch (Exception ignored) { }
+        try {   // 莫奈取色診斷：換桌布後回來看，系統主色有沒有跟著變（沒變＝系統沒提供新顏色，不是 App 的問題）
+            boolean avail = com.google.android.material.color.DynamicColors.isDynamicColorAvailable();
+            String sys = String.format("#%06X", getColor(android.R.color.system_accent1_500) & 0xFFFFFF);
+            String sys2 = String.format("#%06X", getColor(android.R.color.system_accent2_500) & 0xFFFFFF);
+            String used = String.format("#%06X", App.accentColor(this, 0) & 0xFFFFFF);
+            boolean on = getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("monet_on", true);
+            sb.append(L.t("莫奈取色：")).append(on ? L.t("開") : L.t("關（用固定色）")).append(avail ? "" : L.t("，這支手機不支援"))
+                    .append(L.t("；系統主色 ")).append(sys).append(" / ").append(sys2).append(L.t("；App 目前主色 ")).append(used).append('\n');
+        } catch (Throwable ignored) { }
         sb.append(L.t("更新檢查：")).append(Updater.info(this).isEmpty() ? L.t("（還沒檢查過）") : Updater.info(this)).append('\n');
         sb.append(L.t("聲紋：")).append(SpeakerId.statusText(this)).append('\n');
         sb.append(L.t("透鏡著色器：")).append(GlassBar.shaderInfo).append('\n');

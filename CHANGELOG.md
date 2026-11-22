@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 「進階與診斷」多一行莫奈取色資訊（系統主色、App 目前主色），換桌布後回來看就知道有沒有跟著變｜Diagnostics now shows a Monet line (system accent, app accent) so you can check whether it follows the wallpaper
+
 - 整理功能頁與設定頁：設定頁改成分類列表（AI 與搜尋、外觀、呼叫與語音、執行任務、更新與公告、權限與其他），點進去才是各自的頁面，返回鍵回到列表；「AI 服務與 API Key」「網頁搜尋」「用量與上限」「檢查並更新」「設定導覽」「解除安裝」從功能頁搬到設定；功能頁只留「打開來用」的東西｜Reorganized Features vs Settings: Settings is now a category list (AI & search, Appearance, Invoke & voice, Running tasks, Updates & announcements, Permissions & other) that opens separate pages, Back returns to the list; AI service & API key, web search, usage limits, check for updates, setup guide and uninstall moved from Features to Settings; the Features page keeps only things you open and use
 ## 1.0.1821
 
