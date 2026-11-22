@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正互傳「明明連得上、卻一直傳不過去」：對方的區網位址過期（IP 換了、手機 Wi-Fi 休眠）時，以前會對著同一個位址重試六次再放棄；現在重試一次還是連不上，就重新找對方（區網掃描、推播叫醒、外網）再傳，續傳照樣從斷點接著｜Fix transfers that fail with "No route to host" although the phones seem connected: when the peer's LAN address is stale (its IP changed or its Wi-Fi was asleep) it used to retry the same address six times; after one failed retry it now looks for the peer again (LAN scan, push wake-up, remote) and resumes from the breakpoint
+
+## 1.0.1787
+
 - 外網：第一次走外網不用再事先「兩邊同時開著 Tailscale 各連一次」——對方被叫醒、把 Tailscale 開起來之後，會用推播把自己的 Tailscale 位址回報給你，你的手機馬上就能連（兩邊只要登入過 Tailscale、也互換過推播 token）｜Remote: the first remote connection no longer needs both phones to have connected once with Tailscale on — after the other phone is woken and turns Tailscale on it reports its Tailscale address back by push, so your phone can connect right away (both just need to be signed in to Tailscale and to have swapped push tokens)
 
 ## 1.0.1786
