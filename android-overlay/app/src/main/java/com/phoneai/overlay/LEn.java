@@ -1229,7 +1229,9 @@ final class LEn {
         m.put("液態玻璃", "Liquid glass");
         m.put("回答卡片的玻璃", "Answer card glass");
         m.put("測試回答卡片", "Test answer card");
-        m.put("馬上跳出一則範例回答，看目前的玻璃", "Shows a sample reply right away with the current glass");
+        m.put("先抓一次遠端參數，再跳出一則範例回答，看目前的玻璃", "Fetches the remote parameters once, then shows a sample reply with the current glass");
+        m.put("允許遠端調整參數", "Allow remote parameter tuning");
+        m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");
         m.put("開面板時自動聽", "Listen when the panel opens");
         m.put("叫出助理面板就開始聽；關掉就要自己點麥克風", "Start listening as soon as the assistant panel opens; turn off to tap the mic button yourself");

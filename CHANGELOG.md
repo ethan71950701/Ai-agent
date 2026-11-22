@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 新增「遠端調整參數」：只改數值（例如回答卡片玻璃的模糊、暗度）時不用發新版，App 打開時從 GitHub 抓 tuning.json（只認白名單裡的數字）；設定 → 外觀可關；回答卡片玻璃預設改為「液態玻璃」｜Added remote parameter tuning: number-only changes (e.g. answer-card glass blur/darkness) no longer need a new release; the app fetches tuning.json from GitHub (whitelisted numbers only), can be turned off in Settings → Appearance; the answer-card glass now defaults to "Liquid glass"
+
 - 回答卡片的玻璃改得更通透（上緣有一小段高光），設定 → 外觀可選「原本（偏暗）／通透／很透」，並有「測試回答卡片」按鈕｜Answer card glass is clearer with a soft top highlight; choose Original / Clear / Very clear in Settings → Appearance, with a "Test answer card" button；「很透」改成跟底下輸入列同一組玻璃參數（不染色、不疊糊層）；測試按鈕改成跟真的開面板一樣先截圖；新增「液態玻璃」一檔（清楚、邊緣折射）｜Added a "Liquid glass" option (clear, edge refraction)；「液態玻璃」：後面輕微模糊、稍暗、邊緣一條很淡的亮線
 ## 1.0.1809
 

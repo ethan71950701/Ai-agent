@@ -118,7 +118,7 @@ final class Announcements {
     static boolean enabled(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("ann_on", true); }
 
     /** 打開 App 時呼叫（主畫面 onResume）。 */
-    static void checkOnOpen(final Activity a) { check(a, false); }
+    static void checkOnOpen(final Activity a) { RemoteTuning.refreshIfDue(a); check(a, false); }
 
     /** 這次執行中已經彈過的公告 id：回到首頁（onResume）不會一直重複彈，要「下次打開 App」才會再彈。 */
     private static final Set<String> SHOWN_THIS_RUN = new HashSet<>();
@@ -181,8 +181,11 @@ final class Announcements {
         a.runOnUiThread(() -> android.widget.Toast.makeText(a, s, longer ? android.widget.Toast.LENGTH_LONG : android.widget.Toast.LENGTH_SHORT).show());
     }
 
-    private static String fetch() throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL("https://raw.githubusercontent.com/" + BuildConfig.REPO + "/main/announcement.json").openConnection();
+    private static String fetch() throws Exception { return fetch("announcement.json"); }
+
+    /** 從 repo main 抓一個小檔案（固定的 https 網址、最多 20 KB）。 */
+    static String fetch(String file) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL("https://raw.githubusercontent.com/" + BuildConfig.REPO + "/main/" + file).openConnection();
         c.setConnectTimeout(8000);
         c.setReadTimeout(8000);
         c.setRequestProperty("User-Agent", "Vertex");

@@ -1087,19 +1087,24 @@ public class MainActivity extends Activity {
     /** 回答卡片的玻璃通透度：原本（偏暗）／通透／很透；旁邊的按鈕直接顯示範例回答。 */
     private void buildGlassLevelGroup() {
         final String[] labels = {L.t("原本（偏暗）"), L.t("通透"), L.t("很透"), L.t("液態玻璃")};
-        int ci = Math.max(0, Math.min(3, cfg().getInt("glass_level", 1)));
+        int ci = Math.max(0, Math.min(3, cfg().getInt("glass_level", 3)));
         LinearLayout rg = Ui.expandGroup(this, box, "droplet", L.t("回答卡片的玻璃"), labels[ci], false);
         for (int k = 0; k < labels.length; k++) {
             final int v = k;
             View trailing = k == ci ? wrapIcon(new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary))) : null;
-            Ui.row(this, rg, k, labels.length + 1, null, labels[k], null, trailing, x -> {
-                if (v == cfg().getInt("glass_level", 1)) return;
+            Ui.row(this, rg, k, labels.length + 2, null, labels[k], null, trailing, x -> {
+                if (v == cfg().getInt("glass_level", 3)) return;
                 cfg().edit().putInt("glass_level", v).apply();
                 recreate();
             });
         }
-        Ui.row(this, rg, labels.length, labels.length + 1, "sparkle", L.t("測試回答卡片"), L.t("馬上跳出一則範例回答，看目前的玻璃"), Ui.chevron(this), v ->
-                startActivity(new Intent(this, AskActivity.class).putExtra("demo_reply", L.t("這是一則範例回答，用來預覽回答的樣子。"))));
+        Ui.switchRow(this, rg, labels.length, labels.length + 2, "download", L.t("允許遠端調整參數"), L.t("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料"),
+                RemoteTuning.enabled(this), (v, on) -> cfg().edit().putBoolean("tune_on", on).apply());
+        Ui.row(this, rg, labels.length + 1, labels.length + 2, "sparkle", L.t("測試回答卡片"), L.t("先抓一次遠端參數，再跳出一則範例回答，看目前的玻璃"), Ui.chevron(this), v ->
+                new Thread(() -> {
+                    RemoteTuning.refreshNow(getApplicationContext());
+                    runOnUiThread(() -> startActivity(new Intent(this, AskActivity.class).putExtra("demo_reply", L.t("這是一則範例回答，用來預覽回答的樣子。"))));
+                }, "tune-test").start());
     }
 
     /** 選要保護的 App：AI 操作之前先問你；銀行、支付類不用勾，會自動保護。 */
