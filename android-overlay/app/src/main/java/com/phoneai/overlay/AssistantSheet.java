@@ -506,8 +506,7 @@ public class AssistantSheet {
     public void setQuestion(String q) {
         questionMode = true;
         questionView.setText(q);
-        final boolean asCard = act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getBoolean("question_card", false);
-        questionView.setVisibility(asCard ? View.GONE : View.VISIBLE);   // 開關開著：問題用回答卡片顯示
+        questionView.setVisibility(View.VISIBLE);
         bgBtnView.setVisibility(View.GONE);
         waiting = false;
         root.removeCallbacks(waitTimeout);
@@ -516,13 +515,6 @@ public class AssistantSheet {
         row.setTranslationY(0f);
         row.setEnabled(true);
         setWaveState(WaveView.IDLE);
-        if (asCard) {
-            final String keepReply = lastReply;
-            final long keepAt = lastReplyAt;
-            showReply("", q);
-            lastReply = keepReply;   // 問題不算「上一則回答」
-            lastReplyAt = keepAt;
-        }
         setStatus(L.t("說出或打字你的回答"));
         java.util.concurrent.CountDownLatch l = questionShown;
         if (l != null) l.countDown();
