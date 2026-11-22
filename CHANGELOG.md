@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1824
+
 - 新增「自己從桌面壁紙取色」開關（設定 → 外觀）：系統取色沒跟著壁紙變的手機，改由 App 讀桌面壁紙主色來配色；診斷頁也會顯示桌面壁紙主色｜Added a "pick colors from the home wallpaper myself" switch (Settings → Appearance) for phones whose system accent does not follow the wallpaper; diagnostics also shows the wallpaper main color
+
 ## 1.0.1823
 
 - 「進階與診斷」多一行莫奈取色資訊（系統主色、App 目前主色），換桌布後回來看就知道有沒有跟著變｜Diagnostics now shows a Monet line (system accent, app accent) so you can check whether it follows the wallpaper
