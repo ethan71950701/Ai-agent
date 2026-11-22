@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1779
+
 - 修正：前景開著瀏覽器時問「這個新聞在講什麼」，AI 會知道自己能看畫面並用 current_page 去讀，不再回「我沒辦法取得你目前畫面上的內容」；鍵盤出現、收起時回答卡改成用動畫慢慢縮放，不再瞬間跳動｜Fix: asking "what is this news about" with a browser in the foreground now tells the AI it can see the screen so it uses current_page instead of answering that it cannot see the screen; the answer card now animates smoothly when the keyboard appears or hides instead of jumping
 
 ## 1.0.1778
