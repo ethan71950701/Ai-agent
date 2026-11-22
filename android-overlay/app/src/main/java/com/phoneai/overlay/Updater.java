@@ -65,14 +65,14 @@ final class Updater {
                     if (as.getString("name").equals("PhoneAI-from-" + BuildConfig.VERSION_CODE + ".patch")) pUrl = as.getString("browser_download_url");
                     if (as.getString("name").equals("SHA256SUMS.txt")) sUrl = as.getString("browser_download_url");
                     if (as.getString("name").equals("PhoneAI.blocks")) bUrl = as.getString("browser_download_url");
-                    if (as.getString("name").endsWith(".apk")) {
+                    if (url == null && as.getString("name").endsWith(".apk")) {   // 不能在這裡 break：補丁、校驗碼、區塊檔在清單裡排在 APK 後面，break 了就永遠看不到（增量更新因此一直沒生效）
                         url = as.getString("browser_download_url");
                         size = as.optLong("size", 0);
                         name = as.getString("name");
-                        break;
                     }
                 }
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
+                note(a, "手動檢查：最新 " + shown + "，目前 1.0." + BuildConfig.VERSION_CODE + "，有新版本｜補丁 " + (pUrl != null ? "有" : "沒有") + "、區塊檔 " + (bUrl != null ? "有" : "沒有") + "、校驗碼 " + (sUrl != null ? "有" : "沒有"));
                 final String v = shown;
                 final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl, blocksUrl = bUrl;
                 busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）

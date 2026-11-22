@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正增量更新一直沒生效：更新程式讀到 APK 就停了，沒看到後面的補丁與校驗碼檔，所以每次都下載完整包；診斷頁的更新資訊也會顯示這次有沒有找到補丁、區塊檔、校驗碼｜Fixed delta updates never kicking in: the updater stopped scanning the release assets at the APK and never saw the patch / checksum / block files after it, so it always downloaded the full APK; the diagnostics page now also shows whether the patch, block file and checksum were found
+
 ## 1.0.1815
 
 - 增量更新再加一層：隔了好幾版也不用下載整包——發布時附「區塊指紋檔」，App 比對已安裝的 APK，只用 Range 下載缺的部分（實測隔 10 版約 7 MB，完整包約 40 MB），核對 SHA-256 才安裝，失敗就下載完整包｜Delta updates, second layer: even many versions behind you no longer download the whole APK — releases carry a block-fingerprint file, the app compares it with the installed APK and fetches only the missing ranges (measured ~7 MB for 10 versions behind vs ~40 MB full), verifies SHA-256 before installing, and falls back to the full APK on any failure
