@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1787
+
 - 外網：第一次走外網不用再事先「兩邊同時開著 Tailscale 各連一次」——對方被叫醒、把 Tailscale 開起來之後，會用推播把自己的 Tailscale 位址回報給你，你的手機馬上就能連（兩邊只要登入過 Tailscale、也互換過推播 token）｜Remote: the first remote connection no longer needs both phones to have connected once with Tailscale on — after the other phone is woken and turns Tailscale on it reports its Tailscale address back by push, so your phone can connect right away (both just need to be signed in to Tailscale and to have swapped push tokens)
 
 ## 1.0.1786
