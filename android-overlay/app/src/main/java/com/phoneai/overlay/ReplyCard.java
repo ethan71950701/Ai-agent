@@ -69,7 +69,7 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            if (lv != 3) g.setBlurDp(lv == 2 ? 10f : 6f);   // 液態（3）：不覆蓋，用跟底欄一樣的設定   // 液態（3）：後面幾乎不模糊，保持清楚、靠邊緣折射        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
+            g.setBlurDp(lv == 3 ? 8f : lv == 2 ? 10f : 6f);   // 液態（3）：輕微模糊，讓後面的圖示、漩渦不搶字   // 液態（3）：後面幾乎不模糊，保持清楚、靠邊緣折射        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
             if (lv < 2) g.setSatBoost(1.25f); 
             if (lv < 2) g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
             g.setSoftGlow(lv >= 2 ? 0f : 1f);
@@ -83,7 +83,8 @@ final class ReplyCard {
             mid.setDarkScale(darkK);
             mid.setCenterMask(true);
             if (lv < 2) g.addView(mid, new FrameLayout.LayoutParams(-1, -1));   // 「很透」不疊中間的糊層：整片都是清楚的玻璃，文字靠陰影
-            if (lv != 3) g.setDarkScale(lv == 2 ? 0.6f : darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
+            g.setDarkScale(lv == 3 ? 1.2f : lv == 2 ? 0.6f : darkK);
+            if (lv == 3) g.setEdgeLight(0.12f, 0f);   // 液態：邊緣一條很淡的細亮線，看得出卡片範圍（不是整圈白框）   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation((lv == 3 ? 8 : 22) * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 30 * d); o.setAlpha(0.9f); }
