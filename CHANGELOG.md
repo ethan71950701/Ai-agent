@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1829
+
 - 修正頁面最上面的第一張卡被標題列下緣的漸層蓋掉一截：頁面內容頂端多留一段跟漸層一樣高的空白｜Fixed the first card being partly covered by the title bar's fade: the page content now starts below the fade (same height of extra top padding)
+
 ## 1.0.1828
 
 - 修正頁面最上面的第一張卡被標題列下緣的陰影蓋掉一截：內容沒捲動時不再顯示那道漸層，捲到標題列下面才慢慢出現｜Fixed the first card being partly covered by the title bar's fade: the fade no longer shows while the content is at the top and fades in only once it scrolls under the bar
