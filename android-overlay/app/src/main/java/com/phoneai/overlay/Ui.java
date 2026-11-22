@@ -654,12 +654,32 @@ final class Ui {
     /** 頁面內容的「輪流滑進來」：每一格從右邊滑進來、一個比一個晚一點（跟設定頁換分頁時一樣的手感）。所有整頁共用，才不會有的有、有的沒有。 */
     static void cascadeIn(ViewGroup box, long baseDelayMs) {
         if (box == null) return;
+        java.util.List<View> blocks = new java.util.ArrayList<>();
+        for (int k = 0; k < box.getChildCount(); k++) leafBlocks(box.getChildAt(k), blocks);
         final float off = box.getResources().getDisplayMetrics().widthPixels;
-        for (int k = 0; k < box.getChildCount(); k++) {
-            View c = box.getChildAt(k);
+        for (int k = 0; k < blocks.size(); k++) {
+            View c = blocks.get(k);
             c.setTranslationX(off);
             c.animate().translationX(0f).setStartDelay(baseDelayMs + 45L * Math.min(k, 10)).setDuration(420).setInterpolator(EMPHASIZED).start();
         }
+    }
+
+    /**
+     * 把一個元件拆成「一格一格」：沒有底色的直向容器（例如一整組按鈕、一整組列）與只包一個東西的捲動區，往裡面拆；
+     * 卡片、橫向的一排、單一元件就是一格。這樣一個容器裡裝了很多列時，也會一列一列輪流滑進來，不是整塊一起動。
+     */
+    static void leafBlocks(View v, java.util.List<View> out) {
+        if ((v instanceof android.widget.ScrollView || v instanceof androidx.core.widget.NestedScrollView) && ((ViewGroup) v).getChildCount() == 1) {
+            leafBlocks(((ViewGroup) v).getChildAt(0), out);
+            return;
+        }
+        if (v instanceof LinearLayout && ((LinearLayout) v).getOrientation() == LinearLayout.VERTICAL
+                && ((LinearLayout) v).getChildCount() >= 2 && v.getBackground() == null) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) leafBlocks(g.getChildAt(i), out);
+            return;
+        }
+        out.add(v);
     }
 
     /** 每個 Activity 整頁的內容容器（Ui.screen 登記），enterSpring 展開時用來做輪流滑進來。 */

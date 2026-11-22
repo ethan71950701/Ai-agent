@@ -564,8 +564,9 @@ public class MainActivity extends Activity {
         if (cascadeDir == 0f) return;
         final android.view.animation.PathInterpolator emph = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
         final float off = cascadeDir * getResources().getDisplayMetrics().widthPixels;
-        for (int k = from; k < box.getChildCount(); k++) {
-            View c = box.getChildAt(k);
+        java.util.List<View> blocks = new java.util.ArrayList<>();
+        for (int k = from; k < box.getChildCount(); k++) Ui.leafBlocks(box.getChildAt(k), blocks);   // 一個群組裡有很多列時，也一列一列輪流滑進來
+        for (View c : blocks) {
             long delay = 45L * Math.min(cascadeIdx++, 10);
             c.setTranslationX(off);
             c.animate().translationX(0f).setStartDelay(delay).setDuration(420).setInterpolator(emph).start();

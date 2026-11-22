@@ -45,9 +45,12 @@ final class PageBuilder {
         final LinearLayout box = c[0];
         h.root = root;
         if (message != null && message.length() > 0) {
-            TextView t = Ui.body(a, message.toString());
-            t.setPadding(Ui.dp(a, 8), 0, Ui.dp(a, 8), Ui.dp(a, 8));
-            box.addView(t);
+            for (String para : message.toString().split("\\n\\s*\\n")) {   // 空一行就是一段：一段一格，才會輪流滑進來
+                if (para.trim().isEmpty()) continue;
+                TextView t = Ui.body(a, para.trim());
+                t.setPadding(Ui.dp(a, 8), 0, Ui.dp(a, 8), Ui.dp(a, 8));
+                box.addView(t);
+            }
         }
         if (view != null) {
             if (view.getParent() instanceof ViewGroup) ((ViewGroup) view.getParent()).removeView(view);
