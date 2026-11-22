@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1788
+
 - 修正互傳「明明連得上、卻一直傳不過去」：對方的區網位址過期（IP 換了、手機 Wi-Fi 休眠）時，以前會對著同一個位址重試六次再放棄；現在重試一次還是連不上，就重新找對方（區網掃描、推播叫醒、外網）再傳，續傳照樣從斷點接著｜Fix transfers that fail with "No route to host" although the phones seem connected: when the peer's LAN address is stale (its IP changed or its Wi-Fi was asleep) it used to retry the same address six times; after one failed retry it now looks for the peer again (LAN scan, push wake-up, remote) and resumes from the breakpoint
 
 ## 1.0.1787
