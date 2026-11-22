@@ -72,7 +72,8 @@ final class ReplyCard {
             g.setBlurDp(lv == 3 ? 2f : lv == 2 ? 10f : 6f);   // 液態（3）：後面幾乎不模糊，保持清楚、靠邊緣折射        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
             if (lv < 2) g.setSatBoost(1.25f); else if (lv == 3) g.setSatBoost(1.15f);
             if (lv != 2) g.setRefraction(lv == 3 ? 2.0f : 1.6f, lv == 3 ? 38f : 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
-            g.setSoftGlow(lv == 2 ? 0f : lv == 3 ? 0.7f : 1f);      // 柔和高光（不是白框）
+            g.setSoftGlow(lv == 2 ? 0f : lv == 3 ? 0.25f : 1f);
+            if (lv == 3) g.setEdgeLight(0.5f, 0.6f);   // 液態：細亮邊（朝左上光源較亮）＋邊緣色散      // 柔和高光（不是白框）
             // 文字所在的中間：再疊一層很糊的玻璃（只畫中間，邊緣漸漸透明），保證可讀；邊緣仍然通透（預覽的 G5）
             GlassBar mid = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
             mid.setSource(source);
@@ -84,12 +85,12 @@ final class ReplyCard {
             mid.setCenterMask(true);
             if (lv < 2) g.addView(mid, new FrameLayout.LayoutParams(-1, -1));   // 「很透」不疊中間的糊層：整片都是清楚的玻璃，文字靠陰影
             g.setDarkScale(lv == 3 ? 0.55f : lv == 2 ? 0.6f : darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
-            g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
+            g.setElevation((lv == 3 ? 8 : 22) * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 30 * d); o.setAlpha(0.9f); }
             });
             g.setOutlineSpotShadowColor(0xFF000000);
-            g.setOutlineAmbientShadowColor(0x99000000);
+            g.setOutlineAmbientShadowColor(lv == 3 ? 0x33000000 : 0x99000000);
             if (lv < 2) g.setLift(liftK);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
             // 白色邊框已拿掉（使用者覺得很突兀）；邊界靠後面畫面的模糊與亮度落差
             if (lv == 1) {   // 玻璃的上緣高光：只有頂部一小段、漸漸消失（不是整圈白框）

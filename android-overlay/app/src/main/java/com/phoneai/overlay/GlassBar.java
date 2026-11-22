@@ -247,6 +247,9 @@ final class GlassBar extends FrameLayout {
     /** 柔和高光強度（0 = 沒有）。 */
     void setSoftGlow(float k) { softGlowK = k; invalidate(); }
     /** 這一條自己的折射倍率與折射帶寬度（dp）。 */
+    private float rimK, dispK;
+    /** 非透鏡的玻璃（回答卡）：k＝邊緣方向光（細亮邊，朝左上光源較亮）的強度；disp＝邊緣色散強度。0 = 沒有。 */
+    void setEdgeLight(float k, float disp) { rimK = k; dispK = disp; invalidate(); }
     void setRefraction(float scale, float band) { refrScale = scale; bandDp = band; invalidate(); }
     private float satBoost = 1.6f;
     /** 這一條自己的飽和度倍率（預設 1.6）。回答卡用較低的值，免得後面的圖示被染成一團團鮮豔的色塊。 */
@@ -482,7 +485,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("band", (lens ? 12f : bandDp) * dp);                  // 邊緣折射的寬度
         sh.setFloatUniform("amount", 24f * dp * GlassPrefs.refr * refrScale * push);      // 折射推開的距離（像素）
         sh.setFloatUniform("progress", progress);
-        sh.setFloatUniform("highlightAlpha", lens ? HIGHLIGHT * progress : 0f);   // 邊緣高光：被左上光源照到的亮邊，背景再平也有玻璃感；按住才慢慢出現
+        sh.setFloatUniform("highlightAlpha", lens ? HIGHLIGHT * progress : rimK);   // 邊緣高光：被左上光源照到的亮邊，背景再平也有玻璃感；按住才慢慢出現
         float[] lp = virtualLight();
         sh.setFloatUniform("lightAngle", lp[0]);                              // 虛擬光源：固定在畫面左上方，方向隨位置與歪斜變化
         if (lens && sh == shader) shaderInfo = String.format(java.util.Locale.US, "halfSize %.0fx%.0f radius %.0f lightAngle %.2f viewScale %.2f,%.2f light %.2f,%.2f nodes %dx%d/%dx%d", w / 2f, h / 2f, radius, lp[0], lp[1], lp[2], lp[3], lp[4], node.getWidth(), node.getHeight(), underNode.getWidth(), underNode.getHeight());
@@ -490,7 +493,7 @@ final class GlassBar extends FrameLayout {
         sh.setFloatUniform("indicator", lens ? 1f : 0f);                      // 透鏡（選中的按鈕）用指示器模式
         sh.setFloatUniform("dark", 1f);
         sh.setFloatUniform("shade", dark() * 0.27f);   // 底欄暗度（預設 0.66 ≈ 0.18）
-        sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : 0f);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
+        sh.setFloatUniform("dispersion", lens ? GlassPrefs.chroma * progress : dispK);   // 沒按住不要彩虹邊：色散跟按住的程度成正比
         sh.setFloatUniform("surface", lens ? 0f : 0.06f);
         sh.setFloatUniform("vividSat", !lens && GlassPrefs.vivid ? satBoost : 0f);   // 顏色增強（設定 → 底欄玻璃可關）
         sh.setFloatUniform("vividBr", 1.18f);
