@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 - 進階與診斷新增「背景螢幕漣漪測試」：建立背景螢幕、打開預覽小窗，在中央與四個象限的中心各畫一次漣漪；背景任務一開始就先把背景螢幕上的漣漪畫布建好，第一下點擊就看得到｜Advanced & diagnostics gets a "Background-display ripple test" button that creates a background display, opens the preview and draws a ripple at the centre and the four quadrant centres; background tasks now create the ripple canvas on the background display up front so the very first tap shows a ripple
 
+## 1.0.1793
+
+- 進階與診斷新增「背景螢幕漣漪測試（新舊兩種畫法）」：建立背景螢幕、打開預覽小窗，先用新畫法（畫在預覽卡片上）、再用舊畫法（畫在背景螢幕的覆蓋層上）各畫一次，讓你分得出預覽裡哪一種看得到漣漪｜Advanced & diagnostics gets a "Background-display ripple test (new and old drawing)" button: it creates a background display, opens the preview window and draws ripples first the new way (on the preview card) and then the old way (on the background display's overlay), so you can tell which one is visible in the preview
+
 ## 1.0.1792
 
 
