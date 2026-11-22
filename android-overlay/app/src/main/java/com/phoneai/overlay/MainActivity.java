@@ -1202,14 +1202,21 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
-            Ui.switchRow(this, g, 0, 4, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
+            Ui.switchRow(this, g, 0, 5, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
                     cfg().getBoolean("voice_sys", false), (v, on) -> cfg().edit().putBoolean("voice_sys", on).apply());
-            Ui.switchRow(this, g, 1, 4, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
+            Ui.switchRow(this, g, 1, 5, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
                     (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
-            Ui.switchRow(this, g, 2, 4, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
+            Ui.switchRow(this, g, 2, 5, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
                     (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
-            Ui.switchRow(this, g, 3, 4, "sparkle", L.t("AI 的提問用回答卡片樣式（試用）"), L.t("任務中 AI 要問你細節（例如要看哪個 App）時，問題用跟回答框一樣的卡片顯示；關掉是原本的文字樣式"),
+            Ui.switchRow(this, g, 3, 5, "sparkle", L.t("AI 的提問用回答卡片樣式（試用）"), L.t("任務中 AI 要問你細節（例如要看哪個 App）時，問題用跟回答框一樣的卡片顯示；關掉是原本的文字樣式"),
                     cfg().getBoolean("question_card", false), (v, on) -> cfg().edit().putBoolean("question_card", on).apply());
+            Ui.row(this, g, 4, 5, "sparkle", L.t("測試 AI 提問"), L.t("馬上跳出一個範例提問，看卡片樣式；你的回答只會顯示出來，不會做任何事"), Ui.chevron(this), v -> {
+                final android.content.Context app = getApplicationContext();
+                new Thread(() -> {
+                    String r = AssistantSheet.askUser(app, L.t("你說的「地圖」有兩個 App：Google 地圖和 Waze，要用哪一個？"));
+                    runOnUiThread(() -> android.widget.Toast.makeText(this, r == null ? L.t("提問沒有跳出來") : r.isEmpty() ? L.t("已取消") : L.t("你的回答：") + r, android.widget.Toast.LENGTH_LONG).show());
+                }).start();
+            });
             {   // 只回應我的聲音（實驗）：聲紋跟登錄的不像，就不自動送出
                 Ui.switchRow(this, g, 0, 1, "wave", L.t("只回應我的聲音（實驗）"), L.t("先到「進階與診斷」登錄聲紋；聲音不像你時不自動送出，文字留在輸入框等你確認"),
                         SpeakerId.gateOn(this), (v, on) -> cfg().edit().putBoolean("spk_gate", on).apply());
