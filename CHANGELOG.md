@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 回答卡片的玻璃改得更通透（上緣有一小段高光），設定 → 外觀可選「原本（偏暗）／通透／很透」，並有「測試回答卡片」按鈕｜Answer card glass is clearer with a soft top highlight; choose Original / Clear / Very clear in Settings → Appearance, with a "Test answer card" button；「很透」改成跟底下輸入列同一組玻璃參數（不染色、不疊糊層）；測試按鈕改成跟真的開面板一樣先截圖；新增「液態玻璃」一檔（清楚、邊緣折射）｜Added a "Liquid glass" option (clear, edge refraction)；液態玻璃加上很淡的細亮邊、減弱外陰影、後面的字調暗一點
+## 1.0.1807
+
+- 回答卡片的玻璃改得更通透（上緣有一小段高光），設定 → 外觀可選「原本（偏暗）／通透／很透」，並有「測試回答卡片」按鈕｜Answer card glass is clearer with a soft top highlight; choose Original / Clear / Very clear in Settings → Appearance, with a "Test answer card" button；「很透」改成跟底下輸入列同一組玻璃參數（不染色、不疊糊層）；測試按鈕改成跟真的開面板一樣先截圖；新增「液態玻璃」一檔（清楚、邊緣折射）｜Added a "Liquid glass" option (clear, edge refraction)；液態玻璃加上細亮邊與邊緣色散、減弱外陰影
+
 ## 1.0.1806
 
 - 回答卡片的玻璃改得更通透（上緣有一小段高光），設定 → 外觀可選「原本（偏暗）／通透／很透」，並有「測試回答卡片」按鈕｜Answer card glass is clearer with a soft top highlight; choose Original / Clear / Very clear in Settings → Appearance, with a "Test answer card" button；「很透」改成跟底下輸入列同一組玻璃參數（不染色、不疊糊層）；測試按鈕改成跟真的開面板一樣先截圖；新增「液態玻璃」一檔（清楚、邊緣折射）｜Added a "Liquid glass" option (clear, edge refraction)
