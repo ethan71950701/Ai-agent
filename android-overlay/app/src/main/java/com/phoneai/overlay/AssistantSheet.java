@@ -1129,9 +1129,7 @@ public class AssistantSheet {
         cardInset = bottomInset;   // 新卡片從目前的鍵盤高度開始
         cardHolder.setValue(bottomInset);
         // 卡片放在「狀態列下面」到「輸入列上面」這一段的中間偏上，不要貼著底部（使用者回報太偏下）
-        final boolean plainStyle = act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getBoolean("reply_plain", false);
-        // 提問樣式：文字貼在輸入列上方（跟 AI 提問同位置、離底下的光波近）；卡片樣式：從上方排起
-        final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, plainStyle ? Gravity.BOTTOM : Gravity.TOP);
+        final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
         cp.setMargins((int) (14 * d), topPad, (int) (14 * d), botPad);
         card.setLayoutParams(cp);
         if (oldCard != null && oldCard.getParent() == root && !SoakSwap.broken && android.os.Build.VERSION.SDK_INT >= 33) {
