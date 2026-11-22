@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1792
+
 - 修正背景模式預覽小窗看不到 AI 點擊的漣漪：改成直接畫在預覽卡片上（座標從背景螢幕換算過來），不再靠背景螢幕上的覆蓋層｜Fix: AI tap ripples were not visible in the background-mode preview window; they are now drawn directly on the preview card (coordinates converted from the background display) instead of relying on an overlay on the background display
 
 ## 1.0.1791
