@@ -265,6 +265,8 @@ final class AgentLoop {
         java.util.Set<String> prevTreeKeys = null;   // 上一步的元件鍵：這一步清單裡沒在上一步出現過的標「+」
         String lastTreeText = null;  // 上一步的元件清單；連續三次一樣＝畫面沒在動，可能卡住
         int sameTree = 0;
+        String prevChangeDesc = null;   // 上一步做的、應該會讓畫面改變的動作（描述）；沒有就是 null
+        int noChange = 0;            // 連續幾次「做了動作、元件清單卻完全沒變」
         int waits = 0;               // 連續 wait 的次數（相機取景這種本來就不會變的畫面，不能只看清單有沒有變）
         int maxSteps = baseSteps(c);
         try {
@@ -324,6 +326,16 @@ final class AgentLoop {
                 lastTreeText = treeText;
                 final java.util.Set<String> prevForMarks = prevTreeKeys;
                 prevTreeKeys = useTree ? ElementList.keys(tree) : null;
+                // 點了、畫面卻完全沒變：1 次提醒 AI 換做法，2 次改看截圖，3 次停下來告訴使用者卡在哪（不一直花錢）
+                final String justDid = prevChangeDesc;
+                prevChangeDesc = null;
+                noChange = useTree && treeText != null && justDid != null && sameTree >= 1 ? noChange + 1 : 0;
+                int ncLevel = NoChange.level(noChange);
+                if (ncLevel == NoChange.STOP) return NoChange.stopMessage(justDid);
+                if (ncLevel != NoChange.NONE) {
+                    history.add(step + ". " + NoChange.hint(justDid, ncLevel));
+                    if (ncLevel == NoChange.ESCALATE) { useTree = false; treeNote = -4; }   // 這一步改用截圖＋較強的模型
+                }
                 if (useTree && sameTree >= 1 && waits >= 2) { useTree = false; treeNote = -3; sameTree = 0; }   // 連續等了兩次、清單還是沒變：可能卡住，這一步改用截圖＋Sonnet 看看
                 String img = useTree ? null : screenshot(wasForced ? WIDTH_LOOK : WIDTH);   // look 之後的看圖步驟用大圖
                 if (!useTree && img == null) return L.t("截圖失敗：請確認 root 已允許 Vertex。");
@@ -536,6 +548,7 @@ final class AgentLoop {
                     usage(det, model, cntBefore, costBefore);   // 含搜尋等這一步之後才花的 token
                     det.put("result", finalSay != null ? finalSay : history.size() > historyBefore ? history.get(history.size() - 1) : "");
                 } catch (Exception ignored) { }
+                prevChangeDesc = NoChange.expectsChange(name) ? NoChange.describe(action) : null;   // 下一步看清單有沒有變
                 if (finalSay == null) sleep((long) (Math.min(Math.max(wait, 0.5), 6) * 1000));
             }
         } finally {
