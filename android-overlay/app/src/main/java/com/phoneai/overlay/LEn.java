@@ -1230,6 +1230,7 @@ final class LEn {
         m.put("回答卡片的玻璃", "Answer card glass");
         m.put("測試回答卡片", "Test answer card");
         m.put("先抓一次遠端參數，再跳出一則範例回答，看目前的玻璃", "Fetches the remote parameters once, then shows a sample reply with the current glass");
+        m.put("比對已安裝的版本…", "Comparing with the installed version…");
         m.put("拼出新版本…", "Building the new version…");
         m.put("（增量補丁）…", " (delta patch)…");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");

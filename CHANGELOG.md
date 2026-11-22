@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 增量更新再加一層：隔了好幾版也不用下載整包——發布時附「區塊指紋檔」，App 比對已安裝的 APK，只用 Range 下載缺的部分（實測隔 10 版約 7 MB，完整包約 40 MB），核對 SHA-256 才安裝，失敗就下載完整包｜Delta updates, second layer: even many versions behind you no longer download the whole APK — releases carry a block-fingerprint file, the app compares it with the installed APK and fetches only the missing ranges (measured ~7 MB for 10 versions behind vs ~40 MB full), verifies SHA-256 before installing, and falls back to the full APK on any failure
+
 ## 1.0.1812
 
 - 新增「增量更新」：發布時另外附上「上一版 → 這一版」的補丁；App 只下載補丁，在手機上拼出新 APK，用 SHA-256 核對無誤才安裝；任何一步失敗就自動改下載完整 APK（第一次有補丁的版本要下一版才會用到）｜Added delta updates: each release also carries a patch from the previous version; the app downloads only the patch, rebuilds the APK on the phone and verifies SHA-256 before installing; on any failure it falls back to the full APK (the first release with this feature has no patch to use yet)

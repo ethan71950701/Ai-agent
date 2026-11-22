@@ -164,6 +164,12 @@ jobs:
           } > "$RUNNER_TEMP/notes.md"
           # 增量更新補丁：上一版 → 這一版（App 只下載補丁，拼出新 APK 後用 SHA256SUMS.txt 核對；補丁不比完整 APK 小很多就不放）
           EXTRA=()
+          # 區塊指紋檔：隔了好幾版的手機用它比對已安裝的 APK，只下載缺的部分（沒有「剛好上一版」的補丁時用）
+          if python3 -m pip install --quiet numpy && python3 android-overlay/tools/make_blocks.py apk/PhoneAI.apk apk/PhoneAI.blocks 4096; then
+            EXTRA+=("apk/PhoneAI.blocks")
+          else
+            echo "沒做出區塊指紋檔（略過）"
+          fi
           if [ -n "$PREV_TAG" ]; then
             PREV_CODE=$(echo "$PREV_TAG" | awk -F- '{print $2}')
             if gh release download "$PREV_TAG" --pattern PhoneAI.apk --dir "$RUNNER_TEMP/prev" 2>/dev/null \
@@ -171,7 +177,7 @@ jobs:
                && python3 android-overlay/tools/make_delta.py "$RUNNER_TEMP/prev/PhoneAI.apk" apk/PhoneAI.apk "apk/PhoneAI-from-${PREV_CODE}.patch"; then
               FULL=$(stat -c %s apk/PhoneAI.apk); PSZ=$(stat -c %s "apk/PhoneAI-from-${PREV_CODE}.patch")
               echo "補丁 ${PSZ} 位元組，完整 APK ${FULL} 位元組"
-              if [ $((PSZ * 10)) -lt $((FULL * 7)) ]; then EXTRA=("apk/PhoneAI-from-${PREV_CODE}.patch"); fi
+              if [ $((PSZ * 10)) -lt $((FULL * 7)) ]; then EXTRA+=("apk/PhoneAI-from-${PREV_CODE}.patch"); fi
             else
               echo "沒做出補丁（略過）：App 會下載完整 APK"
             fi

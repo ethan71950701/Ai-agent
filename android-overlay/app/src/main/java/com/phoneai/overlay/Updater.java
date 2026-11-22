@@ -58,12 +58,13 @@ final class Updater {
                     return;
                 }
                 String url = null; long size = 0; String name = "";
-                String pUrl = null, sUrl = null;   // 增量補丁（從目前這一版到最新版）與校驗碼檔
+                String pUrl = null, sUrl = null, bUrl = null;   // 增量補丁（從目前這一版到最新版）與校驗碼檔
                 org.json.JSONArray assets = rel.getJSONArray("assets");
                 for (int i = 0; i < assets.length(); i++) {
                     JSONObject as = assets.getJSONObject(i);
                     if (as.getString("name").equals("PhoneAI-from-" + BuildConfig.VERSION_CODE + ".patch")) pUrl = as.getString("browser_download_url");
                     if (as.getString("name").equals("SHA256SUMS.txt")) sUrl = as.getString("browser_download_url");
+                    if (as.getString("name").equals("PhoneAI.blocks")) bUrl = as.getString("browser_download_url");
                     if (as.getString("name").endsWith(".apk")) {
                         url = as.getString("browser_download_url");
                         size = as.optLong("size", 0);
@@ -73,7 +74,7 @@ final class Updater {
                 }
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
                 final String v = shown;
-                final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl;
+                final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl, blocksUrl = bUrl;
                 busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）
                 if (a.isFinishing() || a.isDestroyed()) { notifyNew(a, v); return; }   // 這個畫面已經關了（例如剛重建）：改用通知
                 a.runOnUiThread(() -> {
@@ -88,7 +89,7 @@ final class Updater {
                             busy = true;
                             busySince = System.currentTimeMillis();
                             showProg(a, v);   // App 裡也顯示下載進度（通知列與 Now Bar 照舊）
-                            new Thread(() -> download(a, apkUrl, apkSize, apkName, v, patchUrl, sumsUrl)).start();
+                            new Thread(() -> download(a, apkUrl, apkSize, apkName, v, patchUrl, sumsUrl, blocksUrl)).start();
                         })
                         .setNegativeButton(L.t("稍後"), null)
                         .show();
@@ -163,12 +164,13 @@ final class Updater {
         }, "update-auto").start();
     }
 
-    private static void download(Activity a, String url, long size, String name, String v, String patchUrl, String sumsUrl) {
+    private static void download(Activity a, String url, long size, String name, String v, String patchUrl, String sumsUrl, String blocksUrl) {
         NotificationManager nm = a.getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel(CH, L.t("App 更新"), NotificationManager.IMPORTANCE_LOW));
         File out = new File(a.getCacheDir(), "update.apk");
         try {
             boolean delta = patchUrl != null && sumsUrl != null && tryDelta(a, patchUrl, sumsUrl, out, v, nm);   // 增量：只下載補丁，拼出新 APK（核對過 SHA-256）；任何一步失敗就照舊下載完整 APK
+            if (!delta && blocksUrl != null && sumsUrl != null) delta = tryBlocks(a, url, blocksUrl, sumsUrl, out, v, nm);   // 沒有「剛好上一版」的補丁（隔了好幾版）：改用區塊比對，只下載缺的部分
             boolean cached = delta || !Root.isRoot() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setInstanceFollowRedirects(true);
@@ -234,13 +236,8 @@ final class Updater {
         try {
             android.content.pm.ApplicationInfo ai = a.getApplicationInfo();
             if (ai.splitSourceDirs != null && ai.splitSourceDirs.length > 0) return false;   // 有分割 APK：不是單一檔案，補丁對不上
-            String sums = new String(httpBytes(sumsUrl, 64 * 1024), "UTF-8");
-            String want = null;
-            for (String line : sums.split("\\r?\\n")) {
-                String[] p = line.trim().split("\\s+");
-                if (p.length >= 2 && p[1].replace("*", "").equals("PhoneAI.apk")) want = p[0];
-            }
-            if (want == null || !want.matches("[0-9a-fA-F]{64}")) return false;
+            String want = wantedSha(sumsUrl);
+            if (want == null) return false;
             setProg(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true);
             nm.notify(NOTE, progress(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true));
             java.nio.file.Files.write(patch.toPath(), httpBytes(patchUrl, 60L * 1024 * 1024));
@@ -253,6 +250,105 @@ final class Updater {
             return false;
         } finally {
             patch.delete();
+        }
+    }
+
+    /** SHA256SUMS.txt 裡 PhoneAI.apk 那一行的雜湊；找不到回 null。 */
+    private static String wantedSha(String sumsUrl) throws Exception {
+        String sums = new String(httpBytes(sumsUrl, 64 * 1024), "UTF-8");
+        for (String line : sums.split("\\r?\\n")) {
+            String[] p = line.trim().split("\\s+");
+            if (p.length >= 2 && p[1].replace("*", "").equals("PhoneAI.apk") && p[0].matches("[0-9a-fA-F]{64}")) return p[0];
+        }
+        return null;
+    }
+
+    /** 下載連結會轉址到另一個主機：先問出最後的網址，之後每個區段直接連過去（少一次來回）。問不到就回原網址。 */
+    private static String resolveFinal(String url) {
+        try {
+            String cur = url;
+            for (int hop = 0; hop < 4; hop++) {
+                HttpURLConnection c = (HttpURLConnection) new URL(cur).openConnection();
+                c.setInstanceFollowRedirects(false);
+                c.setConnectTimeout(20000);
+                c.setReadTimeout(20000);
+                c.setRequestProperty("User-Agent", "PhoneAI-Update");
+                c.setRequestProperty("Range", "bytes=0-0");
+                int code = c.getResponseCode();
+                String loc = c.getHeaderField("Location");
+                c.disconnect();
+                if (code >= 300 && code < 400 && loc != null) { cur = loc; continue; }
+                return cur;
+            }
+        } catch (Exception ignored) { }
+        return url;
+    }
+
+    private static byte[] fetchRange(String url, long start, long endExcl) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setInstanceFollowRedirects(true);
+        c.setConnectTimeout(20000);
+        c.setReadTimeout(60000);
+        c.setRequestProperty("User-Agent", "PhoneAI-Update");
+        c.setRequestProperty("Range", "bytes=" + start + "-" + (endExcl - 1));
+        if (c.getResponseCode() != 206) throw new java.io.IOException("HTTP " + c.getResponseCode() + "（不支援區段下載）");
+        byte[] buf = new byte[(int) (endExcl - start)];
+        try (InputStream in = c.getInputStream()) {
+            int got = 0, n;
+            while (got < buf.length && (n = in.read(buf, got, buf.length - got)) > 0) got += n;
+            if (got != buf.length) throw new java.io.IOException("區段不完整");
+        }
+        return buf;
+    }
+
+    /**
+     * 區塊式增量更新：用發布附的區塊指紋檔，掃描手機上已安裝的 APK（任何舊版本都行），相同的區塊直接複用，
+     * 只用 HTTP Range 下載缺的部分，拼好後用 SHA256SUMS.txt 核對。省不了多少（缺的部分超過一半）、或任何一步失敗都回 false，改下載完整 APK。
+     */
+    private static boolean tryBlocks(Activity a, String apkUrl, String blocksUrl, String sumsUrl, File out, String v, NotificationManager nm) {
+        try {
+            android.content.pm.ApplicationInfo ai = a.getApplicationInfo();
+            if (ai.splitSourceDirs != null && ai.splitSourceDirs.length > 0) return false;
+            String want = wantedSha(sumsUrl);
+            BlockSync.Control ctl = BlockSync.parse(httpBytes(blocksUrl, 2L * 1024 * 1024));
+            if (want == null || ctl == null) return false;
+            setProg(a, L.t("比對已安裝的版本…"), 0, true);
+            nm.notify(NOTE, progress(a, L.t("比對已安裝的版本…"), 0, true));
+            File oldF = new File(ai.sourceDir);
+            if (oldF.length() > 400L * 1024 * 1024) return false;
+            byte[] old = java.nio.file.Files.readAllBytes(oldF.toPath());
+            int[] src = BlockSync.plan(old, ctl);
+            java.util.List<long[]> ranges = BlockSync.ranges(ctl, src, 64 * 1024);
+            long need = BlockSync.totalBytes(ranges);
+            if (need > ctl.size / 2 || ranges.size() > 200) { note(a, "區塊增量：要下載 " + need / 1024 + " KB，不划算，改下載完整 APK"); return false; }
+            String finalUrl = resolveFinal(apkUrl);
+            java.util.List<byte[]> data = new java.util.ArrayList<>();
+            long got = 0;
+            for (long[] r : ranges) {
+                byte[] part;
+                try { part = fetchRange(finalUrl, r[0], r[1]); }
+                catch (Exception first) { finalUrl = resolveFinal(apkUrl); part = fetchRange(finalUrl, r[0], r[1]); }   // 網址過期或連線斷了：重問一次再試一次
+                data.add(part);
+                got += part.length;
+                int pct = need > 0 ? (int) (got * 100 / need) : 100;
+                setProg(a, L.t("下載 ") + v + "：" + pct + "%" + String.format(java.util.Locale.US, "（%.1f / %.1f MB）", got / 1048576f, need / 1048576f), pct, false);
+                nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
+            }
+            setProg(a, L.t("拼出新版本…"), 100, true);
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            try (java.io.OutputStream fo = new FileOutputStream(out); java.security.DigestOutputStream dos = new java.security.DigestOutputStream(fo, md)) {
+                BlockSync.assemble(old, ctl, src, ranges, data, dos);
+            }
+            StringBuilder sb = new StringBuilder();
+            for (byte b : md.digest()) sb.append(String.format(java.util.Locale.US, "%02x", b));
+            boolean ok = sb.toString().equalsIgnoreCase(want) && out.length() == ctl.size;
+            if (!ok) out.delete();
+            note(a, "區塊增量：" + (ok ? "成功（下載 " + need / 1024 + " KB，共 " + ranges.size() + " 段）" : "拼出來的檔案核對不符，改下載完整 APK"));
+            return ok;
+        } catch (Throwable t) {
+            out.delete();
+            note(a, "區塊增量失敗，改下載完整 APK：" + t);
+            return false;
         }
     }
 
