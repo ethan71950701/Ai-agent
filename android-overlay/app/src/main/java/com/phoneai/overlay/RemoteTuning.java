@@ -64,6 +64,36 @@ final class RemoteTuning {
         return out;
     }
 
+    /** 可以遠端「新增」詞的清單（只能加，不能取代程式內建的；比對時用小寫、不是正規表示式）。 */
+    static final java.util.Set<String> WORD_KEYS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "words_action_verb",     // 「這句話是要操作手機」的動作詞（例如：打開、進入）
+            "words_action_object",  // 要操作的項目詞（例如：設定、藍牙）
+            "words_refusal"));      // 聊天助理說「我不能操作手機」的說法
+
+    /** 純邏輯，可單元測試：取出某個詞清單。只收字串、去掉控制字元與空白、長度 1–20、最多 50 個；key 不在白名單回空表。 */
+    static java.util.List<String> parseWords(String json, String key) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (!WORD_KEYS.contains(key) || json == null || json.length() > 4096) return out;
+        try {
+            org.json.JSONArray a = new JSONObject(json).optJSONArray(key);
+            for (int i = 0; a != null && i < a.length() && out.size() < 50; i++) {
+                Object v = a.opt(i);
+                if (!(v instanceof String)) continue;
+                String w = ((String) v).replaceAll("[\\p{Cntrl}]", "").trim().toLowerCase(java.util.Locale.ROOT);
+                if (w.length() >= 1 && w.length() <= 20) out.add(w);
+            }
+        } catch (Exception ignored) { }
+        return out;
+    }
+
+    /** 這個詞清單現在的內容（遠端有給、而且開關開著；否則空表）。 */
+    static java.util.List<String> words(Context c, String key) {
+        try {
+            if (c == null || !enabled(c)) return new java.util.ArrayList<>();
+            return parseWords(c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString(PREF_JSON, ""), key);
+        } catch (Throwable t) { return new java.util.ArrayList<>(); }
+    }
+
     static boolean enabled(Context c) { return c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean(PREF_ON, true); }
 
     /** 這個參數現在的值：遠端有給（而且開關開著）就用遠端的，否則用 def。 */

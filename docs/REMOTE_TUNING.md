@@ -22,3 +22,16 @@
 | `card_damp` | 0.2–1 | 0.5 | 彈簧阻尼（越小越 Q 彈） |
 
 新增可調項目：在 `RemoteTuning.ALLOWED` 加名稱與範圍，程式用 `RemoteTuning.f(ctx, 名稱, 預設值)` 讀。安全規則、模型代號、傳檔協定參數不要放進來。
+
+## 詞清單（只能「新增」，不能取代內建的）
+`tuning.json` 裡可以放字串清單；App 比對時用小寫、直接找這個詞有沒有出現在句子裡（不是正規表示式）。每個詞 1–20 字，最多 50 個，控制字元會被去掉。
+
+| 名稱 | 用在哪 | 說明 |
+|---|---|---|
+| `words_action_verb` | `Assist.looksLikeAction` | 「這句話是要操作手機」的動作詞（內建：打開、進入、前往…） |
+| `words_action_object` | `Assist.looksLikeAction` | 要操作的項目詞（內建：設定、頁面、藍牙…） |
+| `words_refusal` | `Assist.refusesToOperate` | 聊天助理說「我不能操作手機」的說法（內建：不能操作手機、cannot operate…） |
+
+範例：`{"words_action_verb": ["開起來", "點進去"], "words_refusal": ["沒辦法幫你操作"]}`
+
+注意：固定指令（開 Wi-Fi、開藍牙…）現在由便宜模型（Router）判斷，`Assist.COMMANDS` 裡的關鍵字清單沒有在比對，所以不需要也不能遠端調整。

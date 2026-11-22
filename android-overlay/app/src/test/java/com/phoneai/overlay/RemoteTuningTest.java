@@ -33,4 +33,12 @@ public class RemoteTuningTest {
         assertEquals(100f, m.get("card_stiff"), 0.001f);
         assertEquals(0.35f, m.get("card_damp"), 0.001f);
     }
+
+    @Test public void wordListsOnlyForWhitelistedKeysAndSanitized() {
+        String j = "{\"words_action_verb\": [\"  開啟\\u0007  \", \"\", 5, \"123456789012345678901\", \"Tap\"], \"other\": [\"x\"]}";
+        java.util.List<String> w = RemoteTuning.parseWords(j, "words_action_verb");
+        assertEquals(java.util.Arrays.asList("開啟", "tap"), w);   // 去控制字元與空白、轉小寫、丟掉空字串／非字串／太長
+        assertTrue(RemoteTuning.parseWords(j, "other").isEmpty());   // 不在白名單
+        assertTrue(RemoteTuning.parseWords("壞掉", "words_action_verb").isEmpty());
+    }
 }

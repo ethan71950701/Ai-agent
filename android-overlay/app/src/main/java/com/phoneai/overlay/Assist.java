@@ -85,7 +85,7 @@ final class Assist {
     static boolean looksLikeAction(String t) {
         if (t == null) return false;
         String s = t.toLowerCase(java.util.Locale.ROOT);
-        return ACTION_VERB.matcher(s).find() && ACTION_OBJECT.matcher(s).find();
+        return (ACTION_VERB.matcher(s).find() || hasAny(s, "words_action_verb")) && (ACTION_OBJECT.matcher(s).find() || hasAny(s, "words_action_object"));
     }
 
     /** 聊天助理的回答是在說「我不能操作手機」：使用者其實是要操作手機。 */
@@ -93,7 +93,14 @@ final class Assist {
         if (reply == null) return false;
         String s = reply.toLowerCase(java.util.Locale.ROOT);
         return s.contains("不能操作手機") || s.contains("不能操作手机") || s.contains("無法操作手機") || s.contains("无法操作手机")
-                || s.contains("cannot operate") || s.contains("can't operate") || s.contains("unable to operate");
+                || s.contains("cannot operate") || s.contains("can't operate") || s.contains("unable to operate")
+                || hasAny(s, "words_refusal");
+    }
+
+    /** 遠端新增的詞（tuning.json，只能加）：有任何一個出現在 s（已轉小寫）裡就是 true。 */
+    private static boolean hasAny(String s, String key) {
+        for (String w : RemoteTuning.words(App.ctx, key)) if (s.contains(w)) return true;
+        return false;
     }
     private static final String[] EN_LABELS = {"turn Wi-Fi on", "turn Wi-Fi off", "turn Bluetooth on", "turn Bluetooth off", "go to the home screen",
             "go back", "volume up", "volume down", "Do Not Disturb on", "Do Not Disturb off", "auto-rotate on", "auto-rotate off",
