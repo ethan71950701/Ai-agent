@@ -170,9 +170,11 @@ final class AgentLoop {
     /** macroTask：路由認為這句話是某個記住的任務的另一種說法（沒有就 null）。一次只跑一個：助理面板與首頁輸入同時送出時，後來的會被擋下，不會互相蓋掉狀態與搶畫面。 */
     static String run(Context c, String task, Ui ui, String preOpen, String macroTask) {
         if (!GATE.tryEnter()) return L.t("已經有一個操作正在進行，請等它做完（或在通知上按「停止」）再試。");
+        RippleAccessibilityService.setAgentGlow(true);   // 螢幕邊緣的流動光暈（波浪）：AI 操作手機的提示
         try {
             return runExclusive(c, task, ui, preOpen, macroTask);
         } finally {
+            RippleAccessibilityService.setAgentGlow(false);
             GATE.exit();
         }
     }
@@ -596,7 +598,14 @@ final class AgentLoop {
     static String screenshot() { return screenshot(WIDTH); }
 
     /** width：縮圖寬度。一般 432 省 token；look（元件清單裡找不到，要靠看圖找位置）用大一點的圖，縮圖、小圖示才看得清楚。 */
-    static String screenshot(int width) { return screenshot(width, false); }
+    static String screenshot(int width) {
+        boolean hid = RippleAccessibilityService.hideGlowForShot();   // 邊緣光暈會被截進圖裡，截圖的瞬間先藏起來
+        try {
+            return screenshot(width, false);
+        } finally {
+            if (hid) RippleAccessibilityService.showGlowAfterShot();
+        }
+    }
 
     /** retried：背景螢幕的截圖編號失效時，重新查一次再試一次（只試一次）。 */
     private static String screenshot(int width, boolean retried) {

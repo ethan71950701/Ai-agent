@@ -466,6 +466,39 @@ public class RippleAccessibilityService extends AccessibilityService {
         refreshGlows();   // 預覽關了：光暈回到主螢幕
     }
 
+    /** AI 開始／結束操作手機：螢幕邊緣的流動光暈（波浪）跟著出現／消失。設定「呼吸光暈」關著就不畫。主執行緒以外也能呼叫。 */
+    static void setAgentGlow(final boolean on) {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> { s.glowOn = on; s.refreshGlows(); });
+    }
+
+    /**
+     * 截圖之前先把光暈藏起來（光暈會被截進圖裡，AI 會以為是畫面的一部分）：等主執行緒藏好、再等一下讓畫面合成，才回來讓呼叫端去截。
+     * 回傳 true＝光暈本來是顯示的、現在藏起來了，截完要呼叫 showGlowAfterShot。
+     */
+    static boolean hideGlowForShot() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return false;
+        final boolean[] hid = {false};
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            if (s.glow != null && s.glow.getVisibility() == View.VISIBLE) { s.glow.setVisibility(View.INVISIBLE); hid[0] = true; }
+            done.countDown();
+        });
+        try {
+            done.await(500, java.util.concurrent.TimeUnit.MILLISECONDS);
+            if (hid[0]) Thread.sleep(90);
+        } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        return hid[0];
+    }
+
+    static void showGlowAfterShot() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return;
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> { if (s.glow != null && s.glowOn) s.glow.setVisibility(View.VISIBLE); });
+    }
+
     /** 目前可用的漣漪畫布（沒開無障礙服務就是 null） */
     /**
      * 把文字填進目前焦點的輸入框（ACTION_SET_TEXT）。只碰焦點欄位，不讀其他元件；append = true 時接在原本的文字後面。
