@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1781
+
 - 修正：點 AI 的回答卡會跳出只能打英文的鍵盤——現在回答文字不再要求鍵盤，輸入框沒有焦點卻冒出鍵盤時會自動收掉；鍵盤滑出、收起時，回答卡和輸入列改成跟著鍵盤動畫的每一格走，比以前順｜Fix: tapping the AI's answer card popped up an English-only keyboard — the answer text no longer asks for a keyboard and a keyboard that appears while the input box has no focus is dismissed; the answer card and input row now follow every frame of the keyboard animation, which is smoother than before
 
 ## 1.0.1780
