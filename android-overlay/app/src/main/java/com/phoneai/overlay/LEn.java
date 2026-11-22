@@ -1224,11 +1224,6 @@ final class LEn {
         m.put("；自動操作 ", "; automatic actions ");
         m.put("；搜尋 ", "; search ");
         m.put("開面板時自動聽", "Listen when the panel opens");
-        m.put("測試 AI 提問", "Test AI question");
-        m.put("馬上跳出一個範例提問，看卡片樣式；你的回答只會顯示出來，不會做任何事", "Shows a sample question right away to preview the card style; your answer is only displayed, nothing is done");
-        m.put("你說的「地圖」有兩個 App：Google 地圖和 Waze，要用哪一個？", "There are two map apps: Google Maps and Waze. Which one do you want?");
-        m.put("提問沒有跳出來", "The question did not appear");
-        m.put("你的回答：", "Your answer: ");
         m.put("AI 的提問用回答卡片樣式（試用）", "AI's questions as answer card (trial)");
         m.put("任務中 AI 要問你細節（例如要看哪個 App）時，問題用跟回答框一樣的卡片顯示；關掉是原本的文字樣式", "When the AI asks you for details during a task (e.g. which app), show the question as the same card as answers; off = the original text style");
         m.put("叫出助理面板就開始聽；關掉就要自己點麥克風", "Start listening as soon as the assistant panel opens; turn off to tap the mic button yourself");
