@@ -1125,6 +1125,9 @@ public class AssistantSheet {
         final int maxH = replyCardMaxH(botPad);   // 狀態列下面到輸入列上面之間能用的高度
         final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH, root);
         replyCard = card;
+        if (cardSpring != null) cardSpring.cancel();
+        cardInset = bottomInset;   // 新卡片從目前的鍵盤高度開始
+        cardHolder.setValue(bottomInset);
         // 卡片放在「狀態列下面」到「輸入列上面」這一段的中間偏上，不要貼著底部（使用者回報太偏下）
         final FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
         cp.setMargins((int) (14 * d), topPad, (int) (14 * d), botPad);
@@ -1165,7 +1168,7 @@ public class AssistantSheet {
         bottomInset = Math.max(ime, nav);
         content.setTranslationY(-bottomInset);
         updateGlowY();
-        fitReplyCard();
+        followCardInset(bottomInset);
         // 鍵盤冒出來、但輸入框沒有焦點（例如點了 AI 的回答卡）：不是使用者要打字。以前這時會跳出只能打英文的鍵盤，收掉它
         if (ime > 0 && input != null && !input.hasFocus() && !hidingStrayKeyboard) {
             hidingStrayKeyboard = true;
@@ -1176,11 +1179,40 @@ public class AssistantSheet {
     private boolean hidingStrayKeyboard;
     private boolean imeAnimating;   // 鍵盤（含手勢帶動的）動畫進行中
 
-    /** 回答卡的下緣與可用高度（直接設，跟著鍵盤動畫的每一格走；以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
-    private void fitReplyCard() {
+    // 回答卡用的「鍵盤高度」：鍵盤升起時卡片要立刻縮（不然會蓋到輸入列）；鍵盤收起、卡片變大時用彈簧，有一點 Q 彈，而且每個畫面更新都動（不受鍵盤動畫回報的次數限制）
+    private float cardInset = -1;
+    private final androidx.dynamicanimation.animation.FloatValueHolder cardHolder = new androidx.dynamicanimation.animation.FloatValueHolder();
+    private androidx.dynamicanimation.animation.SpringAnimation cardSpring;
+
+    private void followCardInset(int target) {
+        if (cardInset < 0 || replyCard == null) {   // 還沒有回答卡：先記著，卡片出現時直接用
+            cardInset = target;
+            cardHolder.setValue(target);
+            applyCardInset();
+            return;
+        }
+        if (target >= cardInset) {   // 鍵盤升起：卡片立刻跟著縮，不彈
+            if (cardSpring != null) cardSpring.cancel();
+            cardInset = target;
+            cardHolder.setValue(target);
+            applyCardInset();
+            return;
+        }
+        if (cardSpring == null) {   // 鍵盤收起：卡片彈著長回去
+            cardSpring = new androidx.dynamicanimation.animation.SpringAnimation(cardHolder);
+            cardSpring.setSpring(new androidx.dynamicanimation.animation.SpringForce().setStiffness(420f).setDampingRatio(0.5f));
+            cardSpring.setMinimumVisibleChange(1f);
+            cardSpring.addUpdateListener((anim, value, velocity) -> { cardInset = Math.max(0f, value); applyCardInset(); });
+        }
+        cardHolder.setValue(cardInset);
+        cardSpring.animateToFinalPosition(target);
+    }
+
+    /** 回答卡的下緣與可用高度（跟著 cardInset；以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
+    private void applyCardInset() {
         final View card = replyCard;
         if (card == null || !(card.getLayoutParams() instanceof FrameLayout.LayoutParams) || root.getHeight() <= 0) return;
-        final int toM = (int) (CARD_BOTTOM_DP * d) + bottomInset;
+        final int toM = (int) (CARD_BOTTOM_DP * d) + Math.round(cardInset);
         final FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) card.getLayoutParams();
         final int toH = replyCardMaxH(toM);
         if (cp.bottomMargin == toM && ReplyCard.maxHeight(card) == toH) return;
