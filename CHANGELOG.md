@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1784
+
 - 回答卡跟著鍵盤改成有彈性：鍵盤升起時立刻縮小（不蓋到輸入列），鍵盤收起時用彈簧彈著長回去，每個畫面更新都動，更順、更 Q 彈｜The answer card now springs with the keyboard: it shrinks at once when the keyboard rises (never covers the input row) and springs back to full size when the keyboard hides, updating every display frame for a smoother, bouncier feel
 
 ## 1.0.1783
