@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 自動操作：上一個操作還沒結束（通知不見了、或卡住了）又下新任務時，不再只回「正在進行」就沒辦法——會告訴你它已經跑了多久、做到第幾步、最後一次動靜是多久以前，問你要不要停掉它、改做新的；「進階與診斷」也會記下每個自動操作的開始與結束｜Automatic operation: when a previous operation has not finished (its notification vanished, or it is stuck) and you start a new task, it no longer just says "in progress" with no way out — it tells you how long it has run, which step it is at and how long ago it last showed activity, and asks whether to stop it and run the new one; Advanced & diagnostics now logs the start and end of every automatic operation
+
+## 1.0.1794
+
 - 進階與診斷新增「背景螢幕漣漪測試」：建立背景螢幕、打開預覽小窗，在中央與四個象限的中心各畫一次漣漪；背景任務一開始就先把背景螢幕上的漣漪畫布建好，第一下點擊就看得到｜Advanced & diagnostics gets a "Background-display ripple test" button that creates a background display, opens the preview and draws a ripple at the centre and the four quadrant centres; background tasks now create the ripple canvas on the background display up front so the very first tap shows a ripple
 
 ## 1.0.1793
