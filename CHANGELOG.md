@@ -5,7 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
-- 新增「確認框用回答卡片樣式（試用）」開關（設定 → 語音）：任務中的確認改用跟回答框一樣的卡片｜Added a "confirm prompts as answer card (trial)" switch (Settings → Voice)
+- 新增「AI 的提問用回答卡片樣式（試用）」開關（設定 → 語音）：任務中 AI 問你細節時，問題改用回答卡片顯示｜Added an "AI questions as answer card (trial)" switch (Settings → Voice)
 ## 1.0.1795
 
 - 自動操作：上一個操作還沒結束（通知不見了、或卡住了）又下新任務時，不再只回「正在進行」就沒辦法——會告訴你它已經跑了多久、做到第幾步、最後一次動靜是多久以前，問你要不要停掉它、改做新的；「進階與診斷」也會記下每個自動操作的開始與結束｜Automatic operation: when a previous operation has not finished (its notification vanished, or it is stuck) and you start a new task, it no longer just says "in progress" with no way out — it tells you how long it has run, which step it is at and how long ago it last showed activity, and asks whether to stop it and run the new one; Advanced & diagnostics now logs the start and end of every automatic operation

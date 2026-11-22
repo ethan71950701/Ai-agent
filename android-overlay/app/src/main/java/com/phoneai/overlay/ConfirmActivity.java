@@ -57,8 +57,6 @@ public class ConfirmActivity extends Activity {
         super.onCreate(b);
         setShowWhenLocked(true);
         String msg = getIntent().getStringExtra("msg");
-        if (getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("confirm_card", false)) showCard(msg);
-        else
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setTitle(L.t("需要你確認"))
                 .setMessage(msg)
@@ -69,50 +67,6 @@ public class ConfirmActivity extends Activity {
         CountDownLatch l = shown;
         if (l != null) l.countDown();
     }
-
-    /** 回答卡片樣式（設定裡的開關）：跟助理的回答框同一種卡片，下面兩顆按鈕。點卡片外面、返回都當「否」。 */
-    private void showCard(String msg) {
-        final float d = getResources().getDisplayMetrics().density;
-        android.widget.FrameLayout root = new android.widget.FrameLayout(this);
-        root.setBackgroundColor(0x88000000);
-        root.setOnClickListener(v -> done(false));
-        android.widget.LinearLayout col = new android.widget.LinearLayout(this);
-        col.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int maxH = (int) (getResources().getDisplayMetrics().heightPixels * 0.5f);
-        android.widget.FrameLayout card = ReplyCard.build(this, L.t("需要你確認"), msg, () -> done(false), maxH, null);
-        col.addView(card, new android.widget.LinearLayout.LayoutParams(-1, -2));
-        android.widget.LinearLayout btns = new android.widget.LinearLayout(this);
-        btns.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        btns.setPadding(0, (int) (14 * d), 0, 0);
-        btns.addView(cardButton(L.t("否"), 0x66FFFFFF, false), new android.widget.LinearLayout.LayoutParams(0, (int) (52 * d), 1f));
-        android.widget.LinearLayout.LayoutParams yl = new android.widget.LinearLayout.LayoutParams(0, (int) (52 * d), 1f);
-        yl.leftMargin = (int) (12 * d);
-        btns.addView(cardButton(L.t("是"), App.accentColor(this, 0xFF6EA8FF), true), yl);
-        col.addView(btns, new android.widget.LinearLayout.LayoutParams(-1, -2));
-        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER);
-        lp.leftMargin = lp.rightMargin = (int) (20 * d);
-        col.setClickable(true);
-        root.addView(col, lp);
-        setContentView(root);
-    }
-
-    private android.widget.TextView cardButton(String t, int color, boolean yes) {
-        float d = getResources().getDisplayMetrics().density;
-        android.widget.TextView b = new android.widget.TextView(this);
-        b.setText(t);
-        b.setTextColor(0xFFFFFFFF);
-        b.setTextSize(18);
-        b.setGravity(android.view.Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
-        g.setColor(yes ? color : 0x33FFFFFF);
-        g.setCornerRadius(26 * d);
-        b.setBackground(g);
-        b.setOnClickListener(v -> done(yes));
-        return b;
-    }
-
-    @Override
-    public void onBackPressed() { done(false); }
 
     private void done(boolean yes) {
         CompletableFuture<Boolean> a = answer;
