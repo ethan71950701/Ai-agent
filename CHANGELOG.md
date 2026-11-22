@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1786
+
 - 修正互傳：兩支手機連的是不同的 Wi-Fi 網路（網段不同，例如一個 192.168.1.x、一個 192.168.51.x）時，以前只會用舊的區網位址去連、一直連不上；現在會當成「在外網」，自動開 Tailscale 並叫醒對方走 Tailscale｜Fix file transfer when the two phones are on different Wi-Fi networks (different subnets, e.g. 192.168.1.x vs 192.168.51.x): it used to keep trying the old LAN address and fail; it is now treated as remote, turning on Tailscale and waking the other phone to connect over Tailscale
 
 ## 1.0.1785
