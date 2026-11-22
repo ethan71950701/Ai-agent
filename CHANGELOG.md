@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 自動操作：AI 做了動作、畫面的元件清單卻完全沒變時，第 1 次提醒它換個做法、第 2 次改看截圖（較強的模型）、連續第 3 次就停下來告訴你卡在哪，不再一直點同一個東西花錢｜Automatic operation: when the AI acts but the screen's element list does not change at all, the 1st time it is told to try something else, the 2nd time it gets a screenshot (stronger model), and on the 3rd in a row it stops and tells you where it is stuck instead of tapping the same thing and burning money
+
+## 1.0.1784
+
 - 回答卡跟著鍵盤改成有彈性：鍵盤升起時立刻縮小（不蓋到輸入列），鍵盤收起時用彈簧彈著長回去，每個畫面更新都動，更順、更 Q 彈｜The answer card now springs with the keyboard: it shrinks at once when the keyboard rises (never covers the input row) and springs back to full size when the keyboard hides, updating every display frame for a smoother, bouncier feel
 
 ## 1.0.1783
