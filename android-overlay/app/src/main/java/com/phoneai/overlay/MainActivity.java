@@ -214,9 +214,19 @@ public class MainActivity extends Activity {
         return tabIdx == 2 && settingsCat >= 0 ? L.t((String) SET_CATS[settingsCat][1]) : L.t(TAB_TITLE[tabIdx]);
     }
 
-    /** 分類裡面的群組一律展開（不然一個分類頁只看到一條收起來的群組）。 */
+    /**
+     * 在分類裡面：不要收合用的標題列（已經進到子頁了，再收起來沒有意義），內容直接攤開；
+     * 一個分類裡有好幾段時，各段只放一行小標題分開。在分類列表以外（其他地方呼叫）才用可收合的群組。
+     */
     private LinearLayout grp(String icon, String title, String summary, boolean open) {
-        return Ui.expandGroup(this, box, icon, title, summary, open || settingsCat >= 0);
+        if (settingsCat < 0) return Ui.expandGroup(this, box, icon, title, summary, open);
+        if (((int[]) SET_CATS[settingsCat][3]).length > 1 || box.getChildCount() > 0) Ui.section(this, box, title);
+        LinearLayout body = new LinearLayout(this);
+        body.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.topMargin = Ui.dp(this, 4);
+        box.addView(body, lp);
+        return body;
     }
 
     private java.util.List<Runnable> currentSettingsSteps() {
@@ -225,7 +235,8 @@ public class MainActivity extends Activity {
             one.add(() -> {
                 for (int i = 0; i < SET_CATS.length; i++) {
                     final int ci = i;
-                    Ui.row(this, box, i, SET_CATS.length, (String) SET_CATS[i][0], L.t((String) SET_CATS[i][1]), L.t((String) SET_CATS[i][2]), Ui.chevron(this), v -> openSettingsCat(ci));
+                    com.google.android.material.card.MaterialCardView card = Ui.row(this, box, 0, 1, (String) SET_CATS[i][0], L.t((String) SET_CATS[i][1]), L.t((String) SET_CATS[i][2]), Ui.chevron(this), v -> openSettingsCat(ci));
+                    ((android.view.ViewGroup.MarginLayoutParams) card.getLayoutParams()).topMargin = Ui.dp(this, i == 0 ? 4 : 10);   // 每個分類是獨立的一張卡，中間留空隙
                 }
             });
             return one;
