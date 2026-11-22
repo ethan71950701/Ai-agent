@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * App 自己的錯誤紀錄：當機（沒攔到的例外）與程式主動記下的錯誤都寫進 App 資料夾的 app_errors.log，
- * 在「功能 → 維護 → 錯誤紀錄」看、分享、存檔。不含 API Key；最多留約 120 KB，超過就丟掉最舊的一半。
+ * 在「進階與診斷 → 錯誤紀錄」看、分享、存檔。不含 API Key；最多留約 120 KB，超過就丟掉最舊的一半。
  */
 final class CrashLog {
     private CrashLog() { }

@@ -22,7 +22,7 @@ public class OnboardingActivity extends Activity {
             "語音在手機上離線辨識，不會上傳；也可以直接打字。",
             "看到畫面後會點擊、輸入、捲動。螢幕邊緣的光暈和點擊漣漪，讓你知道它正在做什麼。",
             "付款、轉帳、刪除、傳訊息、登入這類操作，一律先跳出確認框；你沒有回應就是不同意。",
-            "給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。"};
+            "給 App 需要的權限、設定 API Key。隨時可以在「設定 → AI 與資料」重做。"};
     private ViewPager2 pager;
     private final View[] dots = new View[TITLES.length];
     private View next;

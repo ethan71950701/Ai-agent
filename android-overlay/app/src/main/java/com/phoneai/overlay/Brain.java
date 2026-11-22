@@ -54,7 +54,7 @@ final class Brain {
         int kb = 0;
         for (String b : images) kb += b.length() / 1024;
         LifeLog.add(act, "帶圖片的聊天：" + images.size() + " 張（約 " + kb + " KB）用了 " + ms + " ms，" + (reply != null ? "成功" : "失敗：" + ChatEngine.lastError) + "，模型 " + ChatEngine.lastModel);   // 診斷：圖片一直逾時時看是上傳大、模型慢、還是被拒絕
-        return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
+        return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「設定 → AI 與資料」確認 Claude API Key。）");
     }
 
     private static String run(Activity act, String t, AgentLoop.Ui ui) {
@@ -90,7 +90,7 @@ final class Brain {
                 if (reply == null) reply = Schedule.quickAnswer(act, t);   // 連不上 AI（沒網路）時，才用關鍵字直接回答電量、儲存空間、幾點這類短問題
                 // 聊天助理回答「我不能操作手機」，但使用者明明是要操作：補救，改走自動操作
                 if (Assist.refusesToOperate(reply) && Assist.looksLikeAction(t)) return AgentLoop.run(act, t, ui);
-                return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）");
+                return reply != null ? reply : L.t("連不上 AI：") + ChatEngine.lastError + L.t("（請檢查網路，或到「設定 → AI 與資料」確認 Claude API Key。）");
             }
         }
     }

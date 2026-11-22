@@ -229,7 +229,7 @@ final class AgentLoop {
         for (String w : TASK_BLOCK)
             if (hit(task, w) && !ui.confirm(L.t("任務含「") + L.t(w) + L.t("」這類敏感操作，要繼續嗎？"))) return L.t("已取消，沒有執行。");
         String key = ChatEngine.key(c);
-        if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。");
+        if (key == null || key.isEmpty()) return L.t("還沒有 Claude API Key：請到「設定 → AI 與資料 → AI 服務與 API Key」設定。");
         if (!Root.available() && RippleAccessibilityService.instance == null)
             return L.t("沒有 root 時，操作手機要靠無障礙服務：請先到系統設定開啟 Vertex 的無障礙服務。");
         Memory.seedLessons(c);

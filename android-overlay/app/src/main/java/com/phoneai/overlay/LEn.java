@@ -508,7 +508,7 @@ final class LEn {
         m.put("語音在手機上離線辨識，不會上傳；也可以直接打字。", "Speech is recognized offline on the phone and not uploaded; you can also just type.");
         m.put("看到畫面後會點擊、輸入、捲動。螢幕邊緣的光暈和點擊漣漪，讓你知道它正在做什麼。", "After it sees the screen it taps, types and scrolls. The glow at the screen edge and the tap ripples show you what it is doing.");
         m.put("付款、轉帳、刪除、傳訊息、登入這類操作，一律先跳出確認框；你沒有回應就是不同意。", "Payments, transfers, deletion, messaging and login always show a confirmation dialog first; no response counts as \"no\".");
-        m.put("給 App 需要的權限、設定 API Key。隨時可以在「功能 → 維護」重做。", "Give the app the permissions it needs and set the API key. You can redo this any time under \"Features → Maintenance\".");
+        m.put("給 App 需要的權限、設定 API Key。隨時可以在「設定 → AI 與資料」重做。", "Give the app the permissions it needs and set the API key. You can redo this any time under \"Settings → AI & data\".");
         m.put("略過", "Skip");
         m.put("先選一個主題色（之後可以在「設定 → 外觀」再改）", "Pick a theme color first (you can change it later under \"Settings → Appearance\")");
         m.put("（還沒發過通知）", "(no notification sent yet)");
@@ -591,7 +591,7 @@ final class LEn {
         m.put("任務含「", "The task contains \"");
         m.put("」這類敏感操作，要繼續嗎？", "\", a sensitive action. Continue?");
         m.put("已取消，沒有執行。", "Cancelled; nothing was done.");
-        m.put("還沒有 Claude API Key：請到「功能 → 維護 → Claude API Key」設定。", "No Claude API key yet: set it under \"Features → Maintenance → Claude API Key\".");
+        m.put("還沒有 Claude API Key：請到「設定 → AI 與資料 → AI 服務與 API Key」設定。", "No Claude API key yet: set it under \"Settings → AI & data → AI service & API key\".");
         m.put("第 ", "Step ");
         m.put(" 步", "");
         m.put("截圖失敗：請確認 root 已允許 Vertex。", "Screenshot failed: make sure root is allowed for Vertex.");
@@ -1057,8 +1057,8 @@ final class LEn {
         m.put("已設定 %02d:%02d 的鬧鐘（已直接設好，不用再按儲存）", "Alarm set for %02d:%02d (set directly; no need to press save).");
         m.put("已送出 %02d:%02d 的鬧鐘設定（有 SET_ALARM 權限時會直接設好；時鐘畫面如果跳出來，要按儲存）", "Alarm request sent for %02d:%02d (it is set directly with the SET_ALARM permission; if the clock screen appears, press save).");
         m.put("已打開時鐘，要在時鐘裡按儲存，%02d:%02d 的鬧鐘才會設定", "Opened the clock. Tap Save in the clock to set the %02d:%02d alarm.");
-        m.put("（請檢查網路，或到「功能 → 維護」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Features → Maintenance\".)");
-        m.put("還沒有 Claude API Key（功能 → 維護 → Claude API Key）", "No Claude API key yet (Features → Maintenance → Claude API key)");
+        m.put("（請檢查網路，或到「設定 → AI 與資料」確認 Claude API Key。）", " (check the network, or confirm the Claude API key under \"Settings → AI & data\".)");
+        m.put("還沒有 Claude API Key（設定 → AI 與資料 → AI 服務與 API Key）", "No Claude API key yet (Settings → AI & data → AI service & API key)");
         m.put("AI 的回答看不懂，已停止。", "The AI's reply could not be understood; stopped.");
         m.put("完成了。", "Done.");
         m.put("做不到：", "Cannot do it: ");
@@ -1133,7 +1133,7 @@ final class LEn {
         m.put("這會開關飛航模式，可能會斷網，要繼續嗎？", "This toggles airplane mode and may cut the network. Continue?");
         m.put("已取消", "Cancelled");
         m.put("已開啟 App", "App opened");
-        m.put("連不上 AI：請檢查網路，或到「功能 → 維護」確認 Claude API Key。", "Cannot reach the AI: check the network, or confirm the Claude API key under \"Features → Maintenance\".");
+        m.put("連不上 AI：請檢查網路，或到「設定 → AI 與資料」確認 Claude API Key。", "Cannot reach the AI: check the network, or confirm the Claude API key under \"Settings → AI & data\".");
         m.put("定時任務出錯：", "Scheduled task error: ");
         m.put("確定", "OK");
         m.put("繼續問…", "Keep asking…");
@@ -1199,8 +1199,8 @@ final class LEn {
         m.put("Android API：", "Android API: ");
         m.put("；", "; ");
         m.put("｜", " | ");
-        m.put("今天的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "Today's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
-        m.put("這個月的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。", "This month's Claude usage has reached the limit (%,d tokens). You can change it under Features → Maintenance → Usage and limits.");
+        m.put("今天的 Claude 用量已達上限（%,d token）。可在「設定 → AI 與資料 → 用量與上限」調整。", "Today's Claude usage has reached the limit (%,d tokens). You can change it under Settings → AI & data → Usage and limits.");
+        m.put("這個月的 Claude 用量已達上限（%,d token）。可在「設定 → AI 與資料 → 用量與上限」調整。", "This month's Claude usage has reached the limit (%,d tokens). You can change it under Settings → AI & data → Usage and limits.");
                 m.put("今天：%,d token（輸入 %,d、輸出 %,d）\n　快取寫入 %,d、快取讀取 %,d\n這個月：%,d token（輸入 %,d、輸出 %,d）\n\n這是 token 數，不是金額；金額請到 Anthropic Console 的 Usage 查。上限填千 token，0 或留空 = 不限。", "Today: %,d tokens (input %,d, output %,d)\n　cache writes %,d, cache reads %,d\nThis month: %,d tokens (input %,d, output %,d)\n\nThese are token counts, not money; check amounts on the Usage page of the Anthropic Console. Limits are in thousands of tokens; 0 or empty = no limit.");
         m.put("每日上限（千 token）", "Daily limit (thousand tokens)");
         m.put("每月上限（千 token）", "Monthly limit (thousand tokens)");
@@ -1233,6 +1233,11 @@ final class LEn {
         m.put("比對已安裝的版本…", "Comparing with the installed version…");
         m.put("拼出新版本…", "Building the new version…");
         m.put("（增量補丁）…", " (delta patch)…");
+        m.put("AI 與資料", "AI & data");
+        m.put("AI 服務與 Key、網頁搜尋、用量上限", "AI service & key, web search, usage limits");
+        m.put("檢查更新、自動檢查、公告", "Check for updates, auto-check, announcements");
+        m.put("其他", "Other");
+        m.put("設定導覽、解除安裝", "Setup guide, uninstall");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
         m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");
@@ -1349,7 +1354,7 @@ final class LEn {
         m.put("會把最近 20 筆任務（含每一步的思考、動作、結果、token）和診斷資訊（版本、模式、AI 服務的網址與模型）存成文字檔，讓你用分享選單傳出去。不含 API Key；但任務文字和畫面上的內容可能有個人資料，分享前請自己看過。\n\n「分享」會打開系統分享選單；「存到 PhoneAI 資料夾」會存成 下載/PhoneAI/phoneai_log_日期時間.txt（跟互傳檔案收到的檔案是同一個資料夾，不是下載資料夾的最外層）。", "Saves the last 20 tasks (each step's thinking, action, result and tokens) and diagnostics (version, mode, AI service host and model) as a text file you can send with the share sheet. It does not include API keys, but task text and on-screen content may contain personal data, so please review it before sharing. \"Share\" opens the system share sheet; \"Save to Vertex folder\" saves Download/PhoneAI/phoneai_log_datetime.txt (the same folder as files received by file transfer, not the top level of Downloads).");
         m.put("匯出", "Export");
         m.put("匯出失敗：", "Export failed: ");
-        m.put("已有這個服務的 Key，沿用（要換 Key 請到「功能 → 維護」重新輸入）", "This service already has a key; reusing it (to change it, go to Functions → Maintenance).");
+        m.put("已有這個服務的 Key，沿用（要換 Key 請到「設定 → AI 與資料」重新輸入）", "This service already has a key; reusing it (to change it, go to Settings → AI & data).");
         m.put("我做完了，繼續", "Done, continue");
         m.put("\n做完按「繼續」，AI 會接著做。", "\nPress Continue when done and the AI carries on.");
         m.put("朗讀引擎啟動失敗（代碼 ", "Speech engine failed to start (code ");

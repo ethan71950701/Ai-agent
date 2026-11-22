@@ -154,12 +154,12 @@ final class Usage {
         if (ld > 0) {
             long[] s = sum(c, today());
             if (s[0] + s[1] >= ld)
-                return String.format(L.t("今天的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。"), ld);
+                return String.format(L.t("今天的 Claude 用量已達上限（%,d token）。可在「設定 → AI 與資料 → 用量與上限」調整。"), ld);
         }
         if (lm > 0) {
             long[] s = sum(c, today().substring(0, 7));
             if (s[0] + s[1] >= lm)
-                return String.format(L.t("這個月的 Claude 用量已達上限（%,d token）。可在「功能 → 維護 → 用量與上限」調整。"), lm);
+                return String.format(L.t("這個月的 Claude 用量已達上限（%,d token）。可在「設定 → AI 與資料 → 用量與上限」調整。"), lm);
         }
         return null;
     }

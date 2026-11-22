@@ -302,7 +302,7 @@ final class ChatEngine {
         if (!tmp.renameTo(f)) throw new Exception("寫入對話紀錄失敗");
     }
 
-    /** API 金鑰：只讀 App 自己的檔案（設定時用「功能 → 維護 → Claude API Key」存進來）。 */
+    /** API 金鑰：只讀 App 自己的檔案（設定時用「設定 → AI 與資料 → AI 服務與 API Key」存進來）。 */
     static String key(Context c) {
         String k = LlmConfig.readKey(c, LlmConfig.cheap(c));   // 有任何一個欄位的 Key 就算設定好了；實際送出時 post 會依模型挑自己的 Key
         return k != null ? k : LlmConfig.readKey(c, LlmConfig.vision(c));
@@ -481,7 +481,7 @@ final class ChatEngine {
     static String visionChat(Context c, JSONArray msgs, boolean builtinSearch) {
         lastError = "";
         String key = key(c);
-        if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
+        if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（設定 → AI 與資料 → AI 服務與 API Key）"); return null; }
         for (String model : new String[]{MODEL, AgentLoop.MODEL}) {
             try {
                 boolean claude = builtinSearch && claudeSearchOn(c) && !(MODEL.equals(model) ? LlmConfig.cheap(c) : LlmConfig.vision(c)).openai();   // 網頁搜尋是 Claude 的伺服器工具，別家沒有
@@ -703,7 +703,7 @@ final class ChatEngine {
         SAW_NOTIFS.remove();
         WebReader.newTurn();
         String key = key(c);
-        if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（功能 → 維護 → Claude API Key）"); return null; }
+        if (key == null || key.isEmpty()) { lastError = L.t("還沒有 Claude API Key（設定 → AI 與資料 → AI 服務與 API Key）"); return null; }
         try {
             JSONObject mem = Memory.load(c);
             String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());

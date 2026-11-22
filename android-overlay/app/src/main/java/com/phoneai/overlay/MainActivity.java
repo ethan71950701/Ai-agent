@@ -995,9 +995,6 @@ public class MainActivity extends Activity {
         steps.add(() -> {
             Ui.section(this, box, L.t("資料"));
             Ui.tileGrid(this, box,
-                    new Ui.Tile("pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), true, v -> AiServiceUi.open(this, this::recreate)),
-                    new Ui.Tile("search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), false, v -> TavilySearch.openSettings(this, this::recreate)),
-                    new Ui.Tile("pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), false, v -> TavilySearch.editTrusted(this, this::recreate)),
                     new Ui.Tile("list", L.t("記住的步驟"), String.format(L.t("目前記住 %d 個任務（點進去看、刪除）"), Macros.count(this)), false, v -> MacrosUi.open(this, this::recreate)),
                     new Ui.Tile("flask", L.t("AI 比較測試"), L.t("同一批任務用不同 AI 各跑一遍，比成功率與花費"), false, v -> AbTestUi.open(this)),
                     new Ui.Tile("bell", L.t("公告"), AnnouncementsUi.summary(this), false, v -> AnnouncementsUi.open(this, this::recreate)),
@@ -1006,14 +1003,6 @@ public class MainActivity extends Activity {
                     new Ui.Tile("clock", L.t("定時任務"), ScheduleUi.summary(this), false, v -> ScheduleUi.open(this, this::recreate)),
                     new Ui.Tile("clock", L.t("任務過程"), L.t("AI 每一步做了什麼"), false, v -> startActivity(new Intent(this, LogActivity.class))),
                     new Ui.Tile("transfer", L.t("互傳檔案"), L.t("在自己的裝置之間互傳檔案"), false, v -> startActivity(new Intent(this, TransferActivity.class))));
-        });
-        steps.add(() -> {
-            Ui.section(this, box, L.t("維護"));
-            Ui.tileGrid(this, box,
-                    new Ui.Tile("download", L.t("檢查並更新"), L.t("按一下：有新版本就自動更新"), false, v -> startUpdate()),
-                    new Ui.Tile("power", L.t("解除安裝"), L.t("還原設定、刪除 Key，最後移除本 App"), true, v -> Uninstaller.start(this)),
-                    new Ui.Tile("check_circle", L.t("設定導覽"), L.t("逐步檢查權限、Key（root 選用）"), false, v -> startActivity(new Intent(this, GuideActivity.class))),
-                    new Ui.Tile("sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), false, v -> Usage.dialog(this)));
         });
         steps.add(() -> {
             Ui.section(this, box, L.t("進階"));
@@ -1140,6 +1129,13 @@ public class MainActivity extends Activity {
     private java.util.List<Runnable> settingsSteps() {
         heroBox = null;
         final java.util.List<Runnable> steps = new java.util.ArrayList<>();
+        steps.add(() -> {   // 規則：設好就不太動的東西放設定（功能頁只放「打開來用」的）
+            LinearLayout g = Ui.expandGroup(this, box, "pin", L.t("AI 與資料"), L.t("AI 服務與 Key、網頁搜尋、用量上限"), false);
+            Ui.row(this, g, 0, 4, "pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), Ui.chevron(this), v -> AiServiceUi.open(this, this::recreate));
+            Ui.row(this, g, 1, 4, "search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), Ui.chevron(this), v -> TavilySearch.openSettings(this, this::recreate));
+            Ui.row(this, g, 2, 4, "pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), Ui.chevron(this), v -> TavilySearch.editTrusted(this, this::recreate));
+            Ui.row(this, g, 3, 4, "sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), Ui.chevron(this), v -> Usage.dialog(this));
+        });
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
             Ui.themePicker(this, g);
@@ -1149,12 +1145,13 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("自動檢查新版本"), false);
-            Ui.row(this, u, 0, 4, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
-            Ui.switchRow(this, u, 1, 4, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
+            LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("檢查更新、自動檢查、公告"), false);
+            Ui.row(this, u, 0, 5, "download", L.t("檢查並更新"), L.t("按一下：有新版本就自動更新"), Ui.chevron(this), v -> startUpdate());
+            Ui.row(this, u, 1, 5, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
+            Ui.switchRow(this, u, 2, 5, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
                     cfg().getBoolean("upd_auto", true), (v, on) -> cfg().edit().putBoolean("upd_auto", on).apply());
-            Ui.row(this, u, 2, 4, "bell", L.t("立即看公告"), L.t("現在就去抓一次公告（不受 10 分鐘限制，看過的也會再顯示）"), Ui.chevron(this), v -> Announcements.check(this, true));
-            Ui.switchRow(this, u, 3, 4, "bell", L.t("開 App 時看公告"), L.t("打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有新公告；不會傳送任何你的資料。關掉就不會收到公告，也收不到暫時停用功能的通知"),
+            Ui.row(this, u, 3, 5, "bell", L.t("立即看公告"), L.t("現在就去抓一次公告（不受 10 分鐘限制，看過的也會再顯示）"), Ui.chevron(this), v -> Announcements.check(this, true));
+            Ui.switchRow(this, u, 4, 5, "bell", L.t("開 App 時看公告"), L.t("打開 App 時（最多每 10 分鐘）到 GitHub 看有沒有新公告；不會傳送任何你的資料。關掉就不會收到公告，也收不到暫時停用功能的通知"),
                     cfg().getBoolean("ann_on", true), (v, on) -> cfg().edit().putBoolean("ann_on", on).apply());
         });
         steps.add(() -> {
@@ -1356,6 +1353,11 @@ public class MainActivity extends Activity {
                 });
                 kc.addView(ks, new LinearLayout.LayoutParams(-1, -2));
             }
+        });
+        steps.add(() -> {
+            LinearLayout g = Ui.expandGroup(this, box, "check_circle", L.t("其他"), L.t("設定導覽、解除安裝"), false);
+            Ui.row(this, g, 0, 2, "check_circle", L.t("設定導覽"), L.t("逐步檢查權限、Key（root 選用）"), Ui.chevron(this), v -> startActivity(new Intent(this, GuideActivity.class)));
+            Ui.row(this, g, 1, 2, "power", L.t("解除安裝"), L.t("還原設定、刪除 Key，最後移除本 App"), Ui.chevron(this), v -> Uninstaller.start(this));
         });
         return steps;
     }

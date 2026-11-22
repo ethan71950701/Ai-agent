@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 整理功能頁與設定頁：「AI 服務與 API Key」「網頁搜尋」「可信任的網站」「用量與上限」搬到設定 → AI 與資料；「檢查並更新」併進設定 → 更新；「設定導覽」「解除安裝」搬到設定 → 其他；功能頁只留「打開來用」的東西｜Reorganized Features vs Settings: AI service & API key, web search, trusted sites and usage limits moved to Settings → AI & data; "Check for updates" now sits in Settings → Updates; setup guide and uninstall moved to Settings → Other; the Features page keeps only things you open and use
+
 - 增量更新的補丁下載也顯示百分比與大小，「拼出新版本」時通知欄也會更新｜The delta-update patch download now shows percentage and size too, and the notification updates while the new version is being assembled
 
 ## 1.0.1818
