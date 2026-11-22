@@ -1251,6 +1251,10 @@ final class LEn {
         m.put("，這支手機不支援", ", not supported on this phone");
         m.put("；系統主色 ", "; system accent ");
         m.put("；App 目前主色 ", "; app accent now ");
+        m.put("自己從桌面壁紙取色", "Pick colors from the home wallpaper myself");
+        m.put("換壁紙後顏色沒跟著變時打開：App 自己讀桌面壁紙的主色來配色，不靠系統給的；開關後會重開畫面", "Turn on if colors do not follow the wallpaper: the app reads the home wallpaper's main color itself instead of relying on the system; the screen restarts when toggled");
+        m.put("；桌面壁紙主色 ", "; home wallpaper main color ");
+        m.put("讀不到", "unavailable");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
         m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");

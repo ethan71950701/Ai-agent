@@ -261,7 +261,8 @@ public class DiagActivity extends Activity {
             String used = String.format("#%06X", App.accentColor(this, 0) & 0xFFFFFF);
             boolean on = getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("monet_on", true);
             sb.append(L.t("莫奈取色：")).append(on ? L.t("開") : L.t("關（用固定色）")).append(avail ? "" : L.t("，這支手機不支援"))
-                    .append(L.t("；系統主色 ")).append(sys).append(" / ").append(sys2).append(L.t("；App 目前主色 ")).append(used).append('\n');
+                    .append(L.t("；系統主色 ")).append(sys).append(" / ").append(sys2).append(L.t("；App 目前主色 ")).append(used)
+                    .append(L.t("；桌面壁紙主色 ")).append(App.wallpaperSeed(this) == 0 ? L.t("讀不到") : String.format("#%06X", App.wallpaperSeed(this) & 0xFFFFFF)).append('\n');
         } catch (Throwable ignored) { }
         sb.append(L.t("更新檢查：")).append(Updater.info(this).isEmpty() ? L.t("（還沒檢查過）") : Updater.info(this)).append('\n');
         sb.append(L.t("聲紋：")).append(SpeakerId.statusText(this)).append('\n');

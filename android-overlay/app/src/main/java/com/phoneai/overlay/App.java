@@ -30,6 +30,25 @@ public class App extends Application {
         return sp.getBoolean("monet_on", true) ? "monet" : "seed" + sp.getInt("seed_idx", 0);
     }
 
+    /** 桌面壁紙的主色（系統自己的取色沒跟著壁紙變時，由 App 自己算用）；讀不到回 0。 */
+    static int wallpaperSeed(Context c) {
+        try {
+            android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(c.getApplicationContext());
+            android.app.WallpaperColors wc = wm.getWallpaperColors(android.app.WallpaperManager.FLAG_SYSTEM);
+            return wc == null ? 0 : wc.getPrimaryColor().toArgb();
+        } catch (Throwable t) { return 0; }
+    }
+
+    /** 莫奈用的選項：開了「自己從桌面壁紙取色」而且讀得到壁紙色，就以壁紙主色為種子；否則照系統給的。 */
+    static DynamicColorsOptions monetOptions(Context c) {
+        DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
+        if (c.getApplicationContext().getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("monet_wall", false)) {
+            int seed = wallpaperSeed(c);
+            if (seed != 0) ob.setContentBasedSource(seed);
+        }
+        return ob.build();
+    }
+
     /** 目前主題的主色（莫奈取色或固定色）。助理面板的 Activity 沒套 Material 主題，所以自己組一個再讀；讀不到回 defColor。 */
     static int accentColor(Context c, int defColor) {
         try {
@@ -41,7 +60,7 @@ public class App extends Application {
                 int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
                 tc.getTheme().applyStyle(ACCENTS[i], true);
             } else {
-                use = DynamicColors.wrapContextIfAvailable(tc);
+                use = DynamicColors.wrapContextIfAvailable(tc, monetOptions(c));
             }
             android.util.TypedValue tv = new android.util.TypedValue();
             if (!use.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, tv, true)) return defColor;
@@ -81,8 +100,7 @@ public class App extends Application {
                     a.getTheme().applyStyle(ACCENTS[i], true);
                     return;
                 }
-                DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
-                DynamicColors.applyToActivityIfAvailable(a, ob.build());
+                DynamicColors.applyToActivityIfAvailable(a, monetOptions(a));
             }
             @Override public void onActivityCreated(Activity a, Bundle b) { }
             @Override
