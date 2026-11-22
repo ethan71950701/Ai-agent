@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 移除「回答／提問卡片樣式（試用）」開關與測試按鈕，回到原本的回答卡片｜Removed the trial "answer/question card style" switches and test buttons; back to the original answer card
+
 ## 1.0.1799
 
 - 新增「回答用提問的樣式（試用）」開關與「測試回答樣式」按鈕（設定 → 語音）：聊天回答改成跟 AI 提問一樣的白字置中樣式｜Added a "Replies in the question style (trial)" switch and a "Test reply style" button (Settings → Voice)
