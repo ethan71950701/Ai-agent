@@ -64,15 +64,15 @@ final class ReplyCard {
             final float tintK = new float[]{0.62f, 0.85f, 1f}[lv], darkK = new float[]{0.9f, 0.6f, 0.4f}[lv], midBlur = new float[]{46f, 28f, 18f}[lv], liftK = new float[]{1f, 0.5f, 0.2f}[lv];
             int ac = App.accentColor(act, 0xFF6EA8FF);   // 玻璃染上主題色（深一點）：跟大多數背景的顏色都不同，邊界才看得出來
             int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * tintK) << 16) | (Math.round(((ac >> 8) & 255) * tintK) << 8) | Math.round((ac & 255) * tintK);
-            GlassBar g = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
+            GlassBar g = new GlassBar(act, 0xFF23262A, lv == 2 ? 0x00000000 : tintC, 0x44FFFFFF, 30 * d, false);   // 「很透」：跟底下輸入列一樣，不染色
             g.setSource(source);
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            g.setBlurDp(6f);        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
-            g.setSatBoost(1.25f);
-            g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
-            g.setSoftGlow(lv == 2 ? 0.25f : 1f);      // 柔和高光（不是白框）
+            g.setBlurDp(lv == 2 ? 10f : 6f);        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
+            if (lv < 2) g.setSatBoost(1.25f);
+            if (lv < 2) g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
+            g.setSoftGlow(lv == 2 ? 0f : 1f);      // 柔和高光（不是白框）
             // 文字所在的中間：再疊一層很糊的玻璃（只畫中間，邊緣漸漸透明），保證可讀；邊緣仍然通透（預覽的 G5）
             GlassBar mid = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
             mid.setSource(source);
@@ -83,16 +83,16 @@ final class ReplyCard {
             mid.setDarkScale(darkK);
             mid.setCenterMask(true);
             if (lv < 2) g.addView(mid, new FrameLayout.LayoutParams(-1, -1));   // 「很透」不疊中間的糊層：整片都是清楚的玻璃，文字靠陰影
-            g.setDarkScale(darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
+            g.setDarkScale(lv == 2 ? 0.6f : darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 30 * d); o.setAlpha(0.9f); }
             });
             g.setOutlineSpotShadowColor(0xFF000000);
             g.setOutlineAmbientShadowColor(0x99000000);
-            g.setLift(liftK);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
+            if (lv < 2) g.setLift(liftK);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
             // 白色邊框已拿掉（使用者覺得很突兀）；邊界靠後面畫面的模糊與亮度落差
-            if (lv > 0) {   // 玻璃的上緣高光：只有頂部一小段、漸漸消失（不是整圈白框）
+            if (lv == 1) {   // 玻璃的上緣高光：只有頂部一小段、漸漸消失（不是整圈白框）
                 View hl = new View(act);
                 GradientDrawable hg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x55FFFFFF, 0x00FFFFFF});
                 hg.setCornerRadii(new float[]{30 * d, 30 * d, 30 * d, 30 * d, 0, 0, 0, 0});
