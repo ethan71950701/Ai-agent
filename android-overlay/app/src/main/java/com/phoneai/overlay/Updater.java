@@ -240,8 +240,19 @@ final class Updater {
             if (want == null) return false;
             setProg(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true);
             nm.notify(NOTE, progress(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true));
-            java.nio.file.Files.write(patch.toPath(), httpBytes(patchUrl, 60L * 1024 * 1024));
-            setProg(a, L.t("拼出新版本…"), 0, true);
+            final long[] lastAt = {0};
+            java.nio.file.Files.write(patch.toPath(), httpBytes(patchUrl, 60L * 1024 * 1024, (got, total) -> {   // 補丁下載也顯示百分比（通知最多每 0.4 秒更新一次，理由同下載完整包）
+                if (total <= 0) return;
+                int pct = (int) (got * 100 / total);
+                long nowMs = android.os.SystemClock.uptimeMillis();
+                if (pct < 100 && nowMs - lastAt[0] < 400) return;
+                lastAt[0] = nowMs;
+                String t = L.t("下載 ") + v + "：" + pct + "%" + String.format(java.util.Locale.US, "（%.1f / %.1f MB）", got / 1048576f, total / 1048576f);
+                setProg(a, t, pct, false);
+                nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
+            }));
+            setProg(a, L.t("拼出新版本…"), 100, true);
+            nm.notify(NOTE, progress(a, L.t("拼出新版本…"), 100, true));
             boolean ok = DeltaPatch.applyFiles(new File(ai.sourceDir), patch, out, want);
             note(a, "增量更新：" + (ok ? "成功（補丁 " + patch.length() / 1024 + " KB）" : "拼出來的檔案核對不符，改下載完整 APK"));
             return ok;
@@ -335,6 +346,7 @@ final class Updater {
                 nm.notify(NOTE, progress(a, L.t("下載 ") + v + "：" + pct + "%", pct, false));
             }
             setProg(a, L.t("拼出新版本…"), 100, true);
+            nm.notify(NOTE, progress(a, L.t("拼出新版本…"), 100, true));
             java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
             try (java.io.OutputStream fo = new FileOutputStream(out); java.security.DigestOutputStream dos = new java.security.DigestOutputStream(fo, md)) {
                 BlockSync.assemble(old, ctl, src, ranges, data, dos);
@@ -352,7 +364,10 @@ final class Updater {
         }
     }
 
-    private static byte[] httpBytes(String url, long max) throws Exception {
+    private static byte[] httpBytes(String url, long max) throws Exception { return httpBytes(url, max, null); }
+
+    /** progress：每讀一段回報「已讀位元組、總位元組（不知道是 -1）」。 */
+    private static byte[] httpBytes(String url, long max, java.util.function.BiConsumer<Long, Long> progress) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setInstanceFollowRedirects(true);
         c.setConnectTimeout(20000);
@@ -363,9 +378,11 @@ final class Updater {
             java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
             byte[] b = new byte[65536];
             int n;
+            long total = c.getContentLengthLong();
             while ((n = in.read(b)) > 0) {
                 if (o.size() + n > max) throw new java.io.IOException("too large");
                 o.write(b, 0, n);
+                if (progress != null) progress.accept((long) o.size(), total);
             }
             return o.toByteArray();
         }
