@@ -44,7 +44,6 @@ final class PreviewView extends FrameLayout {
     private final GradientDrawable bg = new GradientDrawable();
     private float radius;
     private DotLayer dots;
-    private RippleView rip;
     private boolean takeover;
 
     /** 預覽上已經沒有任何按鈕（卡片整個是主螢幕）：永遠不是控制區。保留給 PreviewTouch 呼叫。 */
@@ -156,9 +155,6 @@ final class PreviewView extends FrameLayout {
 
         dots = new DotLayer(c, d);
         addView(dots, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        // AI 點擊的漣漪直接畫在預覽卡片自己這一層（座標從背景螢幕換算過來）：不靠背景螢幕上的覆蓋層，預覽用什麼方式顯示畫面都看得到
-        rip = new RippleView(c);
-        addView(rip, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     /** 進入／離開接手模式：預覽上不再有按鈕，外觀不變（Now Bar 與小白條會反映狀態）。 */
@@ -169,19 +165,6 @@ final class PreviewView extends FrameLayout {
     /** 接手時你點的地方閃一個圈（座標是卡片座標）。 */
     void pulse(float x, float y) {
         dots.pulse(x, y);
-    }
-
-    /** AI 的點擊或滑動（背景螢幕的座標）：在預覽卡片上對應的位置畫漣漪（起點等於終點就是點擊）。 */
-    void rippleOnVd(float x1, float y1, float x2, float y2) {
-        float sx = width / (float) Math.max(1, OverlayService.vdW), sy = cardHeight() / (float) Math.max(1, OverlayService.vdH);
-        if (x1 == x2 && y1 == y2) rip.ripple(x1 * sx, y1 * sy);
-        else rip.swipe(x1 * sx, y1 * sy, x2 * sx, y2 * sy);
-    }
-
-    /** AI 在背景螢幕上點的地方（背景螢幕的座標）：在預覽卡片上對應的位置閃一個圈。 */
-    void pulseOnVd(float vx, float vy) {
-        float sx = width / (float) Math.max(1, OverlayService.vdW), sy = cardHeight() / (float) Math.max(1, OverlayService.vdH);
-        dots.pulse(vx * sx, vy * sy);
     }
 
     int cardWidth() { return width; }

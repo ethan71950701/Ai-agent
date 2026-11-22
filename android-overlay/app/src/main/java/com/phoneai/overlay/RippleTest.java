@@ -8,11 +8,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 診斷實驗：背景模式的預覽小窗裡，AI 點擊的漣漪看不看得到？同時測兩種畫法，一前一後各畫一次，讓你分得出是哪一種有出現：
- *  A（新）：漣漪直接畫在預覽卡片上（座標從背景螢幕換算）。
- *  B（舊）：漣漪畫在背景螢幕上的覆蓋層，預覽看的是那個螢幕（間接看到）。
- * 流程：建立背景螢幕 → 在上面開「設定」→ 打開預覽小窗 → 畫 A（5 個位置）→ 等 → 畫 B（同樣 5 個位置）→ 收掉。約 15 秒。需要 root 與無障礙服務。
- * 結果只是診斷文字，要你親眼看預覽小窗，回報「第幾次有看到」。在背景執行緒呼叫。
+ * 診斷實驗：背景模式的預覽小窗裡，AI 點擊的漣漪看不看得到？漣漪畫在背景螢幕上的覆蓋層，預覽看的是那個螢幕（間接看到）。
+ * 流程：建立背景螢幕 → 在上面開「設定」→ 打開預覽小窗 → 在中央與四個象限的中心各畫一次 → 收掉。約 10 秒。需要 root 與無障礙服務。
+ * 結果只是診斷文字，要你親眼看預覽小窗有沒有漣漪。在背景執行緒呼叫。
  */
 final class RippleTest {
     private RippleTest() { }
@@ -40,16 +38,7 @@ final class RippleTest {
             sleep(2000);
             int[][] pts = points(OverlayService.vdW, OverlayService.vdH);
 
-            // A：畫在預覽卡片上
-            final boolean[] drewA = {true};
-            for (int[] p : pts) {
-                onMain(() -> drewA[0] &= RippleAccessibilityService.previewRipple(p[0], p[1], p[0], p[1]));
-                sleep(500);
-            }
-            sb.append(L.t("第一次（新畫法，畫在預覽卡片上）：")).append(drewA[0] ? L.t("已畫 5 個位置\n") : L.t("預覽小窗沒有開，沒畫\n"));
-            sleep(2500);
-
-            // B：畫在背景螢幕的覆蓋層上
+            // 畫在背景螢幕的覆蓋層上（AI 任務用的就是這一種）
             final String[] stateB = {""};
             final int[] drewB = {0};
             for (int[] p : pts) {
@@ -62,9 +51,9 @@ final class RippleTest {
                 });
                 sleep(500);
             }
-            sb.append(L.t("第二次（舊畫法，畫在背景螢幕的覆蓋層上）：")).append(stateB[0].isEmpty() ? L.t("沒有動作") : stateB[0]).append("，").append(drewB[0]).append(L.t(" 個位置已送出畫\n"));
+            sb.append(L.t("漣漪（畫在背景螢幕的覆蓋層上）：")).append(stateB[0].isEmpty() ? L.t("沒有動作") : stateB[0]).append("，").append(drewB[0]).append(L.t(" 個位置已送出畫\n"));
             sleep(2500);
-            sb.append('\n').append(L.t("請回報：預覽小窗裡，第一次、第二次，哪一次有看到漣漪？（位置應該在中央，以及四個象限的中心）"));
+            sb.append('\n').append(L.t("預覽小窗裡有沒有看到漣漪？位置應該在中央，以及四個象限的中心。"));
         } catch (Throwable t) {
             sb.append(L.t("出錯：")).append(t);
         } finally {

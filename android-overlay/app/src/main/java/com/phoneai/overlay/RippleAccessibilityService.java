@@ -467,20 +467,6 @@ public class RippleAccessibilityService extends AccessibilityService {
         refreshGlows();   // 預覽關了：光暈回到主螢幕
     }
 
-    /** AI 的點擊或滑動畫在預覽小窗上（座標是背景螢幕的座標）。預覽開著而且畫了回 true；沒開預覽回 false。要在主執行緒呼叫。 */
-    static boolean previewRipple(float x1, float y1, float x2, float y2) {
-        RippleAccessibilityService s = instance;
-        if (s == null || s.preview == null) return false;
-        s.preview.rippleOnVd(x1, y1, x2, y2);
-        return true;
-    }
-
-    /** 在預覽小窗上閃一個圈（座標是背景螢幕的座標）。沒開預覽就什麼都不做。要在主執行緒呼叫。 */
-    static void previewPulse(float vx, float vy) {
-        RippleAccessibilityService s = instance;
-        if (s != null && s.preview != null) s.preview.pulseOnVd(vx, vy);
-    }
-
     /** AI 開始／結束操作手機：螢幕邊緣的流動光暈（波浪）跟著出現／消失。設定「呼吸光暈」關著就不畫。主執行緒以外也能呼叫。 */
     static void setAgentGlow(final boolean on) {
         final RippleAccessibilityService s = instance;

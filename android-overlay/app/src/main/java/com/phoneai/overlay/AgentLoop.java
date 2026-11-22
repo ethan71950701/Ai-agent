@@ -190,6 +190,7 @@ final class AgentLoop {
         BgDisplay.stopIfLingering();   // 上一次任務留著的背景螢幕先收掉
         boolean bg = BgDisplay.wanted(c);
         if (bg && !BgDisplay.start(c, preOpen)) return L.t("背景螢幕建立失敗：這支手機或 root 管理器可能不支援。請到設定關掉背景模式再試。");
+        if (bg) { final int vd = BgDisplay.id; MAIN.post(() -> RippleAccessibilityService.viewFor(vd)); }   // 先把背景螢幕上的漣漪畫布建好：第一下點擊就看得到，不用等到點的時候才臨時建
         if (bg && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("bg_preview_auto", true)) {   // 背景任務一開始就顯示預覽小視窗（以前要點 Now Bar 才出現，使用者找不到）
             final String sfNow = OverlayService.vdSf;
             MAIN.postDelayed(() -> { try { RippleAccessibilityService.showPreview(sfNow); } catch (Throwable ignored) { } }, 800);
@@ -910,8 +911,6 @@ final class AgentLoop {
     private static void ripple(int x1, int y1, int x2, int y2) {
         final int disp = BgDisplay.active ? BgDisplay.id : 0;   // 背景模式：漣漪畫在背景螢幕上（預覽窗看得到 AI 點在哪）；以前被關掉了
         MAIN.post(() -> {
-            // 背景模式、預覽小窗開著：漣漪直接畫在預覽卡片上（座標換算），不用靠背景螢幕上的覆蓋層（以前那條路在某次改版後看不到了，原因查不出來）
-            if (disp > 0 && RippleAccessibilityService.previewRipple(x1, y1, x2, y2)) return;
             RippleView v = disp > 0 ? RippleAccessibilityService.viewFor(disp) : RippleAccessibilityService.view();
             if (v == null) return;
             if (x1 == x2 && y1 == y2) v.ripple(x1, y1);

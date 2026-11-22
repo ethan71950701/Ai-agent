@@ -71,8 +71,8 @@ public class DiagActivity extends Activity {
                 runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("背景螢幕元件清單測試")).setMessage(r).setPositiveButton(L.t("好"), null).show());
             }, "bg-probe").start();
         }));
-        Ui.buttons(this, box, Ui.button(this, L.t("背景螢幕漣漪測試（新舊兩種畫法）"), v -> {
-            android.widget.Toast.makeText(this, L.t("測試中，約 15 秒。請看預覽小窗裡有沒有漣漪（第一次、第二次）"), android.widget.Toast.LENGTH_LONG).show();
+        Ui.buttons(this, box, Ui.button(this, L.t("背景螢幕漣漪測試"), v -> {
+            android.widget.Toast.makeText(this, L.t("測試中，約 10 秒。請看預覽小窗裡有沒有漣漪"), android.widget.Toast.LENGTH_LONG).show();
             new Thread(() -> {
                 final String r = RippleTest.run(getApplicationContext());
                 runOnUiThread(() -> new com.google.android.material.dialog.MaterialAlertDialogBuilder(this).setTitle(L.t("背景螢幕漣漪測試")).setMessage(r).setPositiveButton(L.t("好"), null).show());
