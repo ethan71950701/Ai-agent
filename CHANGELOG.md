@@ -5,9 +5,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1836
+
 - 所有整頁（互傳檔案、任務過程、助理的記憶、診斷、以及原本是彈窗的那些頁）的內容都改成跟設定頁一樣「一格一格輪流從右邊滑進來」，不再有的有、有的沒有｜All full pages (file transfer, task log, assistant memory, diagnostics and the former popup pages) now slide their content in one block after another from the right, like Settings, instead of some doing it and some not
 
 - 整頁拿掉只是「關掉」的按鈕（好、知道了、關閉、取消）：已經有左上返回箭頭與返回手勢，只留有實際動作的按鈕（儲存、開始、立即看公告…）｜Removed the buttons that only close a full page (OK, Got it, Close, Cancel): the back arrow and back gesture are already there; only buttons with a real action remain (Save, Start, Check announcements now…)
+
 ## 1.0.1834
 
 - 整頁底下的按鈕改成跟其他頁（例如助理的記憶）同一種：一排等寬的圓角按鈕，主要動作（實心）在最前面｜Buttons at the bottom of the full pages now match the other pages (e.g. Assistant memory): one row of equal-width pill buttons with the primary (filled) action first
