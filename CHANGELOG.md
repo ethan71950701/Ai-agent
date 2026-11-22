@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1834
+
 - 整頁底下的按鈕改成跟其他頁（例如助理的記憶）同一種：一排等寬的圓角按鈕，主要動作（實心）在最前面｜Buttons at the bottom of the full pages now match the other pages (e.g. Assistant memory): one row of equal-width pill buttons with the primary (filled) action first
+
 ## 1.0.1833
 
 - 整頁底下的按鈕不再拉滿整行：像對話框一樣，取消與確定靠右、中立的靠左｜Buttons on the full pages no longer stretch across the whole row: like dialogs, Cancel/OK sit on the right and the neutral one on the left
