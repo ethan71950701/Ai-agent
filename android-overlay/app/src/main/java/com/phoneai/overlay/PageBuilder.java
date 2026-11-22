@@ -94,13 +94,22 @@ final class PageBuilder {
         private boolean gone;
         private android.window.OnBackInvokedCallback back;
 
+        private PageAnim anim;
+
         void attach() {
-            a.addContentView(root, new ViewGroup.LayoutParams(-1, -1));
-            final float w = a.getResources().getDisplayMetrics().widthPixels;
-            root.setTranslationX(w);
-            root.animate().translationX(0f).setDuration(320).setInterpolator(new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).start();
+            anim = new PageAnim(a, root);
+            anim.open();
             try {
-                back = this::cancel;
+                if (android.os.Build.VERSION.SDK_INT >= 34) {
+                    back = new android.window.OnBackAnimationCallback() {
+                        @Override public void onBackStarted(android.window.BackEvent e) { if (anim != null) anim.onBackStarted(); }
+                        @Override public void onBackProgressed(android.window.BackEvent e) { if (anim != null) anim.onBackProgressed(e.getProgress()); }
+                        @Override public void onBackCancelled() { if (anim != null) anim.onBackCancelled(); }
+                        @Override public void onBackInvoked() { cancel(); }
+                    };
+                } else {
+                    back = this::cancel;
+                }
                 a.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, back);
             } catch (Throwable ignored) { back = null; }
         }
@@ -110,10 +119,7 @@ final class PageBuilder {
             if (gone) return;
             gone = true;
             try { if (back != null) a.getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(back); } catch (Throwable ignored) { }
-            final float w = a.getResources().getDisplayMetrics().widthPixels;
-            root.animate().cancel();
-            root.animate().translationX(w).setDuration(240).setInterpolator(new android.view.animation.PathInterpolator(0.3f, 0f, 0.8f, 0.15f))
-                    .withEndAction(() -> { if (root.getParent() instanceof ViewGroup) ((ViewGroup) root.getParent()).removeView(root); }).start();
+            if (anim != null) anim.close(null);
         }
 
         @Override

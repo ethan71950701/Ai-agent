@@ -650,6 +650,15 @@ final class Ui {
         tapAt = android.os.SystemClock.uptimeMillis();
     }
 
+    /** 給 PageAnim 用：取出最近一次點的卡片位置與小圖（2 秒內才算；取走後清掉）。沒有就回 null。 */
+    static Object[] takeTap() {
+        if (tapRect == null || android.os.SystemClock.uptimeMillis() - tapAt > 2000) { tapRect = null; tapSnap = null; return null; }
+        Object[] r = {tapRect, tapSnap};
+        tapRect = null;
+        tapSnap = null;
+        return r;
+    }
+
     private static final android.view.animation.PathInterpolator EMPHASIZED = new android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f);
     /** 平順的「慢進慢出」（跟 Android 的 FastOutSlowIn 一樣）：起步比官方強調曲線溫和，容器展開不會一下子衝出去。 */
     private static final android.view.animation.PathInterpolator SMOOTH_IO = new android.view.animation.PathInterpolator(0.4f, 0f, 0.2f, 1f);
