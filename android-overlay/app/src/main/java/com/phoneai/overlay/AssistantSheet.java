@@ -506,7 +506,8 @@ public class AssistantSheet {
     public void setQuestion(String q) {
         questionMode = true;
         questionView.setText(q);
-        questionView.setVisibility(View.VISIBLE);
+        final boolean asCard = act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getBoolean("question_card", false);
+        questionView.setVisibility(asCard ? View.GONE : View.VISIBLE);   // 開關開著：問題用回答卡片顯示
         bgBtnView.setVisibility(View.GONE);
         waiting = false;
         root.removeCallbacks(waitTimeout);
@@ -515,6 +516,13 @@ public class AssistantSheet {
         row.setTranslationY(0f);
         row.setEnabled(true);
         setWaveState(WaveView.IDLE);
+        if (asCard) {
+            final String keepReply = lastReply;
+            final long keepAt = lastReplyAt;
+            showReply("", q);
+            lastReply = keepReply;   // 問題不算「上一則回答」
+            lastReplyAt = keepAt;
+        }
         setStatus(L.t("說出或打字你的回答"));
         java.util.concurrent.CountDownLatch l = questionShown;
         if (l != null) l.countDown();
@@ -1123,7 +1131,7 @@ public class AssistantSheet {
         aurora.setEnergy(0.45f);
         final int topPad = (int) (CARD_TOP_DP * d), botPad = (int) (CARD_BOTTOM_DP * d) + bottomInset;
         final int maxH = replyCardMaxH(botPad);   // 狀態列下面到輸入列上面之間能用的高度
-        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH, root, act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getBoolean("reply_plain", false));
+        final FrameLayout card = ReplyCard.build(act, title, text, this::dismiss, maxH, root);
         replyCard = card;
         if (cardSpring != null) cardSpring.cancel();
         cardInset = bottomInset;   // 新卡片從目前的鍵盤高度開始
