@@ -1202,12 +1202,14 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout g = Ui.expandGroup(this, box, "wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
-            Ui.switchRow(this, g, 0, 3, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
+            Ui.switchRow(this, g, 0, 4, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
                     cfg().getBoolean("voice_sys", false), (v, on) -> cfg().edit().putBoolean("voice_sys", on).apply());
-            Ui.switchRow(this, g, 1, 3, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
+            Ui.switchRow(this, g, 1, 4, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
                     (v, on) -> cfg().edit().putBoolean("tts_on", on).apply());
-            Ui.switchRow(this, g, 2, 3, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
+            Ui.switchRow(this, g, 2, 4, "wave", L.t("開面板時自動聽"), L.t("叫出助理面板就開始聽；關掉就要自己點麥克風"), cfg().getBoolean("voice_auto", true),
                     (v, on) -> cfg().edit().putBoolean("voice_auto", on).apply());
+            Ui.switchRow(this, g, 3, 4, "sparkle", L.t("確認框用回答卡片樣式（試用）"), L.t("任務中要你確認（付款、刪除…）時，用跟回答框一樣的卡片；關掉是一般對話框。沒按、點外面、返回都當「否」"),
+                    cfg().getBoolean("confirm_card", false), (v, on) -> cfg().edit().putBoolean("confirm_card", on).apply());
             {   // 只回應我的聲音（實驗）：聲紋跟登錄的不像，就不自動送出
                 Ui.switchRow(this, g, 0, 1, "wave", L.t("只回應我的聲音（實驗）"), L.t("先到「進階與診斷」登錄聲紋；聲音不像你時不自動送出，文字留在輸入框等你確認"),
                         SpeakerId.gateOn(this), (v, on) -> cfg().edit().putBoolean("spk_gate", on).apply());
