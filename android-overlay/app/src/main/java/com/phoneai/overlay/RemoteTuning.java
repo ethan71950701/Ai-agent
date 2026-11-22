@@ -14,6 +14,7 @@ import java.util.Map;
  * 打開 App 時（最多每 10 分鐘）去 repo 抓一個小檔案 tuning.json，裡面只放「白名單裡的數值」；
  * 沒有網路、檔案壞掉、數值超出範圍一律用程式內建的預設值。不傳送任何使用者資料，只認數字，不執行任何東西。
  * 格式：{"g3_blur": 8, "g3_dark": 1.2}。設定 → 外觀可以關掉。
+ * （增量更新測試用的小改動：這行說明是為了讓 CI 發布下一版。）
  */
 final class RemoteTuning {
     private RemoteTuning() { }
