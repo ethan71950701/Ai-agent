@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1783
+
 - 修正助理面板叫出鍵盤時偶爾有一格回答卡沒跟著鍵盤、以及鍵盤打開時側滑返回到一半會閃一下：鍵盤動畫進行中不再套用系統一開始就給的最終高度，只跟著動畫每一格走｜Fix a single frame where the answer card ignored the keyboard when it opened, and a flash halfway through the back swipe with the keyboard open: during the keyboard animation the final height the system hands over at the start is no longer applied, only the per-frame values
 
 ## 1.0.1782
