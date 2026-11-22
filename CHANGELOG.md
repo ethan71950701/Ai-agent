@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 找回 AI 操作手機時螢幕邊緣的波浪光暈：任務開始就出現、結束就消失（設定「呼吸光暈」可關）；它會被截進圖裡干擾 AI，所以每次截圖的瞬間會先藏起來、截完再顯示｜Brought back the wavy glow around the screen edge while the AI operates the phone: it appears when a task starts and disappears when it ends (can be switched off with the "breathing glow" setting); because it would show up in screenshots and confuse the AI it is hidden for the instant of each screenshot and shown again afterwards
+
+## 1.0.1789
+
 - 修正：對方關機或沒電時，通知還是顯示「已連上，開始傳送」；現在只有真的連得上才說已連上，對方沒回應就直接告訴你「找不到某某：它沒有回應，可能關機、沒電、沒網路或不在同一個 Wi-Fi」｜Fix: when the other phone was off or out of battery the notification still said "connected, starting"; it now says connected only when it really is, otherwise it tells you straight away that the phone did not answer (maybe off, out of battery, no network, or on another Wi-Fi)
 
 ## 1.0.1788
