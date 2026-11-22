@@ -58,9 +58,12 @@ final class Updater {
                     return;
                 }
                 String url = null; long size = 0; String name = "";
+                String pUrl = null, sUrl = null;   // 增量補丁（從目前這一版到最新版）與校驗碼檔
                 org.json.JSONArray assets = rel.getJSONArray("assets");
                 for (int i = 0; i < assets.length(); i++) {
                     JSONObject as = assets.getJSONObject(i);
+                    if (as.getString("name").equals("PhoneAI-from-" + BuildConfig.VERSION_CODE + ".patch")) pUrl = as.getString("browser_download_url");
+                    if (as.getString("name").equals("SHA256SUMS.txt")) sUrl = as.getString("browser_download_url");
                     if (as.getString("name").endsWith(".apk")) {
                         url = as.getString("browser_download_url");
                         size = as.optLong("size", 0);
@@ -70,7 +73,7 @@ final class Updater {
                 }
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
                 final String v = shown;
-                final String apkUrl = url; final long apkSize = size; final String apkName = name;
+                final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl;
                 busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）
                 if (a.isFinishing() || a.isDestroyed()) { notifyNew(a, v); return; }   // 這個畫面已經關了（例如剛重建）：改用通知
                 a.runOnUiThread(() -> {
@@ -85,7 +88,7 @@ final class Updater {
                             busy = true;
                             busySince = System.currentTimeMillis();
                             showProg(a, v);   // App 裡也顯示下載進度（通知列與 Now Bar 照舊）
-                            new Thread(() -> download(a, apkUrl, apkSize, apkName, v)).start();
+                            new Thread(() -> download(a, apkUrl, apkSize, apkName, v, patchUrl, sumsUrl)).start();
                         })
                         .setNegativeButton(L.t("稍後"), null)
                         .show();
@@ -160,12 +163,13 @@ final class Updater {
         }, "update-auto").start();
     }
 
-    private static void download(Activity a, String url, long size, String name, String v) {
+    private static void download(Activity a, String url, long size, String name, String v, String patchUrl, String sumsUrl) {
         NotificationManager nm = a.getSystemService(NotificationManager.class);
         nm.createNotificationChannel(new NotificationChannel(CH, L.t("App 更新"), NotificationManager.IMPORTANCE_LOW));
         File out = new File(a.getCacheDir(), "update.apk");
         try {
-            boolean cached = !Root.isRoot() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
+            boolean delta = patchUrl != null && sumsUrl != null && tryDelta(a, patchUrl, sumsUrl, out, v, nm);   // 增量：只下載補丁，拼出新 APK（核對過 SHA-256）；任何一步失敗就照舊下載完整 APK
+            boolean cached = delta || !Root.isRoot() && size > 0 && out.length() == size;   // 沒 root 時上次下載好、卻因為缺「安裝未知應用程式」權限沒裝：直接用，不重新下載
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
             c.setInstanceFollowRedirects(true);
             c.setConnectTimeout(20000);
@@ -218,6 +222,56 @@ final class Updater {
         } catch (Exception e) {
             nm.cancel(NOTE);
             done(a, L.t("下載失敗：") + e.getMessage());
+        }
+    }
+
+    /**
+     * 增量更新：下載「目前版本 → 最新版本」的補丁，套在已安裝的 APK 上，拼出新 APK 並用 SHA256SUMS.txt 核對。
+     * 成功回 true（out 就是新 APK）；已安裝的不是單一 APK、補丁壞掉、核對不符、網路錯誤…一律回 false，呼叫端改下載完整 APK。
+     */
+    private static boolean tryDelta(Activity a, String patchUrl, String sumsUrl, File out, String v, NotificationManager nm) {
+        File patch = new File(a.getCacheDir(), "update.patch");
+        try {
+            android.content.pm.ApplicationInfo ai = a.getApplicationInfo();
+            if (ai.splitSourceDirs != null && ai.splitSourceDirs.length > 0) return false;   // 有分割 APK：不是單一檔案，補丁對不上
+            String sums = new String(httpBytes(sumsUrl, 64 * 1024), "UTF-8");
+            String want = null;
+            for (String line : sums.split("\\r?\\n")) {
+                String[] p = line.trim().split("\\s+");
+                if (p.length >= 2 && p[1].replace("*", "").equals("PhoneAI.apk")) want = p[0];
+            }
+            if (want == null || !want.matches("[0-9a-fA-F]{64}")) return false;
+            setProg(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true);
+            nm.notify(NOTE, progress(a, L.t("下載 ") + v + L.t("（增量補丁）…"), 0, true));
+            java.nio.file.Files.write(patch.toPath(), httpBytes(patchUrl, 60L * 1024 * 1024));
+            setProg(a, L.t("拼出新版本…"), 0, true);
+            boolean ok = DeltaPatch.applyFiles(new File(ai.sourceDir), patch, out, want);
+            note(a, "增量更新：" + (ok ? "成功（補丁 " + patch.length() / 1024 + " KB）" : "拼出來的檔案核對不符，改下載完整 APK"));
+            return ok;
+        } catch (Throwable t) {
+            note(a, "增量更新失敗，改下載完整 APK：" + t);
+            return false;
+        } finally {
+            patch.delete();
+        }
+    }
+
+    private static byte[] httpBytes(String url, long max) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setInstanceFollowRedirects(true);
+        c.setConnectTimeout(20000);
+        c.setReadTimeout(60000);
+        c.setRequestProperty("User-Agent", "PhoneAI-Update");
+        if (c.getResponseCode() != 200) throw new java.io.IOException("HTTP " + c.getResponseCode());
+        try (InputStream in = c.getInputStream()) {
+            java.io.ByteArrayOutputStream o = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[65536];
+            int n;
+            while ((n = in.read(b)) > 0) {
+                if (o.size() + n > max) throw new java.io.IOException("too large");
+                o.write(b, 0, n);
+            }
+            return o.toByteArray();
         }
     }
 

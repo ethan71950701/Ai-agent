@@ -162,7 +162,21 @@ jobs:
             echo "校驗碼｜Checksum（SHA-256）：\`sha256sum -c SHA256SUMS.txt\`"
             sed 's/^/    /' apk/SHA256SUMS.txt
           } > "$RUNNER_TEMP/notes.md"
-          gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt \
+          # 增量更新補丁：上一版 → 這一版（App 只下載補丁，拼出新 APK 後用 SHA256SUMS.txt 核對；補丁不比完整 APK 小很多就不放）
+          EXTRA=()
+          if [ -n "$PREV_TAG" ]; then
+            PREV_CODE=$(echo "$PREV_TAG" | awk -F- '{print $2}')
+            if gh release download "$PREV_TAG" --pattern PhoneAI.apk --dir "$RUNNER_TEMP/prev" 2>/dev/null \
+               && python3 -m pip install --quiet bsdiff4 \
+               && python3 android-overlay/tools/make_delta.py "$RUNNER_TEMP/prev/PhoneAI.apk" apk/PhoneAI.apk "apk/PhoneAI-from-${PREV_CODE}.patch"; then
+              FULL=$(stat -c %s apk/PhoneAI.apk); PSZ=$(stat -c %s "apk/PhoneAI-from-${PREV_CODE}.patch")
+              echo "補丁 ${PSZ} 位元組，完整 APK ${FULL} 位元組"
+              if [ $((PSZ * 10)) -lt $((FULL * 7)) ]; then EXTRA=("apk/PhoneAI-from-${PREV_CODE}.patch"); fi
+            else
+              echo "沒做出補丁（略過）：App 會下載完整 APK"
+            fi
+          fi
+          gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt "${EXTRA[@]}" \
             --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
             --notes-file "$RUNNER_TEMP/notes.md"
           # 只留最近 10 個 Release，舊的連同 tag 刪掉
