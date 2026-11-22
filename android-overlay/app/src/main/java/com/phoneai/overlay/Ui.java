@@ -180,6 +180,7 @@ final class Ui {
         final java.util.function.IntConsumer fadeUpdate = y -> { };   // 漸層一直都在；改成內容頂端多留一段空白（等於漸層高度），第一張卡不會被蓋到
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> fadeUpdate.accept(y));
         content[0] = box;
+        PAGE_BOX.put(a, box);
         root.setTag(new Object[]{ctl, sv, fadeUpdate});   // 換分頁時改大標題、底欄隨捲動收起
         return root;
     }
@@ -650,6 +651,20 @@ final class Ui {
         tapAt = android.os.SystemClock.uptimeMillis();
     }
 
+    /** 頁面內容的「輪流滑進來」：每一格從右邊滑進來、一個比一個晚一點（跟設定頁換分頁時一樣的手感）。所有整頁共用，才不會有的有、有的沒有。 */
+    static void cascadeIn(ViewGroup box, long baseDelayMs) {
+        if (box == null) return;
+        final float off = box.getResources().getDisplayMetrics().widthPixels;
+        for (int k = 0; k < box.getChildCount(); k++) {
+            View c = box.getChildAt(k);
+            c.setTranslationX(off);
+            c.animate().translationX(0f).setStartDelay(baseDelayMs + 45L * Math.min(k, 10)).setDuration(420).setInterpolator(EMPHASIZED).start();
+        }
+    }
+
+    /** 每個 Activity 整頁的內容容器（Ui.screen 登記），enterSpring 展開時用來做輪流滑進來。 */
+    private static final java.util.WeakHashMap<android.app.Activity, LinearLayout> PAGE_BOX = new java.util.WeakHashMap<>();
+
     /** 給 PageAnim 用：取出最近一次點的卡片位置與小圖（2 秒內才算；取走後清掉）。沒有就回 null。 */
     static Object[] takeTap() {
         if (tapRect == null || android.os.SystemClock.uptimeMillis() - tapAt > 2000) { tapRect = null; tapSnap = null; return null; }
@@ -814,6 +829,7 @@ final class Ui {
     /** 子頁 onCreate 最後呼叫：整個畫面從點擊的位置用彈簧放大出來，不做系統的左右滑動。 */
     static void enterSpring(final android.app.Activity a) {
         a.overridePendingTransition(0, 0);
+        cascadeIn(PAGE_BOX.get(a), 140);   // 內容一格一格輪流滑進來（展開動畫開始一下子之後）
         final View root = a.getWindow().getDecorView();
         float[] rect0 = tapRect;
         tapRect = null;

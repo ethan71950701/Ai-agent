@@ -80,6 +80,7 @@ final class PageBuilder {
             ((LinearLayout.LayoutParams) bar.getLayoutParams()).topMargin = Ui.dp(a, 16);
             Ui.buttons(a, bar, bs.toArray(new com.google.android.material.button.MaterialButton[0]));
         }
+        Ui.cascadeIn(box, 140);   // 跟其他整頁一樣：內容一格一格輪流滑進來
         h.attach();
         return h;
     }
