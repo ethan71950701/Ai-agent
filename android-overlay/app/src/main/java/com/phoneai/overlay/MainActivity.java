@@ -1086,8 +1086,8 @@ public class MainActivity extends Activity {
 
     /** 回答卡片的玻璃通透度：原本（偏暗）／通透／很透；旁邊的按鈕直接顯示範例回答。 */
     private void buildGlassLevelGroup() {
-        final String[] labels = {L.t("原本（偏暗）"), L.t("通透"), L.t("很透")};
-        int ci = Math.max(0, Math.min(2, cfg().getInt("glass_level", 1)));
+        final String[] labels = {L.t("原本（偏暗）"), L.t("通透"), L.t("很透"), L.t("液態玻璃")};
+        int ci = Math.max(0, Math.min(3, cfg().getInt("glass_level", 1)));
         LinearLayout rg = Ui.expandGroup(this, box, "droplet", L.t("回答卡片的玻璃"), labels[ci], false);
         for (int k = 0; k < labels.length; k++) {
             final int v = k;

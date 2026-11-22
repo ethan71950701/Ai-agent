@@ -1226,6 +1226,7 @@ final class LEn {
         m.put("原本（偏暗）", "Original (darker)");
         m.put("通透", "Clear");
         m.put("很透", "Very clear");
+        m.put("液態玻璃", "Liquid glass");
         m.put("回答卡片的玻璃", "Answer card glass");
         m.put("測試回答卡片", "Test answer card");
         m.put("馬上跳出一則範例回答，看目前的玻璃", "Shows a sample reply right away with the current glass");
