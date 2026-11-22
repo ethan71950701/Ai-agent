@@ -1234,6 +1234,14 @@ final class LEn {
         m.put("拼出新版本…", "Building the new version…");
         m.put("（增量補丁）…", " (delta patch)…");
         m.put("AI 與資料", "AI & data");
+        m.put("AI 與搜尋", "AI & search");
+        m.put("主題色、語言、回答卡片、底欄玻璃", "Theme color, language, answer card, bar glass");
+        m.put("呼叫與語音", "Invoke & voice");
+        m.put("浮動按鈕、電源鍵、朗讀、語音", "Floating button, power key, read-aloud, voice");
+        m.put("執行任務", "Running tasks");
+        m.put("更新與公告", "Updates & announcements");
+        m.put("權限與其他", "Permissions & other");
+        m.put("權限、設定導覽、解除安裝", "Permissions, setup guide, uninstall");
         m.put("AI 服務與 Key、網頁搜尋、用量上限", "AI service & key, web search, usage limits");
         m.put("檢查更新、自動檢查、公告", "Check for updates, auto-check, announcements");
         m.put("其他", "Other");

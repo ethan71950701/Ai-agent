@@ -197,6 +197,72 @@ public class MainActivity extends Activity {
     private int barItemW, barPad;
     private int shown = -1;
     private static final String[] TAB_TITLE = {"", "功能", "設定"};
+
+    // ---------- 設定頁：分類列表（點進去才是各自的頁面）----------
+    private int settingsCat = -1;   // -1＝顯示分類列表；0 以上＝在某個分類裡
+    /** 圖示、名稱、說明、包含設定頁的哪幾段（settingsSteps 的順序：0 AI 與資料、1 外觀、2 更新、3 權限、4 底欄玻璃、5 呼叫方式、6 語音、7 執行任務時、8 其他）。 */
+    private static final Object[][] SET_CATS = {
+            {"pin", "AI 與搜尋", "AI 服務與 Key、網頁搜尋、用量上限", new int[]{0}},
+            {"droplet", "外觀", "主題色、語言、回答卡片、底欄玻璃", new int[]{1, 4}},
+            {"float", "呼叫與語音", "浮動按鈕、電源鍵、朗讀、語音", new int[]{5, 6}},
+            {"sparkle", "執行任務", "光暈、背景模式、自動修復、實驗", new int[]{7}},
+            {"download", "更新與公告", "檢查更新、自動檢查、公告", new int[]{2}},
+            {"shield", "權限與其他", "權限、設定導覽、解除安裝", new int[]{3, 8}},
+    };
+
+    private String titleFor(int tabIdx) {
+        return tabIdx == 2 && settingsCat >= 0 ? L.t((String) SET_CATS[settingsCat][1]) : L.t(TAB_TITLE[tabIdx]);
+    }
+
+    /** 分類裡面的群組一律展開（不然一個分類頁只看到一條收起來的群組）。 */
+    private LinearLayout grp(String icon, String title, String summary, boolean open) {
+        return Ui.expandGroup(this, box, icon, title, summary, open || settingsCat >= 0);
+    }
+
+    private java.util.List<Runnable> currentSettingsSteps() {
+        if (settingsCat < 0) {
+            java.util.List<Runnable> one = new java.util.ArrayList<>();
+            one.add(() -> {
+                for (int i = 0; i < SET_CATS.length; i++) {
+                    final int ci = i;
+                    Ui.row(this, box, i, SET_CATS.length, (String) SET_CATS[i][0], L.t((String) SET_CATS[i][1]), L.t((String) SET_CATS[i][2]), Ui.chevron(this), v -> openSettingsCat(ci));
+                }
+            });
+            return one;
+        }
+        java.util.List<Runnable> all = settingsSteps(), sub = new java.util.ArrayList<>();
+        for (int idx : (int[]) SET_CATS[settingsCat][3]) sub.add(all.get(idx));
+        return sub;
+    }
+
+    private void openSettingsCat(int c) {
+        settingsCat = c;
+        animateTitle(titleFor(2), 1);
+        cascadeTo(2, 1f);
+        syncCatBack();
+    }
+
+    private void backToSettingsList() {
+        settingsCat = -1;
+        animateTitle(titleFor(2), -1);
+        cascadeTo(2, -1f);
+        syncCatBack();
+    }
+
+    private android.window.OnBackInvokedCallback catBack;
+
+    /** 在分類裡時，返回鍵先回分類列表（不是離開 App）；回到列表就取消註冊。 */
+    private void syncCatBack() {
+        try {
+            if (settingsCat >= 0 && tab == 2 && catBack == null) {
+                catBack = this::backToSettingsList;
+                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, catBack);
+            } else if ((settingsCat < 0 || tab != 2) && catBack != null) {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(catBack);
+                catBack = null;
+            }
+        } catch (Throwable ignored) { }
+    }
     private static final String[] TAB_ICON = {"home", "apps", "tune"};
     private static final String[] TAB_LABEL = {"首頁", "功能", "設定"};
 
@@ -219,8 +285,9 @@ public class MainActivity extends Activity {
         }, "root-probe").start();
         myTheme = App.themeKey(this);
         tab = b == null ? 0 : b.getInt("tab", 0);
+        settingsCat = b == null ? -1 : b.getInt("scat", -1);
         LinearLayout[] c = new LinearLayout[1];
-        root = Ui.screen(this, L.t(TAB_TITLE[tab]), false, c);
+        root = Ui.screen(this, titleFor(tab), false, c);
         box = c[0];
         box.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 120));   // 底部留空，才不會被懸浮底欄蓋住
         ((android.view.ViewGroup) root).setClipChildren(false);   // 玻璃按鈕按住放大後會超出底欄上下緣，上層不能裁掉
@@ -238,6 +305,7 @@ public class MainActivity extends Activity {
     protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
         out.putInt("tab", tab);
+        out.putInt("scat", settingsCat);
     }
 
     private androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams barParams() {
@@ -411,6 +479,8 @@ public class MainActivity extends Activity {
         final int prev = shown;
         shown = i;
         tab = i;
+        if (i != 2) settingsCat = -1;   // 離開設定頁再回來，從分類列表開始
+        syncCatBack();
         if (glass != null) { glass.setLive(false); glass.setFollowContent(i != 0); }   // 見 floatingBar：首頁底欄玻璃底下是純色，不用每幀重畫，也不要跟著標誌的波每幀重錄
         if (indicator instanceof GlassBar) { ((GlassBar) indicator).setLive(false); ((GlassBar) indicator).setFollowContent(i != 0); }
         if (barItemW > 0) {   // 圓底滑到新位置：位移帶一點回彈，滑動中橫向拉長再縮回
@@ -422,7 +492,7 @@ public class MainActivity extends Activity {
                 Anim.spring(indicator, androidx.dynamicanimation.animation.DynamicAnimation.SCALE_X, 1f, 260f, 0.55f);
             }
         }
-        animateTitle(L.t(TAB_TITLE[i]), prev < 0 ? 0 : (i > prev ? 1 : -1));
+        animateTitle(titleFor(i), prev < 0 ? 0 : (i > prev ? 1 : -1));
         final float dir = prev < 0 ? 0f : (i > prev ? 1f : -1f);   // 往右邊的分頁（編號變大）：新頁從右邊滑進來、舊頁往左滑出去
         if (prev < 0) showTabNow(i);
         else cascadeTo(i, dir);
@@ -437,7 +507,7 @@ public class MainActivity extends Activity {
         final int gen = ++tabGen;
         cascadeDir = 0f;
         if (tabNow == 0) { buildHome(); finishTab(tabNow, gen); }
-        else runTabSteps(tabNow == 1 ? functionSteps() : settingsSteps(), tabNow, gen);
+        else runTabSteps(tabNow == 1 ? functionSteps() : currentSettingsSteps(), tabNow, gen);
     }
 
     private void prepareBox(int tabNow) {
@@ -469,7 +539,7 @@ public class MainActivity extends Activity {
                     cascadeDir = dir;
                     cascadeIdx = 0;
                     if (tabNow == 0) { buildHome(); cascadeFrom(0); finishTab(tabNow, gen); }
-                    else runTabSteps(tabNow == 1 ? functionSteps() : settingsSteps(), tabNow, gen);
+                    else runTabSteps(tabNow == 1 ? functionSteps() : currentSettingsSteps(), tabNow, gen);
                 }).start();
     }
 
@@ -1041,7 +1111,7 @@ public class MainActivity extends Activity {
         final String[] labels = {L.t("跟隨系統") + " (Auto)", "繁體中文", "English"};
         String cur = L.pref(this);
         int ci = Math.max(0, java.util.Arrays.asList(values).indexOf(cur));
-        LinearLayout lg = Ui.expandGroup(this, box, "list", "Language / 語言", labels[ci], false);
+        LinearLayout lg = grp("list", "Language / 語言", labels[ci], false);
         for (int k = 0; k < values.length; k++) {
             final String v = values[k];
             View check = k == ci ? new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary)) : null;
@@ -1061,7 +1131,7 @@ public class MainActivity extends Activity {
         final String[] labels = {L.t("自動（回答較長或有搜尋才顯示）"), L.t("一律顯示"), L.t("一律不顯示（只用通知）")};
         String cur = cfg().getString("reply_card", "auto");
         int ci = Math.max(0, java.util.Arrays.asList(values).indexOf(cur));
-        LinearLayout rg = Ui.expandGroup(this, box, "window", L.t("操作完成後的回答卡片"), labels[ci], false);
+        LinearLayout rg = grp("window", L.t("操作完成後的回答卡片"), labels[ci], false);
         for (int k = 0; k < values.length; k++) {
             final String v = values[k];
             View trailing = k == ci ? wrapIcon(new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary))) : null;
@@ -1077,7 +1147,7 @@ public class MainActivity extends Activity {
     private void buildGlassLevelGroup() {
         final String[] labels = {L.t("原本（偏暗）"), L.t("通透"), L.t("很透"), L.t("液態玻璃")};
         int ci = Math.max(0, Math.min(3, cfg().getInt("glass_level", 3)));
-        LinearLayout rg = Ui.expandGroup(this, box, "droplet", L.t("回答卡片的玻璃"), labels[ci], false);
+        LinearLayout rg = grp("droplet", L.t("回答卡片的玻璃"), labels[ci], false);
         for (int k = 0; k < labels.length; k++) {
             final int v = k;
             View trailing = k == ci ? wrapIcon(new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary))) : null;
@@ -1130,14 +1200,14 @@ public class MainActivity extends Activity {
         heroBox = null;
         final java.util.List<Runnable> steps = new java.util.ArrayList<>();
         steps.add(() -> {   // 規則：設好就不太動的東西放設定（功能頁只放「打開來用」的）
-            LinearLayout g = Ui.expandGroup(this, box, "pin", L.t("AI 與資料"), L.t("AI 服務與 Key、網頁搜尋、用量上限"), false);
+            LinearLayout g = grp("pin", L.t("AI 與資料"), L.t("AI 服務與 Key、網頁搜尋、用量上限"), false);
             Ui.row(this, g, 0, 4, "pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), Ui.chevron(this), v -> AiServiceUi.open(this, this::recreate));
             Ui.row(this, g, 1, 4, "search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), Ui.chevron(this), v -> TavilySearch.openSettings(this, this::recreate));
             Ui.row(this, g, 2, 4, "pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), Ui.chevron(this), v -> TavilySearch.editTrusted(this, this::recreate));
             Ui.row(this, g, 3, 4, "sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), Ui.chevron(this), v -> Usage.dialog(this));
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
+            LinearLayout g = grp("droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
             Ui.themePicker(this, g);
             buildLanguageGroup();
             buildReplyCardGroup();
@@ -1145,7 +1215,7 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout u = Ui.expandGroup(this, box, "download", L.t("更新"), L.t("檢查更新、自動檢查、公告"), false);
+            LinearLayout u = grp("download", L.t("更新"), L.t("檢查更新、自動檢查、公告"), false);
             Ui.row(this, u, 0, 5, "download", L.t("檢查並更新"), L.t("按一下：有新版本就自動更新"), Ui.chevron(this), v -> startUpdate());
             Ui.row(this, u, 1, 5, "sparkle", L.t("更新內容"), L.t("看最近幾版改了什麼"), Ui.chevron(this), v -> WhatsNew.showRecent(this));
             Ui.switchRow(this, u, 2, 5, "bell", L.t("有新版本時提醒我"), L.t("打開 App 時，每小時最多檢查一次；有新版本就在通知欄跳一則，點了開始更新，不會自動安裝"),
@@ -1155,7 +1225,7 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("ann_on", true), (v, on) -> cfg().edit().putBoolean("ann_on", on).apply());
         });
         steps.add(() -> {
-            LinearLayout p = Ui.expandGroup(this, box, "shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
+            LinearLayout p = grp("shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
             Ui.row(this, p, 0, 3, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
                     new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
             Ui.row(this, p, 1, 3, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
@@ -1163,7 +1233,7 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "sparkle", L.t("底欄玻璃（進階）"), L.t("折射、模糊、放大與開關，拖動即時生效"), false);
+            LinearLayout g = grp("sparkle", L.t("底欄玻璃（進階）"), L.t("折射、模糊、放大與開關，拖動即時生效"), false);
             glassSlider(g, L.t("折射強度"), L.t("邊緣彎曲的程度"), 0f, 2f, GlassPrefs.refr, GlassPrefs.K_REFR);
             glassSlider(g, L.t("色散（只有上層透鏡）"), L.t("透鏡邊緣的彩色光邊，0 = 沒有"), 0f, 2f, GlassPrefs.chroma, GlassPrefs.K_CHROMA);
             glassSlider(g, L.t("模糊程度（dp）"), L.t("底欄背景的模糊半徑"), 0f, 24f, GlassPrefs.blur, GlassPrefs.K_BLUR);
@@ -1188,7 +1258,7 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "float", L.t("呼叫方式"), L.t("浮動按鈕、電源鍵、預設助理"), false);
+            LinearLayout g = grp("float", L.t("呼叫方式"), L.t("浮動按鈕、電源鍵、預設助理"), false);
             Ui.switchRow(this, g, 0, 3, "float", L.t("浮動按鈕"), L.t("螢幕邊緣的 AI 圓鈕，可拖曳"), cfg().getBoolean("float_on", false), (v, on) -> {
                 cfg().edit().putBoolean("float_on", on).apply();
                 RippleAccessibilityService.refreshFloat();
@@ -1222,7 +1292,7 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
+            LinearLayout g = grp("wave", L.t("語音"), L.t("朗讀、系統語音視窗"), false);
             Ui.switchRow(this, g, 0, 3, "window", L.t("語音一律用系統視窗"), L.t("有些手機內建辨識不讓 App 直接用，會自動打開；想重測 App 內辨識就關掉"),
                     cfg().getBoolean("voice_sys", false), (v, on) -> cfg().edit().putBoolean("voice_sys", on).apply());
             Ui.switchRow(this, g, 1, 3, "volume", L.t("朗讀結果"), L.t("AI 完成任務後念出來"), cfg().getBoolean("tts_on", true),
@@ -1270,7 +1340,7 @@ public class MainActivity extends Activity {
 
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
+            LinearLayout g = grp("sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
             {   // 任務一開始最多做幾步（不夠會問要不要再加 10 步）
                 LinearLayout innerS = Ui.card(this, g);
                 final int curS = Math.max(8, Math.min(40, cfg().getInt("max_steps", 20)));
@@ -1355,7 +1425,7 @@ public class MainActivity extends Activity {
             }
         });
         steps.add(() -> {
-            LinearLayout g = Ui.expandGroup(this, box, "check_circle", L.t("其他"), L.t("設定導覽、解除安裝"), false);
+            LinearLayout g = grp("check_circle", L.t("其他"), L.t("設定導覽、解除安裝"), false);
             Ui.row(this, g, 0, 2, "check_circle", L.t("設定導覽"), L.t("逐步檢查權限、Key（root 選用）"), Ui.chevron(this), v -> startActivity(new Intent(this, GuideActivity.class)));
             Ui.row(this, g, 1, 2, "power", L.t("解除安裝"), L.t("還原設定、刪除 Key，最後移除本 App"), Ui.chevron(this), v -> Uninstaller.start(this));
         });
