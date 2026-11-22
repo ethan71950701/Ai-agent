@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1837
+
 - 輪流滑進來的動畫改成更細：一個容器裡裝了很多列或按鈕時，也一列一列輪流滑進來，不再整塊一起動；訊息文字空一行就當一段，一段一格｜The staggered slide-in is now finer-grained: when one container holds many rows or buttons they slide in one by one instead of as a single block, and message text splits into paragraphs (blank line = new block)
+
 ## 1.0.1836
 
 - 所有整頁（互傳檔案、任務過程、助理的記憶、診斷、以及原本是彈窗的那些頁）的內容都改成跟設定頁一樣「一格一格輪流從右邊滑進來」，不再有的有、有的沒有｜All full pages (file transfer, task log, assistant memory, diagnostics and the former popup pages) now slide their content in one block after another from the right, like Settings, instead of some doing it and some not
