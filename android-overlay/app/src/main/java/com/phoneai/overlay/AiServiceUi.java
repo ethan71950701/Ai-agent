@@ -37,7 +37,7 @@ final class AiServiceUi {
         box.setPadding(p, p / 2, p, 0);
         box.addView(Ui.body(a, L.t("目前：便宜模型 ") + LlmConfig.cheap(a).label() + L.t("｜看圖模型 ") + LlmConfig.vision(a).label()
                 + L.t("\n\n兩個可以選不同的服務，例如便宜的用 DeepSeek、看圖的用 Gemini。")));
-        final androidx.appcompat.app.AlertDialog[] dlg = new androidx.appcompat.app.AlertDialog[1];
+        final PageBuilder.Handle[] dlg = new PageBuilder.Handle[1];
         for (int i = 0; i < items.length; i++) {
             final String scope = scopes[i];
             com.google.android.material.button.MaterialButton b = Ui.pill(a, items[i], i == 0, v -> { dlg[0].dismiss(); chooseService(a, scope, done); });
@@ -45,7 +45,7 @@ final class AiServiceUi {
             lp.topMargin = Ui.dp(a, 10);
             box.addView(b, lp);
         }
-        dlg[0] = new PageDialogBuilder(a).setTitle(L.t("AI 服務與 API Key")).setView(box).setNegativeButton(L.t("取消"), null).show();
+        dlg[0] = new PageBuilder(a).setTitle(L.t("AI 服務與 API Key")).setView(box).setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void chooseService(Activity a, String scope, Runnable done) {

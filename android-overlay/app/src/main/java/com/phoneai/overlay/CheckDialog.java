@@ -40,7 +40,7 @@ final class CheckDialog {
         });
         count.setText(summary(on));
         col.addView(lv, new LinearLayout.LayoutParams(-1, (int) (a.getResources().getDisplayMetrics().heightPixels * 0.55f)));
-        new PageDialogBuilder(a).setTitle(title).setView(col)
+        new PageBuilder(a).setTitle(title).setView(col)
                 .setPositiveButton(L.t("儲存"), (d, w) -> onSave.run())
                 .setNegativeButton(L.t("取消"), null).show();
     }

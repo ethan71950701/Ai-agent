@@ -14,14 +14,14 @@ final class AbTestUi {
 
     static void open(Activity a) {
         if (AbTest.running) {
-            new PageDialogBuilder(a).setTitle(L.t("AI 比較測試"))
+            new PageBuilder(a).setTitle(L.t("AI 比較測試"))
                     .setMessage(L.t("正在跑：") + AbTest.progress)
                     .setPositiveButton(L.t("知道了"), null)
                     .setNegativeButton(L.t("停止測試"), (d, w) -> { AbTest.stopRequested = true; AgentLoop.cancel(); }).show();
             return;
         }
         String last = AbTest.last(a);
-        MaterialAlertDialogBuilder b = new PageDialogBuilder(a).setTitle(L.t("AI 比較測試"))
+        PageBuilder b = new PageBuilder(a).setTitle(L.t("AI 比較測試"))
                 .setMessage(L.t("同一批固定的任務（簡單題或困難題，下一步選），分別用不同的 AI 服務各跑一遍，比成功與否、步數、時間和預估花費。\n\n測試期間 AI 會操作你的手機（開設定、計算機、時鐘），請不要碰螢幕；每個任務跑完會回主畫面並強制關閉那個 App。需要 root 或 Shizuku。會用到各服務的額度或費用。\n\n下一步會列出你可以用的 API（已經存好 Key 的），勾選要比的兩個以上就好；模型用你現在設定的，想換再按「自訂組合」。"))
                 .setPositiveButton(L.t("開始"), (d, w) -> chooseSet(a))
                 .setNegativeButton(L.t("取消"), null);

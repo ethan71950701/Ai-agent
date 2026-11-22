@@ -222,7 +222,7 @@ final class TavilySearch {
         render[0].run();
         android.widget.ScrollView sv = new android.widget.ScrollView(a);
         sv.addView(box);
-        new PageDialogBuilder(a).setTitle(L.t("可信任的網站")).setView(sv)
+        new PageBuilder(a).setTitle(L.t("可信任的網站")).setView(sv)
                 .setPositiveButton(L.t("完成"), (d, w) -> { if (after != null) after.run(); })
                 .setOnCancelListener(d -> { if (after != null) after.run(); }).show();
     }
@@ -360,7 +360,7 @@ final class TavilySearch {
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(Ui.body(a, L.t("只有你說「幫我查…／搜尋一下」時才會搜尋，用哪個 AI 都可以。不設 Key 也能搜（Tavily 的免 Key 模式，有次數限制）；想要更穩定的額度，到 Tavily 網站註冊後建立一組 API Key 貼在這裡（免費方案的實際額度請看他們的網站）。Key 只存在這支手機的 App 私有資料夾，不要貼給任何人。")));
         form.addView(til);
-        MaterialAlertDialogBuilder b = new PageDialogBuilder(a).setTitle(L.t("網頁搜尋（Tavily）")).setView(form)
+        PageBuilder b = new PageBuilder(a).setTitle(L.t("網頁搜尋（Tavily）")).setView(form)
                 .setPositiveButton(L.t("儲存"), (d, w) -> {
                     final String k = et.getText().toString();
                     if (k.trim().isEmpty()) return;

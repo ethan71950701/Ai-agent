@@ -143,7 +143,7 @@ final class Ui {
         com.google.android.material.appbar.MaterialToolbar tb = new com.google.android.material.appbar.MaterialToolbar(a);
         if (back) {
             tb.setNavigationIcon(R.drawable.ic_back);
-            tb.setNavigationOnClickListener(v -> closeToTap(a));
+            { final Runnable pb = pageBack; tb.setNavigationOnClickListener(v -> { if (pb != null) pb.run(); else closeToTap(a); }); }
         }
         com.google.android.material.appbar.CollapsingToolbarLayout.LayoutParams tlp =
                 new com.google.android.material.appbar.CollapsingToolbarLayout.LayoutParams(-1, dp(a, 56));
@@ -211,6 +211,8 @@ final class Ui {
      */
     /** true：每一列都是獨立的一張圓角卡、中間留空隙（設定的分類頁用），不併成一整塊。 */
     static boolean standaloneRows;
+    /** 設了就用它當左上返回鍵的動作（PageBuilder 的整頁用）；null＝照舊關掉這個 Activity。 */
+    static Runnable pageBack;
 
     static MaterialCardView row(Context c, LinearLayout parent, int index, int count,
                                 String icon, String title, String summary, View trailing, View.OnClickListener click) {
