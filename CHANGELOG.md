@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 修正助理面板叫出鍵盤時偶爾有一格回答卡沒跟著鍵盤、以及鍵盤打開時側滑返回到一半會閃一下：鍵盤動畫進行中不再套用系統一開始就給的最終高度，只跟著動畫每一格走｜Fix a single frame where the answer card ignored the keyboard when it opened, and a flash halfway through the back swipe with the keyboard open: during the keyboard animation the final height the system hands over at the start is no longer applied, only the per-frame values
+
+## 1.0.1782
+
 - 修正：點 AI 的回答卡時鍵盤一下跳出、一下收起造成畫面閃動——原因是輸入框收起鍵盤後又自己拿回焦點，系統就再把鍵盤叫出來；現在焦點交給外層、助理面板不再自動顯示鍵盤，只有你點輸入框才會出現；輸入法也會被提示用繁體中文｜Fix flicker when tapping the AI's answer card: the keyboard kept popping up and being dismissed because the input box took focus back after hiding the keyboard; focus now goes to the outer view, the assistant panel no longer shows the keyboard on its own (only when you tap the input box), and the keyboard is hinted to use Traditional Chinese
 
 ## 1.0.1781
