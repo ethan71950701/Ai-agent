@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1782
+
 - 修正：點 AI 的回答卡時鍵盤一下跳出、一下收起造成畫面閃動——原因是輸入框收起鍵盤後又自己拿回焦點，系統就再把鍵盤叫出來；現在焦點交給外層、助理面板不再自動顯示鍵盤，只有你點輸入框才會出現；輸入法也會被提示用繁體中文｜Fix flicker when tapping the AI's answer card: the keyboard kept popping up and being dismissed because the input box took focus back after hiding the keyboard; focus now goes to the outer view, the assistant panel no longer shows the keyboard on its own (only when you tap the input box), and the keyboard is hinted to use Traditional Chinese
 
 ## 1.0.1781
