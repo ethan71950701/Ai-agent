@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1780
+
 - 修正：叫出助理面板之後，底下的瀏覽器可能讀不到，AI 就說看不到畫面；現在面板一打開（瀏覽器還在最上面時）先記下瀏覽器畫面上的字，AI 讀不到時用這份（兩分鐘內有效，只有前景是瀏覽器才記）；找不到時會把看到的視窗寫進「進階與診斷」方便查｜Fix: once the assistant panel is open, the browser underneath may not be readable and the AI says it cannot see the screen; the browser page text is now captured the moment the panel opens (only when a browser is in front, valid for two minutes) and used when the live read fails; when nothing is found the windows seen are logged in Advanced & diagnostics
 
 ## 1.0.1779
