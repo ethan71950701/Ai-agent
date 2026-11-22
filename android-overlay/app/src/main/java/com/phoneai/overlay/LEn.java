@@ -1224,8 +1224,6 @@ final class LEn {
         m.put("；自動操作 ", "; automatic actions ");
         m.put("；搜尋 ", "; search ");
         m.put("開面板時自動聽", "Listen when the panel opens");
-        m.put("確認框用回答卡片樣式（試用）", "Confirm prompts as answer card (trial)");
-        m.put("任務中要你確認（付款、刪除…）時，用跟回答框一樣的卡片；關掉是一般對話框。沒按、點外面、返回都當「否」", "When a task asks you to confirm (payment, delete…), show it as the same card as answers; off = normal dialog. No answer, tapping outside or Back counts as No");
         m.put("叫出助理面板就開始聽；關掉就要自己點麥克風", "Start listening as soon as the assistant panel opens; turn off to tap the mic button yourself");
         m.put("選擇要匯入的備份", "Choose a backup to import");
         m.put("已匯出到下載資料夾：", "Exported to the Downloads folder: ");
