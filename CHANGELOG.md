@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1820
+
 - 增量更新的補丁下載也顯示百分比與大小，「拼出新版本」時通知欄也會更新｜The delta-update patch download now shows percentage and size too, and the notification updates while the new version is being assembled
 
 ## 1.0.1818
