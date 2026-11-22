@@ -167,6 +167,12 @@ final class PreviewView extends FrameLayout {
         dots.pulse(x, y);
     }
 
+    /** AI 在背景螢幕上點的地方（背景螢幕的座標）：在預覽卡片上對應的位置閃一個圈。背景螢幕上的漣漪畫布建不起來時，靠這個讓你看得到 AI 點哪裡。 */
+    void pulseOnVd(float vx, float vy) {
+        float sx = width / (float) Math.max(1, OverlayService.vdW), sy = cardHeight() / (float) Math.max(1, OverlayService.vdH);
+        dots.pulse(vx * sx, vy * sy);
+    }
+
     int cardWidth() { return width; }
 
     int cardHeight() { return (int) (width * aspect); }

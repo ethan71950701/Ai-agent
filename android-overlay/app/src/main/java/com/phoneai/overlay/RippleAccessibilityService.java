@@ -132,7 +132,7 @@ public class RippleAccessibilityService extends AccessibilityService {
         }
         try {
             Display d = getSystemService(DisplayManager.class).getDisplay(id);
-            if (d == null) return null;
+            if (d == null) { LifeLog.add(this, "背景螢幕漣漪：找不到螢幕 " + id); return null; }
             Context dc = createDisplayContext(d);
             WindowManager w = dc.getSystemService(WindowManager.class);
             WindowManager.LayoutParams p = new WindowManager.LayoutParams(
@@ -153,6 +153,7 @@ public class RippleAccessibilityService extends AccessibilityService {
             return v;
         } catch (Exception e) {
             Log.e(OverlayService.TAG, "second-display addView display=" + id, e);
+            LifeLog.add(this, "背景螢幕漣漪畫布建不起來（螢幕 " + id + "）：" + e);   // 之後的點擊改在預覽小窗上閃圈
             return null;
         }
     }
@@ -464,6 +465,12 @@ public class RippleAccessibilityService extends AccessibilityService {
         }
         preview = null;
         refreshGlows();   // 預覽關了：光暈回到主螢幕
+    }
+
+    /** 在預覽小窗上閃一個圈（座標是背景螢幕的座標）。沒開預覽就什麼都不做。要在主執行緒呼叫。 */
+    static void previewPulse(float vx, float vy) {
+        RippleAccessibilityService s = instance;
+        if (s != null && s.preview != null) s.preview.pulseOnVd(vx, vy);
     }
 
     /** AI 開始／結束操作手機：螢幕邊緣的流動光暈（波浪）跟著出現／消失。設定「呼吸光暈」關著就不畫。主執行緒以外也能呼叫。 */

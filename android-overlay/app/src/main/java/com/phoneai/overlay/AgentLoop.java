@@ -911,7 +911,13 @@ final class AgentLoop {
         final int disp = BgDisplay.active ? BgDisplay.id : 0;   // 背景模式：漣漪畫在背景螢幕上（預覽窗看得到 AI 點在哪）；以前被關掉了
         MAIN.post(() -> {
             RippleView v = disp > 0 ? RippleAccessibilityService.viewFor(disp) : RippleAccessibilityService.view();
-            if (v == null) return;
+            if (v == null) {   // 背景螢幕上的漣漪畫布建不起來：改在預覽小窗上閃圈，至少看得到 AI 點在哪
+                if (disp > 0) {
+                    RippleAccessibilityService.previewPulse(x1, y1);
+                    if (x1 != x2 || y1 != y2) MAIN.postDelayed(() -> RippleAccessibilityService.previewPulse(x2, y2), 180);
+                }
+                return;
+            }
             if (x1 == x2 && y1 == y2) v.ripple(x1, y1);
             else v.swipe(x1, y1, x2, y2);
         });
