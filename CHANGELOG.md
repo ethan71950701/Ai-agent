@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正互傳：兩支手機連的是不同的 Wi-Fi 網路（網段不同，例如一個 192.168.1.x、一個 192.168.51.x）時，以前只會用舊的區網位址去連、一直連不上；現在會當成「在外網」，自動開 Tailscale 並叫醒對方走 Tailscale｜Fix file transfer when the two phones are on different Wi-Fi networks (different subnets, e.g. 192.168.1.x vs 192.168.51.x): it used to keep trying the old LAN address and fail; it is now treated as remote, turning on Tailscale and waking the other phone to connect over Tailscale
 - 自動操作：AI 做了動作、畫面的元件清單卻完全沒變時，第 1 次提醒它換個做法、第 2 次改看截圖（較強的模型）、連續第 3 次就停下來告訴你卡在哪，不再一直點同一個東西花錢｜Automatic operation: when the AI acts but the screen's element list does not change at all, the 1st time it is told to try something else, the 2nd time it gets a screenshot (stronger model), and on the 3rd in a row it stops and tells you where it is stuck instead of tapping the same thing and burning money
 
 ## 1.0.1784

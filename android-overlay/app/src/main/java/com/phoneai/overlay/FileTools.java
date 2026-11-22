@@ -368,7 +368,8 @@ final class FileTools {
         TransferNotify.phase(c, L.t("正在找：") + p.name, L.t("找對方"));
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
-            if (FcmLab.lanIp() == null && p.tsIp != null && !TailscaleControl.isOn()) {
+            final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip);   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
+            if (remoteNow && p.tsIp != null && !TailscaleControl.isOn()) {
                 TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                 TailscaleControl.turnOnForSession(c, 12000);
             }
@@ -376,7 +377,7 @@ final class FileTools {
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = FcmLab.wake(c, p);
             if (err == null) {
-                long t0 = System.currentTimeMillis(), until = t0 + (FcmLab.lanIp() == null ? 45000 : 25000), nextRing = t0 + 8000;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
+                long t0 = System.currentTimeMillis(), until = t0 + (remoteNow ? 45000 : 25000), nextRing = t0 + 8000;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
                 while (f == null && System.currentTimeMillis() < until) {
                     if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);

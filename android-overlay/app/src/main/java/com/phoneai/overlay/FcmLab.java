@@ -329,11 +329,21 @@ final class FcmLab {
         return p != null && p.fcmToken != null && hasConfig(c) && FcmVault.has(c);
     }
 
+    /**
+     * 我和對方現在是不是「不在同一個區網」：自己沒連 Wi-Fi，或連的網段和對方上次記下的區網位址不同（例如對方上次在 192.168.1.x、我現在在 192.168.51.x）。
+     * 對方的位址不知道時照舊（當作同一個區網，先用區網找）。
+     */
+    static boolean isRemote(String myLanNet, String peerLanIp) {
+        if (myLanNet == null) return true;
+        if (peerLanIp == null || peerLanIp.isEmpty()) return false;
+        return !Doorbell.sameSubnet(myLanNet, peerLanIp);
+    }
+
     /** 叫醒對方：送一則「請把互傳伺服器開起來」的門鈴。回 null 成功，否則錯誤。之後的連線都照原本的直連方式。 */
     static String wake(Context c, TransferStore.Peer peer) {
         if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";
         String ip = lanIp();
-        boolean remote = ip == null;   // 沒連 Wi-Fi（行動數據或其他網路）：從外面來，走 Tailscale
+        boolean remote = isRemote(lanNet(), peer.ip);   // 沒連 Wi-Fi，或連的是另一個網路（網段跟對方上次的區網位址不同）：從外面來，走 Tailscale
         if (remote) {
             String ts = TransferClient.localTailnetIp();
             ip = ts == null ? "" : ts;
