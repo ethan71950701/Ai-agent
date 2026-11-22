@@ -4,6 +4,9 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+
+## 1.0.1789
+
 - 修正：對方關機或沒電時，通知還是顯示「已連上，開始傳送」；現在只有真的連得上才說已連上，對方沒回應就直接告訴你「找不到某某：它沒有回應，可能關機、沒電、沒網路或不在同一個 Wi-Fi」｜Fix: when the other phone was off or out of battery the notification still said "connected, starting"; it now says connected only when it really is, otherwise it tells you straight away that the phone did not answer (maybe off, out of battery, no network, or on another Wi-Fi)
 
 ## 1.0.1788
