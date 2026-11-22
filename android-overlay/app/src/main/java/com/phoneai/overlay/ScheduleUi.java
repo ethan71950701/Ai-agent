@@ -20,7 +20,7 @@ final class ScheduleUi {
     static void open(Activity a, Runnable done) {
         JSONArray items = Schedule.load(a);
         if (items.length() == 0) {
-            new MaterialAlertDialogBuilder(a).setTitle(L.t("定時任務"))
+            new PageDialogBuilder(a).setTitle(L.t("定時任務"))
                     .setMessage(L.t("目前沒有定時任務。\n\n對助理說，例如：「每天早上 8 點幫我查某某商品的價格」「每 3 天晚上 9 點查一次…」，確認後就會建立。只查公開網頁，看不到你的帳號或訂單。"))
                     .setPositiveButton(L.t("好"), null).show();
             return;
@@ -32,7 +32,7 @@ final class ScheduleUi {
             ids[i] = it.optInt("id");
             names[i] = Schedule.describe(it);
         }
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("定時任務")).setItems(names, (d, which) -> actions(a, ids[which], names[which], done))
+        new PageDialogBuilder(a).setTitle(L.t("定時任務")).setItems(names, (d, which) -> actions(a, ids[which], names[which], done))
                 .setNegativeButton(L.t("關閉"), null).show();
     }
 

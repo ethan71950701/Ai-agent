@@ -45,7 +45,7 @@ final class AiServiceUi {
             lp.topMargin = Ui.dp(a, 10);
             box.addView(b, lp);
         }
-        dlg[0] = new MaterialAlertDialogBuilder(a).setTitle(L.t("AI 服務與 API Key")).setView(box).setNegativeButton(L.t("取消"), null).show();
+        dlg[0] = new PageDialogBuilder(a).setTitle(L.t("AI 服務與 API Key")).setView(box).setNegativeButton(L.t("取消"), null).show();
     }
 
     private static void chooseService(Activity a, String scope, Runnable done) {

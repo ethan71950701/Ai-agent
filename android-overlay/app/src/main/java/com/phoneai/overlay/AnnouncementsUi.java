@@ -23,7 +23,7 @@ final class AnnouncementsUi {
         final List<Announcements.Entry> list = Announcements.history(a);
         final Set<String> muted = Announcements.mutedIds(a);
         if (list.isEmpty()) {
-            new MaterialAlertDialogBuilder(a).setTitle(L.t("公告"))
+            new PageDialogBuilder(a).setTitle(L.t("公告"))
                     .setMessage(L.t("還沒有收到公告。有新公告時，打開 App 就會跳出來，收到過的會留在這裡。"))
                     .setPositiveButton(L.t("好"), null)
                     .setNeutralButton(L.t("立即看公告"), (d, w) -> Announcements.check(a, true)).show();
@@ -36,7 +36,7 @@ final class AnnouncementsUi {
             names[i] = (e.severity.equals("critical") ? "⚠ " : "") + (e.title.isEmpty() ? L.t("公告") : e.title) + "　" + f.format(new Date(e.at))
                     + (muted.contains(e.id) ? "　" + L.t("（已不再提醒）") : "");
         }
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("公告")).setItems(names, (d, which) -> detail(a, list.get(which), muted.contains(list.get(which).id), done))
+        new PageDialogBuilder(a).setTitle(L.t("公告")).setItems(names, (d, which) -> detail(a, list.get(which), muted.contains(list.get(which).id), done))
                 .setNeutralButton(L.t("立即看公告"), (d, w) -> Announcements.check(a, true))
                 .setNegativeButton(L.t("關閉"), null).show();
     }

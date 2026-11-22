@@ -199,7 +199,7 @@ final class Usage {
         if (limitMonth(a) > 0) monEt.setText(String.valueOf(limitMonth(a) / 1000));
         form.addView(dayEt);
         form.addView(monEt);
-        new MaterialAlertDialogBuilder(a).setTitle(L.t("用量與上限")).setView(form)
+        new PageDialogBuilder(a).setTitle(L.t("用量與上限")).setView(form)
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> setLimits(a, parseK(dayEt) * 1000, parseK(monEt) * 1000))
                 .setNegativeButton(L.t("取消"), null).show();
     }

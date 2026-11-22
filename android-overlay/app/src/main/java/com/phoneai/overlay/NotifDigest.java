@@ -201,7 +201,7 @@ final class NotifDigest {
     /** 功能頁的設定：開關、時間、立即整理、看上次結果。 */
     static void openSettings(final Activity a, final Runnable after) {
         String state = on(a) ? String.format(java.util.Locale.US, L.t("目前：每天 %02d:%02d 整理"), hour(a), minute(a)) : L.t("目前：關閉");
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(L.t("通知整理"))
+        new PageDialogBuilder(a).setTitle(L.t("通知整理"))
                 .setMessage(state + "\n\n" + L.t("每天到了設定的時間，AI 會整理通知欄，跳一則通知；點進去可以看摘要，有提到日期時間的事可以一鍵加入行事曆或提醒。通知內容會送到你選的 AI 服務；銀行等受保護的 App 不讀內容，驗證碼會遮掉。"))
                 .setPositiveButton(L.t("設定時間"), (d, w) -> new android.app.TimePickerDialog(a, (tp, h, m) -> {
                     setTime(a, true, h, m);

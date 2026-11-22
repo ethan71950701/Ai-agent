@@ -122,7 +122,7 @@ final class WhatsNew {
         bind(tv, all, after, MAX_VERSIONS);
         ScrollView sv = new ScrollView(a);
         sv.addView(tv);
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(a).setTitle(L.t("更新內容") + " · 1.0." + BuildConfig.VERSION_CODE).setView(sv)
+        new PageDialogBuilder(a).setTitle(L.t("更新內容") + " · 1.0." + BuildConfig.VERSION_CODE).setView(sv)
                 .setPositiveButton(L.t("知道了"), null).show();
     }
 
