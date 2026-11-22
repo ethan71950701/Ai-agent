@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 回答卡片的玻璃改得更通透（上緣有一小段高光），設定 → 外觀可選「原本（偏暗）／通透／很透」，並有「測試回答卡片」按鈕｜Answer card glass is clearer with a soft top highlight; choose Original / Clear / Very clear in Settings → Appearance, with a "Test answer card" button
+
 - 移除「回答／提問卡片樣式（試用）」開關與測試按鈕，回到原本的回答卡片｜Removed the trial "answer/question card style" switches and test buttons; back to the original answer card
 
 ## 1.0.1799

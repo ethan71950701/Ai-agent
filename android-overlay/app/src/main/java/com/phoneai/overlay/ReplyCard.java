@@ -60,8 +60,10 @@ final class ReplyCard {
         final boolean glass = source != null;
         FrameLayout card;
         if (glass) {
+            final int lv = Math.max(0, Math.min(2, act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getInt("glass_level", 1)));   // 0 原本偏暗；1 通透；2 很透
+            final float tintK = new float[]{0.62f, 0.85f, 1f}[lv], darkK = new float[]{0.9f, 0.6f, 0.4f}[lv], midBlur = new float[]{46f, 28f, 18f}[lv], liftK = new float[]{1f, 0.5f, 0.2f}[lv];
             int ac = App.accentColor(act, 0xFF6EA8FF);   // 玻璃染上主題色（深一點）：跟大多數背景的顏色都不同，邊界才看得出來
-            int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * 0.62f) << 16) | (Math.round(((ac >> 8) & 255) * 0.62f) << 8) | Math.round((ac & 255) * 0.62f);
+            int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * tintK) << 16) | (Math.round(((ac >> 8) & 255) * tintK) << 8) | Math.round((ac & 255) * tintK);
             GlassBar g = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
             g.setSource(source);
             g.setGlowColor(0xFFFFFFFF);
@@ -76,20 +78,28 @@ final class ReplyCard {
             mid.setSource(source);
             mid.setClipChildren(false);
             mid.setLive(true);
-            mid.setBlurDp(46f);
+            mid.setBlurDp(midBlur);
             mid.setSatBoost(1.2f);
-            mid.setDarkScale(0.9f);
+            mid.setDarkScale(darkK);
             mid.setCenterMask(true);
             g.addView(mid, new FrameLayout.LayoutParams(-1, -1));
-            g.setDarkScale(0.9f);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
+            g.setDarkScale(darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
                 @Override public void getOutline(View v, android.graphics.Outline o) { o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), 30 * d); o.setAlpha(0.9f); }
             });
             g.setOutlineSpotShadowColor(0xFF000000);
             g.setOutlineAmbientShadowColor(0x99000000);
-            g.setLift(1f);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
+            g.setLift(liftK);   // 跟後面的畫面拉開亮度落差：很暗的背景提亮、其他壓暗，任何背景都看得出卡片
             // 白色邊框已拿掉（使用者覺得很突兀）；邊界靠後面畫面的模糊與亮度落差
+            if (lv > 0) {   // 玻璃的上緣高光：只有頂部一小段、漸漸消失（不是整圈白框）
+                View hl = new View(act);
+                GradientDrawable hg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0x55FFFFFF, 0x00FFFFFF});
+                hg.setCornerRadii(new float[]{30 * d, 30 * d, 30 * d, 30 * d, 0, 0, 0, 0});
+                hl.setBackground(hg);
+                hl.setClickable(false);
+                g.addView(hl, new FrameLayout.LayoutParams(-1, (int) (26 * d), Gravity.TOP));
+            }
             card = g;
         } else card = new FrameLayout(act);
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});

@@ -1084,6 +1084,24 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** 回答卡片的玻璃通透度：原本（偏暗）／通透／很透；旁邊的按鈕直接顯示範例回答。 */
+    private void buildGlassLevelGroup() {
+        final String[] labels = {L.t("原本（偏暗）"), L.t("通透"), L.t("很透")};
+        int ci = Math.max(0, Math.min(2, cfg().getInt("glass_level", 1)));
+        LinearLayout rg = Ui.expandGroup(this, box, "droplet", L.t("回答卡片的玻璃"), labels[ci], false);
+        for (int k = 0; k < labels.length; k++) {
+            final int v = k;
+            View trailing = k == ci ? wrapIcon(new IconView(this, "check", Ui.attr(this, com.google.android.material.R.attr.colorPrimary))) : null;
+            Ui.row(this, rg, k, labels.length + 1, null, labels[k], null, trailing, x -> {
+                if (v == cfg().getInt("glass_level", 1)) return;
+                cfg().edit().putInt("glass_level", v).apply();
+                recreate();
+            });
+        }
+        Ui.row(this, rg, labels.length, labels.length + 1, "sparkle", L.t("測試回答卡片"), L.t("馬上跳出一則範例回答，看目前的玻璃"), Ui.chevron(this), v ->
+                startActivity(new Intent(this, AskActivity.class).putExtra("reply_text", L.t("這是一則範例回答，用來預覽回答的樣子。"))));
+    }
+
     /** 選要保護的 App：AI 操作之前先問你；銀行、支付類不用勾，會自動保護。 */
     private void chooseProtectedApps() {
         // 讀 App 清單與名稱很慢（幾百個 App）：放在背景執行緒，讀好再顯示，不卡住畫面
@@ -1122,6 +1140,7 @@ public class MainActivity extends Activity {
             Ui.themePicker(this, g);
             buildLanguageGroup();
             buildReplyCardGroup();
+            buildGlassLevelGroup();
 
         });
         steps.add(() -> {

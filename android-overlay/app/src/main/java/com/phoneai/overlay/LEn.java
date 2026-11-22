@@ -1223,6 +1223,13 @@ final class LEn {
         m.put("模型：聊天與路由 ", "Models: chat and routing ");
         m.put("；自動操作 ", "; automatic actions ");
         m.put("；搜尋 ", "; search ");
+        m.put("原本（偏暗）", "Original (darker)");
+        m.put("通透", "Clear");
+        m.put("很透", "Very clear");
+        m.put("回答卡片的玻璃", "Answer card glass");
+        m.put("測試回答卡片", "Test answer card");
+        m.put("馬上跳出一則範例回答，看目前的玻璃", "Shows a sample reply right away with the current glass");
+        m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");
         m.put("開面板時自動聽", "Listen when the panel opens");
         m.put("叫出助理面板就開始聽；關掉就要自己點麥克風", "Start listening as soon as the assistant panel opens; turn off to tap the mic button yourself");
         m.put("選擇要匯入的備份", "Choose a backup to import");
