@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 整頁底下的按鈕不再拉滿整行：像對話框一樣，取消與確定靠右、中立的靠左｜Buttons on the full pages no longer stretch across the whole row: like dialogs, Cancel/OK sit on the right and the neutral one on the left
+
 - 整頁（原本是彈窗的入口）的開關動畫改成跟其他整頁一致：從點的那張卡片展開、返回縮回那張卡片；展開途中按返回會從目前進度接著縮回（可打斷）；Android 14 以上的返回手勢會讓頁面跟著手指縮小｜Full pages (the entries that used to be popups) now animate like the other pages: they expand from the tapped card and shrink back into it; pressing Back mid-opening continues from the current progress (interruptible); on Android 14+ the back gesture shrinks the page with your finger
 ## 1.0.1831
 

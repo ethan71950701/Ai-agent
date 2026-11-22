@@ -65,14 +65,16 @@ final class PageBuilder {
                 }
             } finally { Ui.standaloneRows = false; }
         }
-        if (posL != null || neuL != null || negL != null) {
+        if (posL != null || neuL != null || negL != null) {   // 跟對話框一樣：按鈕不拉滿整行；中立的靠左，取消與確定靠右
             LinearLayout bar = new LinearLayout(a);
-            bar.setOrientation(LinearLayout.VERTICAL);
-            if (posL != null) addButton(bar, h, posL, posC, DialogInterface.BUTTON_POSITIVE, true);
+            bar.setOrientation(LinearLayout.HORIZONTAL);
+            bar.setGravity(android.view.Gravity.CENTER_VERTICAL);
             if (neuL != null) addButton(bar, h, neuL, neuC, DialogInterface.BUTTON_NEUTRAL, false);
+            bar.addView(new View(a), new LinearLayout.LayoutParams(0, 1, 1f));   // 把後面的按鈕推到右邊
             if (negL != null) addButton(bar, h, negL, negC, DialogInterface.BUTTON_NEGATIVE, false);
+            if (posL != null) addButton(bar, h, posL, posC, DialogInterface.BUTTON_POSITIVE, true);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-            lp.topMargin = Ui.dp(a, 16);
+            lp.topMargin = Ui.dp(a, 20);
             box.addView(bar, lp);
         }
         h.attach();
@@ -81,8 +83,9 @@ final class PageBuilder {
 
     private void addButton(LinearLayout bar, Handle h, CharSequence text, DialogInterface.OnClickListener l, int which, boolean primary) {
         com.google.android.material.button.MaterialButton b = Ui.pill(a, text.toString(), primary, v -> { h.dismiss(); if (l != null) l.onClick(h, which); });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, Ui.dp(a, 48));
-        lp.topMargin = Ui.dp(a, 8);
+        b.setMinWidth(Ui.dp(a, 88));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, Ui.dp(a, 48));
+        lp.leftMargin = Ui.dp(a, 8);
         bar.addView(b, lp);
     }
 
