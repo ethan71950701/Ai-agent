@@ -39,13 +39,11 @@ public class App extends Application {
         } catch (Throwable t) { return 0; }
     }
 
-    /** 莫奈用的選項：開了「自己從桌面壁紙取色」而且讀得到壁紙色，就以壁紙主色為種子；否則照系統給的。 */
+    /** 莫奈用的選項：讀得到桌面壁紙主色就以它為種子自己配色（有些手機的系統取色不會跟著壁紙變）；讀不到才照系統給的。 */
     static DynamicColorsOptions monetOptions(Context c) {
         DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
-        if (c.getApplicationContext().getSharedPreferences("cfg", MODE_PRIVATE).getBoolean("monet_wall", false)) {
-            int seed = wallpaperSeed(c);
-            if (seed != 0) ob.setContentBasedSource(seed);
-        }
+        int seed = wallpaperSeed(c);
+        if (seed != 0) ob.setContentBasedSource(seed);
         return ob.build();
     }
 

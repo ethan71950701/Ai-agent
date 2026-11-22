@@ -1209,8 +1209,6 @@ public class MainActivity extends Activity {
         steps.add(() -> {
             LinearLayout g = grp("droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
             Ui.themePicker(this, g);
-            Ui.switchRow(this, g, 0, 1, "droplet", L.t("自己從桌面壁紙取色"), L.t("換壁紙後顏色沒跟著變時打開：App 自己讀桌面壁紙的主色來配色，不靠系統給的；開關後會重開畫面"),
-                    cfg().getBoolean("monet_wall", false), (v, on) -> { cfg().edit().putBoolean("monet_wall", on).apply(); recreate(); });
             buildLanguageGroup();
             buildReplyCardGroup();
             buildGlassLevelGroup();

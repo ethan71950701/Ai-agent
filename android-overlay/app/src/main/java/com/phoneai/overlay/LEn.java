@@ -1251,8 +1251,6 @@ final class LEn {
         m.put("，這支手機不支援", ", not supported on this phone");
         m.put("；系統主色 ", "; system accent ");
         m.put("；App 目前主色 ", "; app accent now ");
-        m.put("自己從桌面壁紙取色", "Pick colors from the home wallpaper myself");
-        m.put("換壁紙後顏色沒跟著變時打開：App 自己讀桌面壁紙的主色來配色，不靠系統給的；開關後會重開畫面", "Turn on if colors do not follow the wallpaper: the app reads the home wallpaper's main color itself instead of relying on the system; the screen restarts when toggled");
         m.put("；桌面壁紙主色 ", "; home wallpaper main color ");
         m.put("讀不到", "unavailable");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
