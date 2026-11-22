@@ -169,15 +169,34 @@ final class AgentLoop {
 
     /** macroTask：路由認為這句話是某個記住的任務的另一種說法（沒有就 null）。一次只跑一個：助理面板與首頁輸入同時送出時，後來的會被擋下，不會互相蓋掉狀態與搶畫面。 */
     static String run(Context c, String task, Ui ui, String preOpen, String macroTask) {
-        if (!GATE.tryEnter()) return L.t("已經有一個操作正在進行，請等它做完（或在通知上按「停止」）再試。");
+        if (!GATE.tryEnter()) {
+            // 上一個操作還沒結束（通知可能已經不見了、或它卡住了）：講清楚狀況，讓使用者選擇要不要停掉它，不要只回一句「正在進行」就沒辦法了
+            long now = System.currentTimeMillis();
+            boolean stop = ui != null && ui.confirm(RunStatus.askStop(now, runStartedAt, lastBeatAt, lastStep));
+            if (!stop) return L.t("已經有一個操作正在進行，這個沒有開始。要停掉它，可以再說一次並選「停止」，或在通知上按「停止」。");
+            LifeLog.add(c, "自動操作：使用者要停掉上一個還沒結束的操作（已進行 " + (now - runStartedAt) / 1000 + " 秒，第 " + lastStep + " 步）");
+            cancel();
+            boolean got = false;
+            for (int i = 0; i < 50 && !(got = GATE.tryEnter()); i++) sleep(200);   // 最多等 10 秒讓它停下來
+            if (!got) return RunStatus.cannotStop();
+        }
+        runStartedAt = lastBeatAt = System.currentTimeMillis();
+        lastStep = 0;
+        LifeLog.add(c, "自動操作開始：" + (task.length() > 30 ? task.substring(0, 30) + "…" : task));
         RippleAccessibilityService.setAgentGlow(true);   // 螢幕邊緣的流動光暈（波浪）：AI 操作手機的提示
+        String result = null;
         try {
-            return runExclusive(c, task, ui, preOpen, macroTask);
+            result = runExclusive(c, task, ui, preOpen, macroTask);
+            return result;
         } finally {
             RippleAccessibilityService.setAgentGlow(false);
+            LifeLog.add(c, "自動操作結束（" + (System.currentTimeMillis() - runStartedAt) / 1000 + " 秒，做到第 " + lastStep + " 步）：" + (result == null ? "例外" : result.length() > 40 ? result.substring(0, 40) + "…" : result));
             GATE.exit();
         }
     }
+
+    private static volatile long runStartedAt, lastBeatAt;   // 這一次自動操作開始的時間、最近一次有動靜（每一步開始）的時間
+    private static volatile int lastStep;
 
     private static String runExclusive(Context c, String task, Ui ui, String preOpen, String macroTask) {
         WebReader.newTurn();
@@ -274,6 +293,8 @@ final class AgentLoop {
         int maxSteps = baseSteps(c);
         try {
             for (int step = 1; step <= HARD_CAP && finalSay == null; step++) {
+                lastBeatAt = System.currentTimeMillis();   // 有動靜：新任務進來時才分得出「還在跑」和「卡住了」
+                lastStep = step;
                 if (step > maxSteps) {   // 給的步數用完了還沒完成：問使用者要不要再加（不回應＝不同意）
                     if (!ui.confirm(String.format(L.t("已經做了 %d 步，還沒完成。要再給它 10 步繼續嗎？（每多一步會多花一點費用）"), maxSteps))) break;
                     maxSteps = Math.min(HARD_CAP, maxSteps + 10);

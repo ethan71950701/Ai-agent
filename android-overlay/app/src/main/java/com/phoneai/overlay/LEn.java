@@ -1478,6 +1478,16 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("目前在第 ", "now at step ");
+        m.put("還在準備", "still preparing");
+        m.put("，最後一次動靜是 ", ", last activity ");
+        m.put("前", " ago");
+        m.put("（可能卡住了）", " (may be stuck)");
+        m.put("上一個操作還沒結束（已進行 ", "The previous operation has not finished (running for ");
+        m.put("）。\n要停止它、改做這一個嗎？", ").\nStop it and do this one instead?");
+        m.put("上一個操作停不下來（可能卡住了）。請稍等一下再試；一直不行的話，到系統設定把 Vertex「強制停止」再重新打開。", "The previous operation will not stop (it may be stuck). Wait a moment and try again; if it keeps failing, force-stop Vertex in system settings and reopen it.");
+        m.put("已經有一個操作正在進行，這個沒有開始。要停掉它，可以再說一次並選「停止」，或在通知上按「停止」。", "An operation is already running, so this one did not start. To stop it, say it again and choose Stop, or tap Stop in the notification.");
+
         m.put("測試中，約 10 秒。請看預覽小窗裡有沒有漣漪", "Testing, about 10 s. Watch the preview window for ripples");
         m.put("背景螢幕漣漪測試", "Background-display ripple test");
         m.put("背景螢幕建立失敗。", "Could not create the background display.");
