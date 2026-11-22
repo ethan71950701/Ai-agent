@@ -21,7 +21,11 @@ public class AskActivity extends Activity {
         final android.content.Intent in0 = getIntent();
         boolean plain0 = in0.getStringExtra("text") == null && in0.getStringExtra("fill") == null
                 && in0.getStringExtra("question") == null && in0.getStringExtra("reply_text") == null;
-        if (plain0) {   // 單純打開：面板先藏起來、先截一張畫面（才不會拍到開場動畫），截好再出現，就能直接在畫面上圈選提問
+        final String demo = in0.getStringExtra("demo_reply");   // 設定裡的「測試回答卡片」：照一般開面板的流程先截圖，截好再顯示範例回答（跟真的用起來一樣）
+        if (demo != null) {
+            sheet.view().setVisibility(android.view.View.INVISIBLE);
+            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); sheet.showReply("", demo); });
+        } else if (plain0) {   // 單純打開：面板先藏起來、先截一張畫面（才不會拍到開場動畫），截好再出現，就能直接在畫面上圈選提問
             sheet.view().setVisibility(android.view.View.INVISIBLE);
             sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); });
         } else {

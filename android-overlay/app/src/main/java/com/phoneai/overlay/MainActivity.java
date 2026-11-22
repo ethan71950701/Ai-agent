@@ -1099,7 +1099,7 @@ public class MainActivity extends Activity {
             });
         }
         Ui.row(this, rg, labels.length, labels.length + 1, "sparkle", L.t("測試回答卡片"), L.t("馬上跳出一則範例回答，看目前的玻璃"), Ui.chevron(this), v ->
-                startActivity(new Intent(this, AskActivity.class).putExtra("reply_text", L.t("這是一則範例回答，用來預覽回答的樣子。"))));
+                startActivity(new Intent(this, AskActivity.class).putExtra("demo_reply", L.t("這是一則範例回答，用來預覽回答的樣子。"))));
     }
 
     /** 選要保護的 App：AI 操作之前先問你；銀行、支付類不用勾，會自動保護。 */
