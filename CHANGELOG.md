@@ -5,7 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
-- 新增「AI 的提問用回答卡片樣式（試用）」開關（設定 → 語音）：任務中 AI 問你細節時，問題改用回答卡片顯示｜Added an "AI questions as answer card (trial)" switch (Settings → Voice)；旁邊有「測試 AI 提問」按鈕，不用等 AI 真的發問｜and a "Test AI question" button next to it
+- 新增「回答用提問的樣式（試用）」開關與「測試回答樣式」按鈕（設定 → 語音）：聊天回答改成跟 AI 提問一樣的白字置中樣式｜Added a "Replies in the question style (trial)" switch and a "Test reply style" button (Settings → Voice)
 ## 1.0.1796
 
 - 新增「確認框用回答卡片樣式（試用）」開關（設定 → 語音）：任務中的確認改用跟回答框一樣的卡片｜Added a "confirm prompts as answer card (trial)" switch (Settings → Voice)

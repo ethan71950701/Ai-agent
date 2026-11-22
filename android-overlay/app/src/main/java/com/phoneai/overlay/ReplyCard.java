@@ -55,11 +55,16 @@ final class ReplyCard {
     static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx) { return build(act, title, text, close, maxHeightPx, null); }
 
     /** source 不是 null：卡片用跟輸入列同一種液態玻璃（折射 source 後面的畫面、顏色增強）；null：舊的深色卡片。 */
-    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx, View source) {
+    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx, View source) { return build(act, title, text, close, maxHeightPx, source, false); }
+
+    /** plain：跟 AI 提問一樣的樣式——沒有卡片底、白字置中加陰影，直接浮在極光上（設定裡的開關）。 */
+    static FrameLayout build(Activity act, String title, String text, Runnable close, int maxHeightPx, View source, boolean plain) {
         final float d = act.getResources().getDisplayMetrics().density;
-        final boolean glass = source != null;
+        final boolean glass = source != null && !plain;
         FrameLayout card;
-        if (glass) {
+        if (plain) {
+            card = new FrameLayout(act);
+        } else if (glass) {
             int ac = App.accentColor(act, 0xFF6EA8FF);   // 玻璃染上主題色（深一點）：跟大多數背景的顏色都不同，邊界才看得出來
             int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * 0.62f) << 16) | (Math.round(((ac >> 8) & 255) * 0.62f) << 8) | Math.round((ac & 255) * 0.62f);
             GlassBar g = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
@@ -95,7 +100,7 @@ final class ReplyCard {
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8202030, 0xD810101C});
         bg.setStroke((int) Math.max(2, 1.5f * d), 0x99FFFFFF);   // 白色細邊
         bg.setCornerRadius(30 * d);
-        if (!glass) {
+        if (!glass && !plain) {
         card.setBackground(bg);
         card.setElevation(24 * d);                                // 浮起來；陰影用白色，像一圈柔和白光
         card.setOutlineSpotShadowColor(0xFFFFFFFF);
@@ -112,7 +117,7 @@ final class ReplyCard {
         View glowFade = new View(act);   // 光區上緣慢慢淡進卡片底色，不要有一條硬邊
         glowFade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xD8191927, 0x00191927}));
         glowBox.addView(glowFade, new FrameLayout.LayoutParams(-1, (int) (90 * d), Gravity.TOP));
-        if (!glass) {   // 玻璃版不放底部光區（玻璃後面已經是極光）
+        if (!glass && !plain) {   // 玻璃版不放底部光區（玻璃後面已經是極光）
         card.addView(glowBox, new FrameLayout.LayoutParams(-1, glowH, Gravity.BOTTOM));
         card.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, orr, ob) -> aurora.setGlowY(glowH - 16 * d));
         }
@@ -133,8 +138,9 @@ final class ReplyCard {
         TextView body = new TextView(act);
         body.setText(Md.render(text));
         body.setTextColor(0xFFF4F4F8);
-        body.setTextSize(20);
-        body.setLineSpacing(0, 1.38f);
+        body.setTextSize(plain ? 18 : 20);
+        body.setLineSpacing(0, plain ? 1.15f : 1.38f);
+        if (plain) { body.setGravity(Gravity.CENTER_HORIZONTAL); body.setShadowLayer(8 * d, 0, 0, 0xCC000000); }
         body.setTextIsSelectable(true);
         body.setShowSoftInputOnFocus(false);   // 點回答文字（要選取、複製）不要跳出鍵盤
         if (text != null && text.contains(TavilySearch.SOURCES_MARK.trim())) {   // 有來源清單：網址要能點（這種回答改用可點連結的方式，不能同時用選取模式）
