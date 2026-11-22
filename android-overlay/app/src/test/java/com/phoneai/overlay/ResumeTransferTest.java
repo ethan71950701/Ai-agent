@@ -518,4 +518,43 @@ public class ResumeTransferTest {
         }
         return false;
     }
+
+    /** 位址過期（連過去被拒絕）：重試兩次後重新找對方，換到正確的位址再傳，檔案要完整收到。 */
+    @Test
+    public void staleAddressTriggersARe_resolveAndTheTransferCompletes() throws Exception {
+        byte[] d = data(150_000, 31);
+        TransferClient stale = new TransferClient("127.0.0.1", 1, "cli", "client", key);   // 沒人在聽的位址
+        final int[] resolves = new int[1];
+        stale.setReconnector(() -> { resolves[0]++; return new String[]{"127.0.0.1", String.valueOf(server.port())}; });
+        String saved = stale.putResumable(() -> new ByteArrayInputStream(d), d.length, "moved.bin", null);
+        assertEquals("moved.bin", saved);
+        assertEquals("只重新找一次", 1, resolves[0]);
+        assertArrayEquals(d, Files.readAllBytes(new File(inbox, "moved.bin").toPath()));
+    }
+
+    @Test
+    public void ifReResolvingFailsTheErrorIsReported() throws Exception {
+        byte[] d = data(10_000, 32);
+        TransferClient stale = new TransferClient("127.0.0.1", 1, "cli", "client", key);
+        final int[] resolves = new int[1];
+        stale.setReconnector(() -> { resolves[0]++; throw new Exception("找不到"); });
+        try {
+            stale.putResumable(() -> new ByteArrayInputStream(d), d.length, "never2.bin", null);
+            throw new AssertionError("should fail");
+        } catch (IOException expected) {
+            assertTrue(String.valueOf(expected.getMessage()), expected.getMessage().length() > 0);
+        }
+        assertEquals("只試一次重新找，不會無限重找", 1, resolves[0]);
+    }
+
+    @Test
+    public void connectFailuresAreRecognisedButMidTransferTimeoutsAreNot() {
+        assertTrue(Resume.isConnectFailure(new IOException("failed to connect to /192.168.1.112 (port 47321) from /192.168.1.105 (port 48614) after 4000ms: isConnected failed: EHOSTUNREACH (No route to host)")));
+        assertTrue(Resume.isConnectFailure(new java.net.ConnectException("Connection refused")));
+        assertTrue(Resume.isConnectFailure(new IOException("wrapped", new java.net.NoRouteToHostException("x"))));
+        assertTrue(Resume.isConnectFailure(new java.net.SocketTimeoutException("connect timed out")));
+        assertFalse(Resume.isConnectFailure(new java.net.SocketTimeoutException("Read timed out")));
+        assertFalse(Resume.isConnectFailure(new IOException("Connection reset")));
+        assertFalse(Resume.isConnectFailure(null));
+    }
 }

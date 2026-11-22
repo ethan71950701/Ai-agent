@@ -413,6 +413,12 @@ final class FileTools {
         if (ip != null && Doorbell.isTailnet(ip)) TailscaleControl.noteUse();   // 走 Tailscale：重新計「閒置多久才關回去」
         TransferNotify.phase(c, L.t("已連上，開始傳送…"), L.t("已連上"));
         TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
+        final String shownName = p.name;
+        cl.setReconnector(() -> {   // 傳到一半（或剛開始）連不上：重新找一次對方（區網掃描、叫醒、外網），不要一直對著可能過期的位址重試
+            TransferNotify.phase(c, L.t("連不上，重新找對方：") + shownName, L.t("重找"));
+            TransferClient n = clientFor(c, p);
+            return new String[]{n.host(), String.valueOf(n.portNumber())};
+        });
         if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
     }

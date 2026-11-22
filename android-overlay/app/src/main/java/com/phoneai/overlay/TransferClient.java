@@ -28,11 +28,40 @@ final class TransferClient {
     volatile String lastSha = "";
     volatile boolean lastVerified;
 
-    private final String ip;
-    private final int port;
+    private volatile String ip;
+    private volatile int port;
     private final String myId;
     private final byte[] key;
     private final String myName;
+
+    /** 連不上時重新找對方：回傳 {位址, 埠號}（找不到就丟例外或回 null）。由呼叫端（FileTools.clientFor）設定，傳輸中連不上會用它換一個位址再試。 */
+    interface Reconnector { String[] resolve() throws Exception; }
+
+    private volatile Reconnector reconnector;
+    private int reconnects;
+    static final int MAX_RECONNECTS = 1;
+
+    void setReconnector(Reconnector r) { reconnector = r; }
+
+    String host() { return ip; }
+
+    int portNumber() { return port; }
+
+    /** 連不上、而且還沒重新找過：重新找一次，找到（位址可能一樣也可能換了）就回 true，重試次數重新算。 */
+    private boolean tryReconnect(IOException e) {
+        Reconnector r = reconnector;
+        if (r == null || reconnects >= MAX_RECONNECTS || !Resume.isConnectFailure(e)) return false;
+        reconnects++;
+        try {
+            String[] a = r.resolve();
+            if (a == null || a.length < 2) return false;
+            ip = a[0];
+            port = Integer.parseInt(a[1]);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
+    }
 
     TransferClient(String ip, int port, String myId, String myName, byte[] key) {
         this.ip = ip;
@@ -222,6 +251,7 @@ final class TransferClient {
                 if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 連線是因為按停止／暫停才被關掉的：不是斷線，不要重試
                 if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
                 last = e;
+                if (attempt >= 2 && tryReconnect(e)) { attempt = 0; continue; }   // 連不上：位址可能過期了，重新找對方再試（不要對著同一個死位址試六次）
                 if (!Resume.retryable(e)) throw e;
                 if (attempt == Resume.MAX_ATTEMPTS) break;
                 try { Thread.sleep(Resume.backoffMs(attempt)); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw e; }
@@ -424,6 +454,7 @@ final class TransferClient {
                 if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 連線是因為按停止／暫停才被關掉的：不是斷線，不要重試
                 if (TransferNotify.pauseRequested()) throw new TransferNotify.Paused();
                 last = e;
+                if (attempt >= 2 && tryReconnect(e)) { attempt = 0; continue; }   // 連不上：位址可能過期了，重新找對方再試
                 boolean mismatch = e.getMessage() != null && e.getMessage().contains("offset mismatch");
                 if (bodySha != null && Resume.retryable(e)) {   // 整個檔案都送出去了才出事：多半只是「收到了」的回覆掉了，先問對方收完沒，免得整個重傳又多一份
                     String[] done = remoteDone(fp);

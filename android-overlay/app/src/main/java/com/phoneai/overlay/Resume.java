@@ -45,6 +45,18 @@ final class Resume {
         return false;
     }
 
+    /** 連線一開始就連不上對方（位址過期、對方休眠、不在同一個網路）：重試同一個位址沒用，要重新找對方。已經在傳了才斷的讀寫逾時不算。 */
+    static boolean isConnectFailure(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof java.net.ConnectException || t instanceof java.net.NoRouteToHostException || t instanceof java.net.UnknownHostException) return true;
+            String m = t.getMessage() == null ? "" : t.getMessage();
+            String l = m.toLowerCase(java.util.Locale.ROOT);
+            if (l.startsWith("failed to connect to") || l.contains("ehostunreach") || l.contains("enetunreach") || l.contains("no route to host")
+                    || l.contains("isconnected failed") || l.contains("connect timed out")) return true;
+        }
+        return false;
+    }
+
     static long backoffMs(int attempt) { return Math.min(10_000L, 2_000L * Math.max(1, attempt)); }
 
     static final int MAX_ATTEMPTS = 6;

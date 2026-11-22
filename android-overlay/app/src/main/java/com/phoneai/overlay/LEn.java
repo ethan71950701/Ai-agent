@@ -1478,6 +1478,8 @@ final class LEn {
         m.put(" 個檔案）", " files)");
         m.put("準備傳送…（找對方、必要時叫醒它，進度看通知列）", "Getting ready… (finding the other phone, waking it if needed; follow progress in the notifications)");
         m.put("正在找：", "Looking for: ");
+        m.put("連不上，重新找對方：", "Cannot connect, looking for it again: ");
+        m.put("重找", "Retry");
         m.put("我試了好幾次，畫面都沒有變化，卡在：", "I tried several times and the screen did not change; stuck at: ");
         m.put("。可能是這個按鈕沒反應、需要你自己操作，或需要登入、授權。你可以接手做，或換個說法再叫我一次。", ". The button may not respond, need you to do it yourself, or need a login or permission. You can take over, or ask me again in different words.");
         m.put("AI 想再讀另一個網站：", "The AI wants to read another website: ");
