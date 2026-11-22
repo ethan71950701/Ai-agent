@@ -1200,7 +1200,7 @@ public class AssistantSheet {
         }
         if (cardSpring == null) {   // 鍵盤收起：卡片彈著長回去
             cardSpring = new androidx.dynamicanimation.animation.SpringAnimation(cardHolder);
-            cardSpring.setSpring(new androidx.dynamicanimation.animation.SpringForce().setStiffness(420f).setDampingRatio(0.5f));
+            cardSpring.setSpring(new androidx.dynamicanimation.animation.SpringForce().setStiffness(RemoteTuning.f(act, "card_stiff", 420f)).setDampingRatio(RemoteTuning.f(act, "card_damp", 0.5f)));
             cardSpring.setMinimumVisibleChange(1f);
             cardSpring.addUpdateListener((anim, value, velocity) -> { cardInset = Math.max(0f, value); applyCardInset(); });
         }

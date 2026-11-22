@@ -25,4 +25,12 @@ public class RemoteTuningTest {
         for (int i = 0; i < 5000; i++) sb.append('a');
         assertTrue(RemoteTuning.parse(sb.append("\"}").toString()).isEmpty());
     }
+
+    @Test public void glassLevelsAndSpringKeysAreAllowedAndClamped() {
+        Map<String, Float> m = RemoteTuning.parse("{\"g1_blur\": 99, \"g0_tint\": 0.7, \"card_stiff\": 5, \"card_damp\": 0.35}");
+        assertEquals(40f, m.get("g1_blur"), 0.001f);
+        assertEquals(0.7f, m.get("g0_tint"), 0.001f);
+        assertEquals(100f, m.get("card_stiff"), 0.001f);
+        assertEquals(0.35f, m.get("card_damp"), 0.001f);
+    }
 }

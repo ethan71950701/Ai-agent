@@ -61,7 +61,9 @@ final class ReplyCard {
         FrameLayout card;
         if (glass) {
             final int lv = Math.max(0, Math.min(3, act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getInt("glass_level", 3)));   // 0 原本偏暗；1 通透；2 很透
-            final float tintK = new float[]{0.62f, 0.85f, 1f, 1f}[lv], darkK = new float[]{0.9f, 0.6f, 0.4f, 0.4f}[lv], midBlur = new float[]{46f, 28f, 18f, 18f}[lv], liftK = new float[]{1f, 0.5f, 0.2f, 0f}[lv];
+            final float[] tintD = {0.62f, 0.85f, 1f, 1f}, darkD = {0.9f, 0.6f, 0.4f, 0.4f}, midD = {46f, 28f, 18f, 18f}, liftD = {1f, 0.5f, 0.2f, 0f};
+            final float tintK = RemoteTuning.f(act, "g" + lv + "_tint", tintD[lv]), darkK = RemoteTuning.f(act, "g" + lv + "_dark", darkD[lv]),
+                    midBlur = RemoteTuning.f(act, "g" + lv + "_mid", midD[lv]), liftK = RemoteTuning.f(act, "g" + lv + "_lift", liftD[lv]);
             int ac = App.accentColor(act, 0xFF6EA8FF);   // 玻璃染上主題色（深一點）：跟大多數背景的顏色都不同，邊界才看得出來
             int tintC = 0xFF000000 | (Math.round(((ac >> 16) & 255) * tintK) << 16) | (Math.round(((ac >> 8) & 255) * tintK) << 8) | Math.round((ac & 255) * tintK);
             GlassBar g = new GlassBar(act, 0xFF23262A, lv >= 2 ? 0x00000000 : tintC, 0x44FFFFFF, 30 * d, false);   // 「很透」：跟底下輸入列一樣，不染色
@@ -69,7 +71,7 @@ final class ReplyCard {
             g.setGlowColor(0xFFFFFFFF);
             g.setClipChildren(false);
             g.setLive(true);
-            g.setBlurDp(lv == 3 ? RemoteTuning.f(act, "g3_blur", 8f) : lv == 2 ? 10f : 6f);   // 液態（3）：輕微模糊，讓後面的圖示、漩渦不搶字   // 液態（3）：後面幾乎不模糊，保持清楚、靠邊緣折射        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
+            g.setBlurDp(RemoteTuning.f(act, "g" + lv + "_blur", lv == 3 ? 8f : lv == 2 ? 10f : 6f));   // 液態（3）：輕微模糊，讓後面的圖示、漩渦不搶字   // 液態（3）：後面幾乎不模糊，保持清楚、靠邊緣折射        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
             if (lv < 2) g.setSatBoost(1.25f); 
             if (lv < 2) g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
             g.setSoftGlow(lv >= 2 ? 0f : 1f);
@@ -83,7 +85,7 @@ final class ReplyCard {
             mid.setDarkScale(darkK);
             mid.setCenterMask(true);
             if (lv < 2) g.addView(mid, new FrameLayout.LayoutParams(-1, -1));   // 「很透」不疊中間的糊層：整片都是清楚的玻璃，文字靠陰影
-            g.setDarkScale(lv == 3 ? RemoteTuning.f(act, "g3_dark", 1.2f) : lv == 2 ? 0.6f : darkK);
+            g.setDarkScale(lv == 3 ? RemoteTuning.f(act, "g3_dark", 1.2f) : lv == 2 ? RemoteTuning.f(act, "g2_dark", 0.6f) : darkK);
             if (lv == 3) g.setEdgeLight(RemoteTuning.f(act, "g3_rim", 0.12f), 0f);   // 液態：邊緣一條很淡的細亮線，看得出卡片範圍（不是整圈白框）   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation((lv == 3 ? RemoteTuning.f(act, "g3_elev", 8f) : 22) * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {

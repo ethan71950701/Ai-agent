@@ -27,6 +27,17 @@ final class RemoteTuning {
         ALLOWED.put("g3_rim", new float[]{0f, 1f});         // 邊緣細亮線強度
         ALLOWED.put("g3_elev", new float[]{0f, 30f});       // 外陰影高度（dp）
         ALLOWED.put("g3_ambient", new float[]{0f, 1f});     // 環境陰影濃度
+        // 回答卡片其他三檔（0 原本偏暗、1 通透、2 很透）：g<檔>_blur 後面模糊（dp）、g<檔>_dark 暗度倍率、g<檔>_tint 染色深淺、g<檔>_lift 亮度落差、g<檔>_mid 中間糊層模糊（dp）
+        for (int lv = 0; lv <= 2; lv++) {
+            ALLOWED.put("g" + lv + "_blur", new float[]{0f, 40f});
+            ALLOWED.put("g" + lv + "_dark", new float[]{0f, 2f});
+            ALLOWED.put("g" + lv + "_tint", new float[]{0f, 1.5f});
+            ALLOWED.put("g" + lv + "_lift", new float[]{0f, 2f});
+            ALLOWED.put("g" + lv + "_mid", new float[]{0f, 80f});
+        }
+        // 回答卡片跟著鍵盤的彈簧：越硬越快、阻尼越小越 Q 彈
+        ALLOWED.put("card_stiff", new float[]{100f, 1500f});
+        ALLOWED.put("card_damp", new float[]{0.2f, 1f});
     }
 
     private static final long MIN_INTERVAL_MS = 10 * 60_000L;
