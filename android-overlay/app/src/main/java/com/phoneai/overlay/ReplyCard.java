@@ -136,6 +136,7 @@ final class ReplyCard {
         body.setTextSize(20);
         body.setLineSpacing(0, 1.38f);
         body.setTextIsSelectable(true);
+        body.setShowSoftInputOnFocus(false);   // 點回答文字（要選取、複製）不要跳出鍵盤
         if (text != null && text.contains(TavilySearch.SOURCES_MARK.trim())) {   // 有來源清單：網址要能點（這種回答改用可點連結的方式，不能同時用選取模式）
             android.text.util.Linkify.addLinks(body, android.text.util.Linkify.WEB_URLS);
             body.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());

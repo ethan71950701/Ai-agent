@@ -282,13 +282,16 @@ public class AssistantSheet {
         act.getWindow().setStatusBarContrastEnforced(false);       // 不要讓系統在狀態列/導覽列加一層對比遮罩
         act.getWindow().setNavigationBarContrastEnforced(false);
         root.setOnApplyWindowInsetsListener((v, ins) -> {
-            int ime = ins.getInsets(WindowInsets.Type.ime()).bottom;
-            int nav = ins.getInsets(WindowInsets.Type.systemBars()).bottom;
-            bottomInset = Math.max(ime, nav);
-            content.setTranslationY(-bottomInset);
-            updateGlowY();
-            fitReplyCard();   // 鍵盤出現／收起：回答卡的高度跟著縮放，才不會被鍵盤蓋住
+            applyBottomInset(ins);
             return ins;
+        });
+        // 鍵盤滑出來、收起來的每一格都跟著動（以前只在開始與結束各算一次，再用自己的動畫補，節奏跟鍵盤對不上，看起來不順）
+        root.setWindowInsetsAnimationCallback(new android.view.WindowInsetsAnimation.Callback(android.view.WindowInsetsAnimation.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE) {
+            @Override
+            public WindowInsets onProgress(WindowInsets ins, java.util.List<android.view.WindowInsetsAnimation> animations) {
+                applyBottomInset(ins);
+                return ins;
+            }
         });
         content.addOnLayoutChangeListener((v, l, t, rr, b, ol, ot, orr, ob) -> updateGlowY());
 
@@ -1140,30 +1143,34 @@ public class AssistantSheet {
         return Math.max((int) (160 * d), root.getHeight() - (int) (CARD_TOP_DP * d) - botPad);
     }
 
-    private android.animation.ValueAnimator cardAnim;
+    /** 鍵盤與導覽列的高度：輸入列往上頂、回答卡的下緣與可用高度跟著改。鍵盤動畫中每一格都會呼叫。 */
+    private void applyBottomInset(WindowInsets ins) {
+        int ime = ins.getInsets(WindowInsets.Type.ime()).bottom;
+        int nav = ins.getInsets(WindowInsets.Type.systemBars()).bottom;
+        bottomInset = Math.max(ime, nav);
+        content.setTranslationY(-bottomInset);
+        updateGlowY();
+        fitReplyCard();
+        // 鍵盤冒出來、但輸入框沒有焦點（例如點了 AI 的回答卡）：不是使用者要打字。以前這時會跳出只能打英文的鍵盤，收掉它
+        if (ime > 0 && input != null && !input.hasFocus() && !hidingStrayKeyboard) {
+            hidingStrayKeyboard = true;
+            root.post(() -> { hideKeyboard(); hidingStrayKeyboard = false; });
+        }
+    }
 
-    /** 鍵盤高度變了：回答卡的下緣與可用高度跟著改（以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上），用動畫慢慢縮放，不是瞬間跳。 */
+    private boolean hidingStrayKeyboard;
+
+    /** 回答卡的下緣與可用高度（直接設，跟著鍵盤動畫的每一格走；以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
     private void fitReplyCard() {
         final View card = replyCard;
         if (card == null || !(card.getLayoutParams() instanceof FrameLayout.LayoutParams) || root.getHeight() <= 0) return;
         final int toM = (int) (CARD_BOTTOM_DP * d) + bottomInset;
         final FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) card.getLayoutParams();
-        final int fromM = cp.bottomMargin;
         final int toH = replyCardMaxH(toM);
-        final int fromH0 = ReplyCard.maxHeight(card);
-        final int fromH = fromH0 < 0 ? toH : fromH0;
-        if (fromM == toM && fromH == toH) return;
-        if (cardAnim != null) cardAnim.cancel();
-        cardAnim = android.animation.ValueAnimator.ofFloat(0f, 1f);
-        cardAnim.setDuration(260);
-        cardAnim.setInterpolator(new DecelerateInterpolator(2f));   // 跟鍵盤滑出來的節奏差不多：一開始快、慢慢停
-        cardAnim.addUpdateListener(an -> {
-            float f = (float) an.getAnimatedValue();
-            cp.bottomMargin = fromM + Math.round((toM - fromM) * f);
-            card.setLayoutParams(cp);
-            ReplyCard.resize(card, fromH + Math.round((toH - fromH) * f));
-        });
-        cardAnim.start();
+        if (cp.bottomMargin == toM && ReplyCard.maxHeight(card) == toH) return;
+        cp.bottomMargin = toM;
+        card.setLayoutParams(cp);
+        ReplyCard.resize(card, toH);
     }
 
     private void refreshAction() {

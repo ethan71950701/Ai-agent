@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：點 AI 的回答卡會跳出只能打英文的鍵盤——現在回答文字不再要求鍵盤，輸入框沒有焦點卻冒出鍵盤時會自動收掉；鍵盤滑出、收起時，回答卡和輸入列改成跟著鍵盤動畫的每一格走，比以前順｜Fix: tapping the AI's answer card popped up an English-only keyboard — the answer text no longer asks for a keyboard and a keyboard that appears while the input box has no focus is dismissed; the answer card and input row now follow every frame of the keyboard animation, which is smoother than before
 - 修正：叫出助理面板之後，底下的瀏覽器可能讀不到，AI 就說看不到畫面；現在面板一打開（瀏覽器還在最上面時）先記下瀏覽器畫面上的字，AI 讀不到時用這份（兩分鐘內有效，只有前景是瀏覽器才記）；找不到時會把看到的視窗寫進「進階與診斷」方便查｜Fix: once the assistant panel is open, the browser underneath may not be readable and the AI says it cannot see the screen; the browser page text is now captured the moment the panel opens (only when a browser is in front, valid for two minutes) and used when the live read fails; when nothing is found the windows seen are logged in Advanced & diagnostics
 
 ## 1.0.1779
