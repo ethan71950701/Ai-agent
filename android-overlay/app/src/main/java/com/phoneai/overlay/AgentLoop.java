@@ -910,14 +910,10 @@ final class AgentLoop {
     private static void ripple(int x1, int y1, int x2, int y2) {
         final int disp = BgDisplay.active ? BgDisplay.id : 0;   // 背景模式：漣漪畫在背景螢幕上（預覽窗看得到 AI 點在哪）；以前被關掉了
         MAIN.post(() -> {
+            // 背景模式、預覽小窗開著：漣漪直接畫在預覽卡片上（座標換算），不用靠背景螢幕上的覆蓋層（以前那條路在某次改版後看不到了，原因查不出來）
+            if (disp > 0 && RippleAccessibilityService.previewRipple(x1, y1, x2, y2)) return;
             RippleView v = disp > 0 ? RippleAccessibilityService.viewFor(disp) : RippleAccessibilityService.view();
-            if (v == null) {   // 背景螢幕上的漣漪畫布建不起來：改在預覽小窗上閃圈，至少看得到 AI 點在哪
-                if (disp > 0) {
-                    RippleAccessibilityService.previewPulse(x1, y1);
-                    if (x1 != x2 || y1 != y2) MAIN.postDelayed(() -> RippleAccessibilityService.previewPulse(x2, y2), 180);
-                }
-                return;
-            }
+            if (v == null) return;
             if (x1 == x2 && y1 == y2) v.ripple(x1, y1);
             else v.swipe(x1, y1, x2, y2);
         });
