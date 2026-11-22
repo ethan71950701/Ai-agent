@@ -339,6 +339,32 @@ final class FcmLab {
         return !Doorbell.sameSubnet(myLanNet, peerLanIp);
     }
 
+    /**
+     * 被外網叫醒、Tailscale 開起來之後，把我的 Tailscale 位址用推播回報給叫醒我的人。最多等 20 秒讓 Tailscale 出現位址；沒有就不回報。
+     * 背景執行緒做（不佔著收推播的回呼）。
+     */
+    static void reportAddressAsync(final Context c, final String peerId) {
+        final Context app = c.getApplicationContext();
+        Thread t = new Thread(() -> {
+            try {
+                TransferStore.Peer peer = null;
+                for (TransferStore.Peer q : TransferStore.peers(app)) if (q.id.equals(peerId)) peer = q;
+                if (peer == null || peer.fcmToken == null) return;
+                String ts = null;
+                long until = System.currentTimeMillis() + 20_000;
+                while (ts == null && System.currentTimeMillis() < until) {
+                    ts = TransferClient.localTailnetIp();
+                    if (ts == null) Thread.sleep(500);
+                }
+                if (ts == null) { LifeLog.add(app, "FCM：Tailscale 一直沒有位址，沒辦法回報給「" + peer.name + "」"); return; }
+                String err = sendData(app, peer.fcmToken, Doorbell.makeAddr(peer.key, TransferStore.myId(app), ts, TransferServer.PORT, System.currentTimeMillis()));
+                LifeLog.add(app, "FCM：把我的 Tailscale 位址回報給「" + peer.name + "」" + (err == null ? "" : "失敗：" + err));
+            } catch (Throwable ignored) { }
+        }, "fcm-report-addr");
+        t.setDaemon(true);
+        t.start();
+    }
+
     /** 叫醒對方：送一則「請把互傳伺服器開起來」的門鈴。回 null 成功，否則錯誤。之後的連線都照原本的直連方式。 */
     static String wake(Context c, TransferStore.Peer peer) {
         if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";

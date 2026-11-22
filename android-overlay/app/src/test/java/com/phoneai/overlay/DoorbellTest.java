@@ -217,4 +217,26 @@ public class DoorbellTest {
         assertTrue(v.verify(m, NOW + 1000, null).ok());       // 之後在有效時間內重送一次仍可以（過期沒佔 nonce）
         assertNotNull(m);
     }
+
+    @Test
+    public void addressReportRoundTripsAndOnlyAcceptsTailscaleAddresses() {
+        byte[] key = TransferCrypto.random(32);
+        Doorbell.Verifier v = new Doorbell.Verifier(id -> id.equals("peer") ? key : null);
+        long now = 1_000_000L;
+        Doorbell.Result ok = v.verify(Doorbell.makeAddr(key, "peer", "100.101.102.103", 47321, now), now, "192.168.1.5/24");
+        assertTrue(ok.error, ok.ok());
+        assertEquals("addr", ok.ring.mode);
+        assertEquals("100.101.102.103", ok.ring.ip);
+        assertEquals(47321, ok.ring.port);
+        // 區網位址、公開位址、亂格式都不收（不能讓人用推播把我們的紀錄改成別的位址）
+        for (String bad : new String[]{"192.168.1.9", "8.8.8.8", "127.0.0.1", "not an ip", ""})
+            assertFalse(bad, v.verify(Doorbell.makeAddr(key, "peer", bad, 47321, now), now, null).ok());
+        assertFalse("埠號不對", v.verify(Doorbell.makeAddr(key, "peer", "100.101.102.103", 0, now), now, null).ok());
+        // 同一則只認一次、金鑰不對、過期都照樣拒絕
+        java.util.Map<String, String> m = Doorbell.makeAddr(key, "peer", "100.101.102.103", 47321, now);
+        assertTrue(v.verify(m, now, null).ok());
+        assertFalse(v.verify(m, now, null).ok());
+        assertFalse(new Doorbell.Verifier(id -> TransferCrypto.random(32)).verify(Doorbell.makeAddr(key, "peer", "100.101.102.103", 47321, now), now, null).ok());
+        assertFalse(v.verify(Doorbell.makeAddr(key, "peer", "100.101.102.103", 47321, now - 120_000), now, null).ok());
+    }
 }

@@ -88,6 +88,29 @@ final class Doorbell {
         }
     }
 
+    /**
+     * 「我的 Tailscale 位址在這裡」：被叫醒、把 Tailscale 開起來的那一端，用推播回報給叫醒它的人。
+     * 這樣第一次走外網時，不需要事先在兩邊都開著 Tailscale 各連一次，叫醒的人才知道對方的位址。ip 必須是 Tailscale 位址（100.64.0.0/10）。
+     */
+    static Map<String, String> makeAddr(byte[] key, String fromId, String tailnetIp, int port, long nowMs) {
+        try {
+            String nonce = TransferCrypto.hex(TransferCrypto.random(16));
+            String ts = String.valueOf(nowMs);
+            JSONObject body = new JSONObject().put("mode", "addr").put("ip", tailnetIp).put("port", port).put("path", "").put("name", "").put("size", 0);
+            byte[] ct = crypt(Cipher.ENCRYPT_MODE, key, nonce, aad(VERSION, fromId, ts, nonce), body.toString().getBytes(StandardCharsets.UTF_8));
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("kind", "doorbell");
+            m.put("v", VERSION);
+            m.put("src", fromId);
+            m.put("ts", ts);
+            m.put("nonce", nonce);
+            m.put("ct", Base64.getEncoder().encodeToString(ct));
+            return m;
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     // ---------- 接收端 ----------
 
     /** 驗證器：記住最近用過的 nonce，同一則門鈴只認一次。 */
@@ -126,7 +149,7 @@ final class Doorbell {
             r.size = o.optLong("size", -1);
             r.mode = o.optString("mode", "file");
             r.remote = o.optBoolean("remote", false);
-            if (!r.mode.equals("file") && !r.mode.equals("serve")) return fail("不認得的門鈴類型");
+            if (!r.mode.equals("file") && !r.mode.equals("serve") && !r.mode.equals("addr")) return fail("不認得的門鈴類型");
             String bad = checkFields(r, myIpOrNull);
             if (bad != null) return fail(bad);
             seen.put(from + nonce, nowMs);   // 驗證全部通過才記，亂送的壞訊息不佔位置
@@ -152,6 +175,11 @@ final class Doorbell {
 
     /** 內容欄位檢查：位址必須是區網私有位址，大小、路徑、檔名有上限，不接受控制字元。 */
     static String checkFields(Ring r, String myIpOrNull) {
+        if ("addr".equals(r.mode)) {   // 回報位址：只收 Tailscale 位址，不收區網、公開位址或亂格式
+            if (!isTailnet(r.ip)) return "回報的位址不是 Tailscale 位址";
+            if (r.port < 1 || r.port > 65535) return "埠號不對";
+            return null;
+        }
         if ("serve".equals(r.mode)) {   // 只是叫醒：位址用不到，空的、區網、Tailscale 都可以；其他（公開網路位址、亂格式）不收
             if (!r.ip.isEmpty() && !isPrivateLan(r.ip) && !isTailnet(r.ip)) return "位址不是區網或 Tailscale 位址";
             if (r.port < 1 || r.port > 65535) return "埠號不對";

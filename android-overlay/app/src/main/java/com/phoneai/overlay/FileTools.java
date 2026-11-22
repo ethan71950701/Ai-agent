@@ -369,7 +369,7 @@ final class FileTools {
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
             final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip);   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
-            if (remoteNow && p.tsIp != null && !TailscaleControl.isOn()) {
+            if (remoteNow && !TailscaleControl.isOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
                 TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                 TailscaleControl.turnOnForSession(c, 12000);
             }
@@ -381,7 +381,8 @@ final class FileTools {
                 while (f == null && System.currentTimeMillis() < until) {
                     if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
-                    if (f == null && p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
+                    TransferStore.Peer now = freshPeer(c, p);   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
+                    if (f == null && now.tsIp != null && now.tsPort > 0 && canPing(c, now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
                     if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
                         FcmLab.wake(c, p);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
                         nextRing += 8000;
@@ -393,12 +394,13 @@ final class FileTools {
         }
         String ip;
         int port;
+        final TransferStore.Peer cur = freshPeer(c, p);
         if (f != null) {
             ip = f.ip;
             port = f.port;
-        } else if (p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort)) {
-            ip = p.tsIp;
-            port = p.tsPort;
+        } else if (cur.tsIp != null && cur.tsPort > 0 && canPing(c, cur, cur.tsIp, cur.tsPort)) {
+            ip = cur.tsIp;
+            port = cur.tsPort;
         } else {
             ip = p.ip;
             port = p.port;
@@ -413,6 +415,12 @@ final class FileTools {
         TransferClient cl = new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key);
         if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
+    }
+
+    /** 已配對裝置目前存的樣子（位址可能在等待中被更新）；找不到就用原本那份。 */
+    private static TransferStore.Peer freshPeer(Context c, TransferStore.Peer p) {
+        for (TransferStore.Peer q : TransferStore.peers(c)) if (q.id.equals(p.id)) return q;
+        return p;
     }
 
     private static boolean canPing(Context c, TransferStore.Peer p, String ip, int port) {

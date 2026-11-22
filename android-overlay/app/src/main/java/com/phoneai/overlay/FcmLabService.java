@@ -45,10 +45,16 @@ public class FcmLabService extends FirebaseMessagingService {
             notifyLab("門鈴被拒絕：" + r.error + "｜本機 " + FcmLab.lanNet() + "｜已配對 " + TransferStore.peers(this).size() + " 台");
             return;
         }
+        if ("addr".equals(r.ring.mode)) {   // 對方（被我叫醒、開了 Tailscale 的那一端）回報它的 Tailscale 位址：記下來，馬上就能連
+            TransferStore.updateAddress(this, r.ring.from, r.ring.ip, r.ring.port);
+            LifeLog.add(this, "FCM：收到「" + TransferStore.nameOf(this, r.ring.from) + "」回報的 Tailscale 位址 " + r.ring.ip);
+            return;
+        }
         if ("serve".equals(r.ring.mode)) {   // 只是叫醒：把伺服器開起來，對方再用原本的方式連進來
             LifeLog.add(this, "FCM 叫醒通過：" + TransferStore.nameOf(this, r.ring.from) + " 要連進來");
             String st = FcmLab.serveForAWhile(this, r.ring.remote);
             notifyLab("收到「" + TransferStore.nameOf(this, r.ring.from) + "」的叫醒：" + st);   // 每次被叫醒都讓人看得到結果（也符合高優先級推播要有可見通知的建議）
+            if (r.ring.remote) FcmLab.reportAddressAsync(this, r.ring.from);   // 從外網來：把我的 Tailscale 位址回報給它（它第一次可能還不知道）
             return;
         }
         LifeLog.add(this, "FCM 門鈴：收到舊版的「來取檔案」門鈴，已不支援，忽略（請兩支都更新到最新版）");   // 檔案一律由發送端直接連線傳，推播只負責叫醒
