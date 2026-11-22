@@ -5,9 +5,12 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1826
+
 - 設定頁：分類列表每項各自一張卡、中間留空隙；進到分類後不再有可收合的標題列，內容直接攤開（有多段時用小標題分隔）｜Settings: each category in the list is its own spaced card; inside a category there are no collapsible headers any more, content is laid out directly (small section labels when there are several parts)
 
 - 莫奈取色改成由 App 自己讀桌面壁紙主色來配色（有些手機的系統取色不會跟著壁紙變）；讀不到壁紙色才照系統給的；診斷頁顯示桌面壁紙主色｜Monet colors are now computed by the app from the home wallpaper's main color (on some phones the system accent does not follow the wallpaper); falls back to the system colors if the wallpaper color is unreadable; diagnostics shows the wallpaper color
+
 ## 1.0.1824
 
 - 新增「自己從桌面壁紙取色」開關（設定 → 外觀）：系統取色沒跟著壁紙變的手機，改由 App 讀桌面壁紙主色來配色；診斷頁也會顯示桌面壁紙主色｜Added a "pick colors from the home wallpaper myself" switch (Settings → Appearance) for phones whose system accent does not follow the wallpaper; diagnostics also shows the wallpaper main color
