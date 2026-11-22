@@ -159,7 +159,7 @@ final class Ui {
         LinearLayout box = new LinearLayout(a);
         box.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(a, 16);
-        box.setPadding(pad, dp(a, 4), pad, dp(a, 32));
+        box.setPadding(pad, dp(a, 28), pad, dp(a, 32));   // 頂端留 28dp ＝ 標題列下緣漸層的高度，第一個元件不會被漸層蓋到
         androidx.core.widget.NestedScrollView sv = new androidx.core.widget.NestedScrollView(a);
         sv.setFillViewport(true);
         sv.addView(box, new android.view.ViewGroup.LayoutParams(-1, -2));
@@ -176,9 +176,8 @@ final class Ui {
                 new androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, dp(a, 28));
         flp.setBehavior(new FollowBarBehavior());
         root.addView(fade, flp);
-        fade.setAlpha(0f);   // 內容還在最上面（沒捲動）時不要有漸層，不然第一張卡的上緣會被蓋掉一截；捲到標題列下面才慢慢出現
         final float fadeFull = dp(a, 16);
-        final java.util.function.IntConsumer fadeUpdate = y -> fade.setAlpha(Math.max(0f, Math.min(1f, y / fadeFull)));
+        final java.util.function.IntConsumer fadeUpdate = y -> { };   // 漸層一直都在；改成內容頂端多留一段空白（等於漸層高度），第一張卡不會被蓋到
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> fadeUpdate.accept(y));
         content[0] = box;
         root.setTag(new Object[]{ctl, sv, fadeUpdate});   // 換分頁時改大標題、底欄隨捲動收起

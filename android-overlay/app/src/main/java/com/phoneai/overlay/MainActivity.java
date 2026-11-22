@@ -529,7 +529,7 @@ public class MainActivity extends Activity {
     private void prepareBox(int tabNow) {
         removeHomeBar();
         box.setGravity(android.view.Gravity.TOP);
-        box.setPadding(Ui.dp(this, 16), Ui.dp(this, tabNow == 2 ? 12 : 4), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 設定頁頂端多留一點，第一張卡不會被標題列的漸層蓋到   // 首頁不留底部空間
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 4 : 28), Ui.dp(this, 16), Ui.dp(this, tabNow == 0 ? 0 : 120));   // 功能、設定頁頂端留 28dp ＝ 標題列下緣漸層的高度，第一張卡不會被蓋到   // 首頁不留底部空間
         setHomeScroll(tabNow != 0);
         box.removeAllViews();
     }
