@@ -72,7 +72,7 @@ final class ReplyCard {
             g.setBlurDp(6f);        // 邊緣清楚：後面的畫面只輕輕模糊，看得到內容
             g.setSatBoost(1.25f);
             g.setRefraction(1.6f, 30f);   // 邊緣把後面的畫面往內彎（比底欄寬、強）
-            g.setSoftGlow(1f);      // 柔和高光（不是白框）
+            g.setSoftGlow(lv == 2 ? 0.25f : 1f);      // 柔和高光（不是白框）
             // 文字所在的中間：再疊一層很糊的玻璃（只畫中間，邊緣漸漸透明），保證可讀；邊緣仍然通透（預覽的 G5）
             GlassBar mid = new GlassBar(act, 0xFF23262A, tintC, 0x44FFFFFF, 30 * d, false);
             mid.setSource(source);
@@ -82,7 +82,7 @@ final class ReplyCard {
             mid.setSatBoost(1.2f);
             mid.setDarkScale(darkK);
             mid.setCenterMask(true);
-            g.addView(mid, new FrameLayout.LayoutParams(-1, -1));
+            if (lv < 2) g.addView(mid, new FrameLayout.LayoutParams(-1, -1));   // 「很透」不疊中間的糊層：整片都是清楚的玻璃，文字靠陰影
             g.setDarkScale(darkK);   // 比輸入列稍暗：後面是別的 App 的畫面（抓不到、不能模糊）時，卡片邊界才看得出來
             g.setElevation(22 * d);   // 外圍柔和陰影：卡片「浮」起來，邊界靠陰影不靠邊框
             g.setOutlineProvider(new android.view.ViewOutlineProvider() {
@@ -143,6 +143,7 @@ final class ReplyCard {
         TextView body = new TextView(act);
         body.setText(Md.render(text));
         body.setTextColor(0xFFF4F4F8);
+        if (maxHeightPx > 0 && source != null && act.getSharedPreferences("cfg", Activity.MODE_PRIVATE).getInt("glass_level", 1) == 2) body.setShadowLayer(6 * d, 0, 1 * d, 0xCC000000);
         body.setTextSize(20);
         body.setLineSpacing(0, 1.38f);
         body.setTextIsSelectable(true);
