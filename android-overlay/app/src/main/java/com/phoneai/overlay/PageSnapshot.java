@@ -72,19 +72,62 @@ final class PageSnapshot {
         return sb.toString();
     }
 
+    // ---------- 叫出面板那一刻先記下來 ----------
+    // 面板打開之後，前景視窗變成我們自己的 App，底下的瀏覽器不一定還讀得到（我猜的原因之一）。所以面板一打開（瀏覽器還在最上面時）先讀一次存起來；
+    // 只有前景是瀏覽器才存，別的 App 的畫面完全不讀；存在記憶體，兩分鐘後作廢。
+    static final long CACHE_MS = 120_000;
+    private static volatile Raw cached;
+    private static volatile long cachedAt;
+
+    /** 面板一打開就呼叫（背景執行緒）。前景不是瀏覽器就什麼都不存。 */
+    static void prefetch() {
+        try {
+            String pkg = RippleAccessibilityService.foregroundPackage();
+            if (!isBrowser(pkg)) { cached = null; return; }
+            Raw r = RippleAccessibilityService.foregroundSnapshot();
+            cached = r;
+            cachedAt = System.currentTimeMillis();
+        } catch (Throwable ignored) { cached = null; }
+    }
+
+    /** 兩分鐘內存的那一份；沒有或過期回 null。 */
+    static Raw recentCached(long nowMs) {
+        Raw r = cached;
+        return r != null && isBrowser(r.pkg) && nowMs - cachedAt <= CACHE_MS ? r : null;
+    }
+
+    /** 給 AI 的前景提示用：現在的前景套件；現在讀不到時用面板打開那一刻記下的。 */
+    static String foregroundPkgForHint() {
+        String live = RippleAccessibilityService.foregroundPackage();
+        if (live != null) return live;
+        Raw c = recentCached(System.currentTimeMillis());
+        return c == null ? null : c.pkg;
+    }
+
     /** 工具入口。 */
     static String read() {
         if (RippleAccessibilityService.instance == null) return "錯誤：還沒有開啟無障礙服務，讀不到目前的畫面（到設定開啟 Vertex 的無障礙服務）";
-        Raw r;
+        Raw r = null;
         try {
             r = RippleAccessibilityService.foregroundSnapshot();
         } catch (Throwable e) {
-            return "錯誤：讀畫面失敗：" + e.getMessage();
+            LifeLog.add(App.ctx, "current_page：讀畫面失敗：" + e);
         }
-        if (r == null) return "錯誤：找不到前景的 App 視窗（可能在桌面、或螢幕關著）";
-        if (!isBrowser(r.pkg) && r.urlText.isEmpty())
+        boolean fromCache = false;
+        if (r == null || (!isBrowser(r.pkg) && r.urlText.isEmpty())) {   // 面板在最上面時底下的瀏覽器可能讀不到：改用面板打開那一刻記下的
+            Raw c = recentCached(System.currentTimeMillis());
+            if (c != null) { r = c; fromCache = true; }
+        }
+        if (r == null) {
+            String w = RippleAccessibilityService.describeWindows();
+            LifeLog.add(App.ctx, "current_page：找不到前景視窗；看到的視窗：" + w);
+            return "錯誤：找不到前景的瀏覽器視窗（可能在桌面、螢幕關著，或瀏覽器的畫面被助理面板擋住讀不到）。請使用者先回到網頁，再叫出面板問。";
+        }
+        if (!isBrowser(r.pkg) && r.urlText.isEmpty()) {
+            LifeLog.add(App.ctx, "current_page：前景不是瀏覽器（" + r.pkg + "）；視窗：" + RippleAccessibilityService.describeWindows());
             return "目前前景是 " + r.pkg + "，不是瀏覽器。為了保護隱私，這個工具只讀瀏覽器的畫面；其他 App 請用「圈選提問」，或叫自動操作去看。";
-        return format(r);
+        }
+        return (fromCache ? "（這是使用者叫出助理面板那一刻的畫面）\n" : "") + format(r);
     }
 
     /**

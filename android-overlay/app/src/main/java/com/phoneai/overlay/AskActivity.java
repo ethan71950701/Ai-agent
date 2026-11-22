@@ -14,6 +14,7 @@ public class AskActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         lastCreated = System.currentTimeMillis();
+        new Thread(PageSnapshot::prefetch, "page-prefetch").start();   // 面板還沒蓋住瀏覽器之前，先記下瀏覽器畫面上的字（只有前景是瀏覽器才讀）
         setShowWhenLocked(true);
         sheet = new AssistantSheet(this);
         setContentView(sheet.view());

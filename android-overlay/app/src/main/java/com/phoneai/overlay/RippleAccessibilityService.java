@@ -177,6 +177,25 @@ public class RippleAccessibilityService extends AccessibilityService {
         return ok[0];
     }
 
+    /** 診斷用：現在看得到的所有視窗（層級、類型、套件、是否作用中），給「找不到前景視窗」時查原因。 */
+    static String describeWindows() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return "（無障礙服務沒開）";
+        try {
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = s.getWindows();
+            if (wins == null || wins.isEmpty()) return "（看不到任何視窗）";
+            StringBuilder sb = new StringBuilder();
+            for (android.view.accessibility.AccessibilityWindowInfo w : wins) {
+                android.view.accessibility.AccessibilityNodeInfo r = w.getRoot();
+                sb.append("L").append(w.getLayer()).append(" T").append(w.getType()).append(w.isActive() ? "*" : "").append(' ')
+                        .append(r == null ? "?" : String.valueOf(r.getPackageName())).append("; ");
+            }
+            return sb.toString();
+        } catch (Throwable e) {
+            return "（讀視窗失敗：" + e + "）";
+        }
+    }
+
     /** 前景（不是我們自己的面板）App 視窗的套件名稱，很輕（不讀節點樹）；沒有無障礙服務或找不到回 null。 */
     static String foregroundPackage() {
         final RippleAccessibilityService s = instance;

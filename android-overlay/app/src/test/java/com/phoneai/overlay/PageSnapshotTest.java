@@ -2,6 +2,7 @@ package com.phoneai.overlay;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -87,5 +88,10 @@ public class PageSnapshotTest {
         assertTrue(PageSnapshot.foregroundHint("com.android.chrome", true).contains("current_page"));
         assertEquals("", PageSnapshot.foregroundHint("com.example.bank", false));
         assertEquals("", PageSnapshot.foregroundHint(null, false));
+    }
+
+    @Test
+    public void nothingIsCachedWhenThereIsNoBrowserAndStaleCachesExpire() {
+        assertNull(PageSnapshot.recentCached(System.currentTimeMillis()));   // 沒存過
     }
 }
