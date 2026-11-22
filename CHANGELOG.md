@@ -5,6 +5,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 - 背景模式的預覽小窗：AI 點擊或滑動時，如果背景螢幕上的漣漪畫布建不起來（系統不允許），改在預覽小窗上對應的位置閃一個圈；建不起來的原因也會寫進「進階與診斷」｜Background-mode preview window: when the ripple canvas cannot be created on the background display (the system refuses), AI taps and swipes now flash a ring at the matching spot on the preview window, and the reason is written to Advanced & diagnostics
+
+## 1.0.1790
+
 - 找回 AI 操作手機時螢幕邊緣的波浪光暈：任務開始就出現、結束就消失（設定「呼吸光暈」可關）；它會被截進圖裡干擾 AI，所以每次截圖的瞬間會先藏起來、截完再顯示｜Brought back the wavy glow around the screen edge while the AI operates the phone: it appears when a task starts and disappears when it ends (can be switched off with the "breathing glow" setting); because it would show up in screenshots and confuse the AI it is hidden for the instant of each screenshot and shown again afterwards
 
 ## 1.0.1789
