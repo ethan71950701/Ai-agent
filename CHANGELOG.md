@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：對方關機或沒電時，通知還是顯示「已連上，開始傳送」；現在只有真的連得上才說已連上，對方沒回應就直接告訴你「找不到某某：它沒有回應，可能關機、沒電、沒網路或不在同一個 Wi-Fi」｜Fix: when the other phone was off or out of battery the notification still said "connected, starting"; it now says connected only when it really is, otherwise it tells you straight away that the phone did not answer (maybe off, out of battery, no network, or on another Wi-Fi)
 - 修正互傳「明明連得上、卻一直傳不過去」：對方的區網位址過期（IP 換了、手機 Wi-Fi 休眠）時，以前會對著同一個位址重試六次再放棄；現在重試一次還是連不上，就重新找對方（區網掃描、推播叫醒、外網）再傳，續傳照樣從斷點接著｜Fix transfers that fail with "No route to host" although the phones seem connected: when the peer's LAN address is stale (its IP changed or its Wi-Fi was asleep) it used to retry the same address six times; after one failed retry it now looks for the peer again (LAN scan, push wake-up, remote) and resumes from the breakpoint
 
 ## 1.0.1787

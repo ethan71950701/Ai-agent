@@ -394,6 +394,7 @@ final class FileTools {
         }
         String ip;
         int port;
+        boolean verified = true;   // 這個位址是掃描找到或剛連得上的
         final TransferStore.Peer cur = freshPeer(c, p);
         if (f != null) {
             ip = f.ip;
@@ -404,8 +405,11 @@ final class FileTools {
         } else {
             ip = p.ip;
             port = p.port;
+            verified = false;   // 區網找不到、Tailscale 也不通：只剩上次記下的位址，還沒確認對方在不在
         }
         if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開互傳，或不在同一個 Wi-Fi（外網請確認 Tailscale 都在線）");
+        if (!verified && !canPing(c, p, ip, port))   // 對方沒回應就直接說，不要先顯示「已連上」再傳到一半才失敗
+            throw new Exception("找不到「" + p.name + "」：它沒有回應。可能已經關機或沒電、手機沒網路、或不在同一個 Wi-Fi（外網請確認兩邊 Tailscale 都登入）");
         if (f != null) {
             TransferStore.updateAddress(c, p.id, ip, port);
             TransferStore.updateName(c, p.id, f.name);
