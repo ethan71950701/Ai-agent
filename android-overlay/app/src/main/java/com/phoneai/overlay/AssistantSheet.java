@@ -1140,16 +1140,30 @@ public class AssistantSheet {
         return Math.max((int) (160 * d), root.getHeight() - (int) (CARD_TOP_DP * d) - botPad);
     }
 
-    /** 鍵盤高度變了：回答卡的下緣與可用高度跟著改（以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上）。 */
+    private android.animation.ValueAnimator cardAnim;
+
+    /** 鍵盤高度變了：回答卡的下緣與可用高度跟著改（以前只在卡片出現的那一刻算一次，之後打字叫出鍵盤就整個蓋在卡片上），用動畫慢慢縮放，不是瞬間跳。 */
     private void fitReplyCard() {
-        View card = replyCard;
+        final View card = replyCard;
         if (card == null || !(card.getLayoutParams() instanceof FrameLayout.LayoutParams) || root.getHeight() <= 0) return;
-        int botPad = (int) (CARD_BOTTOM_DP * d) + bottomInset;
-        FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) card.getLayoutParams();
-        if (cp.bottomMargin == botPad) return;
-        cp.bottomMargin = botPad;
-        card.setLayoutParams(cp);
-        ReplyCard.resize(card, replyCardMaxH(botPad));
+        final int toM = (int) (CARD_BOTTOM_DP * d) + bottomInset;
+        final FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) card.getLayoutParams();
+        final int fromM = cp.bottomMargin;
+        final int toH = replyCardMaxH(toM);
+        final int fromH0 = ReplyCard.maxHeight(card);
+        final int fromH = fromH0 < 0 ? toH : fromH0;
+        if (fromM == toM && fromH == toH) return;
+        if (cardAnim != null) cardAnim.cancel();
+        cardAnim = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        cardAnim.setDuration(260);
+        cardAnim.setInterpolator(new DecelerateInterpolator(2f));   // 跟鍵盤滑出來的節奏差不多：一開始快、慢慢停
+        cardAnim.addUpdateListener(an -> {
+            float f = (float) an.getAnimatedValue();
+            cp.bottomMargin = fromM + Math.round((toM - fromM) * f);
+            card.setLayoutParams(cp);
+            ReplyCard.resize(card, fromH + Math.round((toH - fromH) * f));
+        });
+        cardAnim.start();
     }
 
     private void refreshAction() {

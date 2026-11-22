@@ -86,4 +86,15 @@ final class PageSnapshot {
             return "目前前景是 " + r.pkg + "，不是瀏覽器。為了保護隱私，這個工具只讀瀏覽器的畫面；其他 App 請用「圈選提問」，或叫自動操作去看。";
         return format(r);
     }
+
+    /**
+     * 給聊天助理的一行提示：使用者現在前景開著瀏覽器。沒有這句，AI 不知道自己能看到畫面，會回「我沒辦法取得你目前畫面上的內容」，連工具都不叫。
+     * 不是用關鍵字判斷問題，只是告訴它現在的情況，要不要看由它自己決定。前景不是瀏覽器回空字串。
+     */
+    static String foregroundHint(String pkg, boolean english) {
+        if (!isBrowser(pkg)) return "";
+        return english
+                ? "\nThe user currently has a web browser (" + pkg + ") in the foreground. If they ask about \"this page / this article / this news\", they mean what that browser is showing: call current_page first and answer from it; do not say you cannot see the screen."
+                : "\n使用者現在手機前景開著瀏覽器（" + pkg + "）。如果他問的是「這個網頁／這篇文章／這則新聞／這頁在講什麼」，指的就是這個瀏覽器目前的畫面：先呼叫 current_page 看了再回答，不要說自己看不到畫面。";
+    }
 }

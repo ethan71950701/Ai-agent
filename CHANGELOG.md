@@ -4,6 +4,7 @@
 Each entry is written as "中文｜English"; the app shows the half that matches the interface language. The release notes use the whole `## Unreleased` section.
 
 ## Unreleased
+- 修正：前景開著瀏覽器時問「這個新聞在講什麼」，AI 會知道自己能看畫面並用 current_page 去讀，不再回「我沒辦法取得你目前畫面上的內容」；鍵盤出現、收起時回答卡改成用動畫慢慢縮放，不再瞬間跳動｜Fix: asking "what is this news about" with a browser in the foreground now tells the AI it can see the screen so it uses current_page instead of answering that it cannot see the screen; the answer card now animates smoothly when the keyboard appears or hides instead of jumping
 - 新增「看現在的網頁」工具 current_page：用瀏覽器（Chrome、Firefox、三星瀏覽器、Edge…）開著網頁時，直接問 AI「這頁在講什麼」，它會讀畫面上的標題、網址列與看得到的文字；只讀瀏覽器，別的 App 不讀｜New current_page tool: while a web page is open in a browser (Chrome, Firefox, Samsung Internet, Edge…), just ask the AI what the page is about; it reads the title, address bar and the text visible on screen; browsers only, other apps are never read
 - 修正：打字時鍵盤會把很長的回答卡蓋住；現在鍵盤出現、收起時，回答卡的高度會跟著縮放，長的回答在卡片裡面捲動｜Fix: the keyboard covered a long answer card while typing; the card now resizes when the keyboard appears or hides and long answers scroll inside it
 

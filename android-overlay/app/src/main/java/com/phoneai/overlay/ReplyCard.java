@@ -36,6 +36,12 @@ final class ReplyCard {
 
     private static final int MAXH_TAG = 0x7f0b7001;   // View.setTag 的鍵（只要不跟資源 id 撞，隨便一個數字）
 
+    /** 目前的最大高度（沒有就 -1）：動畫從這裡開始。 */
+    static int maxHeight(View card) {
+        Object o = card.getTag(MAXH_TAG);
+        return o instanceof int[] ? ((int[]) o)[0] : -1;
+    }
+
     /** 可用高度變了（鍵盤出現或收起）：卡片裡捲動區的最大高度跟著改，不然長的回答會被鍵盤蓋住。 */
     static void resize(View card, int maxHeightPx) {
         Object o = card.getTag(MAXH_TAG);

@@ -177,6 +177,27 @@ public class RippleAccessibilityService extends AccessibilityService {
         return ok[0];
     }
 
+    /** 前景（不是我們自己的面板）App 視窗的套件名稱，很輕（不讀節點樹）；沒有無障礙服務或找不到回 null。 */
+    static String foregroundPackage() {
+        final RippleAccessibilityService s = instance;
+        if (s == null) return null;
+        try {
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = s.getWindows();
+            if (wins == null) return null;
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> apps = new java.util.ArrayList<>();
+            for (android.view.accessibility.AccessibilityWindowInfo w : wins) if (w.getType() == android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION) apps.add(w);
+            java.util.Collections.sort(apps, (a, b) -> Integer.compare(b.getLayer(), a.getLayer()));
+            for (android.view.accessibility.AccessibilityWindowInfo w : apps) {
+                android.view.accessibility.AccessibilityNodeInfo root = w.getRoot();
+                if (root == null || root.getPackageName() == null) continue;
+                String pkg = String.valueOf(root.getPackageName());
+                if (pkg.equals(s.getPackageName()) || pkg.equals("com.android.systemui")) continue;
+                return pkg;
+            }
+        } catch (Throwable ignored) { }
+        return null;
+    }
+
     /** 前景（不是我們自己的面板）App 視窗的快照：標題、網址列、畫面上看得到的文字。給 current_page 工具；只在背景執行緒呼叫。找不到視窗回 null。 */
     static PageSnapshot.Raw foregroundSnapshot() {
         final RippleAccessibilityService s = instance;

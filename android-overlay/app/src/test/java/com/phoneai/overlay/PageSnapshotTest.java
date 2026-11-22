@@ -1,5 +1,6 @@
 package com.phoneai.overlay;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -78,5 +79,13 @@ public class PageSnapshotTest {
     public void currentPageIsAllowedAfterReadingAPageButNotAfterNotifications() {
         assertTrue(ChatEngine.allowedAfterUntrusted("current_page", false));
         assertFalse(ChatEngine.allowedAfterUntrusted("current_page", true));
+    }
+
+    @Test
+    public void foregroundHintOnlyForBrowsers() {
+        assertTrue(PageSnapshot.foregroundHint("com.android.chrome", false).contains("current_page"));
+        assertTrue(PageSnapshot.foregroundHint("com.android.chrome", true).contains("current_page"));
+        assertEquals("", PageSnapshot.foregroundHint("com.example.bank", false));
+        assertEquals("", PageSnapshot.foregroundHint(null, false));
     }
 }
