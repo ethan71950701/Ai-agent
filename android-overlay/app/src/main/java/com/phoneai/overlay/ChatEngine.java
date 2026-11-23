@@ -19,7 +19,7 @@ import java.nio.file.Files;
  */
 final class ChatEngine {
     static final String MODEL = "claude-haiku-5-5";
-    private static final int MAX_MSGS = 20, MAX_TURNS = 6;
+    private static final int MAX_MSGS = 20, MAX_TURNS = 8;
     private static final long MAX_AGE = 24L * 3600 * 1000;
 
     private static final String SYSTEM = "你是使用者手機上的語音助理，像 Gemini 一樣自然地聊天回答。規則：\n"
@@ -818,10 +818,26 @@ final class ChatEngine {
                     if (tn.equals("read_notifications")) { readNotifs = true; SAW_NOTIFS.set(true); }
                     if (tn.equals("read_url") || tn.equals("current_page") || McpTools.handles(tn)) readNotifs = true;   // 網頁、GitHub 的內容是外人寫的：之後只給唯讀工具
                     String out = runTool(c, tn, ti, confirm);
+                    { String a = ti.toString(); LifeLog.add(c, "聊天工具：" + tn + " " + (a.length() > 120 ? a.substring(0, 120) + "…" : a) + " → " + (out == null ? 0 : out.length()) + " 字"); }   // 診斷：看 AI 這一輪呼叫了哪些工具、回傳多長
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
                 msgs.put(new JSONObject().put("role", "user").put("content", results));
                 reply = texts.length() > 0 ? texts.toString().trim() : null;
+            }
+            if ((reply == null || reply.isEmpty()) && msgs.length() > 0 && "user".equals(msgs.getJSONObject(msgs.length() - 1).optString("role"))
+                    && msgs.getJSONObject(msgs.length() - 1).opt("content") instanceof JSONArray) {
+                // 工具輪數用完了還沒有答案（例如一直在查）：請它用目前查到的資料直接回答，不要就這樣回「連不上 AI」
+                try {
+                    msgs.getJSONObject(msgs.length() - 1).getJSONArray("content").put(new JSONObject().put("type", "text").put("text", L.en()
+                            ? "(The tool turns are used up. Answer the user now with what you have found so far; say honestly what you could not find. Do not call more tools.)"
+                            : "（工具次數用完了。請用目前已經查到的資料，直接回答使用者；沒查到的就老實說沒查到。不要再呼叫工具。）"));
+                    JSONObject fr = call(msgs, system, key, false, !viaTavily, true, model);
+                    JSONArray fc = fr.optJSONArray("content");
+                    StringBuilder ft = new StringBuilder();
+                    for (int i = 0; fc != null && i < fc.length(); i++) if ("text".equals(fc.getJSONObject(i).optString("type"))) ft.append(fc.getJSONObject(i).optString("text"));
+                    reply = ft.toString().trim();
+                } catch (Exception ignored) { }
+                if (reply == null || reply.isEmpty()) lastError = L.t("這個問題用了太多步驟，沒有得出答案；請換個問法，或分成幾個小問題問");
             }
             reply = stripWork(reply);
             if (reply == null || reply.isEmpty()) return null;

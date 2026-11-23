@@ -1265,6 +1265,7 @@ final class LEn {
         m.put("連上了，但沒有找到可用的唯讀工具", "Connected, but no usable read-only tools were found");
         m.put("連上了，可用的唯讀工具 %d 個", "Connected; %d read-only tools available");
         m.put("連線失敗：", "Connection failed: ");
+        m.put("這個問題用了太多步驟，沒有得出答案；請換個問法，或分成幾個小問題問", "This question took too many steps and got no answer; try rephrasing it or split it into smaller questions");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
         m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");
