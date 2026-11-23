@@ -209,6 +209,12 @@ final class Ui {
             }
         }
 
+        /** 系統拉伸的強度（跟 EdgeEffect.dampStretchVector 同一個公式）：拉得越多越大，上限約 0.03。 */
+        private static float stretchAmount(float d) {
+            d = Math.max(0f, Math.min(1f, d));
+            return (float) (0.016f * d + 0.016f * (1f - Math.exp(-d * Math.E / 0.33f)));
+        }
+
         @Override
         public void draw(android.graphics.Canvas canvas) {
             if (!GlassBar.isCapturing() || fTop == null) { super.draw(canvas); return; }
@@ -219,9 +225,22 @@ final class Ui {
                 fTop.set(this, idle);
                 fBottom.set(this, idle);
             } catch (Throwable ignored) { super.draw(canvas); return; }
+            // 系統的拉伸是在「正在錄的那個 RenderNode」上套特效（EdgeEffect.draw → renderNode.stretch）。玻璃抓背景時錄的是它自己的畫布，
+            // 特效就套到整份背景上、而且用整個頁面的尺寸算，所以底欄裡的字被拉得很高。這裡改成：抓背景時不讓系統套，
+            // 自己用畫布縮放做出同樣的拉伸（以被拉那一邊的對面為軸、強度用系統同一個公式），底欄看到的跟頁面實際看到的一致。
+            float d = 0f;
+            boolean fromTop = false;
             try {
+                float dt = t instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) t).getDistance() : 0f;
+                float db = b instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) b).getDistance() : 0f;
+                if (dt > 0f) { d = dt; fromTop = true; } else if (db > 0f) { d = db; }
+            } catch (Throwable ignored) { }
+            int save = canvas.save();
+            try {
+                if (d > 0f) canvas.scale(1f, 1f + stretchAmount(d), 0f, fromTop ? getHeight() : 0f);
                 super.draw(canvas);
             } finally {
+                canvas.restoreToCount(save);
                 try { fTop.set(this, t); fBottom.set(this, b); } catch (Throwable ignored) { }
             }
         }
