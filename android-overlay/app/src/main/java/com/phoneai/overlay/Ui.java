@@ -535,10 +535,13 @@ final class Ui {
                 dots[idx] = dot;
                 // 每格等寬，裡面放一個正圓（不要讓圓被拉成橢圓）
                 android.widget.FrameLayout cell = new android.widget.FrameLayout(a);
+                cell.setClipChildren(false);   // 「自訂」的光暈會暈到圓點外面一點，不要被裁掉
                 cell.addView(dot, new android.widget.FrameLayout.LayoutParams(dp(a, 36), dp(a, 36), android.view.Gravity.CENTER));
                 row.addView(cell, new LinearLayout.LayoutParams(0, dp(a, 40), 1f));
             }
+            row.setClipChildren(false);
         }
+        grid.setClipChildren(false);
         // 自訂的預覽與三個滑桿：一直建好，選了自訂才用動畫展開（不是整頁重建後突然出現）
         final LinearLayout panel = new LinearLayout(a);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -606,7 +609,7 @@ final class Ui {
         }
         @Override public void draw(android.graphics.Canvas c) {
             android.graphics.Rect b = getBounds();
-            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - blur * 0.7f, h = r * 0.4f;
+            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - ring.getStrokeWidth() / 2f, h = r * 0.4f;   // 圓環的外緣跟其他顏色圓點一樣大；光暈往外暈開
             android.graphics.Shader sh = new android.graphics.SweepGradient(cx, cy, PASTEL, null);
             ring.setShader(sh);
             glow.setShader(sh);
