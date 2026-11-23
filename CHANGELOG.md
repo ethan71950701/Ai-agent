@@ -6,6 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色是 15 個固定顏色（預設藍色，5、6、5 排）加最後一排最右邊的「自訂」（彩虹圓點）；選了自訂，預覽色塊與色相、飽和度、亮度三個滑桿會用動畫展開，每條滑桿的軌道直接畫出會變成的顏色，放手後套用；選別的顏色時滑桿會先收起來（有動畫）｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is one of 15 fixed colors (blue by default) plus a last "Custom" dot (rainbow), in rows of 5, 6 and 5 with Custom at the far right of the last row; choosing Custom expands (animated) a preview swatch and hue / saturation / brightness sliders whose tracks are painted with the colors they produce; it applies when you let go
+## 1.0.1842
+
+- 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色是 15 個固定顏色（預設藍色，5、5、6 排）加最後一排最右邊的「自訂」（彩虹圓點）；選了自訂，預覽色塊與色相、飽和度、亮度三個滑桿會用動畫展開，每條滑桿的軌道直接畫出會變成的顏色，放手後套用｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is one of 15 fixed colors (blue by default) plus a last "Custom" dot (rainbow), in rows of 5, 5 and 6 with Custom at the far right of the last row; choosing Custom expands (animated) a preview swatch and hue / saturation / brightness sliders whose tracks are painted with the colors they produce; it applies when you let go
+
 ## 1.0.1841
 
 - 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色是 15 個固定顏色（預設藍色）加最後一格「自訂」（彩虹圓點），排成 4×4；選了自訂會出現預覽色塊與色相、飽和度、亮度三個滑桿，每條滑桿的軌道直接畫出會變成的顏色，放手後套用｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is one of 15 fixed colors (blue by default) plus a last "Custom" dot (rainbow), laid out 4×4; choosing Custom shows a preview swatch and hue / saturation / brightness sliders whose tracks are painted with the colors they produce; it applies when you let go
