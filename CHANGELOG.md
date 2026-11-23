@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 新增「定時自動操作手機」（例如每天簽到）：對助理說「每天早上 9 點到某某 App 簽到」，確認後建立；時間到了在背景螢幕（有背景模式時）自動操作，結果用通知回報；手機鎖著就等你解鎖後自動補做（App 不碰鎖屏密碼）；遇到付款、登入、驗證碼等要確認的事會停下並通知你。建議先手動做成功一次，之後會用「記住的步驟」重播。設定 → 執行任務有「鎖屏時也嘗試執行定時操作（實驗）」開關｜Added scheduled phone auto-operation (e.g. a daily check-in): tell the assistant "every day at 9 go to <app> and check in"; at the time it operates on the background screen (when background mode is on) and reports by notification; if the phone is locked it waits and runs after you unlock (the app never touches your lock-screen password); for payments, logins, captchas and other things needing confirmation it stops and notifies you. Do it by hand once first so later runs replay the remembered steps. Settings → Running tasks has an experimental switch to also try while locked
+
 ## 1.0.1863
 
 - 修正問「我的 Ai-agent 倉庫」時 AI 去全 GitHub 搜尋、找到別人的同名倉庫：現在告訴 AI 你的 GitHub 帳號與預設倉庫，說「我的某某倉庫」就直接用你的帳號去查｜Fixed the AI searching all of GitHub and finding someone else's repo with the same name when you ask about "my Ai-agent repo": it is now told your GitHub account and default repo, so "my X repo" is looked up directly under your account

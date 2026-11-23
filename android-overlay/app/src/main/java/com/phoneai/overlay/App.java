@@ -82,6 +82,13 @@ public class App extends Application {
         new Thread(() -> TailscaleControl.reconcile(this), "ts-reconcile").start();   // 上次我們開的 Tailscale 若因程序被殺沒關到，接手關回去
         FcmLab.refreshMyToken(this);   // 記下最新的 token（配對時要交給對方）
         GlassPrefs.load(this);
+        try {   // 使用者解鎖手機時：把等著解鎖的定時自動操作補跑（也會順便跑到期的定時查詢）。沒有這個也沒關係，每 15 分鐘的排程會補上
+            registerReceiver(new android.content.BroadcastReceiver() {
+                @Override public void onReceive(Context c, android.content.Intent i) {
+                    new Thread(() -> { try { Schedule.runDue(c.getApplicationContext()); } catch (Exception ignored) { } }, "sched-unlock").start();
+                }
+            }, new android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT), Context.RECEIVER_EXPORTED);
+        } catch (Throwable ignored) { }
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {
             @Override
             public void onActivityPreCreated(Activity a, Bundle b) {

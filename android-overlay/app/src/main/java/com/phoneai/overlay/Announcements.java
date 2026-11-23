@@ -26,7 +26,7 @@ final class Announcements {
     private Announcements() { }
 
     /** 可以被遠端暫時停用的功能名稱（白名單；檔案裡寫別的名稱一律忽略）。 */
-    static final List<String> FLAGS = Arrays.asList("background_mode", "file_transfer", "scheduled_lookup", "chat_stream", "run_shell");
+    static final List<String> FLAGS = Arrays.asList("background_mode", "file_transfer", "scheduled_lookup", "scheduled_task", "chat_stream", "run_shell");
 
     private static final long MIN_INTERVAL_MS = 10 * 60_000L;   // 打開 App 時最多每 10 分鐘抓一次
     private static final long FLAG_TTL_MS = 7L * 24 * 3600_000L;   // 抓不到網路太久，停用就自動失效，不會永遠關著

@@ -133,6 +133,11 @@ final class Schedule {
     private static String fmt(JSONObject it) {
         if ("web".equals(it.optString("kind")))
             return it.optInt("id") + ". " + (it.optInt("every", 1) <= 1 ? L.t("每天 ") : L.t("每 ") + it.optInt("every") + L.t(" 天 ")) + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m")) + L.t(" 查詢：") + it.optString("query");
+        if ("task".equals(it.optString("kind"))) {
+            String st = it.optBoolean("pending") ? L.t("（等你解鎖後執行）") : it.optString("lastResult").isEmpty() ? "" : L.t("（上次：") + shorten(it.optString("lastResult"), 40) + "）";
+            return it.optInt("id") + ". " + (it.optInt("every", 1) <= 1 ? L.t("每天 ") : L.t("每 ") + it.optInt("every") + L.t(" 天 ")) + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m"))
+                    + L.t(" 自動操作手機：") + it.optString("task") + st;
+        }
         return it.optInt("id") + L.t(". 每天 ") + String.format(java.util.Locale.US, "%02d:%02d", it.optInt("h"), it.optInt("m")) + " " + it.optString("task");
     }
 
@@ -210,6 +215,81 @@ final class Schedule {
         } catch (Exception e) { return L.t("建立失敗：") + e.getMessage(); }
     }
 
+    private static String shorten(String t, int n) { return t.length() > n ? t.substring(0, n) + "…" : t; }
+
+    /**
+     * 聊天助理的 schedule_phone_task 工具：每 N 天、幾點，自動「操作手機」做一件事（例如簽到），用通知回報。
+     * 要點：①先手動說一次同樣的話讓它做成功，之後就會用「記住的步驟」重播，幾乎不花錢 ②手機鎖著時等你解鎖後才做（App 不碰鎖屏密碼）
+     * ③遇到付款、登入、驗證碼這類要你確認的操作，因為沒人在，一律當作不同意、停下來通知你。
+     */
+    static String addTask(Context c, String task, int h, int m, int everyDays, Memory.Confirm confirm) {
+        if (Announcements.off("scheduled_task")) return L.t("定時自動操作目前被暫時停用了（公告）。");
+        try {
+            task = task == null ? "" : task.trim();
+            if (task.isEmpty() || h < 0 || h > 23 || m < 0 || m > 59) return L.t("時間或要做的事不完整，請問使用者。");
+            int every = Math.max(1, Math.min(everyDays, 90));
+            String when = (every <= 1 ? L.t("每天 ") : L.t("每 ") + every + L.t(" 天 ")) + String.format(java.util.Locale.US, "%02d:%02d", h, m);
+            if (!confirm.ask(when + L.t(" 自動操作手機：「") + task + L.t("」。有背景模式時在背景螢幕做、不打擾你；手機鎖著就等你解鎖後再做；遇到付款、登入、驗證碼這類要你確認的事會直接停下並通知你，不會自己決定（時間誤差最多約 15 分鐘）。要建立嗎？")))
+                return L.t("使用者取消了，沒有建立。");
+            JSONArray items = load(c);
+            int nid = 1;
+            for (int i = 0; i < items.length(); i++) nid = Math.max(nid, items.getJSONObject(i).optInt("id") + 1);
+            items.put(new JSONObject().put("id", nid).put("kind", "task").put("task", task).put("h", h).put("m", m).put("every", every).put("next", dayStr(Calendar.getInstance())).put("last", "").put("pending", false));
+            save(c, items);
+            boolean ok = ensureJob(c);
+            return L.t("已建立定時 ") + nid + "：" + when + " " + task + L.t("。建議先手動對助理說一次同樣的話，讓它做成功，之後定時就會用記住的步驟重播。") + (ok ? "" : L.t("（排程註冊失敗，請再試一次）"));
+        } catch (Exception e) { return L.t("建立失敗：") + e.getMessage(); }
+    }
+
+    /** 沒有人看著時用的介面：不顯示面板；要確認的一律當作不同意（確認框沒回應＝不同意），並記下是哪件事。 */
+    private static final class HeadlessUi implements AgentLoop.Ui {
+        volatile String refused = "";
+        @Override public void hide() { }
+        @Override public void status(String text) { }
+        @Override public boolean confirm(String msg) { refused = msg; return false; }
+    }
+
+    /** 現在能不能自動操作：手機鎖著就不行（除非開了「鎖屏時也嘗試」而且有背景模式）；沒鎖時，要有背景模式或螢幕是亮的。 */
+    static boolean canRunTaskNow(Context c) {
+        try {
+            android.app.KeyguardManager km = (android.app.KeyguardManager) c.getSystemService(Context.KEYGUARD_SERVICE);
+            android.os.PowerManager pm = (android.os.PowerManager) c.getSystemService(Context.POWER_SERVICE);
+            boolean locked = km != null && km.isKeyguardLocked();
+            boolean bg = BgDisplay.wanted(c);
+            if (locked) return bg && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("sched_try_locked", false);
+            return bg || (pm != null && pm.isInteractive());
+        } catch (Throwable t) { return false; }
+    }
+
+    /** 在背景執行緒跑一個定時自動操作，結果用通知回報、記進這一項。回傳結果文字。 */
+    static String runTaskNow(Context c, int id, String task) {
+        android.os.PowerManager pm = (android.os.PowerManager) c.getSystemService(Context.POWER_SERVICE);
+        android.os.PowerManager.WakeLock wl = pm == null ? null : pm.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "vertex:schedTask");
+        if (wl != null) wl.acquire(10 * 60_000L);
+        String res;
+        HeadlessUi ui = new HeadlessUi();
+        try {
+            LifeLog.add(c, "定時自動操作開始：" + shorten(task, 30));
+            res = AgentLoop.run(c, task, ui);
+            if (res == null || res.trim().isEmpty()) res = L.t("（做完了，沒有文字結果）");
+            if (!ui.refused.isEmpty()) res = L.t("遇到需要你確認的事，已停下沒有繼續：") + shorten(ui.refused, 60) + "\n" + res;
+        } catch (Throwable t) {
+            res = L.t("執行失敗：") + t.getMessage();
+        } finally {
+            if (wl != null && wl.isHeld()) wl.release();
+        }
+        try {
+            JSONArray items = load(c);
+            for (int i = 0; i < items.length(); i++) {
+                JSONObject it = items.getJSONObject(i);
+                if (it.optInt("id") == id) { it.put("lastResult", shorten(res, 200)); it.put("lastAt", System.currentTimeMillis()); }
+            }
+            save(c, items);
+        } catch (Exception ignored) { }
+        notify(c, L.t("定時自動操作：") + shorten(task, 20), shorten(res, 300), 7197 + id);
+        return res;
+    }
+
     /** 立刻跑一次（不改下次時間）；網路查詢回整理後的結果，短問題回答案。在背景執行緒呼叫。 */
     static String runNow(Context c, int id) {
         JSONArray items = load(c);
@@ -217,6 +297,7 @@ final class Schedule {
             JSONObject it = items.optJSONObject(i);
             if (it == null || it.optInt("id") != id) continue;
             if ("web".equals(it.optString("kind"))) return runWeb(c, it.optString("query"), it.optString("prev"));
+            if ("task".equals(it.optString("kind"))) return runTaskNow(c, id, it.optString("task"));
             String a = quickAnswer(c, it.optString("task"));
             return a == null ? L.t("這個定時沒有答案") : a;
         }
@@ -291,6 +372,32 @@ final class Schedule {
             at.set(Calendar.SECOND, 0);
             at.set(Calendar.MILLISECOND, 0);
             long late = now.getTimeInMillis() - at.getTimeInMillis();
+            if ("task".equals(it.optString("kind"))) {   // 定時自動操作：跟網路查詢不同，手機鎖著時要等解鎖，所以有「等待中」的狀態，當天內隨時可以補跑
+                if (Announcements.off("scheduled_task") || today.equals(it.optString("last"))) continue;
+                boolean pending = it.optBoolean("pending");
+                if (pending && !today.equals(it.optString("pday"))) {   // 昨天的沒能執行：通知一下，今天照常
+                    notify(c, L.t("定時自動操作沒有執行：") + shorten(it.optString("task"), 20), L.t("昨天到了時間，但手機一直鎖著或沒有可以操作的環境，所以沒有做。"), 7197 + it.optInt("id"));
+                    it.put("pending", false);
+                    pending = false;
+                }
+                if (today.compareTo(it.optString("next", today)) < 0 || late < 0) continue;
+                if (!canRunTaskNow(c)) {
+                    if (!pending) {
+                        it.put("pending", true).put("pday", today);
+                        notify(c, L.t("定時自動操作等你解鎖：") + shorten(it.optString("task"), 20), L.t("時間到了但手機鎖著；你解鎖之後會自動做一次。"), 7197 + it.optInt("id"));
+                    }
+                    continue;
+                }
+                it.put("pending", false).put("last", today);
+                Calendar nx = Calendar.getInstance();
+                nx.add(Calendar.DAY_OF_YEAR, Math.max(1, it.optInt("every", 1)));
+                it.put("next", dayStr(nx));
+                final int tid = it.optInt("id");
+                final String ttask = it.optString("task");
+                save(c, items);   // 先記下「今天做過了」，避免這次還沒跑完下一輪又開始
+                new Thread(() -> runTaskNow(c, tid, ttask), "sched-task").start();
+                continue;
+            }
             if (today.equals(it.optString("last")) || late < 0 || late > MAX_LATE_MS) continue;
             if ("web".equals(it.optString("kind"))) {
                 if (Announcements.off("scheduled_lookup")) continue;   // 暫時停用：不執行也不更新「下次」，恢復後照常跑

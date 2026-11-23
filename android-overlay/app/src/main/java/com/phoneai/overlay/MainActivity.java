@@ -1373,6 +1373,8 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout g = grp("sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
+            Ui.switchRow(this, g, 0, 1, "clock", L.t("鎖屏時也嘗試執行定時操作（實驗）"), L.t("定時自動操作預設要等你解鎖才做（App 不碰鎖屏密碼）；打開後，有背景模式時手機鎖著也會在背景螢幕試著做，不一定每支手機都行得通"),
+                    cfg().getBoolean("sched_try_locked", false), (v, on) -> cfg().edit().putBoolean("sched_try_locked", on).apply());
             {   // 任務一開始最多做幾步（不夠會問要不要再加 10 步）
                 LinearLayout innerS = Ui.card(this, g);
                 final int curS = Math.max(8, Math.min(40, cfg().getInt("max_steps", 20)));
