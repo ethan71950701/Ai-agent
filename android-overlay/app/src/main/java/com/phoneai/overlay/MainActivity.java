@@ -461,6 +461,7 @@ public class MainActivity extends Activity {
             }
         });
         androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) ((Object[]) root.getTag())[1];
+        sv.setOverScrollMode(View.OVER_SCROLL_NEVER);   // 滑到最上或最下繼續拉時，系統的「拉伸」效果會讓底下的內容變形，底欄玻璃抓到變形的畫面，上層的形狀就跟著怪；關掉拉伸
         final java.util.function.IntConsumer fadeUp = (java.util.function.IntConsumer) ((Object[]) root.getTag())[2];
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> {
             kickGlass();   // 底欄不收起，只讓折射跟著底下的內容更新
