@@ -189,11 +189,9 @@ public class MainActivity extends Activity {
     public boolean dispatchTouchEvent(android.view.MotionEvent e) {
         int act = e.getActionMasked();
         if (act == android.view.MotionEvent.ACTION_DOWN || act == android.view.MotionEvent.ACTION_UP) kickGlass();   // 點一下可能會展開、收合、換內容：底欄後面的畫面要跟著更新（現在用 GPU 錄，很便宜）
-        if (act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL) { String snap = glassSnapshot(); if (snap.contains("(頂)") || snap.contains("(底)")) LifeLog.add(this, (act == android.view.MotionEvent.ACTION_UP ? "放開 " : "取消 ") + snap); settleGlassSoon(); }   // 手放開：等一下確認底欄玻璃有沒有卡在奇怪的形狀
+        if (act == android.view.MotionEvent.ACTION_UP || act == android.view.MotionEvent.ACTION_CANCEL) { String snap = glassSnapshot(); if (snap.contains("(頂)") || snap.contains("(底)")) LifeLog.add(this, (act == android.view.MotionEvent.ACTION_UP ? "放開 " : "取消 ") + snap); }   // 手放開：等一下確認底欄玻璃有沒有卡在奇怪的形狀
         return super.dispatchTouchEvent(e);
     }
-
-    private final Runnable settleGlass = this::settleGlassNow;
 
     /** 偵錯：底欄玻璃現在的狀態＋頁面捲動位置，寫進「最近事件」（進階與診斷看得到）。 */
     private String glassSnapshot() {
@@ -206,30 +204,6 @@ public class MainActivity extends Activity {
             b.append(" ｜ 拖動中").append(barDragging).append(" 形變迴圈").append(stretching);
         } catch (Throwable t) { b.append("取不到：").append(t); }
         return b.toString();
-    }
-
-    private void settleGlassNow() {
-        LifeLog.add(this, "玻璃（重建前）" + glassSnapshot());
-        if (barDragging || isFinishing() || isDestroyed()) return;
-        // 安全網：玻璃的上層（透鏡）與底欄在滑到頂／底繼續拉之後，偶爾會卡在奇怪的形狀，而且不會自己恢復（原因還沒找到）。
-        // 手放開、頁面停下來之後，把形變量歸零並重建玻璃的繪圖資源，一定會回到正常的樣子。
-        if (indicator instanceof GlassBar) {
-            ((GlassBar) indicator).setStretch(0f, 0f);
-            ((GlassBar) indicator).setJelly(1f, 1f);
-        }
-        if (!stretching) {
-            if (indicator != null && !barDragging) { indicator.setScaleX(1f); indicator.setScaleY(1f); }
-            if (bar != null) { bar.setScaleX(1f); bar.setScaleY(1f); }
-        }
-        if (glass != null) glass.resetGpu();
-        if (indicator instanceof GlassBar) ((GlassBar) indicator).resetGpu();
-        kickGlass();
-    }
-
-    private void settleGlassSoon() {
-        if (root == null) return;
-        root.removeCallbacks(settleGlass);
-        root.postDelayed(settleGlass, 600);   // 等慣性滑動、回彈結束再處理；又開始碰螢幕就重新計時
     }
 
     private void kickGlass() { if (glass != null) glass.kick(1500); if (indicator instanceof GlassBar) ((GlassBar) indicator).kick(1500); }
@@ -501,7 +475,6 @@ public class MainActivity extends Activity {
             }
         });
         androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) ((Object[]) root.getTag())[1];
-        sv.setOverScrollMode(View.OVER_SCROLL_NEVER);   // 滑到最上或最下繼續拉時，系統的「拉伸」效果會讓底下的內容變形，底欄玻璃抓到變形的畫面，上層的形狀就跟著怪；關掉拉伸
         final java.util.function.IntConsumer fadeUp = (java.util.function.IntConsumer) ((Object[]) root.getTag())[2];
         sv.setOnScrollChangeListener((androidx.core.widget.NestedScrollView.OnScrollChangeListener) (v, x, y, ox, oy) -> {
             kickGlass();   // 底欄不收起，只讓折射跟著底下的內容更新

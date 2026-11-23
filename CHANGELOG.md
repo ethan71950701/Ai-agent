@@ -8,11 +8,9 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 - 「進階與診斷」的最近事件會記下頁面滑到頂／底放手時，底欄玻璃的狀態（縮放、旋轉、形變、是否已錄背景…），用來找出玻璃變形的原因｜Diagnostics recent events now record the bottom-bar glass state (scale, rotation, deformation, whether the backdrop was captured…) when you release at the top/bottom of a page, to find what warps the glass
 ## 1.0.1849
 
-- 底欄玻璃偶爾卡在奇怪的形狀：手放開、頁面停下來約 0.6 秒後，自動把形變歸零並重建玻璃的繪圖資源，讓它一定回到正常的樣子（原因還沒找到，先加安全網）｜The bottom bar glass sometimes gets stuck in a strange shape: about 0.6 s after you let go and the page settles, the deformation is reset and the glass render resources are rebuilt so it always returns to normal (the root cause is not found yet; this is a safety net)
 
 ## 1.0.1848
 
-- 主頁面（首頁、功能、設定）滑到最上或最下繼續拉時，不再有系統的拉伸效果；底欄玻璃上層的形狀不會跟著變怪（待你在手機上確認）｜The main pages (Home, Features, Settings) no longer show the system stretch effect when you keep pulling past the top or bottom, so the bottom bar's upper glass layer should no longer warp (to be confirmed on the phone)
 
 ## 1.0.1847
 
