@@ -1224,7 +1224,7 @@ public class MainActivity extends Activity {
             Ui.row(this, g, 3, 4, "sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), Ui.chevron(this), v -> Usage.dialog(this));
         });
         steps.add(() -> {
-            LinearLayout g = grp("droplet", L.t("外觀"), L.t("主題色與莫奈取色"), true);
+            LinearLayout g = grp("droplet", L.t("外觀"), L.t("主題色與自訂顏色"), true);
             Ui.themePicker(this, g);
             buildLanguageGroup();
             buildReplyCardGroup();

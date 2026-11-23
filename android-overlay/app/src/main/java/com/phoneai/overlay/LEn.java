@@ -394,7 +394,7 @@ final class LEn {
         m.put("功能介紹", "Feature tour");
         m.put("再看一次介紹動畫", "Watch the intro animation again");
         m.put("外觀", "Appearance");
-        m.put("主題色與莫奈取色", "Theme color and Monet colors");
+        m.put("主題色與自訂顏色", "Theme color and custom color");
         m.put("權限", "Permissions");
         m.put("懸浮層、通知、預設數位助理", "Overlay, notifications, default assistant");
         m.put("顯示在其他應用程式上層", "Display over other apps");
