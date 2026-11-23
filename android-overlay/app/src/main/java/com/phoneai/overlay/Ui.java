@@ -514,7 +514,7 @@ final class Ui {
         LinearLayout inner = card(a, parent);
         LinearLayout grid = new LinearLayout(a);
         grid.setOrientation(LinearLayout.VERTICAL);
-        final int[] counts = {5, 5, 6};   // 15 個固定顏色（跟以前同樣的 5、5、6 排法），自訂放在最後一排最右邊
+        final int[] counts = {5, 6, 5};   // 15 個固定顏色＋最後一格自訂，排成 5、6、5；自訂在最後一排最右邊
         final View[] dots = new View[App.SEEDS.length + 1];
         final int CUSTOM_IDX = App.SEEDS.length;
         int k = 0;
@@ -549,7 +549,13 @@ final class Ui {
             dots[i].setOnClickListener(v -> {
                 if (idx != CUSTOM_IDX) {
                     cfg.edit().putInt("seed_idx", idx).apply();
-                    a.recreate();
+                    if (panel.getVisibility() == View.VISIBLE) {   // 自訂的滑桿還開著：先收起來（有動畫）、選中的白邊先換過去，收完再套用新顏色
+                        for (int j = 0; j <= CUSTOM_IDX; j++) dots[j].setBackground(dotDrawable(a, j == CUSTOM_IDX, j, false, idx, App.customColor(cfg)));
+                        Anim.expandSmooth(panel, false);
+                        panel.postDelayed(a::recreate, 340);
+                    } else {
+                        a.recreate();
+                    }
                     return;
                 }
                 if (App.seedIdx(cfg) == App.CUSTOM) return;
