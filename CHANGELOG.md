@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1848
+
 - 主頁面（首頁、功能、設定）滑到最上或最下繼續拉時，不再有系統的拉伸效果；底欄玻璃上層的形狀不會跟著變怪（待你在手機上確認）｜The main pages (Home, Features, Settings) no longer show the system stretch effect when you keep pulling past the top or bottom, so the bottom bar's upper glass layer should no longer warp (to be confirmed on the phone)
+
 ## 1.0.1847
 
 - 主題色的「自訂」圓點大小跟其他顏色一致（光環外緣一樣大，光暈往外暈開）｜The "Custom" theme dot is now the same size as the other colors (the ring's outer edge matches; the glow spreads outside)
