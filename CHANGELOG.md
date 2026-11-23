@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正功能、設定頁滑過頭時底欄玻璃變形（底欄裡的字被拉得很高、上層透鏡變成梯形）：滑過頭時頁面內容被系統拉伸，玻璃抓到被拉伸的畫面；現在這兩頁一律關掉拉伸效果｜Fixed the bottom bar glass warping when you overscroll the Features/Settings pages (text inside the bar stretched tall, the upper lens turned into a trapezoid): the page content is stretched by the system and the glass captured that stretched picture; the stretch effect is now always off on these pages
+
 ## 1.0.1850
 
 - 「進階與診斷」的最近事件會記下頁面滑到頂／底放手時，底欄玻璃的狀態（縮放、旋轉、形變、是否已錄背景…），用來找出玻璃變形的原因｜Diagnostics recent events now record the bottom-bar glass state (scale, rotation, deformation, whether the backdrop was captured…) when you release at the top/bottom of a page, to find what warps the glass

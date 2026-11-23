@@ -677,7 +677,7 @@ public class MainActivity extends Activity {
         if (box != null && box.getParent() instanceof androidx.core.widget.NestedScrollView) {
             androidx.core.widget.NestedScrollView sv = (androidx.core.widget.NestedScrollView) box.getParent();
             sv.setNestedScrollingEnabled(on);
-            sv.setOverScrollMode(on ? View.OVER_SCROLL_IF_CONTENT_SCROLLS : View.OVER_SCROLL_NEVER);
+            sv.setOverScrollMode(View.OVER_SCROLL_NEVER);   // 一律關掉拉伸：滑過頭時頁面內容被拉伸，底欄玻璃抓到被拉伸的畫面（錄影看得到底欄裡的字被拉得很高、透鏡變梯形）
         }
     }
 
