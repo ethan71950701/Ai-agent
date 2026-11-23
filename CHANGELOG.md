@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1840
+
 - 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色只剩 15 個固定顏色；沒選過時預設藍色。新增「自訂顏色」：在最後一格用色相、飽和度、亮度三個滑桿調出自己的顏色，放手後套用｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is now one of 15 fixed colors (blue by default). Added "Custom color" as the last option: tune your own color with hue, saturation and brightness sliders; it applies when you let go
+
 ## 1.0.1838
 
 - 莫奈取色：桌面壁紙讀不到顏色時改試鎖屏壁紙；助理面板等沒套主題的畫面，主色改成跟壁紙配色一致；診斷頁的「App 目前主色」改成這個畫面實際套用的顏色｜Monet colors: if the home wallpaper color is unreadable it now tries the lock screen wallpaper; screens without the app theme (assistant panel) use an accent consistent with the wallpaper-based scheme; diagnostics now shows the accent actually applied on that screen
