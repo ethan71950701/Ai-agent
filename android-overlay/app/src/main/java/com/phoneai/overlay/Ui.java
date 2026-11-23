@@ -514,114 +514,139 @@ final class Ui {
         LinearLayout inner = card(a, parent);
         LinearLayout grid = new LinearLayout(a);
         grid.setOrientation(LinearLayout.VERTICAL);
-        int total = App.SEEDS.length + 1;   // 15 個固定顏色＋最後一格「自訂」，排成 4 × 4
-        for (int r = 0; r < 4; r++) {
+        final int[] counts = {5, 5, 6};   // 15 個固定顏色（跟以前同樣的 5、5、6 排法），自訂放在最後一排最右邊
+        final View[] dots = new View[App.SEEDS.length + 1];
+        final int CUSTOM_IDX = App.SEEDS.length;
+        int k = 0;
+        for (int r = 0; r < 3; r++) {
             LinearLayout row = new LinearLayout(a);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
             LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
             rl.topMargin = r == 0 ? 0 : dp(a, 8);
             grid.addView(row, rl);
-            for (int n = 0; n < 4; n++) {
-                final int idx = r * 4 + n;
-                if (idx >= total) break;
-                final boolean isCustom = idx == App.SEEDS.length;
-                android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-                gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-                if (isCustom && !custom) {   // 還沒選自訂：用一圈彩虹表示「自己調」
-                    gd.setGradientType(android.graphics.drawable.GradientDrawable.SWEEP_GRADIENT);
-                    gd.setColors(new int[]{0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000});
-                } else {
-                    gd.setColor(isCustom ? customC : App.SEEDS[idx]);
-                }
-                boolean selected = isCustom ? custom : (!custom && idx == cur);
-                if (selected) gd.setStroke(dp(a, 3), attr(a, com.google.android.material.R.attr.colorOnSurface));
+            for (int n = 0; n < counts[r]; n++, k++) {
+                final int idx = k;
+                final boolean isCustom = idx == CUSTOM_IDX;
                 View dot = new View(a);
-                dot.setBackground(gd);
+                dot.setBackground(dotDrawable(a, isCustom, idx, custom, cur, customC));
                 dot.setContentDescription(isCustom ? L.t("自訂顏色") : L.t(App.SEED_NAMES[idx]));
-                dot.setOnClickListener(v -> {
-                    if (isCustom && custom) return;
-                    cfg.edit().putInt("seed_idx", isCustom ? App.CUSTOM : idx).apply();
-                    a.recreate();
-                });
+                dots[idx] = dot;
                 // 每格等寬，裡面放一個正圓（不要讓圓被拉成橢圓）
                 android.widget.FrameLayout cell = new android.widget.FrameLayout(a);
-                cell.addView(dot, new android.widget.FrameLayout.LayoutParams(dp(a, 40), dp(a, 40), android.view.Gravity.CENTER));
-                row.addView(cell, new LinearLayout.LayoutParams(0, dp(a, 44), 1f));
+                cell.addView(dot, new android.widget.FrameLayout.LayoutParams(dp(a, 36), dp(a, 36), android.view.Gravity.CENTER));
+                row.addView(cell, new LinearLayout.LayoutParams(0, dp(a, 40), 1f));
             }
         }
-        if (custom) {   // 選了自訂：下面出現預覽與三個滑桿；每條滑桿的軌道直接畫出會變成的顏色，看得出拉到哪裡是什麼色
-            final float[] hsv = new float[3];
-            android.graphics.Color.colorToHSV(customC, hsv);
-            final android.graphics.drawable.GradientDrawable swatch = new android.graphics.drawable.GradientDrawable();
-            swatch.setCornerRadius(dp(a, 14));
-            swatch.setColor(customC);
-            LinearLayout pv = new LinearLayout(a);
-            pv.setOrientation(LinearLayout.HORIZONTAL);
-            pv.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            View prev = new View(a);
-            prev.setBackground(swatch);
-            pv.addView(prev, new LinearLayout.LayoutParams(0, dp(a, 36), 1f));
-            final TextView hex = new TextView(a);
-            hex.setText(String.format("#%06X", customC & 0xFFFFFF));
-            hex.setTextSize(14);
-            hex.setTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
-            hex.setPadding(dp(a, 12), 0, 0, 0);
-            pv.addView(hex, new LinearLayout.LayoutParams(-2, -2));
-            LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(-1, -2);
-            pl.topMargin = dp(a, 14);
-            grid.addView(pv, pl);
-            final String[] names = {L.t("色相"), L.t("飽和度"), L.t("亮度")};
-            final float[] max = {360f, 100f, 100f}, val = {hsv[0], hsv[1] * 100f, hsv[2] * 100f};
-            final android.graphics.drawable.GradientDrawable[] tracks = new android.graphics.drawable.GradientDrawable[3];
-            for (int i = 0; i < 3; i++) {
-                final int ci = i;
-                TextView lab = new TextView(a);
-                lab.setText(names[i]);
-                lab.setTextSize(13);
-                lab.setTextColor(attr(a, com.google.android.material.R.attr.colorOnSurfaceVariant));
-                LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(-1, -2);
-                ll.topMargin = dp(a, 8);
-                grid.addView(lab, ll);
-                android.widget.FrameLayout fl = new android.widget.FrameLayout(a);
-                tracks[i] = new android.graphics.drawable.GradientDrawable();
-                tracks[i].setOrientation(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT);
-                tracks[i].setCornerRadius(dp(a, 8));
-                View bar = new View(a);
-                bar.setBackground(tracks[i]);
-                fl.addView(bar, new android.widget.FrameLayout.LayoutParams(-1, dp(a, 14), android.view.Gravity.CENTER_VERTICAL));
-                com.google.android.material.slider.Slider sl = new com.google.android.material.slider.Slider(a);
-                sl.setValueFrom(0f);
-                sl.setValueTo(max[i]);
-                sl.setValue(Math.max(0f, Math.min(max[i], val[i])));
-                sl.setTrackActiveTintList(android.content.res.ColorStateList.valueOf(0x00000000));     // 軌道本身透明，用後面畫的漸層當軌道
-                sl.setTrackInactiveTintList(android.content.res.ColorStateList.valueOf(0x00000000));
-                sl.setThumbTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
-                sl.setHaloTintList(android.content.res.ColorStateList.valueOf(0x33FFFFFF));
-                fl.addView(sl, new android.widget.FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
-                grid.addView(fl, new LinearLayout.LayoutParams(-1, -2));
-                sl.addOnChangeListener((s2, v, fromUser) -> {   // 拖動時預覽色塊與三條軌道的顏色都會跟著變
-                    if (!fromUser) return;
-                    hsv[ci] = ci == 0 ? v : v / 100f;
-                    int c = android.graphics.Color.HSVToColor(hsv);
-                    swatch.setColor(c);
-                    hex.setText(String.format("#%06X", c & 0xFFFFFF));
-                    paintTracks(tracks, hsv);
-                });
-                sl.addOnSliderTouchListener(new com.google.android.material.slider.Slider.OnSliderTouchListener() {
-                    @Override public void onStartTrackingTouch(com.google.android.material.slider.Slider s2) { }
-                    @Override public void onStopTrackingTouch(com.google.android.material.slider.Slider s2) {   // 放手才套用（整個畫面重建一次）
-                        cfg.edit().putInt("custom_color", android.graphics.Color.HSVToColor(hsv)).apply();
-                        a.recreate();
-                    }
-                });
-            }
-            paintTracks(tracks, hsv);
+        // 自訂的預覽與三個滑桿：一直建好，選了自訂才用動畫展開（不是整頁重建後突然出現）
+        final LinearLayout panel = new LinearLayout(a);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setVisibility(custom ? View.VISIBLE : View.GONE);
+        buildCustomPanel(a, cfg, panel, customC);
+        grid.addView(panel, new LinearLayout.LayoutParams(-1, -2));
+        for (int i = 0; i <= CUSTOM_IDX; i++) {
+            final int idx = i;
+            dots[i].setOnClickListener(v -> {
+                if (idx != CUSTOM_IDX) {
+                    cfg.edit().putInt("seed_idx", idx).apply();
+                    a.recreate();
+                    return;
+                }
+                if (App.seedIdx(cfg) == App.CUSTOM) return;
+                cfg.edit().putInt("seed_idx", App.CUSTOM).apply();   // 先記下選了自訂；主題等拉完滑桿放手才套用
+                for (int j = 0; j <= CUSTOM_IDX; j++) dots[j].setBackground(dotDrawable(a, j == CUSTOM_IDX, j, true, App.CUSTOM, App.customColor(cfg)));
+                Anim.expandSmooth(panel, true);
+            });
         }
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(-1, -2);
         gl.topMargin = dp(a, 12);
         gl.bottomMargin = dp(a, 8);
         inner.addView(grid, gl);
+    }
+
+    /** 一個顏色圓點的外觀：選中的有白邊；還沒選的「自訂」是一圈彩虹，選了就是目前自訂的顏色。 */
+    private static android.graphics.drawable.GradientDrawable dotDrawable(android.content.Context c, boolean isCustom, int idx, boolean customSel, int cur, int customC) {
+        android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+        gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        if (isCustom && !customSel) {
+            gd.setGradientType(android.graphics.drawable.GradientDrawable.SWEEP_GRADIENT);
+            gd.setColors(new int[]{0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000});
+        } else {
+            gd.setColor(isCustom ? customC : App.SEEDS[idx]);
+        }
+        boolean selected = isCustom ? customSel : (!customSel && idx == cur);
+        if (selected) gd.setStroke(dp(c, 3), attr(c, com.google.android.material.R.attr.colorOnSurface));
+        return gd;
+    }
+
+    /** 自訂顏色的預覽色塊、色碼與三個滑桿（軌道直接畫出會變成的顏色）。放手才套用整個 App。 */
+    private static void buildCustomPanel(final android.app.Activity a, final android.content.SharedPreferences cfg, LinearLayout grid, int customC) {
+        final float[] hsv = new float[3];
+        android.graphics.Color.colorToHSV(customC, hsv);
+        final android.graphics.drawable.GradientDrawable swatch = new android.graphics.drawable.GradientDrawable();
+        swatch.setCornerRadius(dp(a, 14));
+        swatch.setColor(customC);
+        LinearLayout pv = new LinearLayout(a);
+        pv.setOrientation(LinearLayout.HORIZONTAL);
+        pv.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        View prev = new View(a);
+        prev.setBackground(swatch);
+        pv.addView(prev, new LinearLayout.LayoutParams(0, dp(a, 36), 1f));
+        final TextView hex = new TextView(a);
+        hex.setText(String.format("#%06X", customC & 0xFFFFFF));
+        hex.setTextSize(14);
+        hex.setTextColor(attr(a, com.google.android.material.R.attr.colorOnSurface));
+        hex.setPadding(dp(a, 12), 0, 0, 0);
+        pv.addView(hex, new LinearLayout.LayoutParams(-2, -2));
+        LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(-1, -2);
+        pl.topMargin = dp(a, 14);
+        grid.addView(pv, pl);
+        final String[] names = {L.t("色相"), L.t("飽和度"), L.t("亮度")};
+        final float[] max = {360f, 100f, 100f}, val = {hsv[0], hsv[1] * 100f, hsv[2] * 100f};
+        final android.graphics.drawable.GradientDrawable[] tracks = new android.graphics.drawable.GradientDrawable[3];
+        for (int i = 0; i < 3; i++) {
+            final int ci = i;
+            TextView lab = new TextView(a);
+            lab.setText(names[i]);
+            lab.setTextSize(13);
+            lab.setTextColor(attr(a, com.google.android.material.R.attr.colorOnSurfaceVariant));
+            LinearLayout.LayoutParams ll = new LinearLayout.LayoutParams(-1, -2);
+            ll.topMargin = dp(a, 8);
+            grid.addView(lab, ll);
+            android.widget.FrameLayout fl = new android.widget.FrameLayout(a);
+            tracks[i] = new android.graphics.drawable.GradientDrawable();
+            tracks[i].setOrientation(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT);
+            tracks[i].setCornerRadius(dp(a, 8));
+            View bar = new View(a);
+            bar.setBackground(tracks[i]);
+            fl.addView(bar, new android.widget.FrameLayout.LayoutParams(-1, dp(a, 14), android.view.Gravity.CENTER_VERTICAL));
+            com.google.android.material.slider.Slider sl = new com.google.android.material.slider.Slider(a);
+            sl.setValueFrom(0f);
+            sl.setValueTo(max[i]);
+            sl.setValue(Math.max(0f, Math.min(max[i], val[i])));
+            sl.setTrackActiveTintList(android.content.res.ColorStateList.valueOf(0x00000000));     // 軌道本身透明，用後面畫的漸層當軌道
+            sl.setTrackInactiveTintList(android.content.res.ColorStateList.valueOf(0x00000000));
+            sl.setThumbTintList(android.content.res.ColorStateList.valueOf(0xFFFFFFFF));
+            sl.setHaloTintList(android.content.res.ColorStateList.valueOf(0x33FFFFFF));
+            fl.addView(sl, new android.widget.FrameLayout.LayoutParams(-1, -2, android.view.Gravity.CENTER_VERTICAL));
+            grid.addView(fl, new LinearLayout.LayoutParams(-1, -2));
+            sl.addOnChangeListener((s2, v, fromUser) -> {   // 拖動時預覽色塊與三條軌道的顏色都會跟著變
+                if (!fromUser) return;
+                hsv[ci] = ci == 0 ? v : v / 100f;
+                int c = android.graphics.Color.HSVToColor(hsv);
+                swatch.setColor(c);
+                hex.setText(String.format("#%06X", c & 0xFFFFFF));
+                paintTracks(tracks, hsv);
+            });
+            sl.addOnSliderTouchListener(new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+                @Override public void onStartTrackingTouch(com.google.android.material.slider.Slider s2) { }
+                @Override public void onStopTrackingTouch(com.google.android.material.slider.Slider s2) {   // 放手才套用（整個畫面重建一次）
+                    cfg.edit().putInt("seed_idx", App.CUSTOM).putInt("custom_color", android.graphics.Color.HSVToColor(hsv)).apply();
+                    a.recreate();
+                }
+            });
+        }
+        paintTracks(tracks, hsv);
     }
 
     /** 三條滑桿的軌道漸層：色相＝彩虹；飽和度＝灰到這個色；亮度＝黑到這個色（跟著目前另外兩個值）。 */
