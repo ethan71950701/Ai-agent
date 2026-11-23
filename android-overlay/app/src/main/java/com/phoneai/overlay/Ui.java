@@ -576,8 +576,7 @@ final class Ui {
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
         gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
         if (isCustom && !customSel) {   // 還沒選自訂：空心圓圈裡一個「＋」，表示「自己調」
-            int accent = attr(c, com.google.android.material.R.attr.colorPrimary);
-            return new PlusRing((accent & 0x00FFFFFF) | 0xB0000000, attr(c, com.google.android.material.R.attr.colorOnSurfaceVariant), c.getResources().getDisplayMetrics().density);
+            return new PlusRing(attr(c, com.google.android.material.R.attr.colorOnSurfaceVariant), c.getResources().getDisplayMetrics().density);
         }
         gd.setColor(isCustom ? customC : App.SEEDS[idx]);
         boolean selected = isCustom ? customSel : (!customSel && idx == cur);
@@ -585,17 +584,21 @@ final class Ui {
         return gd;
     }
 
-    /** 「自訂」還沒選時的圓點：中間一個「＋」，外面一圈柔和的光環（模糊的圓環，不是硬邊線）。 */
+    /** 「自訂」還沒選時的圓點：中間一個「＋」，外面一圈柔和粉彩色（彩虹）的光環：細的清楚圓環，外面再疊一層模糊的光暈。 */
     private static final class PlusRing extends android.graphics.drawable.Drawable {
-        private final android.graphics.Paint halo = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private static final int[] PASTEL = {0xFFFFB3C1, 0xFFFFD6A5, 0xFFFDFFB6, 0xFFCAFFBF, 0xFF9BF6FF, 0xFFA0C4FF, 0xFFBDB2FF, 0xFFFFB3C1};   // 粉彩色：粉紅、杏、淡黃、淡綠、淡青、淡藍、淡紫，頭尾同色才接得起來
+        private final android.graphics.Paint ring = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint glow = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         private final android.graphics.Paint plus = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
         private final float blur;
-        PlusRing(int haloColor, int plusColor, float dp) {
-            halo.setColor(haloColor);
-            halo.setStyle(android.graphics.Paint.Style.STROKE);
-            halo.setStrokeWidth(2.5f * dp);
-            blur = 5f * dp;
-            halo.setMaskFilter(new android.graphics.BlurMaskFilter(blur, android.graphics.BlurMaskFilter.Blur.NORMAL));
+        PlusRing(int plusColor, float dp) {
+            ring.setStyle(android.graphics.Paint.Style.STROKE);
+            ring.setStrokeWidth(2.5f * dp);
+            glow.setStyle(android.graphics.Paint.Style.STROKE);
+            glow.setStrokeWidth(4f * dp);
+            blur = 4f * dp;
+            glow.setMaskFilter(new android.graphics.BlurMaskFilter(blur, android.graphics.BlurMaskFilter.Blur.NORMAL));
+            glow.setAlpha(150);
             plus.setColor(plusColor);
             plus.setStyle(android.graphics.Paint.Style.STROKE);
             plus.setStrokeWidth(2f * dp);
@@ -603,17 +606,17 @@ final class Ui {
         }
         @Override public void draw(android.graphics.Canvas c) {
             android.graphics.Rect b = getBounds();
-            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - blur * 0.6f, h = r * 0.4f;
-            c.drawCircle(cx, cy, r, halo);   // 光環：先畫一圈模糊的，再疊一圈更淡的，邊緣才柔和
-            int old = halo.getAlpha();
-            halo.setAlpha(old / 2);
-            c.drawCircle(cx, cy, r, halo);
-            halo.setAlpha(old);
+            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - blur * 0.7f, h = r * 0.4f;
+            android.graphics.Shader sh = new android.graphics.SweepGradient(cx, cy, PASTEL, null);
+            ring.setShader(sh);
+            glow.setShader(sh);
+            c.drawCircle(cx, cy, r, glow);   // 外面柔和的光暈
+            c.drawCircle(cx, cy, r, ring);   // 細的粉彩圓環
             c.drawLine(cx - h, cy, cx + h, cy, plus);
             c.drawLine(cx, cy - h, cx, cy + h, plus);
         }
-        @Override public void setAlpha(int a) { halo.setAlpha(a); plus.setAlpha(a); }
-        @Override public void setColorFilter(android.graphics.ColorFilter f) { halo.setColorFilter(f); plus.setColorFilter(f); }
+        @Override public void setAlpha(int a) { ring.setAlpha(a); plus.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { ring.setColorFilter(f); glow.setColorFilter(f); plus.setColorFilter(f); }
         @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 

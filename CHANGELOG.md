@@ -5,7 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
-- 主題色圓點每一格一樣寬（少的那排置中），左右間距在每一排都一致；「自訂」沒選時改成「＋」外面一圈柔和的光環（用主題色），不再是彩虹圓點｜Theme color dots now share one cell width (shorter rows are centered) so the spacing is the same on every row; an unselected "Custom" is now a "+" with a soft halo ring (in the theme color) instead of the rainbow dot
+- 主題色圓點每一格一樣寬（少的那排置中），左右間距在每一排都一致；「自訂」沒選時改成「＋」外面一圈柔和粉彩色的光環｜Theme color dots now share one cell width (shorter rows are centered) so the spacing is the same on every row; an unselected "Custom" is now a "+" with a ring in soft pastel colors and a gentle glow
 ## 1.0.1844
 
 - 主題色圓點每一格一樣寬（少的那排置中），左右間距在每一排都一致；「自訂」沒選時改成空心圓圈加「＋」，不再是彩虹圓點｜Theme color dots now share one cell width (shorter rows are centered) so the spacing is the same on every row; an unselected "Custom" is now a hollow ring with a "+" instead of the rainbow dot
