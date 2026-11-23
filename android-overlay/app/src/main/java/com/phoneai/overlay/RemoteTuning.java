@@ -37,6 +37,7 @@ final class RemoteTuning {
             ALLOWED.put("g" + lv + "_mid", new float[]{0f, 80f});
         }
         // 回答卡片跟著鍵盤的彈簧：越硬越快、阻尼越小越 Q 彈
+        ALLOWED.put("stretch_k", new float[]{0f, 8f});      // 功能、設定頁滑過頭的拉伸額外放大幾倍（0＝系統原本的；預設 3）
         ALLOWED.put("card_stiff", new float[]{100f, 1500f});
         ALLOWED.put("card_damp", new float[]{0.2f, 1f});
     }

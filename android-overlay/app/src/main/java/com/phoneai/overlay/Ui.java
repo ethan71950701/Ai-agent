@@ -215,31 +215,47 @@ final class Ui {
             return (float) (0.016f * d + 0.016f * (1f - Math.exp(-d * Math.E / 0.33f)));
         }
 
+        /** 目前被拉的那一邊的距離（0..1）與是不是頂端；沒被拉回 0。 */
+        private float pull(boolean[] fromTop) {
+            try {
+                if (fTop == null) return 0f;
+                Object t = fTop.get(this), b = fBottom.get(this);
+                float dt = t instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) t).getDistance() : 0f;
+                float db = b instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) b).getDistance() : 0f;
+                if (dt > 0f) { fromTop[0] = true; return dt; }
+                return db > 0f ? db : 0f;
+            } catch (Throwable ignored) { return 0f; }
+        }
+
         @Override
         public void draw(android.graphics.Canvas canvas) {
-            if (!GlassBar.isCapturing() || fTop == null) { super.draw(canvas); return; }
-            Object t = null, b = null;
+            // 畫布這時候是「內容座標」（可見範圍是 [scrollY, scrollY+高]），所以拉伸的軸心要加上 scrollY。
+            // 額外放大：系統的拉伸很含蓄（最多約 3%），使用者覺得幅度太小，這裡再多乘 k 倍（tuning.json 的 stretch_k 可調，預設 3）。
+            boolean[] top = {false};
+            float d = pull(top);
+            float k = RemoteTuning.f(getContext(), "stretch_k", 3f);
+            if (!GlassBar.isCapturing()) {
+                if (d <= 0f || k <= 0f) { super.draw(canvas); return; }
+                int save = canvas.save();
+                try {
+                    canvas.scale(1f, 1f + k * stretchAmount(d), 0f, getScrollY() + (top[0] ? getHeight() : 0f));
+                    super.draw(canvas);
+                } finally { canvas.restoreToCount(save); }
+                return;
+            }
+            if (fTop == null) { super.draw(canvas); return; }
+            Object t, b;
             try {
                 t = fTop.get(this);
                 b = fBottom.get(this);
                 fTop.set(this, idle);
                 fBottom.set(this, idle);
             } catch (Throwable ignored) { super.draw(canvas); return; }
-            // 系統的拉伸是在「正在錄的那個 RenderNode」上套特效（EdgeEffect.draw → renderNode.stretch）。玻璃抓背景時錄的是它自己的畫布，
-            // 特效就套到整份背景上、而且用整個頁面的尺寸算，所以底欄裡的字被拉得很高。這裡改成：抓背景時不讓系統套，
-            // 自己用畫布縮放做出同樣的拉伸（以被拉那一邊的對面為軸、強度用系統同一個公式），底欄看到的跟頁面實際看到的一致。
-            float d = 0f;
-            boolean fromTop = false;
-            try {
-                float dt = t instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) t).getDistance() : 0f;
-                float db = b instanceof android.widget.EdgeEffect ? ((android.widget.EdgeEffect) b).getDistance() : 0f;
-                if (dt > 0f) { d = dt; fromTop = true; } else if (db > 0f) { d = db; }
-            } catch (Throwable ignored) { }
+            // 底欄玻璃抓背景時：系統的拉伸會套到「正在錄的那個節點」（玻璃自己的畫布）上，整份背景被拉歪，所以不讓系統套，
+            // 自己用畫布縮放做出同樣大小的拉伸（系統那份＋額外放大的 k 倍），底欄看到的跟頁面實際看到的一致。
             int save = canvas.save();
             try {
-                // 這時候的畫布是「內容座標」（玻璃抓背景時先扣掉了捲動量），可見範圍是 [scrollY, scrollY+高]，
-                // 所以軸心要加上 scrollY；以前軸心放在內容最上面（y=0），內容越長、位移越大（錄影裡錯位 200 多像素）
-                if (d > 0f) canvas.scale(1f, 1f + stretchAmount(d), 0f, getScrollY() + (fromTop ? getHeight() : 0f));
+                if (d > 0f) canvas.scale(1f, 1f + (1f + k) * stretchAmount(d), 0f, getScrollY() + (top[0] ? getHeight() : 0f));
                 super.draw(canvas);
             } finally {
                 canvas.restoreToCount(save);

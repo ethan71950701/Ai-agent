@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 功能、設定頁滑過頭的拉伸幅度加大（系統原本很含蓄）：預設額外放大 3 倍，底欄看到的背景也跟著；幅度可用 tuning.json 的 stretch_k 調整（0＝系統原本的）｜The overscroll stretch on the Features/Settings pages is stronger (the system default is very subtle): 3× extra by default, and the bottom bar's backdrop follows; adjustable with stretch_k in tuning.json (0 = system default)
+
 ## 1.0.1854
 
 - 修正功能、設定頁滑過頭時底欄玻璃變形（底欄裡的字被拉得很高、上層透鏡變成梯形）：玻璃抓背景時改由 App 自己用同樣的公式做出拉伸，底欄看到的跟頁面實際看到的一致，滑過頭仍然有系統的拉伸｜Fixed the bottom bar glass warping when you overscroll the Features/Settings pages (text inside the bar stretched tall, upper lens turned into a trapezoid): while capturing the backdrop the app now reproduces the stretch itself with the same formula, so the bar shows what the page shows, and the system stretch is still there on screen
