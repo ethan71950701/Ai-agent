@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 修正聊天用工具時偶爾出現「HTTP 400：思考區塊簽章無效」：遇到這個錯誤時，自動把上一輪的思考區塊拿掉再試一次｜Fixed an occasional "HTTP 400: invalid signature in thinking block" when chat uses tools: on that error the previous turn's thinking blocks are now dropped and the request is retried once
+## 1.0.1861
 
 - GitHub 查到的內容改成「先少看、不夠再接著看」：預設只給前 4000 字，AI 自己可以用 max_chars（最多 12000）與 offset 決定看多少、從哪裡接著看，後面還有會告訴它；接著看時不會重新向 GitHub 要一次｜GitHub results are now "look a little first, continue if needed": by default only the first 4000 characters are returned, and the AI can choose how much (max_chars, up to 12000) and where to continue (offset); it is told when there is more, and continuing does not refetch from GitHub
+
 ## 1.0.1860
 
 - 修正聊天一直呼叫工具、用完輪數就顯示「連不上 AI」：輪數從 6 加到 8；用完還沒答案時，請 AI 用目前查到的資料直接回答；GitHub 的入口直接列出可用工具名稱（可以一次就讀 README），參數錯了會回傳該工具的參數格式；仍然答不出來時說明是步驟太多，不再說連不上 AI；診斷頁的最近事件會記每次聊天呼叫了哪些工具｜Fixed chat showing "Cannot reach the AI" when the assistant kept calling tools until it ran out of turns: turns raised from 6 to 8; when they run out the AI is asked to answer with what it has found; the GitHub entry tool now lists the available tool names (so it can read a README in one call) and returns a tool's parameter format on a bad call; if there is still no answer the message says it took too many steps instead of blaming the connection; diagnostics recent events now record which tools each chat called
