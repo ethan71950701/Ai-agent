@@ -160,7 +160,7 @@ final class Ui {
         box.setOrientation(LinearLayout.VERTICAL);
         int pad = dp(a, 16);
         box.setPadding(pad, dp(a, 28), pad, dp(a, 32));   // 頂端留 28dp ＝ 標題列下緣漸層的高度，第一個元件不會被漸層蓋到
-        androidx.core.widget.NestedScrollView sv = new androidx.core.widget.NestedScrollView(a);
+        androidx.core.widget.NestedScrollView sv = new CaptureSafeScrollView(a);
         sv.setFillViewport(true);
         sv.addView(box, new android.view.ViewGroup.LayoutParams(-1, -2));
         androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams slp =
@@ -183,6 +183,48 @@ final class Ui {
         PAGE_BOX.put(a, box);
         root.setTag(new Object[]{ctl, sv, fadeUpdate});   // 換分頁時改大標題、底欄隨捲動收起
         return root;
+    }
+
+    /**
+     * 捲動區：滑過頭時系統的「拉伸」效果會在畫的時候套到目前的畫布上。底欄玻璃抓背景是把頁面畫進它自己的畫布，
+     * 拉伸效果就跟著套到整份背景上（底欄裡的字被拉得很高、上層透鏡變梯形）。所以玻璃在抓背景時，這裡暫時不畫拉伸效果；
+     * 正常畫到畫面上時照常有拉伸。
+     */
+    static final class CaptureSafeScrollView extends androidx.core.widget.NestedScrollView {
+        private static java.lang.reflect.Field fTop, fBottom;
+        private static boolean reflected;
+        private final android.widget.EdgeEffect idle;
+
+        CaptureSafeScrollView(android.content.Context c) {
+            super(c);
+            idle = new android.widget.EdgeEffect(c);   // 從沒被拉過＝isFinished，畫的時候會被略過
+            if (!reflected) {
+                reflected = true;
+                try {
+                    fTop = androidx.core.widget.NestedScrollView.class.getDeclaredField("mEdgeGlowTop");
+                    fBottom = androidx.core.widget.NestedScrollView.class.getDeclaredField("mEdgeGlowBottom");
+                    fTop.setAccessible(true);
+                    fBottom.setAccessible(true);
+                } catch (Throwable t) { fTop = null; fBottom = null; }
+            }
+        }
+
+        @Override
+        public void draw(android.graphics.Canvas canvas) {
+            if (!GlassBar.isCapturing() || fTop == null) { super.draw(canvas); return; }
+            Object t = null, b = null;
+            try {
+                t = fTop.get(this);
+                b = fBottom.get(this);
+                fTop.set(this, idle);
+                fBottom.set(this, idle);
+            } catch (Throwable ignored) { super.draw(canvas); return; }
+            try {
+                super.draw(canvas);
+            } finally {
+                try { fTop.set(this, t); fBottom.set(this, b); } catch (Throwable ignored) { }
+            }
+        }
     }
 
     /** 讓一個 View 貼在 AppBarLayout 的下緣（標題列收合、展開時跟著動）。 */

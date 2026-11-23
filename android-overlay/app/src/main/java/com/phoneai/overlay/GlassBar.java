@@ -149,6 +149,8 @@ final class GlassBar extends FrameLayout {
 
     /** 有任何玻璃元件正在抓背景：其他玻璃元件只畫子內容，免得互相遞迴。 */
     private static boolean anyCapture;
+    /** 玻璃正在抓背景（底欄後面的頁面）。捲動區用它來避開「滑過頭的拉伸效果」：那個效果會套到整個正在錄的背景上。 */
+    static boolean isCapturing() { return anyCapture; }
     /** 玻璃按鈕沒被按住時的效果強度（輕微折射，讓它平常也看得出是一塊玻璃）。 */
     static final float REST = 0.4f;
     /** 透鏡邊緣彩虹環的強度（0 = 不畫）；顏色依邊界方向變化（紅到紫）。想要更明顯就調大，想淡一點就調小。 */
