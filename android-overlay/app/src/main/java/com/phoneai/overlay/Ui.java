@@ -576,8 +576,8 @@ final class Ui {
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
         gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
         if (isCustom && !customSel) {   // 還沒選自訂：空心圓圈裡一個「＋」，表示「自己調」
-            final int line = attr(c, com.google.android.material.R.attr.colorOutline), w = dp(c, 2);
-            return new PlusRing(line, w);
+            int accent = attr(c, com.google.android.material.R.attr.colorPrimary);
+            return new PlusRing((accent & 0x00FFFFFF) | 0xB0000000, attr(c, com.google.android.material.R.attr.colorOnSurfaceVariant), c.getResources().getDisplayMetrics().density);
         }
         gd.setColor(isCustom ? customC : App.SEEDS[idx]);
         boolean selected = isCustom ? customSel : (!customSel && idx == cur);
@@ -585,24 +585,35 @@ final class Ui {
         return gd;
     }
 
-    /** 「自訂」還沒選時的圓點：空心圓圈，中間一個加號。 */
+    /** 「自訂」還沒選時的圓點：中間一個「＋」，外面一圈柔和的光環（模糊的圓環，不是硬邊線）。 */
     private static final class PlusRing extends android.graphics.drawable.Drawable {
-        private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-        PlusRing(int color, int width) {
-            p.setColor(color);
-            p.setStyle(android.graphics.Paint.Style.STROKE);
-            p.setStrokeWidth(width);
-            p.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        private final android.graphics.Paint halo = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final android.graphics.Paint plus = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final float blur;
+        PlusRing(int haloColor, int plusColor, float dp) {
+            halo.setColor(haloColor);
+            halo.setStyle(android.graphics.Paint.Style.STROKE);
+            halo.setStrokeWidth(2.5f * dp);
+            blur = 5f * dp;
+            halo.setMaskFilter(new android.graphics.BlurMaskFilter(blur, android.graphics.BlurMaskFilter.Blur.NORMAL));
+            plus.setColor(plusColor);
+            plus.setStyle(android.graphics.Paint.Style.STROKE);
+            plus.setStrokeWidth(2f * dp);
+            plus.setStrokeCap(android.graphics.Paint.Cap.ROUND);
         }
         @Override public void draw(android.graphics.Canvas c) {
             android.graphics.Rect b = getBounds();
-            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - p.getStrokeWidth() / 2f, h = r * 0.42f;
-            c.drawCircle(cx, cy, r, p);
-            c.drawLine(cx - h, cy, cx + h, cy, p);
-            c.drawLine(cx, cy - h, cx, cy + h, p);
+            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - blur * 0.6f, h = r * 0.4f;
+            c.drawCircle(cx, cy, r, halo);   // 光環：先畫一圈模糊的，再疊一圈更淡的，邊緣才柔和
+            int old = halo.getAlpha();
+            halo.setAlpha(old / 2);
+            c.drawCircle(cx, cy, r, halo);
+            halo.setAlpha(old);
+            c.drawLine(cx - h, cy, cx + h, cy, plus);
+            c.drawLine(cx, cy - h, cx, cy + h, plus);
         }
-        @Override public void setAlpha(int a) { p.setAlpha(a); }
-        @Override public void setColorFilter(android.graphics.ColorFilter f) { p.setColorFilter(f); }
+        @Override public void setAlpha(int a) { halo.setAlpha(a); plus.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { halo.setColorFilter(f); plus.setColorFilter(f); }
         @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 
