@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正問「我的 Ai-agent 倉庫」時 AI 去全 GitHub 搜尋、找到別人的同名倉庫：現在告訴 AI 你的 GitHub 帳號與預設倉庫，說「我的某某倉庫」就直接用你的帳號去查｜Fixed the AI searching all of GitHub and finding someone else's repo with the same name when you ask about "my Ai-agent repo": it is now told your GitHub account and default repo, so "my X repo" is looked up directly under your account
+
 - 修正聊天用工具時偶爾出現「HTTP 400：思考區塊簽章無效」：遇到這個錯誤時，自動把上一輪的思考區塊拿掉再試一次｜Fixed an occasional "HTTP 400: invalid signature in thinking block" when chat uses tools: on that error the previous turn's thinking blocks are now dropped and the request is retried once
 ## 1.0.1861
 
