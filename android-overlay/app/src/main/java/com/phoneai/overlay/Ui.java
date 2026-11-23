@@ -521,7 +521,8 @@ final class Ui {
         for (int r = 0; r < 3; r++) {
             LinearLayout row = new LinearLayout(a);
             row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setGravity(android.view.Gravity.CENTER);   // 每排的格子一樣寬（都是整排的 1/6），少的那排置中：左右、上下的間距在每一排都一樣
+            row.setWeightSum(6f);
             LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
             rl.topMargin = r == 0 ? 0 : dp(a, 8);
             grid.addView(row, rl);
@@ -571,18 +572,38 @@ final class Ui {
     }
 
     /** 一個顏色圓點的外觀：選中的有白邊；還沒選的「自訂」是一圈彩虹，選了就是目前自訂的顏色。 */
-    private static android.graphics.drawable.GradientDrawable dotDrawable(android.content.Context c, boolean isCustom, int idx, boolean customSel, int cur, int customC) {
+    private static android.graphics.drawable.Drawable dotDrawable(android.content.Context c, boolean isCustom, int idx, boolean customSel, int cur, int customC) {
         android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
         gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
-        if (isCustom && !customSel) {
-            gd.setGradientType(android.graphics.drawable.GradientDrawable.SWEEP_GRADIENT);
-            gd.setColors(new int[]{0xFFFF0000, 0xFFFFFF00, 0xFF00FF00, 0xFF00FFFF, 0xFF0000FF, 0xFFFF00FF, 0xFFFF0000});
-        } else {
-            gd.setColor(isCustom ? customC : App.SEEDS[idx]);
+        if (isCustom && !customSel) {   // 還沒選自訂：空心圓圈裡一個「＋」，表示「自己調」
+            final int line = attr(c, com.google.android.material.R.attr.colorOutline), w = dp(c, 2);
+            return new PlusRing(line, w);
         }
+        gd.setColor(isCustom ? customC : App.SEEDS[idx]);
         boolean selected = isCustom ? customSel : (!customSel && idx == cur);
         if (selected) gd.setStroke(dp(c, 3), attr(c, com.google.android.material.R.attr.colorOnSurface));
         return gd;
+    }
+
+    /** 「自訂」還沒選時的圓點：空心圓圈，中間一個加號。 */
+    private static final class PlusRing extends android.graphics.drawable.Drawable {
+        private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        PlusRing(int color, int width) {
+            p.setColor(color);
+            p.setStyle(android.graphics.Paint.Style.STROKE);
+            p.setStrokeWidth(width);
+            p.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+        }
+        @Override public void draw(android.graphics.Canvas c) {
+            android.graphics.Rect b = getBounds();
+            float cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2f - p.getStrokeWidth() / 2f, h = r * 0.42f;
+            c.drawCircle(cx, cy, r, p);
+            c.drawLine(cx - h, cy, cx + h, cy, p);
+            c.drawLine(cx, cy - h, cx, cy + h, p);
+        }
+        @Override public void setAlpha(int a) { p.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { p.setColorFilter(f); }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
     }
 
     /** 自訂顏色的預覽色塊、色碼與三個滑桿（軌道直接畫出會變成的顏色）。放手才套用整個 App。 */
