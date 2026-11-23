@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1856
+
 - 功能、設定頁滑過頭的拉伸幅度加大（系統原本很含蓄）：預設額外放大 3 倍，底欄看到的背景也跟著；幅度可用 tuning.json 的 stretch_k 調整（0＝系統原本的）｜The overscroll stretch on the Features/Settings pages is stronger (the system default is very subtle): 3× extra by default, and the bottom bar's backdrop follows; adjustable with stretch_k in tuning.json (0 = system default)
 
 ## 1.0.1854
