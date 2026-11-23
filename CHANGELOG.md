@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1850
+
 - 「進階與診斷」的最近事件會記下頁面滑到頂／底放手時，底欄玻璃的狀態（縮放、旋轉、形變、是否已錄背景…），用來找出玻璃變形的原因｜Diagnostics recent events now record the bottom-bar glass state (scale, rotation, deformation, whether the backdrop was captured…) when you release at the top/bottom of a page, to find what warps the glass
+
 ## 1.0.1849
 
 
