@@ -40,10 +40,18 @@ public class McpClientTest {
                 "{\"name\":\"issue_read\",\"description\":\"d\"}]");
         JSONArray out = McpTools.convert(in, "me/repo");
         assertEquals(2, out.length());
-        assertEquals("gh_list_releases", out.getJSONObject(0).getString("name"));
+        assertEquals("list_releases", out.getJSONObject(0).getString("name"));
+        assertEquals("release", out.getJSONObject(0).getString("category"));
         assertFalse(out.getJSONObject(0).getJSONObject("input_schema").has("$schema"));
         assertTrue(out.getJSONObject(0).getString("description").contains("me/repo"));
-        assertEquals("gh_issue_read", out.getJSONObject(1).getString("name"));
+        assertEquals("issue_read", out.getJSONObject(1).getString("name"));
+        assertEquals("issues", out.getJSONObject(1).getString("category"));
+        // 瀏覽：先看類別，再看某類別的工具
+        String cats = McpTools.browse(out, "");
+        assertTrue(cats.contains("release") && cats.contains("issues") && !cats.contains("actions"));
+        String rel = McpTools.browse(out, "release");
+        assertTrue(rel.contains("list_releases") && !rel.contains("issue_read"));
+        assertTrue(McpTools.browse(out, "nope").contains("沒有這個類別"));
     }
 
     /** 假的 MCP 服務（ServerSocket）：回應 initialize、tools/list、tools/call，並檢查權杖與 session 標頭有帶。 */

@@ -782,7 +782,7 @@ final class ChatEngine {
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
                     if (tn.equals("phone_action")) { HANDOFF.set(true); return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
                     if (tn.equals("read_notifications")) { readNotifs = true; SAW_NOTIFS.set(true); }
-                    if (tn.equals("read_url") || tn.equals("current_page") || tn.startsWith(McpTools.PREFIX)) readNotifs = true;   // 網頁、GitHub 的內容是外人寫的：之後只給唯讀工具
+                    if (tn.equals("read_url") || tn.equals("current_page") || McpTools.handles(tn)) readNotifs = true;   // 網頁、GitHub 的內容是外人寫的：之後只給唯讀工具
                     String out = runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
