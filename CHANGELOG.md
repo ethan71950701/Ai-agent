@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1841
+
 - 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色是 15 個固定顏色（預設藍色）加最後一格「自訂」（彩虹圓點），排成 4×4；選了自訂會出現預覽色塊與色相、飽和度、亮度三個滑桿，每條滑桿的軌道直接畫出會變成的顏色，放手後套用｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is one of 15 fixed colors (blue by default) plus a last "Custom" dot (rainbow), laid out 4×4; choosing Custom shows a preview swatch and hue / saturation / brightness sliders whose tracks are painted with the colors they produce; it applies when you let go
+
 ## 1.0.1840
 
 - 拿掉「莫奈取色」（有些手機的系統取色不跟壁紙走，用起來不可靠）：主題色只剩 15 個固定顏色；沒選過時預設藍色。新增「自訂顏色」：在最後一格用色相、飽和度、亮度三個滑桿調出自己的顏色，放手後套用｜Removed "Monet" (on some phones the system accent does not follow the wallpaper): the theme color is now one of 15 fixed colors (blue by default). Added "Custom color" as the last option: tune your own color with hue, saturation and brightness sliders; it applies when you let go
