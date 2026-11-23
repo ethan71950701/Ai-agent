@@ -327,6 +327,7 @@ final class ChatEngine {
                             : tn.equals("current_page") ? PageSnapshot.read()
                             : tn.equals("phone_task") ? phoneTask(ti.optString("task"))
                             : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
+                            : McpTools.handles(tn) ? McpTools.run(c, tn, ti)
                             : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
     }
 
@@ -363,7 +364,7 @@ final class ChatEngine {
      */
     static boolean allowedAfterUntrusted(String name, boolean sawNotifications) {
         if (READ_ONLY_TOOLS.contains(name)) return true;
-        return !sawNotifications && (name.equals("read_url") || name.equals("current_page"));
+        return !sawNotifications && (name.equals("read_url") || name.equals("current_page") || McpTools.handles(name));   // GitHub 工具都是唯讀的（白名單），跟讀網頁一樣可以繼續用，讀過通知之後不行
     }
 
     /** 給自動操作的提示詞：把上面那些工具寫成 {"action":"工具名",參數…} 的格式（從工具定義自動產生，兩邊不會不一致）。 */
@@ -412,6 +413,7 @@ final class ChatEngine {
 
     private static JSONObject call(JSONArray messages, String system, String key, boolean search, boolean toolsOn, boolean readOnly, String model) throws Exception {
         JSONArray tools = toolsOn ? new JSONArray(TOOLS) : new JSONArray();
+        if (toolsOn) McpTools.append(tools);   // 設了 GitHub 權杖才有：唯讀的 GitHub 工具
         if (readOnly) {
             JSONArray kept = new JSONArray();
             boolean strict = Boolean.TRUE.equals(SAW_NOTIFS.get());
@@ -780,7 +782,7 @@ final class ChatEngine {
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
                     if (tn.equals("phone_action")) { HANDOFF.set(true); return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
                     if (tn.equals("read_notifications")) { readNotifs = true; SAW_NOTIFS.set(true); }
-                    if (tn.equals("read_url") || tn.equals("current_page")) readNotifs = true;   // 網頁是外人寫的：之後只給唯讀工具
+                    if (tn.equals("read_url") || tn.equals("current_page") || tn.startsWith(McpTools.PREFIX)) readNotifs = true;   // 網頁、GitHub 的內容是外人寫的：之後只給唯讀工具
                     String out = runTool(c, tn, ti, confirm);
                     results.put(new JSONObject().put("type", "tool_result").put("tool_use_id", u.optString("id")).put("content", out));
                 }
