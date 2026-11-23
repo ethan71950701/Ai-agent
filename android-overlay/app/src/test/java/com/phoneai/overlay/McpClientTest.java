@@ -103,4 +103,12 @@ public class McpClientTest {
         assertEquals("initialize|Bearer tok123|", seen.get(0));
         assertTrue(seen.get(3).startsWith("tools/call|Bearer tok123|S1"));   // 握手之後的請求都帶 session
     }
+
+    @Test public void sliceGivesPartsAndTellsWhereToContinue() {
+        String full = "abcdefghij";
+        assertEquals("abcd\n…（後面還有，全部共 10 字，這次看到第 4 個字；要接著看就再呼叫一次，offset 填 4）", McpTools.slice(full, 0, 4));
+        assertEquals("efgh\n…（後面還有，全部共 10 字，這次看到第 8 個字；要接著看就再呼叫一次，offset 填 8）", McpTools.slice(full, 4, 4));
+        assertEquals("ij", McpTools.slice(full, 8, 4));                       // 最後一段：不再說後面還有
+        assertTrue(McpTools.slice(full, 10, 4).contains("沒有後面"));
+    }
 }
