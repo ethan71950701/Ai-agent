@@ -450,6 +450,15 @@ final class GlassBar extends FrameLayout {
     }
 
     /** 虛擬光源：固定在視窗左上方的一個點。回傳 {角度, 累計 X 縮放, 累計 Y 縮放, 光向量 x, y}；玻璃移動、拉伸時，高光點在透鏡裡的位置跟著改變。 */
+    /** 偵錯用：目前這個玻璃的各種狀態（玻璃卡在奇怪的形狀時，看是哪個數字不對）。 */
+    String debugState() {
+        float[] lp = virtualLight();
+        return String.format(java.util.Locale.US,
+                "%s %dx%d 縮放%.2f,%.2f 旋轉%.1f/%.1f/%.1f 位移%.0f,%.0f 形變%.2f,%.2f 果凍%.2f,%.2f 強度%.2f 累計縮放%.2f,%.2f 歪斜%.2f 已錄背景%s 失敗%s 節點%dx%d",
+                lens ? "透鏡" : "底欄", getWidth(), getHeight(), getScaleX(), getScaleY(), getRotation(), getRotationX(), getRotationY(),
+                getTranslationX(), getTranslationY(), stretchX, stretchY, jellyX, jellyY, amount, lp[1], lp[2], skewNow, capReady, failed, node.getWidth(), node.getHeight());
+    }
+
     private float[] virtualLight() {
         int[] loc = new int[2];
         getLocationInWindow(loc);
