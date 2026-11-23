@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 修正問「我的 Ai-agent 倉庫」時 AI 去全 GitHub 搜尋、找到別人的同名倉庫：現在告訴 AI 你的 GitHub 帳號與預設倉庫，說「我的某某倉庫」就直接用你的帳號去查｜Fixed the AI searching all of GitHub and finding someone else's repo with the same name when you ask about "my Ai-agent repo": it is now told your GitHub account and default repo, so "my X repo" is looked up directly under your account
+## 1.0.1862
 
 - 修正聊天用工具時偶爾出現「HTTP 400：思考區塊簽章無效」：遇到這個錯誤時，自動把上一輪的思考區塊拿掉再試一次｜Fixed an occasional "HTTP 400: invalid signature in thinking block" when chat uses tools: on that error the previous turn's thinking blocks are now dropped and the request is retried once
+
 ## 1.0.1861
 
 - GitHub 查到的內容改成「先少看、不夠再接著看」：預設只給前 4000 字，AI 自己可以用 max_chars（最多 12000）與 offset 決定看多少、從哪裡接著看，後面還有會告訴它；接著看時不會重新向 GitHub 要一次｜GitHub results are now "look a little first, continue if needed": by default only the first 4000 characters are returned, and the AI can choose how much (max_chars, up to 12000) and where to continue (offset); it is told when there is more, and continuing does not refetch from GitHub
