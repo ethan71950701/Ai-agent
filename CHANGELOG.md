@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1847
+
 - 主題色的「自訂」圓點大小跟其他顏色一致（光環外緣一樣大，光暈往外暈開）｜The "Custom" theme dot is now the same size as the other colors (the ring's outer edge matches; the glow spreads outside)
+
 ## 1.0.1846
 
 - 主題色圓點每一格一樣寬（少的那排置中），左右間距在每一排都一致；「自訂」沒選時改成「＋」外面一圈柔和粉彩色的光環｜Theme color dots now share one cell width (shorter rows are centered) so the spacing is the same on every row; an unselected "Custom" is now a "+" with a ring in soft pastel colors and a gentle glow
