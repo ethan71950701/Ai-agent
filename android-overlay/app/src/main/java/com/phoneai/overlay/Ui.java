@@ -237,7 +237,9 @@ final class Ui {
             } catch (Throwable ignored) { }
             int save = canvas.save();
             try {
-                if (d > 0f) canvas.scale(1f, 1f + stretchAmount(d), 0f, fromTop ? getHeight() : 0f);
+                // 這時候的畫布是「內容座標」（玻璃抓背景時先扣掉了捲動量），可見範圍是 [scrollY, scrollY+高]，
+                // 所以軸心要加上 scrollY；以前軸心放在內容最上面（y=0），內容越長、位移越大（錄影裡錯位 200 多像素）
+                if (d > 0f) canvas.scale(1f, 1f + stretchAmount(d), 0f, getScrollY() + (fromTop ? getHeight() : 0f));
                 super.draw(canvas);
             } finally {
                 canvas.restoreToCount(save);
