@@ -24,49 +24,39 @@ public class App extends Application {
     static final String[] SEED_NAMES = {"紅", "粉紅", "紫", "深紫", "靛藍", "藍", "青", "藍綠", "綠", "黃",
             "琥珀", "橘", "棕", "灰藍", "粉"};
 
-    /** 目前選的主題（莫奈或哪一色）；比對它就知道畫面是不是已經是最新的主題。 */
+    static final int CUSTOM = -1;        // seed_idx＝-1：自訂顏色
+    static final int DEFAULT_SEED = 5;   // 沒選過：藍色
+
+    static int seedIdx(SharedPreferences sp) { return sp.contains("seed_idx") ? sp.getInt("seed_idx", DEFAULT_SEED) : DEFAULT_SEED; }
+
+    static int customColor(SharedPreferences sp) { return sp.getInt("custom_color", 0xFFFF6F91); }
+
+    /** 目前選的主題（哪一色或自訂顏色）；比對它就知道畫面是不是已經是最新的主題。 */
     static String themeKey(Context c) {
-        android.content.SharedPreferences sp = c.getSharedPreferences("cfg", MODE_PRIVATE);
-        return sp.getBoolean("monet_on", true) ? "monet" : "seed" + sp.getInt("seed_idx", 0);
+        SharedPreferences sp = c.getSharedPreferences("cfg", MODE_PRIVATE);
+        int i = seedIdx(sp);
+        return i == CUSTOM ? "custom" + Integer.toHexString(customColor(sp)) : "seed" + i;
     }
 
-    /** 桌面壁紙的主色（系統自己的取色沒跟著壁紙變時，由 App 自己算用）；讀不到回 0。 */
-    static int wallpaperSeed(Context c) {
-        try {
-            android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(c.getApplicationContext());
-            android.app.WallpaperColors wc = wm.getWallpaperColors(android.app.WallpaperManager.FLAG_SYSTEM);
-            if (wc == null) wc = wm.getWallpaperColors(android.app.WallpaperManager.FLAG_LOCK);   // 桌面讀不到（有些系統是動態桌布或還沒算好）：試鎖屏的
-            return wc == null ? 0 : wc.getPrimaryColor().toArgb();
-        } catch (Throwable t) { return 0; }
-    }
-
-    /** 莫奈用的選項：讀得到桌面壁紙主色就以它為種子自己配色（有些手機的系統取色不會跟著壁紙變）；讀不到才照系統給的。 */
-    static DynamicColorsOptions monetOptions(Context c) {
-        DynamicColorsOptions.Builder ob = new DynamicColorsOptions.Builder();
-        int seed = wallpaperSeed(c);
-        if (seed != 0) ob.setContentBasedSource(seed);
-        return ob.build();
+    /** 自訂顏色：用 Material 的配色演算法，以這個顏色當種子產生整套深色配色。 */
+    static DynamicColorsOptions customOptions(SharedPreferences sp) {
+        return new DynamicColorsOptions.Builder()
+                .setContentBasedSource(customColor(sp))
+                .setThemeOverlay(com.google.android.material.R.style.ThemeOverlay_Material3_DynamicColors_Dark)
+                .build();
     }
 
     /** 目前主題的主色（莫奈取色或固定色）。助理面板的 Activity 沒套 Material 主題，所以自己組一個再讀；讀不到回 defColor。 */
     static int accentColor(Context c, int defColor) {
         try {
             Context base = c.getApplicationContext();
-            android.view.ContextThemeWrapper tc = new android.view.ContextThemeWrapper(base, R.style.AppTheme);
             SharedPreferences sp = base.getSharedPreferences("cfg", MODE_PRIVATE);
-            Context use = tc;
-            if (sp.getBoolean("monet_on", true)) {   // 讀得到壁紙色：主色就是用壁紙色算出來的（跟畫面實際的配色一致）；wrapContext 不會套壁紙種子，不能用它
-                int seed = wallpaperSeed(c);
-                if (seed != 0) return com.google.android.material.color.utilities.Scheme.dark(seed).getPrimary();
-            }
-            if (!sp.getBoolean("monet_on", true)) {
-                int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
-                tc.getTheme().applyStyle(ACCENTS[i], true);
-            } else {
-                use = DynamicColors.wrapContextIfAvailable(tc, monetOptions(c));
-            }
+            int idx = seedIdx(sp);
+            if (idx == CUSTOM) return com.google.android.material.color.utilities.Scheme.dark(customColor(sp)).getPrimary();   // 自訂顏色：用同一個演算法算主色（跟畫面實際配色一致）
+            android.view.ContextThemeWrapper tc = new android.view.ContextThemeWrapper(base, R.style.AppTheme);
+            tc.getTheme().applyStyle(ACCENTS[Math.max(0, Math.min(SEEDS.length - 1, idx))], true);
             android.util.TypedValue tv = new android.util.TypedValue();
-            if (!use.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, tv, true)) return defColor;
+            if (!tc.getTheme().resolveAttribute(com.google.android.material.R.attr.colorPrimary, tv, true)) return defColor;
             return tv.data;
         } catch (Throwable e) {
             return defColor;
@@ -97,13 +87,14 @@ public class App extends Application {
             public void onActivityPreCreated(Activity a, Bundle b) {
                 if (!themed(a)) return;
                 SharedPreferences sp = getSharedPreferences("cfg", MODE_PRIVATE);
-                if (!sp.getBoolean("monet_on", true)) {
-                    // 選了固定主題色：深色背景 + 預先算好的亮色強調色（不用系統的深淺模式）
-                    int i = Math.max(0, Math.min(SEEDS.length - 1, sp.getInt("seed_idx", 0)));
-                    a.getTheme().applyStyle(ACCENTS[i], true);
+                int idx = seedIdx(sp);
+                if (idx == CUSTOM && DynamicColors.isDynamicColorAvailable()) {   // 自訂顏色：從種子色產生整套深色配色
+                    DynamicColors.applyToActivityIfAvailable(a, customOptions(sp));
                     return;
                 }
-                DynamicColors.applyToActivityIfAvailable(a, monetOptions(a));
+                // 固定主題色：深色背景 + 預先算好的亮色強調色（不用系統的深淺模式）
+                int i = Math.max(0, Math.min(SEEDS.length - 1, idx == CUSTOM ? DEFAULT_SEED : idx));
+                a.getTheme().applyStyle(ACCENTS[i], true);
             }
             @Override public void onActivityCreated(Activity a, Bundle b) { }
             @Override

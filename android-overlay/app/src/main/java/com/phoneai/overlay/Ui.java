@@ -508,54 +508,100 @@ final class Ui {
     /** 主題色選擇（設定頁與教學第一頁共用）：莫奈開關在第一排，其餘 18 色分三排（第一排 5、第二排 7、第三排 6），每格等寬，不會被裁掉。 */
     static void themePicker(final android.app.Activity a, LinearLayout parent) {
         final android.content.SharedPreferences cfg = a.getSharedPreferences("cfg", android.content.Context.MODE_PRIVATE);
-        final boolean monet = cfg.getBoolean("monet_on", true);
-        final int cur = cfg.getInt("seed_idx", 0);
+        final int cur = App.seedIdx(cfg);
+        final boolean custom = cur == App.CUSTOM;
         LinearLayout inner = card(a, parent);
         LinearLayout grid = new LinearLayout(a);
         grid.setOrientation(LinearLayout.VERTICAL);
-        int[] counts = {4, 5, 6};   // 15 個主色，莫奈格子放在第一排
         int k = 0;
-        for (int r = 0; r < 3; r++) {
+        for (int r = 0; r < 3; r++) {   // 15 個固定顏色，每排 5 個
             LinearLayout row = new LinearLayout(a);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
             LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
             rl.topMargin = r == 0 ? 0 : dp(a, 8);
             grid.addView(row, rl);
-            if (r == 0) {
-                TextView mo = new TextView(a);
-                mo.setText(L.t("莫奈"));
-                mo.setGravity(android.view.Gravity.CENTER);
-                mo.setTextSize(12);
-                mo.setTextColor(attr(a, monet ? com.google.android.material.R.attr.colorOnSecondaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant));
-                android.graphics.drawable.GradientDrawable mg = new android.graphics.drawable.GradientDrawable();
-                mg.setCornerRadius(dp(a, 18));
-                mg.setColor(monet ? attr(a, com.google.android.material.R.attr.colorSecondaryContainer) : attr(a, com.google.android.material.R.attr.colorSurfaceContainerHighest));
-                mo.setBackground(mg);
-                mo.setOnClickListener(v -> {
-                    cfg.edit().putBoolean("monet_on", true).apply();
-                    a.recreate();
-                });
-                row.addView(mo, new LinearLayout.LayoutParams(0, dp(a, 36), 1f));
-            }
-            for (int n = 0; n < counts[r]; n++, k++) {
+            for (int n = 0; n < 5; n++, k++) {
                 final int idx = k;
                 android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
                 gd.setShape(android.graphics.drawable.GradientDrawable.OVAL);
                 gd.setColor(App.SEEDS[k]);
-                if (!monet && k == cur) gd.setStroke(dp(a, 3), attr(a, com.google.android.material.R.attr.colorOnSurface));
+                if (!custom && k == cur) gd.setStroke(dp(a, 3), attr(a, com.google.android.material.R.attr.colorOnSurface));
                 View dot = new View(a);
                 dot.setBackground(gd);
-                dot.setAlpha(monet ? 0.45f : 1f);
                 dot.setContentDescription(L.t(App.SEED_NAMES[k]));
                 dot.setOnClickListener(v -> {
-                    cfg.edit().putInt("seed_idx", idx).putBoolean("monet_on", false).apply();   // 選顏色就代表不用莫奈
+                    cfg.edit().putInt("seed_idx", idx).apply();
                     a.recreate();
                 });
                 // 每格等寬，裡面放一個正圓（不要讓圓被拉成橢圓）
                 android.widget.FrameLayout cell = new android.widget.FrameLayout(a);
                 cell.addView(dot, new android.widget.FrameLayout.LayoutParams(dp(a, 36), dp(a, 36), android.view.Gravity.CENTER));
                 row.addView(cell, new LinearLayout.LayoutParams(0, dp(a, 36), 1f));
+            }
+        }
+        // 最後一格：自訂顏色（三個滑桿調色相、飽和度、亮度）
+        final int customC = App.customColor(cfg);
+        TextView cb = new TextView(a);
+        cb.setText(L.t("自訂顏色"));
+        cb.setGravity(android.view.Gravity.CENTER);
+        cb.setTextSize(14);
+        cb.setTextColor(attr(a, custom ? com.google.android.material.R.attr.colorOnSecondaryContainer : com.google.android.material.R.attr.colorOnSurfaceVariant));
+        android.graphics.drawable.GradientDrawable cg = new android.graphics.drawable.GradientDrawable();
+        cg.setCornerRadius(dp(a, 18));
+        cg.setColor(custom ? attr(a, com.google.android.material.R.attr.colorSecondaryContainer) : attr(a, com.google.android.material.R.attr.colorSurfaceContainerHighest));
+        cb.setBackground(cg);
+        cb.setCompoundDrawablePadding(dp(a, 8));
+        android.graphics.drawable.GradientDrawable sw = new android.graphics.drawable.GradientDrawable();
+        sw.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        sw.setColor(customC);
+        sw.setSize(dp(a, 20), dp(a, 20));
+        cb.setCompoundDrawablesRelativeWithIntrinsicBounds(sw, null, null, null);
+        cb.setOnClickListener(v -> {
+            if (custom) return;
+            cfg.edit().putInt("seed_idx", App.CUSTOM).apply();
+            a.recreate();
+        });
+        LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(-1, dp(a, 40));
+        cl.topMargin = dp(a, 12);
+        grid.addView(cb, cl);
+        if (custom) {
+            final float[] hsv = new float[3];
+            android.graphics.Color.colorToHSV(customC, hsv);
+            final android.graphics.drawable.GradientDrawable swatch = new android.graphics.drawable.GradientDrawable();
+            swatch.setCornerRadius(dp(a, 14));
+            swatch.setColor(customC);
+            View prev = new View(a);
+            prev.setBackground(swatch);
+            LinearLayout.LayoutParams pl = new LinearLayout.LayoutParams(-1, dp(a, 28));
+            pl.topMargin = dp(a, 12);
+            grid.addView(prev, pl);
+            String[] names = {L.t("色相"), L.t("飽和度"), L.t("亮度")};
+            float[] max = {360f, 100f, 100f}, val = {hsv[0], hsv[1] * 100f, hsv[2] * 100f};
+            for (int i = 0; i < 3; i++) {
+                final int ci = i;
+                TextView lab = new TextView(a);
+                lab.setText(names[i]);
+                lab.setTextSize(13);
+                lab.setTextColor(attr(a, com.google.android.material.R.attr.colorOnSurfaceVariant));
+                grid.addView(lab, new LinearLayout.LayoutParams(-1, -2));
+                com.google.android.material.slider.Slider sl = new com.google.android.material.slider.Slider(a);
+                sl.setValueFrom(0f);
+                sl.setValueTo(max[i]);
+                sl.setValue(Math.max(0f, Math.min(max[i], val[i])));
+                sl.addOnChangeListener((s2, v, fromUser) -> {   // 拖動時預覽色塊會跟著變
+                    if (!fromUser) return;
+                    hsv[ci] = ci == 0 ? v : v / 100f;
+                    swatch.setColor(android.graphics.Color.HSVToColor(hsv));
+                });
+                sl.addOnSliderTouchListener(new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+                    @Override public void onStartTrackingTouch(com.google.android.material.slider.Slider s2) { }
+                    @Override public void onStopTrackingTouch(com.google.android.material.slider.Slider s2) {   // 放手才套用（整個畫面重建一次）
+                        cfg.edit().putInt("custom_color", android.graphics.Color.HSVToColor(hsv)).apply();
+                        a.recreate();
+                    }
+                });
+                grid.addView(sl, new LinearLayout.LayoutParams(-1, -2));
             }
         }
         LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(-1, -2);
