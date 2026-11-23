@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 聊天助理會自己決定要不要記「經驗」：學到以後還會用到的通用事實或做法（例如讀過某個 GitHub 倉庫的 README 之後知道它是做什麼的），用一句話記下來，不用問你；存在助理的記憶頁的「經驗」，可以刪；下次聊天會把相關的帶進提示當參考（含網址、密碼、叫人忽略規則的話不會存）｜The chat assistant now decides on its own whether to save an "experience": a general fact or technique it will need again (e.g. what a GitHub repository is for after reading its README) is saved as one sentence without asking you; it appears under "Experience" on the assistant memory page where you can delete it, and relevant ones are added to later chats as reference (anything with URLs, passwords or "ignore the rules" wording is never saved)
+
 - 新增「GitHub（MCP）」（設定 → AI 與搜尋）：貼上 GitHub 權杖後，聊天助理多出一批唯讀的 GitHub 工具（查 Release、編譯結果、提交、PR、Issue、檔案內容），可以直接問「最新版編譯成功了嗎？」；AI 先選類別（發布、編譯、提交、PR、Issue、檔案、搜尋）再看那一類的工具，不會每次都背著全部工具的說明；只開放白名單內的唯讀工具，GitHub 上別人寫的內容當成不可信資料處理｜Added "GitHub (MCP)" (Settings → AI & search): after pasting a GitHub token the chat assistant gets a set of read-only GitHub tools (releases, build results, commits, PRs, issues, file contents), so you can ask "did the latest build succeed?"; the AI first picks a category (releases, builds, commits, PRs, issues, files, search) and only then sees that category's tools, so it does not carry every tool description each time; only whitelisted read-only tools are exposed, and content written by others on GitHub is treated as untrusted
 ## 1.0.1857
 
