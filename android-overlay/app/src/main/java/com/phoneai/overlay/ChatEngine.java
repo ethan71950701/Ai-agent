@@ -351,6 +351,24 @@ final class ChatEngine {
         }
     }
 
+    /** 把對話裡所有助理訊息的 thinking／redacted_thinking 區塊拿掉。有拿掉任何一個回 true。 */
+    private static boolean stripThinking(JSONArray msgs) {
+        boolean any = false;
+        for (int i = 0; i < msgs.length(); i++) {
+            JSONObject m = msgs.optJSONObject(i);
+            if (m == null || !"assistant".equals(m.optString("role")) || !(m.opt("content") instanceof JSONArray)) continue;
+            JSONArray in = m.optJSONArray("content"), out = new JSONArray();
+            for (int k = 0; k < in.length(); k++) {
+                JSONObject b = in.optJSONObject(k);
+                String t = b == null ? "" : b.optString("type");
+                if (t.equals("thinking") || t.equals("redacted_thinking")) { any = true; continue; }
+                out.put(in.opt(k));
+            }
+            try { if (out.length() == 0) out.put(new JSONObject().put("type", "text").put("text", "…")); m.put("content", out); } catch (Exception ignored) { }
+        }
+        return any;
+    }
+
     /** 把跟這句話相關的通用經驗（最多 6 則）帶進提示；沒有就是空字串。 */
     private static String experienceBlock(Context c, String text) {
         try {
@@ -788,7 +806,17 @@ final class ChatEngine {
             String reply = null;
             boolean readNotifs = false;   // 這一輪讀過通知了：之後只給唯讀工具
             for (int turn = 0; turn < MAX_TURNS; turn++) {
-                JSONObject r = call(msgs, system, key, search, !viaTavily, readNotifs, model);
+                JSONObject r;
+                try {
+                    r = call(msgs, system, key, search, !viaTavily, readNotifs, model);
+                } catch (Exception e) {
+                    // 「思考區塊的簽章無效」（HTTP 400，thinking／signature）：上一輪的思考區塊帶回去被拒絕（簽章綁在當時的請求上，這一輪的工具或模型不一樣就對不上）。
+                    // 把所有思考區塊拿掉再試一次；還是失敗才放棄。
+                    String em = String.valueOf(e.getMessage());
+                    if (!(em.contains("signature") && em.contains("thinking")) || !stripThinking(msgs)) throw e;
+                    LifeLog.add(c, "聊天：思考區塊簽章被拒絕，拿掉思考區塊重試");
+                    r = call(msgs, system, key, search, !viaTavily, readNotifs, model);
+                }
                 JSONArray content = r.optJSONArray("content");
                 if (content == null) return null;
                 StringBuilder texts = new StringBuilder();
