@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 互傳連線診斷：互傳紀錄會寫出找對方時用的位址、廣播有沒有找到、直接連線失敗的原因（逾時／被拒絕／驗證失敗）｜Transfer diagnostics: the transfer log now records the addresses used to find the other phone, whether broadcast found it, and why a direct connection failed (timeout / refused / auth)
+
 - 修正互傳「對方明明已被叫醒、伺服器也開了，這邊卻一直讀取中」：區網的廣播搜尋常被擋（路由器、對方螢幕關著時 Wi-Fi 會丟掉廣播），現在找不到時會直接連上次記下的區網位址，連得上就用；瀏覽檔案讀超過 60 秒會停下並說明可能原因｜Fixed file transfer staying on "Reading…" although the other phone was woken and its server was up: LAN broadcast discovery is often blocked (routers, or Wi-Fi dropping broadcasts while the other screen is off), so when discovery finds nothing it now connects directly to the last known LAN address; browsing gives up after 60 s and explains likely causes
 ## 1.0.1865
 

@@ -366,7 +366,9 @@ final class FileTools {
         List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
         TransferNotify.phase(c, L.t("正在找：") + p.name, L.t("找對方"));
+        { TransferStore.Peer q = freshPeer(c, p); TransferStore.log(c, "找對方：" + q.name + "｜記下的區網位址 " + q.ip + ":" + q.port + "｜Tailscale " + q.tsIp + ":" + q.tsPort + "｜我的區網 " + FcmLab.lanNet()); }
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
+        if (f == null) TransferStore.log(c, "廣播搜尋沒找到：" + p.name);
         if (f == null) f = directLan(c, p);   // 區網「廣播搜尋」被擋（路由器、省電、螢幕關著的手機常會丟掉廣播封包）時，直接連上次記下的區網位址
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
             final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip);   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
@@ -453,10 +455,12 @@ final class FileTools {
     }
 
     private static boolean canPing(Context c, TransferStore.Peer p, String ip, int port) {
+        long t0 = System.currentTimeMillis();
         try {
             new TransferClient(ip, port, TransferStore.myId(c), TransferStore.myName(c), p.key).ping();
             return true;
         } catch (Exception e) {
+            TransferStore.log(c, "連線測試失敗：" + p.name + " " + ip + ":" + port + "（" + (System.currentTimeMillis() - t0) + " 毫秒）" + e.getClass().getSimpleName() + (e.getMessage() == null ? "" : "：" + e.getMessage()));   // 診斷：是逾時（位址不通）、被拒絕（沒人在聽）、還是驗證失敗
             return false;
         }
     }
