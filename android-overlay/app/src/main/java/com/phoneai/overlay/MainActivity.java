@@ -1258,10 +1258,11 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout p = grp("shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
-            Ui.row(this, p, 0, 3, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
+            Ui.row(this, p, 0, 4, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
                     new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
-            Ui.row(this, p, 1, 3, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
-            Ui.row(this, p, 2, 3, "sparkle", L.t("預設數位助理"), L.t("長按電源鍵叫出"), null, v -> openAssistSettings());
+            Ui.row(this, p, 1, 4, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
+            Ui.row(this, p, 2, 4, "sparkle", L.t("預設數位助理"), L.t("長按電源鍵叫出"), null, v -> openAssistSettings());
+            Ui.row(this, p, 3, 4, "power", L.t("保活檢查"), L.t("電池、自啟動、無障礙、通知：避免定時任務被系統殺掉"), Ui.chevron(this), v -> KeepAlive.open(this));
 
         });
         steps.add(() -> {
@@ -1373,6 +1374,8 @@ public class MainActivity extends Activity {
         });
         steps.add(() -> {
             LinearLayout g = grp("sparkle", L.t("執行任務時"), L.t("光暈、背景模式、自動修復、實驗"), false);
+            Ui.switchRow(this, g, 0, 1, "check_circle", L.t("低風險的確認一律不問"), L.t("「再給它 10 步」「送出這則訊息」這類確認不再跳框。付款、密碼、驗證碼、刪除、受保護的 App、系統設定一律照舊每次都問，不受這個影響。預設關：每次問，確認框上還可以選「這個任務內不再問」"),
+                    cfg().getBoolean("soft_confirm_never", false), (v, on) -> cfg().edit().putBoolean("soft_confirm_never", on).apply());
             Ui.switchRow(this, g, 0, 1, "clock", L.t("鎖屏時也嘗試執行定時操作（實驗）"), L.t("定時自動操作預設要等你解鎖才做（App 不碰鎖屏密碼）；打開後，有背景模式時手機鎖著也會在背景螢幕試著做，不一定每支手機都行得通"),
                     cfg().getBoolean("sched_try_locked", false), (v, on) -> cfg().edit().putBoolean("sched_try_locked", on).apply());
             {   // 任務一開始最多做幾步（不夠會問要不要再加 10 步）

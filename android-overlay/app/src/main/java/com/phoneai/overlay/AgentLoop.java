@@ -50,6 +50,22 @@ final class AgentLoop {
         boolean confirm(String msg);    // 敏感操作的確認框（在背景執行緒呼叫，會等使用者按）
         /** 問使用者一個問題，回傳他的回答；null = 這個介面沒辦法問；空字串 = 使用者取消。在背景執行緒呼叫。 */
         default String ask(String question) { return null; }
+        /** 三檔確認：0＝否、1＝是、2＝是，而且這個任務內同一類的確認不再問。沒有支援三檔的介面就當一般的是／否。 */
+        default int confirm3(String msg, boolean offerSkip) { return confirm(msg) ? 1 : 0; }
+    }
+
+    /** 這個任務內「低風險確認」是不是已經選了「不再問」（每個任務開始時清掉）。 */
+    private static volatile boolean skipSoft;
+
+    /**
+     * 低風險的確認（多給 10 步、送出訊息）：設定裡選了「一律不問」，或這個任務內已經選過「不再問」就直接當作同意；
+     * 否則跳三檔確認框。付款、密碼、驗證碼、刪除、受保護的 App、系統設定這些一律照舊每次都問，不走這裡。
+     */
+    private static boolean softConfirm(Context c, Ui ui, String msg) {
+        if (skipSoft || c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("soft_confirm_never", false)) return true;
+        int r = ui.confirm3(msg, true);
+        if (r == 2) skipSoft = true;
+        return r >= 1;
     }
 
     private static volatile boolean cancelled;
@@ -201,6 +217,7 @@ final class AgentLoop {
     private static String runExclusive(Context c, String task, Ui ui, String preOpen, String macroTask) {
         WebReader.newTurn();
         cancelled = false;
+        skipSoft = false;
         macroWhy = "";
         showCard = false;
         cardNote = "";
@@ -296,7 +313,7 @@ final class AgentLoop {
                 lastBeatAt = System.currentTimeMillis();   // 有動靜：新任務進來時才分得出「還在跑」和「卡住了」
                 lastStep = step;
                 if (step > maxSteps) {   // 給的步數用完了還沒完成：問使用者要不要再加（不回應＝不同意）
-                    if (!ui.confirm(String.format(L.t("已經做了 %d 步，還沒完成。要再給它 10 步繼續嗎？（每多一步會多花一點費用）"), maxSteps))) break;
+                    if (!softConfirm(c, ui, String.format(L.t("已經做了 %d 步，還沒完成。要再給它 10 步繼續嗎？（每多一步會多花一點費用）"), maxSteps))) break;
                     maxSteps = Math.min(HARD_CAP, maxSteps + 10);
                     if (step > maxSteps) break;
                 }
@@ -419,7 +436,7 @@ final class AgentLoop {
                 if (isMessageTask(task) && st.lastTyped != null && !st.askedCats.contains("傳送訊息") && (noTree || stillInInput(tree, st.lastTyped))
                         && ("enter".equals(actName) || (("tap".equals(actName) || "batch".equals(actName)) && (noTree || !"輸入框".equals(pickKind(tree, action)))))) {
                     OverlayService.showStep(c, L.t("等你確認"), step, maxSteps);
-                    if (!ui.confirm(String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), st.lastTyped))) return L.t("已取消，訊息沒有送出。");
+                    if (!softConfirm(c, ui, String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), st.lastTyped))) return L.t("已取消，訊息沒有送出。");
                     st.askedCats.add("傳送訊息");
                 }
                 JSONObject det = detail(step, action, Usage.tallyNow() - tokBefore);

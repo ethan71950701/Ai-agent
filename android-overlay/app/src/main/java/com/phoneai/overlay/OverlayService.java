@@ -373,7 +373,7 @@ public class OverlayService extends Service {
 
         /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"。 */
     private String confirm(String msg) {
-        java.util.concurrent.CompletableFuture<Boolean> ans = new java.util.concurrent.CompletableFuture<>();
+        java.util.concurrent.CompletableFuture<Integer> ans = new java.util.concurrent.CompletableFuture<>();
         java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
         ConfirmActivity.answer = ans;
         ConfirmActivity.shown = shown;
@@ -388,7 +388,7 @@ public class OverlayService extends Service {
         });
         try {
             if (!shown.await(4, java.util.concurrent.TimeUnit.SECONDS)) return "unavailable";
-            return ans.get(120, java.util.concurrent.TimeUnit.SECONDS) ? "yes" : "no";
+            return ans.get(120, java.util.concurrent.TimeUnit.SECONDS) >= 1 ? "yes" : "no";
         } catch (java.util.concurrent.TimeoutException e) {
             return "no";
         } catch (Exception e) {

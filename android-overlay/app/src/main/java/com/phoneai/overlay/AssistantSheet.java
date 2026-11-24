@@ -1053,6 +1053,7 @@ public class AssistantSheet {
                 @Override public void hide() { act.runOnUiThread(AssistantSheet.this::dismiss); }
                 @Override public void status(String s) { }   // 進度由 Now Bar 顯示（OverlayService.showStep）；不要再發同編號的一般通知把它蓋掉
                 @Override public boolean confirm(String msg) { return confirmOnUi(msg); }
+                @Override public int confirm3(String msg, boolean offerSkip) { return ConfirmActivity.askTri(act, msg, offerSkip); }
                 @Override public String ask(String q) { return askUser(act.getApplicationContext(), q); }
             }, images);
             } finally {
