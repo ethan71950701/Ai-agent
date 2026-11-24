@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 互傳頁的「最近」紀錄從 5 行增加到 30 行，方便看連線診斷｜Transfer page: the "Recent" log now shows 30 lines instead of 5, to make connection diagnostics readable
 - 互傳：對方換了區網位址（記下的位址連不上、廣播也被擋）時，自動掃本機網段找出對方並更新位址，不再一直「讀取中」｜Transfer: when the other phone's LAN address changed (saved address unreachable and broadcast blocked), the app now scans the local subnet to find it and updates the address instead of hanging on loading
 ## 1.0.1867
 

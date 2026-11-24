@@ -180,7 +180,7 @@ public class TransferActivity extends Activity {
                 + "\n" + L.t("發送金鑰：") + (FcmLab.hasSenderKey(this) ? L.t("已加密存放") : L.t("沒有（只有要叫醒別人的那支需要）"))));
         fcm.addView(Ui.tonal(this, L.t("推播喚醒設定"), v -> startActivity(new Intent(this, FcmSetupActivity.class))));
 
-        List<String> recent = TransferStore.recentLog(this, 5);
+        List<String> recent = TransferStore.recentLog(this, 30);
         if (!recent.isEmpty()) {
             Ui.section(this, box, L.t("最近"));
             TextView log = Ui.infoCard(this, box, 12, false, false);
