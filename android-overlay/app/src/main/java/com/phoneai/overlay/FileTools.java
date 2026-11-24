@@ -438,7 +438,7 @@ final class FileTools {
     private static TransferDiscovery.Found directLan(Context c, TransferStore.Peer p) {
         TransferStore.Peer cur = freshPeer(c, p);
         if (cur.ip == null || cur.port <= 0 || Doorbell.isTailnet(cur.ip)) return null;
-        if (!canPing(c, cur, cur.ip, cur.port)) return null;
+        if (!canPing(c, cur, cur.ip, cur.port)) return scanSubnet(c, cur);
         TransferStore.log(c, "直接連上次的區網位址成功：" + cur.ip + ":" + cur.port + "（廣播搜尋沒找到）");
         TransferDiscovery.Found g = new TransferDiscovery.Found();
         g.id = cur.id;
@@ -446,6 +446,50 @@ final class FileTools {
         g.ip = cur.ip;
         g.port = cur.port;
         return g;
+    }
+
+    private static volatile long lastScan;
+
+    /**
+     * 記下的位址連不上（常是對方換了 DHCP 位址：No route to host），廣播又被擋：逐一試本機所在 /24 網段的每個位址的互傳埠，
+     * 開著的再用配對金鑰驗證；找到就更新記下的位址。最多每 20 秒掃一次。
+     */
+    private static TransferDiscovery.Found scanSubnet(Context c, TransferStore.Peer cur) {
+        String net = FcmLab.lanNet();
+        if (net == null || cur.port <= 0) return null;
+        long now = System.currentTimeMillis();
+        if (now - lastScan < 20000) return null;
+        lastScan = now;
+        final String me = net.substring(0, net.indexOf('/'));
+        final String base = me.substring(0, me.lastIndexOf('.') + 1);
+        final int port = cur.port;
+        final java.util.concurrent.ConcurrentLinkedQueue<String> open = new java.util.concurrent.ConcurrentLinkedQueue<>();
+        java.util.concurrent.ExecutorService ex = java.util.concurrent.Executors.newFixedThreadPool(48);
+        for (int i = 1; i < 255; i++) {
+            final String ip = base + i;
+            if (ip.equals(me) || ip.equals(cur.ip)) continue;
+            ex.execute(() -> {
+                try (java.net.Socket s = new java.net.Socket()) {
+                    s.connect(new java.net.InetSocketAddress(ip, port), 700);
+                    open.add(ip);
+                } catch (Exception ignored) { }
+            });
+        }
+        ex.shutdown();
+        try { ex.awaitTermination(15, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        TransferStore.log(c, "掃網段 " + base + "x 的埠 " + port + "：開著的 " + open.size() + " 個");
+        for (String ip : open) {
+            if (!canPing(c, cur, ip, port)) continue;
+            TransferStore.log(c, "掃網段找到對方：" + cur.name + " 現在在 " + ip + ":" + port + "（記下的是 " + cur.ip + "）");
+            TransferStore.updateAddress(c, cur.id, ip, port);
+            TransferDiscovery.Found g = new TransferDiscovery.Found();
+            g.id = cur.id;
+            g.name = cur.name;
+            g.ip = ip;
+            g.port = port;
+            return g;
+        }
+        return null;
     }
 
     /** 已配對裝置目前存的樣子（位址可能在等待中被更新）；找不到就用原本那份。 */
