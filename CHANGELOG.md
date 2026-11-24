@@ -6,8 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 互傳連線診斷：互傳紀錄會寫出找對方時用的位址、廣播有沒有找到、直接連線失敗的原因（逾時／被拒絕／驗證失敗）｜Transfer diagnostics: the transfer log now records the addresses used to find the other phone, whether broadcast found it, and why a direct connection failed (timeout / refused / auth)
+## 1.0.1866
 
 - 修正互傳「對方明明已被叫醒、伺服器也開了，這邊卻一直讀取中」：區網的廣播搜尋常被擋（路由器、對方螢幕關著時 Wi-Fi 會丟掉廣播），現在找不到時會直接連上次記下的區網位址，連得上就用；瀏覽檔案讀超過 60 秒會停下並說明可能原因｜Fixed file transfer staying on "Reading…" although the other phone was woken and its server was up: LAN broadcast discovery is often blocked (routers, or Wi-Fi dropping broadcasts while the other screen is off), so when discovery finds nothing it now connects directly to the last known LAN address; browsing gives up after 60 s and explains likely causes
+
 ## 1.0.1865
 
 - 確認框分三檔（參考 DSH Go）：「再給它 10 步」「送出這則訊息」這類低風險的確認多一顆「是，這個任務內不再問」；設定 → 執行任務可選「低風險的確認一律不問」。付款、密碼、驗證碼、刪除、受保護的 App、系統設定一律每次都問｜Confirmations now have three levels (inspired by DSH Go): low-risk ones like "give it 10 more steps" and "send this message" get an extra "Yes, don't ask again in this task" button, and Settings → Running tasks has "Never ask for low-risk confirmations". Payments, passwords, verification codes, deletion, protected apps and system settings are always asked every time
