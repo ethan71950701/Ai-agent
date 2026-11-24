@@ -1303,6 +1303,7 @@ final class LEn {
         m.put("「再給它 10 步」「送出這則訊息」這類確認不再跳框。付款、密碼、驗證碼、刪除、受保護的 App、系統設定一律照舊每次都問，不受這個影響。預設關：每次問，確認框上還可以選「這個任務內不再問」", "Confirmations like \"give it 10 more steps\" and \"send this message\" no longer pop up. Payments, passwords, verification codes, deletion, protected apps and system settings are still asked every time and are not affected. Off by default: asked every time, and the box also offers \"don't ask again in this task\"");
         m.put("低風險的確認一律不問", "Never ask for low-risk confirmations");
         m.put("電池、自啟動、無障礙、通知：避免定時任務被系統殺掉", "Battery, auto-start, accessibility, notifications: keep scheduled tasks from being killed by the system");
+        m.put("讀太久了，可能連不上對方：請確認對方手機有電、有網路、沒被系統關掉背景（設定 → 權限與其他 → 保活檢查），再下拉重新整理。", "Reading took too long; the other phone may be unreachable: make sure it has power and network and is not being killed in the background (Settings → Permissions & other → Keep-alive check), then pull down to refresh.");
         m.put("允許遠端調整參數", "Allow remote parameter tuning");
         m.put("打開 App 時到 GitHub 抓一個只含數值的小檔案（例如玻璃的模糊、暗度），不用更新 App；不會傳送任何你的資料", "On opening the app, fetch a small numbers-only file from GitHub (e.g. glass blur and darkness) so no app update is needed; none of your data is sent");
         m.put("這是一則範例回答，用來預覽回答的樣子。", "This is a sample reply, to preview how replies look.");

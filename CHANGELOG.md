@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正互傳「對方明明已被叫醒、伺服器也開了，這邊卻一直讀取中」：區網的廣播搜尋常被擋（路由器、對方螢幕關著時 Wi-Fi 會丟掉廣播），現在找不到時會直接連上次記下的區網位址，連得上就用；瀏覽檔案讀超過 60 秒會停下並說明可能原因｜Fixed file transfer staying on "Reading…" although the other phone was woken and its server was up: LAN broadcast discovery is often blocked (routers, or Wi-Fi dropping broadcasts while the other screen is off), so when discovery finds nothing it now connects directly to the last known LAN address; browsing gives up after 60 s and explains likely causes
+
 - 確認框分三檔（參考 DSH Go）：「再給它 10 步」「送出這則訊息」這類低風險的確認多一顆「是，這個任務內不再問」；設定 → 執行任務可選「低風險的確認一律不問」。付款、密碼、驗證碼、刪除、受保護的 App、系統設定一律每次都問｜Confirmations now have three levels (inspired by DSH Go): low-risk ones like "give it 10 more steps" and "send this message" get an extra "Yes, don't ask again in this task" button, and Settings → Running tasks has "Never ask for low-risk confirmations". Payments, passwords, verification codes, deletion, protected apps and system settings are always asked every time
 - 新增「保活檢查」（設定 → 權限與其他）：檢查電池、無障礙、通知狀態，並一鍵跳到各家（小米、華為、榮耀、OPPO、vivo…）的自啟動設定頁，避免定時任務被系統殺掉｜Added a "Keep-alive check" (Settings → Permissions & other): checks battery, accessibility and notification status and jumps to each brand's auto-start settings (Xiaomi, Huawei, Honor, OPPO, vivo…) so scheduled tasks are not killed by the system
 ## 1.0.1864

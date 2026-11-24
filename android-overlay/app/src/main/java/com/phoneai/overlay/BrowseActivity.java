@@ -114,6 +114,13 @@ public class BrowseActivity extends Activity {
         tapAt = System.currentTimeMillis();
         if (!pullPending) status.setText(L.t("讀取中…"));   // 下拉重新整理時圓圈就是「讀取中」，不要改文字（換行數一變，清單會跳一下）
         final long t0 = System.currentTimeMillis();
+        ui.postDelayed(() -> {   // 60 秒還沒讀完：不要一直轉，告訴使用者可能的原因，可以再試一次（下拉重新整理）
+            if (seq != navSeq || !loading) return;
+            loading = false;
+            navSeq++;
+            if (pullPending && pull != null) { pullPending = false; pull.done(() -> { }); } else pullPending = false;
+            status.setText(L.t("讀太久了，可能連不上對方：請確認對方手機有電、有網路、沒被系統關掉背景（設定 → 權限與其他 → 保活檢查），再下拉重新整理。"));
+        }, 60000);
         new Thread(() -> {
             try {
                 if (client == null) client = FileTools.clientFor(this, peer);

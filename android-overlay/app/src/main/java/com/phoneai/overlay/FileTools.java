@@ -367,6 +367,7 @@ final class FileTools {
         one.add(p);
         TransferNotify.phase(c, L.t("正在找：") + p.name, L.t("找對方"));
         TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
+        if (f == null) f = directLan(c, p);   // 區網「廣播搜尋」被擋（路由器、省電、螢幕關著的手機常會丟掉廣播封包）時，直接連上次記下的區網位址
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
             final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip);   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
             if (remoteNow && !TailscaleControl.isOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
@@ -381,6 +382,7 @@ final class FileTools {
                 while (f == null && System.currentTimeMillis() < until) {
                     if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
+                    if (f == null) f = directLan(c, p);   // 對方伺服器開好了，但廣播沒回應：每一輪也直接連連看
                     TransferStore.Peer now = freshPeer(c, p);   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
                     if (f == null && now.tsIp != null && now.tsPort > 0 && canPing(c, now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
                     if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
@@ -425,6 +427,23 @@ final class FileTools {
         });
         if (f != null || Doorbell.isTailnet(ip)) FcmLab.healTokenAsync(c, p, cl);   // 確實連得上對方時（區網找得到、或走 Tailscale），順便互換推播 token：補沒有的、更新對方換過的
         return cl;
+    }
+
+    /**
+     * 不靠廣播：直接連對方上次記下的區網位址（TCP）。連得上就當作找到（位址沒變、伺服器有開）；連不上回 null。
+     * 為什麼需要：UDP 廣播搜尋常被擋（路由器隔離、對方螢幕關著時 Wi-Fi 會丟掉廣播），結果對方明明已被叫醒、伺服器也開了，這邊卻一直找不到、一直「讀取中」。
+     */
+    private static TransferDiscovery.Found directLan(Context c, TransferStore.Peer p) {
+        TransferStore.Peer cur = freshPeer(c, p);
+        if (cur.ip == null || cur.port <= 0 || Doorbell.isTailnet(cur.ip)) return null;
+        if (!canPing(c, cur, cur.ip, cur.port)) return null;
+        TransferStore.log(c, "直接連上次的區網位址成功：" + cur.ip + ":" + cur.port + "（廣播搜尋沒找到）");
+        TransferDiscovery.Found g = new TransferDiscovery.Found();
+        g.id = cur.id;
+        g.name = cur.name;
+        g.ip = cur.ip;
+        g.port = cur.port;
+        return g;
     }
 
     /** 已配對裝置目前存的樣子（位址可能在等待中被更新）；找不到就用原本那份。 */
