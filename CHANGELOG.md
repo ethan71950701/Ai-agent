@@ -5,7 +5,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1868
+
 - 互傳：對方換了區網位址（記下的位址連不上、廣播也被擋）時，自動掃本機網段找出對方並更新位址，不再一直「讀取中」｜Transfer: when the other phone's LAN address changed (saved address unreachable and broadcast blocked), the app now scans the local subnet to find it and updates the address instead of hanging on loading
+
 ## 1.0.1867
 
 - 互傳連線診斷：互傳紀錄會寫出找對方時用的位址、廣播有沒有找到、直接連線失敗的原因（逾時／被拒絕／驗證失敗）｜Transfer diagnostics: the transfer log now records the addresses used to find the other phone, whether broadcast found it, and why a direct connection failed (timeout / refused / auth)
