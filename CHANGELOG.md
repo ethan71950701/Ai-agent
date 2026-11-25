@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 新增「其他 MCP 服務」（設定 → AI 與資料）：填服務的 MCP 網址就能讓 AI 用它的工具；支援 OAuth 登入（開瀏覽器登入並同意），會修改資料的工具每次都先問你｜New "Other MCP services" (Settings → AI & data): add a service's MCP URL to let the AI use its tools; supports OAuth sign-in (sign in and approve in the browser), and tools that may change your data always ask first
 - 互傳紀錄會寫出「自動開 Tailscale」成功或失敗的原因｜The transfer log now records whether automatically turning on Tailscale succeeded, and why not
 ## 1.0.1870
 

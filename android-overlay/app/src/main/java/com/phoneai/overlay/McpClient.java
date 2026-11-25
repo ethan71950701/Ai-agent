@@ -72,7 +72,16 @@ final class McpClient {
 
     private static final class Resp {
         int code;
-        String type, session, body;
+        String type, session, body, wwwAuth;
+    }
+
+    /** 服務回 401：要登入（或權杖過期）。wwwAuth 是 WWW-Authenticate 標頭（OAuth 用來找授權伺服器），可能是 null。 */
+    static final class AuthRequired extends Exception {
+        final String wwwAuth;
+        AuthRequired(String wwwAuth) {
+            super("權杖被拒絕（HTTP 401）：請確認權杖有沒有過期、有沒有需要的權限");
+            this.wwwAuth = wwwAuth;
+        }
     }
 
     private Resp post(JSONObject msg, boolean wantBody) throws Exception {
@@ -91,6 +100,7 @@ final class McpClient {
         Resp r = new Resp();
         r.code = c.getResponseCode();
         r.type = c.getContentType();
+        r.wwwAuth = c.getHeaderField("WWW-Authenticate");
         String sid = c.getHeaderField("Mcp-Session-Id");
         if (sid != null && !sid.isEmpty()) r.session = sid;
         if (!wantBody) { c.disconnect(); return r; }
@@ -115,7 +125,8 @@ final class McpClient {
         if (params != null) m.put("params", params);
         Resp r = post(m, true);
         if (r.session != null) session = r.session;
-        if (r.code == 401 || r.code == 403) throw new Exception("權杖被拒絕（HTTP " + r.code + "）：請確認權杖有沒有過期、有沒有讀取 repo 的權限");
+        if (r.code == 401) throw new AuthRequired(r.wwwAuth);
+        if (r.code == 403) throw new Exception("權杖被拒絕（HTTP " + r.code + "）：請確認權杖有沒有過期、有沒有需要的權限");
         if (r.code >= 400) throw new Exception("MCP 連線失敗（HTTP " + r.code + "）");
         return parseResponse(r.type, r.body, id);
     }

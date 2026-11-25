@@ -216,7 +216,7 @@ public class MainActivity extends Activity {
     private int settingsCat = -1;   // -1＝顯示分類列表；0 以上＝在某個分類裡
     /** 圖示、名稱、說明、包含設定頁的哪幾段（settingsSteps 的順序：0 AI 與資料、1 外觀、2 更新、3 權限、4 底欄玻璃、5 呼叫方式、6 語音、7 執行任務時、8 其他）。 */
     private static final Object[][] SET_CATS = {
-            {"pin", "AI 與搜尋", "AI 服務與 Key、網頁搜尋、GitHub、用量上限", new int[]{0}},
+            {"pin", "AI 與搜尋", "AI 服務與 Key、網頁搜尋、GitHub、MCP 服務、用量上限", new int[]{0}},
             {"droplet", "外觀", "主題色、語言、回答卡片、底欄玻璃", new int[]{1, 4}},
             {"float", "呼叫與語音", "浮動按鈕、電源鍵、朗讀、語音", new int[]{5, 6}},
             {"sparkle", "執行任務", "光暈、背景模式、自動修復、實驗", new int[]{7}},
@@ -1231,12 +1231,13 @@ public class MainActivity extends Activity {
         heroBox = null;
         final java.util.List<Runnable> steps = new java.util.ArrayList<>();
         steps.add(() -> {   // 規則：設好就不太動的東西放設定（功能頁只放「打開來用」的）
-            LinearLayout g = grp("pin", L.t("AI 與資料"), L.t("AI 服務與 Key、網頁搜尋、GitHub、用量上限"), false);
-            Ui.row(this, g, 0, 5, "pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), Ui.chevron(this), v -> AiServiceUi.open(this, this::recreate));
-            Ui.row(this, g, 1, 5, "search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), Ui.chevron(this), v -> TavilySearch.openSettings(this, this::recreate));
-            Ui.row(this, g, 2, 5, "pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), Ui.chevron(this), v -> TavilySearch.editTrusted(this, this::recreate));
-            Ui.row(this, g, 3, 5, "sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), Ui.chevron(this), v -> Usage.dialog(this));
-            Ui.row(this, g, 4, 5, "terminal", L.t("GitHub（MCP）"), McpUi.summary(this), Ui.chevron(this), v -> McpUi.open(this, this::recreate));
+            LinearLayout g = grp("pin", L.t("AI 與資料"), L.t("AI 服務與 Key、網頁搜尋、GitHub、MCP 服務、用量上限"), false);
+            Ui.row(this, g, 0, 6, "pin", L.t("AI 服務與 API Key"), L.t("選 Claude、Gemini、OpenAI 等；Key 只存在手機裡"), Ui.chevron(this), v -> AiServiceUi.open(this, this::recreate));
+            Ui.row(this, g, 1, 6, "search", L.t("網頁搜尋"), TavilySearch.hasKey(this) ? L.t("已設定 Tavily Key（說「幫我查…」才搜尋）") : L.t("說「幫我查…」就能搜尋，任何 AI 都行；可設 Key 讓額度更穩"), Ui.chevron(this), v -> TavilySearch.openSettings(this, this::recreate));
+            Ui.row(this, g, 2, 6, "pin", L.t("可信任的網站"), String.format(L.t("目前 %d 個；搜尋時 AI 會挑相關的先查"), TavilySearch.trusted(this).size()), Ui.chevron(this), v -> TavilySearch.editTrusted(this, this::recreate));
+            Ui.row(this, g, 3, 6, "sparkle", L.t("用量與上限"), L.t("限制 Claude 可用的 token 數：看用了多少，可設每日／每月上限"), Ui.chevron(this), v -> Usage.dialog(this));
+            Ui.row(this, g, 4, 6, "terminal", L.t("GitHub（MCP）"), McpUi.summary(this), Ui.chevron(this), v -> McpUi.open(this, this::recreate));
+            Ui.row(this, g, 5, 6, "terminal", L.t("其他 MCP 服務"), McpServersUi.summary(this), Ui.chevron(this), v -> McpServersUi.open(this, this::recreate));
         });
         steps.add(() -> {
             LinearLayout g = grp("droplet", L.t("外觀"), L.t("主題色與自訂顏色"), true);
