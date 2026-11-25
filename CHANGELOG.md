@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 互傳紀錄會寫出「自動開 Tailscale」成功或失敗的原因｜The transfer log now records whether automatically turning on Tailscale succeeded, and why not
 - 互傳：區網找不到對方、Tailscale 又沒開時，會主動開 Tailscale（兩邊網段剛好一樣、但不是同一個路由器時，之前會誤以為在同一個 Wi-Fi 而不開）｜Transfer: when the other phone isn't found on the LAN and Tailscale is off, the app now turns Tailscale on (previously, two different routers using the same subnet looked like one Wi-Fi and Tailscale stayed off)
 ## 1.0.1869
 

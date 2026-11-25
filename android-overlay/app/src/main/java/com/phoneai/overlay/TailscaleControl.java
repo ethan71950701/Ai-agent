@@ -130,8 +130,10 @@ final class TailscaleControl {
     }
 
     /** 連線前用：把 Tailscale 開起來；如果本來是關的、是我們開的，之後閒置 60 秒會自動關回去。 */
-    static boolean turnOnForSession(Context c, long waitMs) {
-        boolean ok = turnOn(c, waitMs);
+    static boolean turnOnForSession(Context c, long waitMs) { return turnOnForSession(c, waitMs, null); }
+
+    static boolean turnOnForSession(Context c, long waitMs, StringBuilder log) {
+        boolean ok = turnOn(c, waitMs, log);
         lastUse = System.currentTimeMillis();
         return ok;
     }

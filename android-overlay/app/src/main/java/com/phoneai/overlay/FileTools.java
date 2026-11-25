@@ -374,7 +374,9 @@ final class FileTools {
             final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip) || !TailscaleControl.isOn();   // 區網（廣播、記下的位址、掃網段）都找不到、Tailscale 又沒開：兩邊的網段可能剛好一樣（例如都是 192.168.1.x 但不是同一台路由器），也當作在外面，主動開 Tailscale   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
             if (remoteNow && !TailscaleControl.isOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
                 TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
-                TailscaleControl.turnOnForSession(c, 12000);
+                StringBuilder tsLog = new StringBuilder();
+                boolean tsOk = TailscaleControl.turnOnForSession(c, 12000, tsLog);
+                TransferStore.log(c, "自動開 Tailscale：" + (tsOk ? "成功" : "失敗") + "｜" + tsLog.toString().trim().replace('\n', ' '));   // 診斷：沒裝、沒 root、或廣播送出了但沒連上
             }
             TransferNotify.phase(c, L.t("對方沒回應，正在用推播叫醒：") + p.name, L.t("叫醒中"));   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
