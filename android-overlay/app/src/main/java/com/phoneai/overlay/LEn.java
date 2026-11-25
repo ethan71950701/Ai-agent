@@ -1706,6 +1706,14 @@ final class LEn {
         m.put("查時間與日期", "Time and date");
         m.put("查電池電量", "Battery level");
         m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
+        m.put("換取權杖失敗：", "Failed to get the access token: ");
+        m.put("這個服務不支援自動註冊 App（沒有 registration_endpoint）；請填 Client ID，或改用權杖", "This service doesn't support automatic app registration (no registration_endpoint); enter a Client ID, or use a token instead");
+        m.put("Client ID（選填）", "Client ID (optional)");
+        m.put("Client Secret（選填）", "Client Secret (optional)");
+        m.put("Google 不支援自動註冊：要先在 Google Cloud 建一個「電腦版應用程式」類型的 OAuth 用戶端，把 Client ID 與 Client Secret 填在下面。點下面的按鈕會自動填好名稱與網址。", "Google doesn't support automatic registration: first create an OAuth client of type \"Desktop app\" in Google Cloud, then enter its Client ID and Client Secret below. The buttons below fill in the name and URL for you.");
+        m.put("Google 服務", "Google services");
+        m.put("雲端硬碟", "Google Drive");
+        m.put("Google 日曆", "Google Calendar");
         m.put("其他 MCP 服務", "Other MCP services");
         m.put("向服務註冊這個 App…", "Registering this app with the service…");
         m.put("已取消登入", "Sign-in cancelled");
@@ -1722,7 +1730,6 @@ final class LEn {
         m.put("註冊 App 失敗（HTTP ", "Failed to register the app (HTTP ");
         m.put("註冊 App 失敗：沒有拿到 client_id", "Failed to register the app: no client_id");
         m.put("請在瀏覽器登入並按同意，完成後回到這裡", "Sign in and approve in the browser, then come back here");
-        m.put("這個服務不支援自動註冊 App（沒有 registration_endpoint）；請改用權杖", "This service doesn't support automatic app registration (no registration_endpoint); use a token instead");
         m.put("這個服務沒有提供 OAuth 登入資訊；請改用權杖", "This service doesn't provide OAuth sign-in information; use a token instead");
         m.put("這個服務的登入資訊不完整；請改用權杖", "This service's sign-in information is incomplete; use a token instead");
         m.put("只接受 https 開頭的網址", "Only https URLs are accepted");

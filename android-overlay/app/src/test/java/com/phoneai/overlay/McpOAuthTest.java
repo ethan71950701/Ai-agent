@@ -56,6 +56,21 @@ public class McpOAuthTest {
         assertFalse(q.containsKey("scope"));   // 沒有就不送
     }
 
+    @Test public void googleSpecifics() {
+        assertTrue(McpOAuth.googleScopes("https://drivemcp.googleapis.com/mcp/v1").contains("drive.readonly"));
+        assertTrue(McpOAuth.googleScopes("https://calendarmcp.googleapis.com/mcp/v1").contains("calendar.events"));
+        assertTrue(McpOAuth.googleScopes("https://gmailmcp.googleapis.com/mcp/v1").contains("gmail.readonly"));
+        assertNull(McpOAuth.googleScopes("https://mcp.notion.com/mcp"));
+        String u = McpOAuth.authorizeUrl("https://accounts.google.com/o/oauth2/v2/auth", "cid", "http://127.0.0.1:1/callback", "ch", "st", "https://drivemcp.googleapis.com/mcp/v1", "a b");
+        Map<String, String> q = McpOAuth.parseQuery(u.substring(u.indexOf('?') + 1));
+        assertFalse(q.containsKey("resource"));   // Google 不認 resource
+        assertEquals("offline", q.get("access_type"));
+        assertEquals("consent", q.get("prompt"));
+        assertEquals("a b", q.get("scope"));
+        assertTrue(McpOAuth.isGoogle("https://oauth2.googleapis.com/token"));
+        assertFalse(McpOAuth.isGoogle("https://mcp.notion.com/token"));
+    }
+
     @Test public void tokenAndSession() throws Exception {
         McpOAuth.Session s = new McpOAuth.Session();
         s.refreshToken = "old";

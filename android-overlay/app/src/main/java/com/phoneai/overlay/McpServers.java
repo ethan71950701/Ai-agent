@@ -88,6 +88,7 @@ final class McpServers {
         for (Server s : l) if (!s.id.equals(id)) keep.add(s);
         try { saveList(c, keep); } catch (Exception ignored) { }
         new File(c.getFilesDir(), authFile(id)).delete();
+        new File(c.getFilesDir(), clientFile(id)).delete();
         new File(c.getFilesDir(), toolsFile(id)).delete();
         synchronized (CLIENTS) { CLIENTS.remove(id); }
     }
@@ -98,6 +99,23 @@ final class McpServers {
     }
 
     private static String authFile(String id) { return "mcp_auth_" + id; }
+    private static String clientFile(String id) { return "mcp_client_" + id; }
+
+    /** 使用者自己填的 Client ID／Secret（Google 等不支援自動註冊的服務）；存私有檔，權限 600。 */
+    static void saveManual(Context c, String id, String clientId, String clientSecret) throws Exception {
+        if (clientId == null || clientId.trim().isEmpty()) { new File(c.getFilesDir(), clientFile(id)).delete(); return; }
+        writePrivate(c, clientFile(id), new JSONObject().put("client_id", clientId.trim()).put("client_secret", clientSecret == null ? "" : clientSecret.trim()).toString());
+    }
+
+    static McpOAuth.Manual manual(Context c, String id) {
+        McpOAuth.Manual m = new McpOAuth.Manual();
+        JSONObject j = readJson(c, clientFile(id));
+        if (j != null) {
+            m.clientId = j.optString("client_id");
+            m.clientSecret = j.optString("client_secret");
+        }
+        return m;
+    }
     private static String toolsFile(String id) { return "mcp_tools_" + id + ".json"; }
 
     /** 寫入 App 私有資料夾，權限 600（先寫暫存檔再改名）。 */

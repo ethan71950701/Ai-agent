@@ -17,6 +17,13 @@ final class McpServersUi {
 
     private static volatile int loginSeq;
 
+    /** Google Workspace 官方 MCP 服務（名稱存中文原文，顯示時才翻譯）。 */
+    static final String[][] GOOGLE = {
+            {"雲端硬碟", "https://drivemcp.googleapis.com/mcp/v1"},
+            {"Gmail", "https://gmailmcp.googleapis.com/mcp/v1"},
+            {"Google 日曆", "https://calendarmcp.googleapis.com/mcp/v1"},
+    };
+
     static String summary(Activity a) {
         int n = McpServers.list(a).size();
         return n == 0 ? L.t("接上 Notion、Linear 等提供 MCP 的服務（可用 OAuth 登入）") : String.format(L.t("已接上 %d 個服務"), n);
@@ -66,15 +73,30 @@ final class McpServersUi {
         final TextInputEditText name = field(a, form, L.t("名稱（例如 Notion）"), false);
         final TextInputEditText url = field(a, form, L.t("MCP 網址"), false);
         final TextInputEditText token = field(a, form, L.t("權杖（選填）"), true);
+        Ui.section(a, form, L.t("Google 服務"));
+        form.addView(Ui.body(a, L.t("Google 不支援自動註冊：要先在 Google Cloud 建一個「電腦版應用程式」類型的 OAuth 用戶端，把 Client ID 與 Client Secret 填在下面。點下面的按鈕會自動填好名稱與網址。")));
+        LinearLayout presets = new LinearLayout(a);
+        presets.setOrientation(LinearLayout.HORIZONTAL);
+        for (final String[] p : GOOGLE) {
+            android.view.View b = Ui.tonal(a, L.t(p[0]), v -> { name.setText(L.t(p[0])); url.setText(p[1]); });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1);
+            lp.setMarginEnd(Ui.dp(a, 6));
+            presets.addView(b, lp);
+        }
+        form.addView(presets);
+        final TextInputEditText cid = field(a, form, L.t("Client ID（選填）"), false);
+        final TextInputEditText csec = field(a, form, L.t("Client Secret（選填）"), true);
         new PageBuilder(a).setTitle(L.t("新增 MCP 服務")).setView(form)
                 .setPositiveButton(L.t("連線"), (d, w) -> {
                     String u = url.getText().toString().trim(), n = name.getText().toString().trim(), t = token.getText().toString().trim();
+                    String ci = cid.getText().toString().trim(), cs = csec.getText().toString().trim();
                     String bad = McpServers.checkUrl(u);
                     if (bad != null) { Toast.makeText(a, bad, Toast.LENGTH_LONG).show(); return; }
                     if (n.isEmpty()) { try { n = Uri.parse(u).getHost(); } catch (Exception e) { n = u; } }
                     try {
                         String id = McpServers.put(a, n, u);
                         if (!t.isEmpty()) McpServers.saveToken(a, id, t);
+                        if (!ci.isEmpty()) McpServers.saveManual(a, id, ci, cs);
                         connect(a, id, after);
                     } catch (Exception e) {
                         Toast.makeText(a, L.t("存檔失敗：") + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -119,7 +141,8 @@ final class McpServersUi {
         new Thread(() -> {
             String r;
             try {
-                r = McpServers.connect(a.getApplicationContext(), id);
+                if (McpServers.authType(a, id).isEmpty() && !McpServers.manual(a, id).clientId.isEmpty()) r = login(a, id, null, seq);   // 填了 Client ID 又還沒登入：直接登入（有些服務沒登入時不是回 401）
+                else r = McpServers.connect(a.getApplicationContext(), id);
             } catch (McpClient.AuthRequired e) {
                 if (McpServers.authType(a, id).equals("token")) r = L.t("權杖被拒絕：請確認權杖沒有過期、有需要的權限");
                 else r = login(a, id, e.wwwAuth, seq);
@@ -138,7 +161,7 @@ final class McpServersUi {
         McpServers.Server s = McpServers.byId(a, id);
         if (s == null) return L.t("找不到這個服務");
         try {
-            McpOAuth.Session session = McpOAuth.login(s.url, wwwAuth, new McpOAuth.Ui() {
+            McpOAuth.Session session = McpOAuth.login(s.url, wwwAuth, McpServers.manual(a, id), new McpOAuth.Ui() {
                 @Override public void progress(String msg) { toast(a, msg); }
                 @Override public void openBrowser(String url) {
                     a.runOnUiThread(() -> {

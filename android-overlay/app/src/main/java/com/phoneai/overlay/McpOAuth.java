@@ -140,6 +140,11 @@ final class McpOAuth {
         m.put("state", state);
         m.put("resource", resource);
         m.put("scope", scope);
+        if (isGoogle(endpoint)) {   // Google：不認 resource；要 offline＋consent 才會給更新權杖（不然大約一小時就要重新登入）
+            m.remove("resource");
+            m.put("access_type", "offline");
+            m.put("prompt", "consent");
+        }
         return endpoint + (endpoint.contains("?") ? "&" : "?") + form(m);
     }
 
@@ -214,6 +219,36 @@ final class McpOAuth {
         return null;
     }
 
+    /** 使用者自己填的 App 資料（服務不支援自動註冊時用，例如 Google）；都可以是空的。 */
+    static final class Manual {
+        String clientId = "", clientSecret = "", scope = "";
+    }
+
+    /** 是不是 Google 的登入（Google 不認 resource 參數；要 access_type=offline 才給更新權杖）。 */
+    static boolean isGoogle(String url) {
+        try {
+            String h = URI.create(url).getHost();
+            return h != null && (h.equals("accounts.google.com") || h.equals("oauth2.googleapis.com") || h.endsWith(".googleapis.com"));
+        } catch (Exception e) { return false; }
+    }
+
+    /** Google Workspace MCP 服務預設要的權限（照 Google 官方文件）。不是 Google 的回 null。 */
+    static String googleScopes(String mcpUrl) {
+        String h;
+        try { h = URI.create(mcpUrl).getHost(); } catch (Exception e) { return null; }
+        if (h == null || !h.endsWith(".googleapis.com")) return null;
+        String g = "https://www.googleapis.com/auth/";
+        String drive = g + "drive.readonly " + g + "drive.file";
+        if (h.startsWith("gmailmcp.")) return g + "gmail.readonly " + g + "gmail.compose " + g + "gmail.modify";
+        if (h.startsWith("calendarmcp.")) return g + "calendar.calendarlist.readonly " + g + "calendar.events.freebusy " + g + "calendar.events.readonly " + g + "calendar.events";
+        if (h.startsWith("drivemcp.")) return drive;
+        if (h.startsWith("docsmcp.")) return drive + " " + g + "documents.readonly " + g + "documents";
+        if (h.startsWith("sheetsmcp.")) return drive + " " + g + "spreadsheets.readonly " + g + "spreadsheets";
+        if (h.startsWith("slidesmcp.")) return drive + " " + g + "presentations.readonly " + g + "presentations";
+        if (h.startsWith("people.")) return g + "directory.readonly " + g + "userinfo.profile " + g + "contacts.readonly";
+        return null;
+    }
+
     interface Ui {
         void progress(String msg);
         /** 開瀏覽器到這個網址。 */
@@ -225,7 +260,10 @@ final class McpOAuth {
      * 完整登入（在背景執行緒呼叫，會等使用者在瀏覽器登入，最多 5 分鐘）。
      * wwwAuth：服務回 401 時的 WWW-Authenticate 標頭（可能是 null）。成功回 session；失敗丟例外（訊息可以直接給使用者看）。
      */
-    static Session login(String mcpUrl, String wwwAuth, Ui ui) throws Exception {
+    static Session login(String mcpUrl, String wwwAuth, Ui ui) throws Exception { return login(mcpUrl, wwwAuth, new Manual(), ui); }
+
+    static Session login(String mcpUrl, String wwwAuth, Manual manual, Ui ui) throws Exception {
+        if (manual == null) manual = new Manual();
         ui.progress(L.t("找登入方式…"));
         String prmUrl = authParam(wwwAuth, "resource_metadata");
         List<String> prmCands = new ArrayList<>();
@@ -236,12 +274,14 @@ final class McpOAuth {
         String issuer;
         JSONArray as = prm == null ? null : prm.optJSONArray("authorization_servers");
         if (as != null && as.length() > 0) issuer = as.optString(0);
+        else if (googleScopes(mcpUrl) != null || mcpUrl.contains(".googleapis.com/")) issuer = "https://accounts.google.com";   // Google 的服務：登入一律在 accounts.google.com
         else { URI u = URI.create(mcpUrl); issuer = u.getScheme() + "://" + u.getRawAuthority(); }   // 舊版服務：授權伺服器就在同一個網域
         JSONObject meta = getJson(authServerMetadataUrls(issuer));
         if (meta == null) throw new Exception(L.t("這個服務沒有提供 OAuth 登入資訊；請改用權杖"));
         String authz = meta.optString("authorization_endpoint"), tokenEp = meta.optString("token_endpoint"), reg = meta.optString("registration_endpoint");
         if (authz.isEmpty() || tokenEp.isEmpty()) throw new Exception(L.t("這個服務的登入資訊不完整；請改用權杖"));
-        String scope = authParam(wwwAuth, "scope");
+        String scope = !manual.scope.trim().isEmpty() ? manual.scope.trim() : authParam(wwwAuth, "scope");
+        if (scope == null) scope = googleScopes(mcpUrl);
         if (scope == null && prm != null && prm.optJSONArray("scopes_supported") != null) {
             JSONArray sc = prm.optJSONArray("scopes_supported");
             StringBuilder sb = new StringBuilder();
@@ -254,17 +294,22 @@ final class McpOAuth {
             Session s = new Session();
             s.tokenEndpoint = tokenEp;
             s.resource = resource;
-            if (reg.isEmpty()) throw new Exception(L.t("這個服務不支援自動註冊 App（沒有 registration_endpoint）；請改用權杖"));
-            ui.progress(L.t("向服務註冊這個 App…"));
-            JSONObject regBody = new JSONObject().put("client_name", "Vertex").put("redirect_uris", new JSONArray().put(redirect))
-                    .put("grant_types", new JSONArray().put("authorization_code").put("refresh_token"))
-                    .put("response_types", new JSONArray().put("code")).put("token_endpoint_auth_method", "none");
-            Http rr = http("POST", reg, "application/json", regBody.toString());
-            if (rr.code >= 400) throw new Exception(L.t("註冊 App 失敗（HTTP ") + rr.code + "）");
-            JSONObject rj = new JSONObject(rr.body);
-            s.clientId = rj.optString("client_id");
-            s.clientSecret = rj.optString("client_secret");
-            if (s.clientId.isEmpty()) throw new Exception(L.t("註冊 App 失敗：沒有拿到 client_id"));
+            if (!manual.clientId.trim().isEmpty()) {   // 使用者自己建的 App（Google 等）：不用註冊
+                s.clientId = manual.clientId.trim();
+                s.clientSecret = manual.clientSecret.trim();
+            } else {
+                if (reg.isEmpty()) throw new Exception(L.t("這個服務不支援自動註冊 App（沒有 registration_endpoint）；請填 Client ID，或改用權杖"));
+                ui.progress(L.t("向服務註冊這個 App…"));
+                JSONObject regBody = new JSONObject().put("client_name", "Vertex").put("redirect_uris", new JSONArray().put(redirect))
+                        .put("grant_types", new JSONArray().put("authorization_code").put("refresh_token"))
+                        .put("response_types", new JSONArray().put("code")).put("token_endpoint_auth_method", "none");
+                Http rr = http("POST", reg, "application/json", regBody.toString());
+                if (rr.code >= 400) throw new Exception(L.t("註冊 App 失敗（HTTP ") + rr.code + "）");
+                JSONObject rj = new JSONObject(rr.body);
+                s.clientId = rj.optString("client_id");
+                s.clientSecret = rj.optString("client_secret");
+                if (s.clientId.isEmpty()) throw new Exception(L.t("註冊 App 失敗：沒有拿到 client_id"));
+            }
 
             String verifier = randomToken(48), state = randomToken(24);
             ui.progress(L.t("請在瀏覽器登入並按同意，完成後回到這裡"));
@@ -282,10 +327,11 @@ final class McpOAuth {
             f.put("client_id", s.clientId);
             f.put("client_secret", s.clientSecret);
             f.put("code_verifier", verifier);
-            f.put("resource", resource);
+            if (!isGoogle(tokenEp)) f.put("resource", resource);
             Http tr = http("POST", tokenEp, "application/x-www-form-urlencoded", form(f));
             JSONObject tj;
             try { tj = new JSONObject(tr.body); } catch (Exception e) { throw new Exception(L.t("換取權杖失敗（HTTP ") + tr.code + "）"); }
+            if (tr.code >= 400 && tj.optString("access_token").isEmpty()) throw new Exception(L.t("換取權杖失敗：") + tj.optString("error_description", tj.optString("error", "HTTP " + tr.code)));
             applyToken(s, tj, System.currentTimeMillis());
             return s;
         }
@@ -339,7 +385,7 @@ final class McpOAuth {
         f.put("refresh_token", s.refreshToken);
         f.put("client_id", s.clientId);
         f.put("client_secret", s.clientSecret);
-        f.put("resource", s.resource);
+        if (!isGoogle(s.tokenEndpoint)) f.put("resource", s.resource);
         Http r = http("POST", s.tokenEndpoint, "application/x-www-form-urlencoded", form(f));
         if (r.code >= 400) throw new Exception(L.t("登入已過期，請重新登入"));
         applyToken(s, new JSONObject(r.body), System.currentTimeMillis());
