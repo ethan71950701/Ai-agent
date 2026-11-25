@@ -182,9 +182,17 @@ jobs:
               echo "沒做出補丁（略過）：App 會下載完整 APK"
             fi
           fi
-          gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt "${EXTRA[@]}" \
-            --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
-            --notes-file "$RUNNER_TEMP/notes.md"
+          # GitHub 偶爾回 500，或上傳到一半失敗留下半成品（再傳會說「檔案已存在」）：失敗就刪掉這個版本的半成品，等一下再試，最多 3 次
+          ok=0
+          for attempt in 1 2 3; do
+            if gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt "${EXTRA[@]}" \
+                --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
+                --notes-file "$RUNNER_TEMP/notes.md"; then ok=1; break; fi
+            echo "建立 Release 失敗（第 ${attempt} 次），清掉半成品後重試"
+            gh release delete "$TAG" --cleanup-tag --yes 2>/dev/null || true
+            sleep $((attempt * 20))
+          done
+          [ "$ok" = 1 ] || { echo "建立 Release 連續失敗 3 次"; exit 1; }
           # 只留最近 10 個 Release，舊的連同 tag 刪掉
           gh release list --limit 100 --json tagName --jq '.[10:][].tagName' | while read -r old; do
             [ -n "$old" ] && gh release delete "$old" --cleanup-tag --yes || true
