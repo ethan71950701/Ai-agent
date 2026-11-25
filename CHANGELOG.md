@@ -6,7 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - 互傳：區網找不到對方、Tailscale 又沒開時，會主動開 Tailscale（兩邊網段剛好一樣、但不是同一個路由器時，之前會誤以為在同一個 Wi-Fi 而不開）｜Transfer: when the other phone isn't found on the LAN and Tailscale is off, the app now turns Tailscale on (previously, two different routers using the same subnet looked like one Wi-Fi and Tailscale stayed off)
+## 1.0.1869
+
 - 互傳頁的「最近」紀錄從 5 行增加到 30 行，方便看連線診斷｜Transfer page: the "Recent" log now shows 30 lines instead of 5, to make connection diagnostics readable
+
 ## 1.0.1868
 
 - 互傳：對方換了區網位址（記下的位址連不上、廣播也被擋）時，自動掃本機網段找出對方並更新位址，不再一直「讀取中」｜Transfer: when the other phone's LAN address changed (saved address unreachable and broadcast blocked), the app now scans the local subnet to find it and updates the address instead of hanging on loading
