@@ -396,7 +396,7 @@ final class LEn {
         m.put("外觀", "Appearance");
         m.put("主題色與自訂顏色", "Theme color and custom color");
         m.put("權限", "Permissions");
-        m.put("懸浮層、通知、預設數位助理", "Overlay, notifications, default assistant");
+        m.put("懸浮層、通知、預設數位助理、日曆", "Overlay, notifications, default assistant, calendar");
         m.put("顯示在其他應用程式上層", "Display over other apps");
         m.put("預設數位助理", "Default digital assistant");
         m.put("長按電源鍵叫出", "Long-press the power key to open");
@@ -1706,6 +1706,10 @@ final class LEn {
         m.put("查時間與日期", "Time and date");
         m.put("查電池電量", "Battery level");
         m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
+        m.put("讀手機行事曆的行程（今天、明天、這週）", "Read events from the phone's calendar (today, tomorrow, this week)");
+        m.put("日曆", "Calendar");
+        m.put("已允許：AI 可以讀、新增你的行程", "Allowed: the AI can read and add your events");
+        m.put("允許後 AI 可以讀、新增手機行事曆的行程", "Allow so the AI can read and add events in the phone's calendar");
         m.put("換取權杖失敗：", "Failed to get the access token: ");
         m.put("這個服務不支援自動註冊 App（沒有 registration_endpoint）；請填 Client ID，或改用權杖", "This service doesn't support automatic app registration (no registration_endpoint); enter a Client ID, or use a token instead");
         m.put("Client ID（選填）", "Client ID (optional)");

@@ -1258,12 +1258,14 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("ann_on", true), (v, on) -> cfg().edit().putBoolean("ann_on", on).apply());
         });
         steps.add(() -> {
-            LinearLayout p = grp("shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理"), false);
-            Ui.row(this, p, 0, 4, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
+            LinearLayout p = grp("shield", L.t("權限"), L.t("懸浮層、通知、預設數位助理、日曆"), false);
+            Ui.row(this, p, 0, 5, "layers", L.t("懸浮層"), L.t("顯示在其他應用程式上層"), null, v -> startActivity(
                     new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
-            Ui.row(this, p, 1, 4, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
-            Ui.row(this, p, 2, 4, "sparkle", L.t("預設數位助理"), L.t("長按電源鍵叫出"), null, v -> openAssistSettings());
-            Ui.row(this, p, 3, 4, "power", L.t("保活檢查"), L.t("電池、自啟動、無障礙、通知：避免定時任務被系統殺掉"), Ui.chevron(this), v -> KeepAlive.open(this));
+            Ui.row(this, p, 1, 5, "bell", L.t("通知"), L.t("允許通知"), null, v -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1));
+            Ui.row(this, p, 2, 5, "sparkle", L.t("預設數位助理"), L.t("長按電源鍵叫出"), null, v -> openAssistSettings());
+            Ui.row(this, p, 3, 5, "power", L.t("保活檢查"), L.t("電池、自啟動、無障礙、通知：避免定時任務被系統殺掉"), Ui.chevron(this), v -> KeepAlive.open(this));
+            Ui.row(this, p, 4, 5, "bell", L.t("日曆"), CalendarRead.hasPermission(this) ? L.t("已允許：AI 可以讀、新增你的行程") : L.t("允許後 AI 可以讀、新增手機行事曆的行程"), null,
+                    v -> requestPermissions(new String[]{Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR}, 2));
 
         });
         steps.add(() -> {
@@ -1648,5 +1650,11 @@ public class MainActivity extends Activity {
             rp.topMargin = Ui.dp(this, 10);
             heroBox.addView(r, rp);
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 2) recreate();   // 日曆權限：更新設定頁那一列的說明
     }
 }
