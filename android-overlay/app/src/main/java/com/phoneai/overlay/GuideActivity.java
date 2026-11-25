@@ -21,21 +21,29 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.button.MaterialButton;
 
 /**
- * 設定導覽：和歡迎動畫同一種介面（左右滑動、每頁一個循環小動畫、底下圓點），共 9 步。
+ * 設定導覽：和歡迎動畫同一種介面（左右滑動、每頁一個循環小動畫、底下圓點），共 13 步（後來加的功能需要的權限都是選用）。
  * 每頁右下角的狀態會自動檢查（root、權限、API Key、語音模型），做完回來會更新。
  */
 public class GuideActivity extends Activity {
-    private static final int N = 9;
-    private static final int REQ_NOTIF = 21, REQ_MIC = 22;
+    private static final int N = 13;
+    private static final int REQ_NOTIF = 21, REQ_MIC = 22, REQ_CAL = 23;
+    /** 頁碼（後來加的功能需要的權限放在麥克風後面，都是選用）。 */
+    private static final int I_NLS = 5, I_CAL = 6, I_FILES = 7, I_KEEP = 8, I_KEY = 9, I_VOICE = 10, I_POWER = 11;
+    /** 標題不含編號（顯示時才加「第幾步」），之後插頁不用改翻譯。 */
     private static final String[] TITLES = {
-            "1. 選擇執行模式", "2. 懸浮層權限", "3. 通知權限", "4. 無障礙服務", "5. 麥克風權限",
-            "6. AI 服務與 API Key", "7. 離線語音辨識模型", "8. 長按電源鍵叫出（選用）", "9. 試試看"};
+            "選擇執行模式", "懸浮層權限", "通知權限", "無障礙服務", "麥克風權限",
+            "通知存取（選用）", "日曆（選用）", "所有檔案存取（選用）", "背景保活（選用）",
+            "AI 服務與 API Key", "離線語音辨識模型", "長按電源鍵叫出（選用）", "試試看"};
     private static final String[] WHY = {
             "選一種執行模式，之後隨時可以在設定改。不確定就選「普通」，什麼都不用裝。",
             "讓助理面板、光暈和浮動按鈕能疊在別的 App 上面。",
             "任務進行中，狀態列會出現進度膠囊，讓你知道 AI 在做什麼。",
             "讓 App 能幫你點擊、滑動、輸入文字、讀取畫面上的按鈕與文字，並畫出點擊的漣漪。沒有 root 時，截圖和返回、首頁這些按鍵也靠它，所以沒有 root 一定要開。",
             "用語音跟助理說話。語音辨識在手機上離線完成，聲音不會上傳。",
+            "讓 AI 能幫你整理、念出通知（「我有什麼通知」）。通知內容只在你問的時候讀，驗證碼會遮掉。",
+            "讓 AI 能看你的行程（「明天有什麼行程」）並直接新增行程。讀的是手機行事曆，會跟 Google 日曆等帳號同步。",
+            "互傳檔案、讓 AI 找檔案時需要讀寫手機裡的檔案。不用互傳檔案可以跳過。",
+            "定時任務、推播喚醒互傳都要 App 在背景活著。很多手機會把背景 App 殺掉，把電池設成「不受限制」並開「自啟動」比較穩。",
             "AI 需要一個服務才能思考：Claude（預設）、Google Gemini（有免費額度）、OpenAI 等都可以，便宜模型和看圖模型也能分開選。Key 只存在這支手機 App 的資料夾裡，不會上傳到別處。",
             "語音辨識（SenseVoice）會下載到手機裡，之後離線運作，聲音不會上傳。約 228 MB，建議連 Wi-Fi。不下載的話就不能用離線語音辨識，之後隨時可以回來下載。",
             "設定後長按電源鍵就能叫出 Vertex。三星手機：長按電源鍵本來就能叫原生語音助理，把預設數位助理改成 Vertex 即可。小米等其他手機：要到「功能 → 設定 → 呼叫方式」打開「長按電源鍵叫出助理」（需要 root）。",
@@ -51,6 +59,10 @@ public class GuideActivity extends Activity {
                     "找到「已下載的應用程式」或 Vertex，點進去打開開關，在提示視窗按「允許」。",
                     "有些手機重裝後會自動把它關掉。有 root 的話，之後不能操作時到「功能 → 進階與診斷 → 修復權限」可以補回來；沒有 root 就要自己再開一次。"},
             {"按「允許麥克風」，在系統視窗按「允許」。"},
+            {"按「開啟通知存取」。", "在清單裡找到 Vertex，把開關打開，在提示視窗按「允許」。", "按返回鍵回到這裡，狀態會自動更新。"},
+            {"按「允許日曆」，在系統視窗按「允許」。"},
+            {"按「開啟檔案存取」。", "把「允許存取所有檔案」打開。", "按返回鍵回到這裡。"},
+            {"按「保活檢查」，照頁面上的按鈕把電池設成「不受限制」、打開「自啟動」。", "系統不讓 App 查自啟動有沒有開，只能你自己確認。", "有些手機系統更新後會把自啟動關掉，功能怪怪的時候回來看一次。"},
             {"按下面的「選擇 AI 服務與 Key」，選一家服務；非 Claude 的服務會有申請 Key 的教學與預設模型。",
                     "以下是用 Claude 時的步驟：",
                     "用電腦或手機瀏覽器打開 console.anthropic.com，註冊或登入。",
@@ -91,8 +103,9 @@ public class GuideActivity extends Activity {
     private static final String[] MODE_LABELS = {"root", "Shizuku", "普通"};
     private rikka.shizuku.Shizuku.OnRequestPermissionResultListener shizukuListener;
     private static final String[] BTN = {"檢查", "開啟權限頁", "允許通知", "開啟無障礙設定", "允許麥克風",
+            "開啟通知存取", "允許日曆", "開啟檔案存取", "保活檢查",
             "選擇 AI 服務與 Key", "下載語音模型", "開啟語音輸入設定", "完成，回到 App"};
-    private static final int[] DEMO = {10, 11, 12, 13, 2, 15, 2, 1, 5};
+    private static final int[] DEMO = {10, 11, 12, 13, 2, 12, 5, 14, 4, 15, 2, 1, 5};
 
     private final boolean[] ok = new boolean[N];
     private volatile boolean voiceBusy;
@@ -200,9 +213,18 @@ public class GuideActivity extends Activity {
             case 2: requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_NOTIF); break;
             case 3: startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); break;
             case 4: requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); break;
-            case 5: AiServiceUi.open(this, this::refresh); break;
-            case 6: downloadVoice(); break;
-            case 7:
+            case I_NLS:
+                try { startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)); } catch (Exception e) { startActivity(new Intent(Settings.ACTION_SETTINGS)); }
+                break;
+            case I_CAL: requestPermissions(new String[]{Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR}, REQ_CAL); break;
+            case I_FILES:
+                try { startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:" + getPackageName()))); }
+                catch (Exception e) { startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)); }
+                break;
+            case I_KEEP: KeepAlive.open(this); break;
+            case I_KEY: AiServiceUi.open(this, this::refresh); break;
+            case I_VOICE: downloadVoice(); break;
+            case I_POWER:
                 try {
                     startActivity(new Intent(Settings.ACTION_VOICE_INPUT_SETTINGS));
                 } catch (Exception e) {
@@ -221,7 +243,7 @@ public class GuideActivity extends Activity {
             String err = null;
             try {
                 SherpaEngine.download(this, m -> runOnUiThread(() -> {
-                    label[6] = m;
+                    label[I_VOICE] = m;
                     java.util.regex.Matcher pm = java.util.regex.Pattern.compile("(\\d+)%").matcher(m);
                     if (pm.find() && voiceBar != null) voiceBar.setProgress(Integer.parseInt(pm.group(1)));
                     if (voiceStatus != null) voiceStatus.setText(m);
@@ -270,7 +292,7 @@ public class GuideActivity extends Activity {
             page.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
 
             TextView t = new TextView(a);
-            t.setText(L.t(TITLES[i]));
+            t.setText((i + 1) + ". " + L.t(TITLES[i]));
             t.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_HeadlineMedium);
             t.setTextColor(Ui.attr(a, com.google.android.material.R.attr.colorOnSurface));
             t.setGravity(Gravity.CENTER);
@@ -316,7 +338,7 @@ public class GuideActivity extends Activity {
                 card.addView(s, sl);
             }
 
-            if (i == 6) {   // 語音模型：下載進度條
+            if (i == I_VOICE) {   // 語音模型：下載進度條
                 voiceBar = new android.widget.ProgressBar(a, null, android.R.attr.progressBarStyleHorizontal);
                 voiceBar.setMax(100);
                 voiceBar.setProgress(0);
@@ -326,7 +348,7 @@ public class GuideActivity extends Activity {
             }
             TextView st = new TextView(a);
             st.setText(label[i]);
-            if (i == 6) voiceStatus = st;
+            if (i == I_VOICE) voiceStatus = st;
             st.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleSmall);
             st.setTextColor(Ui.attr(a, ok[i] ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorOnSurfaceVariant));
             st.setGravity(Gravity.CENTER);
@@ -384,11 +406,19 @@ public class GuideActivity extends Activity {
                 set(2, nt, nt ? L.t("✓ 已允許") : L.t("尚未允許"));
                 set(3, a11y, a11y ? L.t("✓ 已開啟") : L.t("尚未開啟"));
                 set(4, mic, mic ? L.t("✓ 已允許") : L.t("尚未允許"));
-                set(5, key, key ? L.t("✓ 已設定") : L.t("尚未設定"));
+                boolean nls = NotifListener.enabled(this);
+                set(I_NLS, nls, nls ? L.t("✓ 已開啟") : L.t("尚未開啟（可以先跳過）"));
+                boolean cal = checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED;
+                set(I_CAL, cal, cal ? L.t("✓ 已允許") : L.t("尚未允許（可以先跳過）"));
+                boolean files = TransferStore.hasAllFiles();
+                set(I_FILES, files, files ? L.t("✓ 已允許") : L.t("尚未允許（可以先跳過）"));
+                boolean bat = KeepAlive.batteryIgnored(this);
+                set(I_KEEP, false, bat ? L.t("電池已不受限制；自啟動請自己確認（程式無法判斷）") : L.t("電池還會被限制（可以先跳過）"));
+                set(I_KEY, key, key ? L.t("✓ 已設定") : L.t("尚未設定"));
                 boolean voice = SherpaEngine.ready(this);
-                set(6, voice, voice ? L.t("✓ 已下載") : L.t("尚未下載（可以先跳過）"));
-                set(7, false, L.t("請自己確認：在「數位助理」裡選到 Vertex（程式無法判斷）"));
-                set(8, false, L.t("做完這一步就可以開始用了"));
+                set(I_VOICE, voice, voice ? L.t("✓ 已下載") : L.t("尚未下載（可以先跳過）"));
+                set(I_POWER, false, L.t("請自己確認：在「數位助理」裡選到 Vertex（程式無法判斷）"));
+                set(N - 1, false, L.t("做完這一步就可以開始用了"));
                 pager.getAdapter().notifyDataSetChanged();
             });
         }).start();

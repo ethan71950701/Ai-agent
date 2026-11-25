@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 設定導覽加上後來功能需要的權限（都是選用）：通知存取、日曆、所有檔案存取、背景保活｜The setup guide now includes the permissions later features need (all optional): notification access, calendar, all files access, and keeping the app alive in the background
 ## 1.0.1875
 
 - AI 可以讀手機行事曆了：問「我明天有什麼行程？」「這週哪天有空？」；第一次要到「設定 → 權限 → 日曆」允許｜The AI can now read the phone's calendar: ask "What's on my schedule tomorrow?" or "Which day am I free this week?"; allow it once in Settings → Permissions → Calendar
