@@ -6,7 +6,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 ## Unreleased
 
 - AI 可以讀手機行事曆了：問「我明天有什麼行程？」「這週哪天有空？」；第一次要到「設定 → 權限 → 日曆」允許｜The AI can now read the phone's calendar: ask "What's on my schedule tomorrow?" or "Which day am I free this week?"; allow it once in Settings → Permissions → Calendar
+## 1.0.1874
+
 - 其他 MCP 服務可以接 Google（雲端硬碟、Gmail、Google 日曆）：新增服務時填自己 Google Cloud 的 Client ID／Secret，按預設按鈕自動填網址｜Other MCP services can now connect Google (Drive, Gmail, Calendar): enter your own Google Cloud Client ID/Secret when adding a service, and use the preset buttons to fill in the URL
+
 ## 1.0.1873
 
 - 新增「其他 MCP 服務」（設定 → AI 與資料）：填服務的 MCP 網址就能讓 AI 用它的工具；支援 OAuth 登入（開瀏覽器登入並同意），會修改資料的工具每次都先問你｜New "Other MCP services" (Settings → AI & data): add a service's MCP URL to let the AI use its tools; supports OAuth sign-in (sign in and approve in the browser), and tools that may change your data always ask first
