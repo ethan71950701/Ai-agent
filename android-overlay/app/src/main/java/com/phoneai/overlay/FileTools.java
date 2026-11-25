@@ -371,7 +371,7 @@ final class FileTools {
         if (f == null) TransferStore.log(c, "廣播搜尋沒找到：" + p.name);
         if (f == null) f = directLan(c, p);   // 區網「廣播搜尋」被擋（路由器、省電、螢幕關著的手機常會丟掉廣播封包）時，直接連上次記下的區網位址
         if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
-            final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip);   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
+            final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip) || !TailscaleControl.isOn();   // 區網（廣播、記下的位址、掃網段）都找不到、Tailscale 又沒開：兩邊的網段可能剛好一樣（例如都是 192.168.1.x 但不是同一台路由器），也當作在外面，主動開 Tailscale   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
             if (remoteNow && !TailscaleControl.isOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
                 TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                 TailscaleControl.turnOnForSession(c, 12000);
