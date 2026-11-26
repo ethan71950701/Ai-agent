@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 用簡體說「打开设定」這類指令也會直接開啟，不再先繞聊天一輪（省下幾十秒與一次 AI 呼叫）｜Commands spoken in Simplified Chinese, like "打开设定", now open directly instead of going through chat first (saves tens of seconds and one AI call)
 ## 1.0.1880
 
 - 修正一批問題：普通模式說「打開 App」會真的打開、繁體說話時路由認得中文 App 名稱、記憶不會被同時發生的寫入蓋掉、連問兩句不會混字、通知整理失敗會重試、拍照時 App 被系統殺掉也找得回照片、語音模型下載失敗不會把舊的刪掉｜Fixes: "open app" now really opens it in normal mode, the router recognizes Chinese app names when you speak Traditional Chinese, memory is no longer overwritten by concurrent writes, asking two questions in a row no longer mixes the answers, the notification digest retries when it fails, photos survive the app being killed during camera use, and a failed speech-model download no longer deletes the old one

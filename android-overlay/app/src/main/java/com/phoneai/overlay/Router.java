@@ -160,26 +160,43 @@ final class Router {
         return last;
     }
 
-    private static final Pattern ACTION_HINT = Pattern.compile(
+    /** 判斷時繁簡都要認：說話的人可能用簡體（語音輸入常是簡體）。關鍵字本身寫繁體，比對前文字與關鍵字都轉成簡體。 */
+    private static final String ACTION_WORDS =
             "開|關|打開|關閉|開啟|音量|大聲|小聲|亮度|截圖|截屏|鎖|返回|上一頁|桌面|點|按|滑|傳訊息|傳給|傳送|發訊息|打電話|進入|前往|切換|設定|飛航|勿擾|藍牙|藍芽|wifi|wi-fi|定位|數據|流量|nfc|深色|省電|旋轉|"
-                    + "\\b(open|turn|go to|goto|tap|click|launch|switch|send|call|volume|brightness|screenshot|enable|disable)\\b",
-            Pattern.CASE_INSENSITIVE);
+                    + "\\b(open|turn|go to|goto|tap|click|launch|switch|send|call|volume|brightness|screenshot|enable|disable)\\b";
+    private static Pattern actionHint;
 
-    private static final Pattern SCHED_HINT = Pattern.compile("每天|每隔|每[0-9一二三四五六七八九十兩]+天|每週|每周|定時|排程|(?i:\\b(every day|every \\d+ days|daily|schedule)\\b)");
+    private static synchronized Pattern actionHint() {
+        if (actionHint == null) actionHint = Pattern.compile(simplify(ACTION_WORDS), Pattern.CASE_INSENSITIVE);
+        return actionHint;
+    }
+
+    private static final String SCHED_WORDS = "每天|每隔|每[0-9一二三四五六七八九十兩]+天|每週|每周|定時|排程|(?i:\\b(every day|every \\d+ days|daily|schedule)\\b)";
+    private static Pattern schedHint;
+
+    private static synchronized Pattern schedHint() {
+        if (schedHint == null) schedHint = Pattern.compile(simplify(SCHED_WORDS));
+        return schedHint;
+    }
 
     /** 這句話看起來可能是要操作手機：先問路由（一次判斷固定指令、開 App、操作畫面）。不像的就直接聊天，聊天助理真的需要操作時會自己呼叫 phone_action 交出去。 */
     static boolean likelyAction(String text) {
-        if (text != null && SCHED_HINT.matcher(text).find()) return false;   // 要排定時查詢：交給聊天助理（它有 schedule_web_query）
-        return text != null && ACTION_HINT.matcher(text).find();
+        if (text != null && schedHint().matcher(simplify(text)).find()) return false;   // 要排定時查詢：交給聊天助理（它有 schedule_web_query）
+        return text != null && actionHint().matcher(simplify(text)).find();
     }
 
-    private static final Pattern SMALL_TALK = Pattern.compile(
-            "^(你好|您好|哈囉|嗨|嘿|hi|hello|hey|早安|早|午安|晚安|謝謝|謝啦|感謝|多謝|掰掰|拜拜|再見|好的|好喔|好|ok|okay|嗯|哈哈|在嗎|在不在|你是誰|你叫什麼|你叫什麼名字|你會什麼|你能做什麼)[!！。.~～？?，, ]*$",
-            Pattern.CASE_INSENSITIVE);
+    private static final String SMALL_TALK_WORDS =
+            "^(你好|您好|哈囉|嗨|嘿|hi|hello|hey|早安|早|午安|晚安|謝謝|謝啦|感謝|多謝|掰掰|拜拜|再見|好的|好喔|好|ok|okay|嗯|哈哈|在嗎|在不在|你是誰|你叫什麼|你叫什麼名字|你會什麼|你能做什麼)[!！。.~～？?，, ]*$";
+    private static Pattern smallTalk;
+
+    private static synchronized Pattern smallTalk() {
+        if (smallTalk == null) smallTalk = Pattern.compile(simplify(SMALL_TALK_WORDS), Pattern.CASE_INSENSITIVE);
+        return smallTalk;
+    }
 
     /** 純寒暄（你好、謝謝…）：不用問路由，直接聊天。路由的提示詞很長（App 清單、筆記），一句「你好」也要等好幾秒（使用者回報）。 */
     static boolean isSmallTalk(String text) {
-        return text != null && SMALL_TALK.matcher(text.trim()).matches();
+        return text != null && smallTalk().matcher(simplify(text.trim())).matches();
     }
 
     /** 回傳判斷結果；Key 讀不到、網路失敗、回答看不懂回 null（呼叫端改用聊天）。 */
