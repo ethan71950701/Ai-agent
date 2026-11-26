@@ -364,60 +364,32 @@ final class FileTools {
 
     /** 找到這台已配對裝置現在的位址，回傳可用的客戶端。 */
     static TransferClient clientFor(Context c, TransferStore.Peer p) throws Exception {
-        // 順序：1) 區網搜尋（在同一個 Wi‑Fi 最快）  2) Tailscale 位址（外網）  3) 上次記住的區網位址
-        List<TransferStore.Peer> one = new ArrayList<>();
+        // 找對方的判斷順序在 PeerFinder（可以用假的網路測試）；這裡只接上真的網路、推播、Tailscale
+        final List<TransferStore.Peer> one = new ArrayList<>();
         one.add(p);
         TransferNotify.phase(c, L.t("正在找：") + p.name, L.t("找對方"));
-        { TransferStore.Peer q = freshPeer(c, p); TransferStore.log(c, "找對方：" + q.name + "｜記下的區網位址 " + q.ip + ":" + q.port + "｜Tailscale " + q.tsIp + ":" + q.tsPort + "｜我的區網 " + FcmLab.lanNet()); }
-        TransferDiscovery.Found f = TransferDiscovery.scan(p.id, 1200, TransferDiscovery.PORT, extra(one)).get(p.id);
-        if (f == null) TransferStore.log(c, "廣播搜尋沒找到：" + p.name);
-        if (f == null) f = directLan(c, p);   // 區網「廣播搜尋」被擋（路由器、省電、螢幕關著的手機常會丟掉廣播封包）時，直接連上次記下的區網位址
-        if (f == null && FcmLab.canRing(c, p) && !(p.tsIp != null && p.tsPort > 0 && canPing(c, p, p.tsIp, p.tsPort))) {
-            final boolean remoteNow = FcmLab.isRemote(FcmLab.lanNet(), p.ip) || !TailscaleControl.isOn();   // 區網（廣播、記下的位址、掃網段）都找不到、Tailscale 又沒開：兩邊的網段可能剛好一樣（例如都是 192.168.1.x 但不是同一台路由器），也當作在外面，主動開 Tailscale   // 沒連 Wi-Fi、或連的是另一個網路：都要走 Tailscale
-            if (remoteNow && !TailscaleControl.isOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
-                TransferNotify.phase(c, L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
+        PeerFinder.Result res = PeerFinder.find(new PeerFinder.Env() {
+            @Override public TransferDiscovery.Found scan(int timeoutMs) { return TransferDiscovery.scan(p.id, timeoutMs, TransferDiscovery.PORT, extra(one)).get(p.id); }
+            @Override public TransferDiscovery.Found directLan() { return FileTools.directLan(c, p); }
+            @Override public boolean canRing() { return FcmLab.canRing(c, p); }
+            @Override public boolean ping(TransferStore.Peer peer, String ip, int port) { return canPing(c, peer, ip, port); }
+            @Override public TransferStore.Peer fresh() { return freshPeer(c, p); }
+            @Override public String lanNet() { return FcmLab.lanNet(); }
+            @Override public boolean tailscaleOn() { return TailscaleControl.isOn(); }
+            @Override public void turnOnTailscale() {
                 StringBuilder tsLog = new StringBuilder();
                 boolean tsOk = TailscaleControl.turnOnForSession(c, 12000, tsLog);
                 TransferStore.log(c, "自動開 Tailscale：" + (tsOk ? "成功" : "失敗") + "｜" + tsLog.toString().trim().replace('\n', ' '));   // 診斷：沒裝、沒 root、或廣播送出了但沒連上
             }
-            TransferNotify.phase(c, L.t("對方沒回應，正在用推播叫醒：") + p.name, L.t("叫醒中"));   // 不在 Wi-Fi 上、又知道對方的 Tailscale 位址：先把自己的 Tailscale 開起來
-            // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現（最多約 15 秒）。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
-            String err = FcmLab.wake(c, p);
-            if (err == null) {
-                long t0 = System.currentTimeMillis(), until = t0 + (remoteNow ? 45000 : 25000), nextRing = t0 + 8000;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
-                while (f == null && System.currentTimeMillis() < until) {
-                    if (TransferNotify.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
-                    f = TransferDiscovery.scan(p.id, 1500, TransferDiscovery.PORT, extra(one)).get(p.id);
-                    if (f == null) f = directLan(c, p);   // 對方伺服器開好了，但廣播沒回應：每一輪也直接連連看
-                    TransferStore.Peer now = freshPeer(c, p);   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
-                    if (f == null && now.tsIp != null && now.tsPort > 0 && canPing(c, now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走原本的 Tailscale 路徑
-                    if (f == null && System.currentTimeMillis() >= nextRing && System.currentTimeMillis() < until - 4000) {
-                        FcmLab.wake(c, p);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
-                        nextRing += 8000;
-                    }
-                }
-            } else {
-                TransferStore.log(c, L.t("推播叫醒失敗：") + err + (FcmLab.tokenGone(err) ? L.t("（對方的 token 已失效；兩支手機都在線的時候會自動更新，也可以在「推播喚醒設定」重新互換）") : ""));
-            }
-        }
-        String ip;
-        int port;
-        boolean verified = true;   // 這個位址是掃描找到或剛連得上的
-        final TransferStore.Peer cur = freshPeer(c, p);
-        if (f != null) {
-            ip = f.ip;
-            port = f.port;
-        } else if (cur.tsIp != null && cur.tsPort > 0 && canPing(c, cur, cur.tsIp, cur.tsPort)) {
-            ip = cur.tsIp;
-            port = cur.tsPort;
-        } else {
-            ip = p.ip;
-            port = p.port;
-            verified = false;   // 區網找不到、Tailscale 也不通：只剩上次記下的位址，還沒確認對方在不在
-        }
-        if (ip == null || port == 0) throw new Exception("找不到「" + p.name + "」：可能沒開機、沒開互傳，或不在同一個 Wi-Fi（外網請確認 Tailscale 都在線）");
-        if (!verified && !canPing(c, p, ip, port))   // 對方沒回應就直接說，不要先顯示「已連上」再傳到一半才失敗
-            throw new Exception("找不到「" + p.name + "」：它沒有回應。可能已經關機或沒電、手機沒網路、或不在同一個 Wi-Fi（外網請確認兩邊 Tailscale 都登入）");
+            @Override public String wake() { return FcmLab.wake(c, p); }
+            @Override public long now() { return System.currentTimeMillis(); }
+            @Override public boolean stopRequested() { return TransferNotify.stopRequested(); }
+            @Override public void log(String line) { TransferStore.log(c, line); }
+            @Override public void phase(String text, String chip) { TransferNotify.phase(c, text, chip); }
+        }, p);
+        final String ip = res.ip;
+        final int port = res.port;
+        final TransferDiscovery.Found f = res.found;
         if (f != null) {
             TransferStore.updateAddress(c, p.id, ip, port);
             TransferStore.updateName(c, p.id, f.name);

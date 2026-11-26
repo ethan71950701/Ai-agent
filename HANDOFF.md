@@ -123,6 +123,7 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 | 錯誤紀錄（`CrashLog`） | 🟡 | | #234 |
 | 安全與穩定性審查 | ✅ CI／🟡 手機行為 | 2026-11-19、11-20 兩輪；2026-11-26 code review 10 項 | #327 #348 #357 |
 | 第二輪程式檢查（2026-11-26，核心：自動操作、互傳、更新）：①`open` 動作的套件名稱只收字母數字點底線（以前模型被畫面文字誘導可以夾帶任意 root 指令） ②傳訊息任務裡「輸入＋Enter 一步做完」（type 帶 enter、batch）也先問「要送出嗎」 ③自動操作的 `search` 結果當不可信內容（之後只給唯讀聊天工具） ④唯讀 shell 的 grep 擋 `-ER`／`-Er`（以前跟 -E 寫在一起就放行，root 從根目錄遞迴搜會讀到金鑰檔） ⑤**互傳協定**：回應改用另一把金鑰（`TransferCrypto.respKey`，請求網址帶已簽章的 `dk=1`、伺服器回 `X-Dk: 1`），修 AES-GCM 金鑰＋IV 重複；舊版手機與 Windows 版照舊相容；Windows 版（Python）同步改，`tests/test_dk.py` 測了新對新、新對舊、舊對新 ⑥完整 APK 也核對 SHA256SUMS（以前只有增量會核對） ⑦配對回應的裝置名稱去換行 ⑧FCM／外網診斷與更新紀錄的文字加翻譯。**沒改（記下來）**：配對碼 6 位數可被中間人暴力配出（要改協定加「先承諾公鑰」，Windows 版也要改，之後再做）；`read_url` 的 DNS rebinding（推測：Android 的位址快取約 2 秒，檢查與連線通常拿到同一個結果，沒驗證）；`windows-transfer/tests/test_interop.py` 早就壞了（只編譯幾個 Java 檔，伺服器現在依賴 org.json、FCM 等），不是這次造成的 | 🟡 編譯與全部單元測試通過（新增 `ReviewFixesTest`；互傳往返 27 項）；手機未測 | 要測：兩支都更新後互傳（新對新）；只更新一支時也要能傳（新對舊） |
+| 單元測試補強（2026-11-26）：找對方的判斷順序從 `FileTools.clientFor` 抽成 `PeerFinder`（網路、推播、Tailscale、時鐘都經過 `PeerFinder.Env`，行為跟原本一樣），`PeerFinderTest` 用假的網路與時鐘走 11 種情況（廣播找到、廣播被擋改直接連、記下的 Tailscale 通、**不同路由器同網段→開 Tailscale＋叫醒＋等對方回報**、同 Wi-Fi 等 25 秒並每 8 秒補推播、外網等 45 秒、推播失敗、叫不醒、沒有任何位址、按停止、等待中區網出現）；`ConfirmRulesTest`（確認框請求互不干擾、讀過外人內容後只給唯讀工具）；`ReviewFixesTest`。全部 320 項通過 | ✅ 單元測試（不需要手機） | 之後改互傳找對方的流程，先改 `PeerFinder` 並補測試情境 |
 | 已放棄／不做 | — | 頂欄毛玻璃 ❌（使用者拿掉）；Gemini computer-use ⏸；本機 2B 模型、Termux 腳本（全部被 App 取代） | #1–#26 #221–#223 #266 #360 |
 
 ## 7. 重要決策與理由（現行）
@@ -167,7 +168,7 @@ Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](d
 3. **MCP 會寫入的工具**：叫 AI 在 Notion 新增一筆，確認框要先出現、按「否」不能建立。
 4. 遊戲沒有元件清單：考慮本機 OCR（ML Kit）。
 5. 提醒的查詢、修改、刪除走 AppFunctions（`docs/APP_FUNCTIONS.md`，要使用者在手機掃參數名稱）。
-6. 拆大檔案（`MainActivity` 很大）；補互傳找對方流程的單元測試。
+6. 拆大檔案（`MainActivity` 很大）。
 
 ## 11b. 開發環境備註（Claude Code 雲端）
 
