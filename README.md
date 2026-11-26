@@ -18,7 +18,13 @@
 
 > 「去蝦皮搜尋耳機」「幫我開藍牙」「用 Instagram 傳訊息給小明說我晚點到」「明天有什麼行程？」「把相簿裡那張課表記起來」
 
-<p align="center"><img src="docs/images/demo.gif" alt="示範：說「幫我去蝦皮搜尋耳機」，它自己開蝦皮並搜尋" width="300"><br><sub>示範：對它說「幫我去蝦皮搜尋耳機」，它自己開蝦皮、輸入、搜尋（實際錄影，已加速等待的部分）</sub></p>
+<table align="center">
+<tr>
+<td align="center" width="50%"><img src="docs/images/demo-1-say.webp" alt="示範第一段：叫出面板並說話" width="300"><br><sub>1. 叫出面板，說一句話</sub></td>
+<td align="center" width="50%"><img src="docs/images/demo-2-act.webp" alt="示範第二段：自己開蝦皮並搜尋" width="300"><br><sub>2. 它自己開蝦皮、輸入、搜尋</sub></td>
+</tr>
+</table>
+<p align="center"><sub>實際錄影。中間約 8 秒 AI 在思考、畫面沒有動作，已剪掉。</sub></p>
 
 <p align="center"><img src="docs/images/flow.svg" alt="運作流程" width="100%"></p>
 

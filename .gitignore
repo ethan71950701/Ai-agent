@@ -26,3 +26,4 @@ android-overlay/app/src/main/jniLibs/
 # README 用的圖（自己畫的 SVG；截圖要先確認沒有個人資料才放）
 !docs/images/*.png
 !docs/images/*.gif
+!docs/images/*.webp
