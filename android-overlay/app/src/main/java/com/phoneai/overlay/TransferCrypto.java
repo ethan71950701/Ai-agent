@@ -75,6 +75,20 @@ final class TransferCrypto {
         return hmac(key, "enc|" + nonce);
     }
 
+    /**
+     * 回應用的內容金鑰（跟請求本文分開）：請求本文與回應都用同一把金鑰時，兩邊的區塊編號都從 0 開始，
+     * AES-GCM 的金鑰＋IV 會重複（例如 PUT 只有一個區塊、回應也只有一個區塊），竊聽者能把兩段密文互相抵消。
+     * 新版請求在網址加上已簽章的 dk=1，伺服器看到就改用這把金鑰回應，並在標頭回 X-Dk: 1；舊版兩邊都照舊（相容）。
+     */
+    static byte[] respKey(byte[] key, String nonce) {
+        return hmac(key, "resp|" + nonce);
+    }
+
+    /** 純邏輯：在請求網址加上 dk=1（要在簽章之前加，簽章才涵蓋它）。 */
+    static String withDk(String target) {
+        return target + (target.indexOf('?') >= 0 ? "&" : "?") + "dk=1";
+    }
+
     // ---------- 配對 ----------
 
     static KeyPair newPair() throws GeneralSecurityException {

@@ -94,6 +94,7 @@ final class TransferClient {
 
     /** 寫出帶簽章的請求標頭；回傳這個請求的隨機數（內容加密金鑰由它衍生）。 */
     private String writeHead(OutputStream out, String method, String target) throws IOException {
+        target = TransferCrypto.withDk(target);   // 請對方用另一把金鑰回應（見 TransferCrypto.respKey）
         String ts = String.valueOf(System.currentTimeMillis() / 1000), nonce = TransferCrypto.hex(TransferCrypto.random(12));
         String sig = TransferCrypto.sign(key, method, target, ts, nonce);
         String myTs = localTailnetIp();   // 自己的 Tailscale 位址（有開 Tailscale 才有）：對方記下來，換網路後也連得回來
@@ -101,6 +102,11 @@ final class TransferClient {
                 + "\r\nX-Name: " + enc(myName) + "\r\nX-Sig: " + sig
                 + (myTs == null ? "" : "\r\nX-Tailnet: " + myTs) + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
         return nonce;
+    }
+
+    /** 回應的解密金鑰：對方回了 X-Dk: 1 就是新版的回應金鑰，沒回（舊版）就跟請求本文同一把。 */
+    private byte[] respKeyFor(Map<String, String> h, String nonce) {
+        return "1".equals(h.get("x-dk")) ? TransferCrypto.respKey(key, nonce) : TransferCrypto.encKey(key, nonce);
     }
 
     /** 讀回應標頭；狀態不是 200 就把內容當錯誤訊息丟出去。 */
@@ -191,8 +197,8 @@ final class TransferClient {
             }
             out.flush();
             InputStream in = new BufferedInputStream(s.getInputStream());
-            readStatus(in);
-            try (InputStream r = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+            Map<String, String> rh = readStatus(in);
+            try (InputStream r = new TransferCrypto.OpenedIn(in, respKeyFor(rh, nonce))) {
                 return "accepted".equals(new String(readAll(r), StandardCharsets.UTF_8).trim());
             }
         }
@@ -208,8 +214,8 @@ final class TransferClient {
             String nonce = writeHead(out, "GET", target);
             out.flush();
             InputStream in = new BufferedInputStream(s.getInputStream());
-            readStatus(in);
-            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+            Map<String, String> rh = readStatus(in);
+            try (InputStream body = new TransferCrypto.OpenedIn(in, respKeyFor(rh, nonce))) {
                 return new String(readAll(body), StandardCharsets.UTF_8);
             }
         }
@@ -289,7 +295,7 @@ final class TransferClient {
             }
             long done = have;
             if (cb != null) cb.onBytes(done, total);
-            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce));
+            try (InputStream body = new TransferCrypto.OpenedIn(in, respKeyFor(h, nonce));
                  FileOutputStream fo = new FileOutputStream(tmp, have > 0)) {
                 byte[] buf = new byte[32 * 1024];
                 int n;
@@ -507,8 +513,8 @@ final class TransferClient {
             final String full = Checksum.hex(md.digest());
             bodySha = full;
             InputStream in = new BufferedInputStream(s.getInputStream());
-            readStatus(in);
-            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+            Map<String, String> rh = readStatus(in);
+            try (InputStream body = new TransferCrypto.OpenedIn(in, respKeyFor(rh, nonce))) {
                 String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
                 lastSha = full;
                 lastVerified = p.length > 3 && !p[3].trim().isEmpty();
@@ -560,8 +566,8 @@ final class TransferClient {
             }
             out.flush();
             InputStream in = new BufferedInputStream(s.getInputStream());
-            readStatus(in);
-            try (InputStream body = new TransferCrypto.OpenedIn(in, TransferCrypto.encKey(key, nonce))) {
+            Map<String, String> rh = readStatus(in);
+            try (InputStream body = new TransferCrypto.OpenedIn(in, respKeyFor(rh, nonce))) {
                 String[] p = new String(readAll(body), StandardCharsets.UTF_8).split("\t");
                 lastSha = Checksum.hex(md.digest());
                 lastVerified = p.length > 3 && !p[3].trim().isEmpty();

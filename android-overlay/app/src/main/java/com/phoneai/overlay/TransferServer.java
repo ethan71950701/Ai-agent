@@ -235,6 +235,7 @@ final class TransferServer {
 
             Auth au = authenticate(method, target, h);
             if (au == null) { fail(ip); reply(out, 401, "unauthorized"); return; }
+            au.dk = "1".equals(params.get("dk"));   // dk 在網址裡，已被簽章涵蓋
             host.peerSeen(au.peer, ip);
             String myTailnet = h.get("x-tailnet");   // 對方自己的 Tailscale 位址：已驗證，記下來
             if (myTailnet != null && isTailnetString(myTailnet)) host.peerSeen(au.peer, myTailnet);
@@ -349,6 +350,12 @@ final class TransferServer {
         String peer;
         byte[] key;
         String nonce;
+        boolean dk;   // 對方是新版（請求網址帶已簽章的 dk=1）：回應用另一把金鑰，標頭回 X-Dk: 1
+
+        /** 回應的加密金鑰（跟請求本文分開，避免 AES-GCM 金鑰＋IV 重複）。 */
+        byte[] respKey() { return dk ? TransferCrypto.respKey(key, nonce) : TransferCrypto.encKey(key, nonce); }
+
+        String dkHeader() { return dk ? "X-Dk: 1\r\n" : ""; }
     }
 
     private Auth authenticate(String method, String target, Map<String, String> h) {
@@ -396,21 +403,21 @@ final class TransferServer {
     }
 
     private static void sendText(OutputStream out, Auth au, String text) throws IOException {
-        out.write("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nConnection: close\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
-        try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(au.key, au.nonce))) {
+        out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n" + au.dkHeader() + "Connection: close\r\n\r\n").getBytes(StandardCharsets.ISO_8859_1));
+        try (TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, au.respKey())) {
             so.write(text.getBytes(StandardCharsets.UTF_8));
         }
         out.flush();
     }
 
     private void sendFile(OutputStream out, Auth au, File f, long offset) throws IOException {
-        out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: " + f.length() + "\r\nX-Offset: " + offset + "\r\nConnection: close\r\n\r\n")
+        out.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: " + f.length() + "\r\nX-Offset: " + offset + "\r\n" + au.dkHeader() + "Connection: close\r\n\r\n")
                 .getBytes(StandardCharsets.ISO_8859_1));
         long total = offset;
         java.security.MessageDigest md = Checksum.newDigest();   // 邊送邊算整檔校驗碼；送完存起來，對方之後來問就不用再讀一遍（只有從頭送才算得出整檔的）
         final long lenAtStart = f.length(), mtimeAtStart = f.lastModified();
         try (InputStream fin = new FileInputStream(f);
-             TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, TransferCrypto.encKey(au.key, au.nonce))) {
+             TransferCrypto.SealedOut so = new TransferCrypto.SealedOut(out, au.respKey())) {
             long skipped = 0;
             while (skipped < offset) {   // 續傳：跳過對方已經有的部分
                 long k = fin.skip(offset - skipped);
@@ -731,7 +738,7 @@ final class TransferServer {
         byte[] shared = TransferCrypto.shared(mine.getPrivate(), theirPub);
         String tr = TransferCrypto.transcript(id, theirPub, host.myId(), myPub);
         host.pairRequest(id, name == null ? id : name, TransferCrypto.pairKey(shared, tr), TransferCrypto.sas(shared, tr));
-        reply(out, 200, "id=" + host.myId() + "\nname=" + host.myName() + "\npub=" + TransferCrypto.hex(myPub));
+        reply(out, 200, "id=" + host.myId() + "\nname=" + host.myName().replace('\n', ' ').replace('\r', ' ') + "\npub=" + TransferCrypto.hex(myPub));   // 名稱裡的換行會被當成另一行（例如假的 pub=）
     }
 
     // ---------- 小工具 ----------

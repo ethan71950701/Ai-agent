@@ -52,7 +52,7 @@ final class Updater {
                 String shown = remote > 0 ? "1.0." + remote : sha.substring(0, Math.min(7, sha.length()));
                 boolean newer = remote > 0 ? remote > BuildConfig.VERSION_CODE
                         : !(installed != null && !installed.equals("dev") && !sha.isEmpty() && sha.startsWith(installed));
-                note(a, "手動檢查：最新 " + shown + "，目前 1.0." + BuildConfig.VERSION_CODE + (newer ? "，有新版本" : "，已是最新"));
+                note(a, L.t("手動檢查：最新 ") + shown + L.t("，目前 1.0.") + BuildConfig.VERSION_CODE + (newer ? L.t("，有新版本") : L.t("，已是最新")));
                 if (!newer) {
                     done(a, L.t("已是最新版本（1.0.") + BuildConfig.VERSION_CODE + L.t("）"));
                     return;
@@ -72,7 +72,7 @@ final class Updater {
                     }
                 }
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
-                note(a, "手動檢查：最新 " + shown + "，目前 1.0." + BuildConfig.VERSION_CODE + "，有新版本｜補丁 " + (pUrl != null ? "有" : "沒有") + "、區塊檔 " + (bUrl != null ? "有" : "沒有") + "、校驗碼 " + (sUrl != null ? "有" : "沒有"));
+                note(a, L.t("手動檢查：最新 ") + shown + L.t("，目前 1.0.") + BuildConfig.VERSION_CODE + L.t("，有新版本｜補丁 ") + (pUrl != null ? L.t("有") : L.t("沒有")) + L.t("、區塊檔 ") + (bUrl != null ? L.t("有") : L.t("沒有")) + L.t("、校驗碼 ") + (sUrl != null ? L.t("有") : L.t("沒有")));
                 final String v = shown;
                 final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl, blocksUrl = bUrl;
                 busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）
@@ -99,7 +99,7 @@ final class Updater {
                   }
                 });
             } catch (Exception e) {
-                note(a, "手動檢查失敗：" + e);
+                note(a, L.t("手動檢查失敗：") + e);
                 done(a, L.t("檢查失敗：") + e.getMessage());
             }
         }).start();
@@ -145,7 +145,7 @@ final class Updater {
                 JSONObject rel = latest();
                 long remote = rel == null ? 0 : runOf(rel.optString("tag_name"));
                 boolean newer = remote > BuildConfig.VERSION_CODE;
-                note(a, "自動檢查：最新 1.0." + remote + "，目前 1.0." + BuildConfig.VERSION_CODE + (newer ? "，有新版本" : "，已是最新"));
+                note(a, L.t("自動檢查：最新 1.0.") + remote + L.t("，目前 1.0.") + BuildConfig.VERSION_CODE + (newer ? L.t("，有新版本") : L.t("，已是最新")));
                 if (!newer || a.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
                 NotificationManager nm = a.getSystemService(NotificationManager.class);
                 nm.createNotificationChannel(new NotificationChannel("update_notice", L.t("有新版本"), NotificationManager.IMPORTANCE_DEFAULT));
@@ -159,7 +159,7 @@ final class Updater {
                         .setAutoCancel(true)
                         .build());
             } catch (Exception e) {
-                note(a, "自動檢查失敗：" + e);
+                note(a, L.t("自動檢查失敗：") + e);
             }
         }, "update-auto").start();
     }
@@ -199,6 +199,14 @@ final class Updater {
                         }
                         setProg(a, L.t("下載 ") + v + "：" + pct + "%" + (total > 0 ? String.format(java.util.Locale.US, "（%.1f / %.1f MB）", got / 1048576f, total / 1048576f) : ""), pct, false);
                     }
+                }
+            }
+            if (!delta && sumsUrl != null) {   // 完整 APK（新下載的、或沿用上次留下的）也要核對 Release 的 SHA-256：下載不完整、或舊檔剛好一樣大，都不能拿去裝
+                String want = null;
+                try { want = wantedSha(sumsUrl); } catch (Exception ignored) { }   // 抓不到校驗碼：照舊（不因為 SHA256SUMS 暫時抓不到就擋住更新）
+                if (want != null && !want.equalsIgnoreCase(Checksum.sha256(out))) {
+                    out.delete();
+                    throw new Exception(L.t("下載的檔案校驗碼不符（可能不完整），已刪除，請再試一次"));
                 }
             }
             if (!Root.isRoot()) {   // 沒有 root：交給系統安裝程式，使用者按一下「安裝」
@@ -254,10 +262,10 @@ final class Updater {
             setProg(a, L.t("拼出新版本…"), 100, true);
             nm.notify(NOTE, progress(a, L.t("拼出新版本…"), 100, true));
             boolean ok = DeltaPatch.applyFiles(new File(ai.sourceDir), patch, out, want);
-            note(a, "增量更新：" + (ok ? "成功（補丁 " + patch.length() / 1024 + " KB）" : "拼出來的檔案核對不符，改下載完整 APK"));
+            note(a, L.t("增量更新：") + (ok ? L.t("成功（補丁 ") + patch.length() / 1024 + " KB）" : L.t("拼出來的檔案核對不符，改下載完整 APK")));
             return ok;
         } catch (Throwable t) {
-            note(a, "增量更新失敗，改下載完整 APK：" + t);
+            note(a, L.t("增量更新失敗，改下載完整 APK：") + t);
             return false;
         } finally {
             patch.delete();
@@ -331,7 +339,7 @@ final class Updater {
             int[] src = BlockSync.plan(old, ctl);
             java.util.List<long[]> ranges = BlockSync.ranges(ctl, src, 64 * 1024);
             long need = BlockSync.totalBytes(ranges);
-            if (need > ctl.size / 2 || ranges.size() > 200) { note(a, "區塊增量：要下載 " + need / 1024 + " KB，不划算，改下載完整 APK"); return false; }
+            if (need > ctl.size / 2 || ranges.size() > 200) { note(a, L.t("區塊增量：要下載 ") + need / 1024 + L.t(" KB，不划算，改下載完整 APK")); return false; }
             String finalUrl = resolveFinal(apkUrl);
             java.util.List<byte[]> data = new java.util.ArrayList<>();
             long got = 0;
@@ -355,11 +363,11 @@ final class Updater {
             for (byte b : md.digest()) sb.append(String.format(java.util.Locale.US, "%02x", b));
             boolean ok = sb.toString().equalsIgnoreCase(want) && out.length() == ctl.size;
             if (!ok) out.delete();
-            note(a, "區塊增量：" + (ok ? "成功（下載 " + need / 1024 + " KB，共 " + ranges.size() + " 段）" : "拼出來的檔案核對不符，改下載完整 APK"));
+            note(a, L.t("區塊增量：") + (ok ? L.t("成功（下載 ") + need / 1024 + L.t(" KB，共 ") + ranges.size() + L.t(" 段）") : L.t("拼出來的檔案核對不符，改下載完整 APK")));
             return ok;
         } catch (Throwable t) {
             out.delete();
-            note(a, "區塊增量失敗，改下載完整 APK：" + t);
+            note(a, L.t("區塊增量失敗，改下載完整 APK：") + t);
             return false;
         }
     }

@@ -402,27 +402,27 @@ final class FcmLab {
 
     static String describe(String cls) {
         switch (cls) {
-            case "ok": return "✅ 連得上";
-            case "refused": return "對方回「拒絕」（網路通，但互傳伺服器沒在跑）";
-            case "timeout": return "逾時";
-            case "noroute": return "沒有路由";
-            default: return "失敗";
+            case "ok": return L.t("✅ 連得上");
+            case "refused": return L.t("對方回「拒絕」（網路通，但互傳伺服器沒在跑）");
+            case "timeout": return L.t("逾時");
+            case "noroute": return L.t("沒有路由");
+            default: return L.t("失敗");
         }
     }
 
     /** 外網連線檢查：本機 Tailscale、對方的位址紀錄、實際連一次，並依失敗類型說明斷在哪一環。要在背景執行緒呼叫。 */
     static String diagnoseRemote(Context c, TransferStore.Peer p) {
         StringBuilder sb = new StringBuilder();
-        sb.append("對象：").append(p.name).append('\n');
+        sb.append(L.t("對象：")).append(p.name).append('\n');
         String mine = TransferClient.localTailnetIp();
-        sb.append("1. 本機 Tailscale：").append(mine != null ? "✅ 開著（" + mine + "）" : "❌ 沒開（外網要先開；可按「測試開關 Tailscale」確認這支手機開得起來）").append('\n');
+        sb.append(L.t("1. 本機 Tailscale：")).append(mine != null ? L.t("✅ 開著（") + mine + "）" : L.t("❌ 沒開（外網要先開；可按「測試開關 Tailscale」確認這支手機開得起來）")).append('\n');
         String lan = lanIp();
-        sb.append("2. 本機網路：").append(lan != null ? "Wi-Fi（" + lan + "）" : "行動數據或沒有 Wi-Fi").append('\n');
-        sb.append("3. 對方的 Tailscale 位址紀錄：").append(p.tsIp != null ? "✅ " + p.tsIp + ":" + p.tsPort : "❌ 沒有").append('\n');
-        sb.append("4. 對方的區網位址紀錄：").append(p.ip != null ? p.ip + ":" + p.port : "沒有").append('\n');
-        sb.append("5. 對方的推播 token：").append(p.fcmToken != null ? "✅ 有（沒開互傳時可以叫醒它）" : "❌ 沒有（沒辦法叫醒它，對方的互傳頁面要自己開著）").append('\n');
+        sb.append(L.t("2. 本機網路：")).append(lan != null ? "Wi-Fi（" + lan + "）" : L.t("行動數據或沒有 Wi-Fi")).append('\n');
+        sb.append(L.t("3. 對方的 Tailscale 位址紀錄：")).append(p.tsIp != null ? L.t("✅ ") + p.tsIp + ":" + p.tsPort : L.t("❌ 沒有")).append('\n');
+        sb.append(L.t("4. 對方的區網位址紀錄：")).append(p.ip != null ? p.ip + ":" + p.port : L.t("沒有")).append('\n');
+        sb.append(L.t("5. 對方的推播 token：")).append(p.fcmToken != null ? L.t("✅ 有（沒開互傳時可以叫醒它）") : L.t("❌ 沒有（沒辦法叫醒它，對方的互傳頁面要自己開著）")).append('\n');
         if (p.tsIp == null || p.tsPort <= 0) {
-            sb.append("→ 沒有對方的 Tailscale 位址：要先在家讓兩台**同時開著 Tailscale**，各自開互傳頁連一次，才會記下來。\n");
+            sb.append(L.t("→ 沒有對方的 Tailscale 位址：要先在家讓兩台**同時開著 Tailscale**，各自開互傳頁連一次，才會記下來。\n"));
             return sb.toString();
         }
         long t0 = System.currentTimeMillis();
@@ -438,34 +438,34 @@ final class FcmLab {
             case "ok": {
                 boolean ping = false;
                 try { new TransferClient(p.tsIp, p.tsPort, TransferStore.myId(c), TransferStore.myName(c), p.key).ping(); ping = true; } catch (Exception ignored) { }
-                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：✅ 連得上（").append(ms).append(" 毫秒）\n");
-                sb.append(ping ? "7. 互傳伺服器有回應 ✅ → 外網是通的，可以直接傳檔案\n"
-                        : "7. ❌ 連得上埠，但伺服器沒有正常回應（驗證失敗？對方的程式版本太舊？）：先把兩支都更新到最新版\n");
+                sb.append(L.t("6. 直接連 ")).append(p.tsIp).append(":").append(p.tsPort).append(L.t("：✅ 連得上（")).append(ms).append(L.t(" 毫秒）\n"));
+                sb.append(ping ? L.t("7. 互傳伺服器有回應 ✅ → 外網是通的，可以直接傳檔案\n")
+                        : L.t("7. ❌ 連得上埠，但伺服器沒有正常回應（驗證失敗？對方的程式版本太舊？）：先把兩支都更新到最新版\n"));
                 break;
             }
             case "refused":
-                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：對方拒絕連線\n");
-                sb.append("→ 對方的 Tailscale 通了，**但它的互傳伺服器沒在跑**。").append(p.fcmToken != null ? "要靠推播叫醒它（傳檔案時會自動做）；叫不醒就看「測試叫醒對方」的診斷。" : "沒有它的推播 token，沒辦法叫醒：請在那支手機打開互傳頁面，或補互換 token。").append('\n');
+                sb.append(L.t("6. 直接連 ")).append(p.tsIp).append(":").append(p.tsPort).append(L.t("：對方拒絕連線\n"));
+                sb.append(L.t("→ 對方的 Tailscale 通了，**但它的互傳伺服器沒在跑**。")).append(p.fcmToken != null ? L.t("要靠推播叫醒它（傳檔案時會自動做）；叫不醒就看「測試叫醒對方」的診斷。") : L.t("沒有它的推播 token，沒辦法叫醒：請在那支手機打開互傳頁面，或補互換 token。")).append('\n');
                 break;
             case "timeout":
-                sb.append("6. 直接連 ").append(p.tsIp).append(":").append(p.tsPort).append("：逾時（").append(ms).append(" 毫秒）\n");
+                sb.append(L.t("6. 直接連 ")).append(p.tsIp).append(":").append(p.tsPort).append(L.t("：逾時（")).append(ms).append(L.t(" 毫秒）\n"));
                 // 逾時代表封包沒到對方（對方的 Tailscale 通的話，埠沒人聽會立刻被拒絕）。再用更久的時間試一次，看是不是第一次連線建立路徑太慢；也試對方的區網位址，看它醒著沒、在不在同一個網路
                 String retry = probe(p.tsIp, p.tsPort, 15000);
-                sb.append("   再試一次（等最多 15 秒）：").append(describe(retry)).append('\n');
-                if (p.ip != null) sb.append("   對方的區網位址 ").append(p.ip).append(":").append(p.port).append("：").append(describe(probe(p.ip, p.port, 4000))).append('\n');
+                sb.append(L.t("   再試一次（等最多 15 秒）：")).append(describe(retry)).append('\n');
+                if (p.ip != null) sb.append(L.t("   對方的區網位址 ")).append(p.ip).append(":").append(p.port).append("：").append(describe(probe(p.ip, p.port, 4000))).append('\n');
                 if ("ok".equals(retry) || "refused".equals(retry)) {
-                    sb.append("→ 第二次通了：是第一次連線在建立路徑，比較慢；實際傳檔案時 App 會等得比較久。\n");
+                    sb.append(L.t("→ 第二次通了：是第一次連線在建立路徑，比較慢；實際傳檔案時 App 會等得比較久。\n"));
                     break;
                 }
-                sb.append("→ 兩次都逾時：封包到不了對方，或對方沒有回應。**對方的 Tailscale 可能被系統凍住**（App 顯示開著、其實不處理封包）：到對方手機給 Tailscale「自啟動」「電池無限制」並在最近工作清單鎖定它，再試。\n   ");
-                sb.append("請到對方手機打開 Tailscale，看它自己的位址是不是 ").append(p.tsIp).append("（不一樣就是我們記的過期了：兩台同時開著 Tailscale，各自開互傳頁連一次就會更新）；也請讓對方螢幕亮著再檢查一次，看是不是它休眠。\n");
-                sb.append("→ 連不到對方：最常見是**對方的 Tailscale 沒開**（平常關著的話就是這樣）、或兩台不在同一個 Tailscale 帳號。").append(p.fcmToken != null ? "傳檔案時 App 會先叫醒對方並請它開 Tailscale（要 root，也要給 Tailscale 自啟動）。" : "沒有它的推播 token，沒辦法請它開：請在那支手機手動開 Tailscale。").append('\n');
+                sb.append(L.t("→ 兩次都逾時：封包到不了對方，或對方沒有回應。**對方的 Tailscale 可能被系統凍住**（App 顯示開著、其實不處理封包）：到對方手機給 Tailscale「自啟動」「電池無限制」並在最近工作清單鎖定它，再試。\n   "));
+                sb.append(L.t("請到對方手機打開 Tailscale，看它自己的位址是不是 ")).append(p.tsIp).append(L.t("（不一樣就是我們記的過期了：兩台同時開著 Tailscale，各自開互傳頁連一次就會更新）；也請讓對方螢幕亮著再檢查一次，看是不是它休眠。\n"));
+                sb.append(L.t("→ 連不到對方：最常見是**對方的 Tailscale 沒開**（平常關著的話就是這樣）、或兩台不在同一個 Tailscale 帳號。")).append(p.fcmToken != null ? L.t("傳檔案時 App 會先叫醒對方並請它開 Tailscale（要 root，也要給 Tailscale 自啟動）。") : L.t("沒有它的推播 token，沒辦法請它開：請在那支手機手動開 Tailscale。")).append('\n');
                 break;
             case "noroute":
-                sb.append("6. 直接連 ").append(p.tsIp).append("：沒有路由\n→ 本機的 Tailscale 沒開或沒連上，先把本機的 Tailscale 開起來。\n");
+                sb.append(L.t("6. 直接連 ")).append(p.tsIp).append(L.t("：沒有路由\n→ 本機的 Tailscale 沒開或沒連上，先把本機的 Tailscale 開起來。\n"));
                 break;
             default:
-                sb.append("6. 直接連 ").append(p.tsIp).append("：失敗（原因不明）\n");
+                sb.append(L.t("6. 直接連 ")).append(p.tsIp).append(L.t("：失敗（原因不明）\n"));
         }
         return sb.toString();
     }
@@ -473,28 +473,28 @@ final class FcmLab {
     /** 逐步診斷「叫醒對方」：每一步的結果都寫出來（不含 token 全文與金鑰），看是哪一步斷掉。回傳多行文字。 */
     static String diagnoseWake(Context c, TransferStore.Peer p) {
         StringBuilder sb = new StringBuilder();
-        sb.append("對象：").append(p.name).append("（編號 ").append(p.id.length() > 8 ? p.id.substring(0, 8) : p.id).append("，上次的位址 ").append(p.ip == null ? "未知" : p.ip).append("）\n");
-        sb.append("1. 對方的 token：").append(p.fcmToken == null ? "❌ 沒有（先互換 token）" : "✅ 有（結尾 " + p.fcmToken.substring(Math.max(0, p.fcmToken.length() - 6)) + "）").append('\n');
-        sb.append("2. 這支手機的設定檔：").append(hasConfig(c) ? "✅" : "❌").append("；發送金鑰：").append(FcmVault.has(c) ? "✅" : "❌").append('\n');
+        sb.append(L.t("對象：")).append(p.name).append(L.t("（編號 ")).append(p.id.length() > 8 ? p.id.substring(0, 8) : p.id).append(L.t("，上次的位址 ")).append(p.ip == null ? L.t("未知") : p.ip).append("）\n");
+        sb.append(L.t("1. 對方的 token：")).append(p.fcmToken == null ? L.t("❌ 沒有（先互換 token）") : L.t("✅ 有（結尾 ") + p.fcmToken.substring(Math.max(0, p.fcmToken.length() - 6)) + "）").append('\n');
+        sb.append(L.t("2. 這支手機的設定檔：")).append(hasConfig(c) ? L.t("✅") : L.t("❌")).append(L.t("；發送金鑰：")).append(FcmVault.has(c) ? L.t("✅") : L.t("❌")).append('\n');
         String ip = lanNet();
-        sb.append("3. 這支手機的 Wi-Fi 位址：").append(ip != null ? "✅ " + ip : p.tsIp != null ? "（沒連 Wi-Fi，改走 Tailscale 外網；對方的 Tailscale 位址 " + p.tsIp + "）" : "❌ 沒有（也沒有對方的 Tailscale 位址）").append('\n');
-        if (p.fcmToken == null || !hasConfig(c) || !FcmVault.has(c) || (ip == null && p.tsIp == null)) { sb.append("→ 上面有 ❌，先處理它").append('\n'); return sb.toString(); }
+        sb.append(L.t("3. 這支手機的 Wi-Fi 位址：")).append(ip != null ? L.t("✅ ") + ip : p.tsIp != null ? L.t("（沒連 Wi-Fi，改走 Tailscale 外網；對方的 Tailscale 位址 ") + p.tsIp + "）" : L.t("❌ 沒有（也沒有對方的 Tailscale 位址）")).append('\n');
+        if (p.fcmToken == null || !hasConfig(c) || !FcmVault.has(c) || (ip == null && p.tsIp == null)) { sb.append(L.t("→ 上面有 ❌，先處理它")).append('\n'); return sb.toString(); }
         TransferDiscovery.Found already = FileTools.scanPeer(p, 1200);
-        if (already != null) { sb.append("4. 對方現在其實已經在線上（").append(already.ip).append("），沒有休眠，這次測不出叫醒。請讓它休眠幾分鐘再測。").append('\n'); return sb.toString(); }
-        sb.append("4. 對方目前不在線上（找不到），開始叫醒\n");
+        if (already != null) { sb.append(L.t("4. 對方現在其實已經在線上（")).append(already.ip).append(L.t("），沒有休眠，這次測不出叫醒。請讓它休眠幾分鐘再測。")).append('\n'); return sb.toString(); }
+        sb.append(L.t("4. 對方目前不在線上（找不到），開始叫醒\n"));
         long t0 = System.currentTimeMillis();
         String err = wake(c, p);
-        sb.append("5. 推播送出：").append(err == null ? "✅ Google 收下了（花 " + (System.currentTimeMillis() - t0) + " 毫秒）" : "❌ " + err).append('\n');
+        sb.append(L.t("5. 推播送出：")).append(err == null ? L.t("✅ Google 收下了（花 ") + (System.currentTimeMillis() - t0) + L.t(" 毫秒）") : L.t("❌ ") + err).append('\n');
         if (err != null) {
-            if (err.contains("UNREGISTERED") || err.contains("NOT_FOUND")) sb.append("→ 對方的 token 已失效（它重裝過或清過資料）：請在能連上它的時候重新互換 token。\n");
-            if (err.contains("PERMISSION") || err.contains("401") || err.contains("403")) sb.append("→ 發送金鑰沒有權限或不是這個專案的：重新匯入正確的金鑰。\n");
+            if (err.contains("UNREGISTERED") || err.contains("NOT_FOUND")) sb.append(L.t("→ 對方的 token 已失效（它重裝過或清過資料）：請在能連上它的時候重新互換 token。\n"));
+            if (err.contains("PERMISSION") || err.contains("401") || err.contains("403")) sb.append(L.t("→ 發送金鑰沒有權限或不是這個專案的：重新匯入正確的金鑰。\n"));
             return sb.toString();
         }
         TransferDiscovery.Found f = null;
         long until = System.currentTimeMillis() + 20000;
         while (f == null && System.currentTimeMillis() < until) f = FileTools.scanPeer(p, 1500);
-        if (f != null) sb.append("6. ✅ 對方起來了（").append(f.ip).append("），共花 ").append((System.currentTimeMillis() - t0) / 1000.0).append(" 秒\n");
-        else sb.append("6. ❌ 20 秒內對方沒有出現。推播送到了，但對方沒有把伺服器開起來：到對方手機看有沒有跳「FCM 門鈴」的通知（會寫被拒絕的原因）；沒有任何通知的話，是對方的系統沒有叫醒它（自啟動、電池限制）；對方的互傳總開關也要開著。\n");
+        if (f != null) sb.append(L.t("6. ✅ 對方起來了（")).append(f.ip).append(L.t("），共花 ")).append((System.currentTimeMillis() - t0) / 1000.0).append(L.t(" 秒\n"));
+        else sb.append(L.t("6. ❌ 20 秒內對方沒有出現。推播送到了，但對方沒有把伺服器開起來：到對方手機看有沒有跳「FCM 門鈴」的通知（會寫被拒絕的原因）；沒有任何通知的話，是對方的系統沒有叫醒它（自啟動、電池限制）；對方的互傳總開關也要開著。\n"));
         return sb.toString();
     }
 

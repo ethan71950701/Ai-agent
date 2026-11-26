@@ -41,6 +41,16 @@ def enc_key(key, nonce):
     return hmac256(key, "enc|" + nonce)
 
 
+def resp_key(key, nonce):
+    """回應用的內容金鑰（跟請求本文分開，避免 AES-GCM 金鑰＋IV 重複）。新版請求網址帶已簽章的 dk=1，伺服器回 X-Dk: 1 時才用。"""
+    return hmac256(key, "resp|" + nonce)
+
+
+def with_dk(target):
+    """在請求網址加上 dk=1（要在簽章之前加，簽章才涵蓋它）。"""
+    return target + ("&" if "?" in target else "?") + "dk=1"
+
+
 # ---------- 配對（ECDH P-256） ----------
 
 class Pair:

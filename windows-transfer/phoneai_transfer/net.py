@@ -90,6 +90,7 @@ class Client:
         return s
 
     def _head(self, method, target):
+        target = crypto.with_dk(target)   # 請對方用另一把金鑰回應（見 crypto.resp_key）
         ts = str(int(time.time()))
         nonce = crypto.hexs(crypto.random_bytes(12))
         sig = crypto.sign(self.key, method, target, ts, nonce)
@@ -97,6 +98,10 @@ class Client:
         extra = f"\r\nX-Tailnet: {tailnet}" if tailnet else ""
         return nonce, (f"{method} {target} HTTP/1.1\r\nHost: phoneai\r\nX-Id: {self.my_id}\r\nX-Ts: {ts}\r\nX-Nonce: {nonce}"
                        f"\r\nX-Name: {_enc(self.my_name)}\r\nX-Sig: {sig}{extra}\r\nConnection: close\r\n\r\n").encode("latin-1")
+
+    def _resp_key(self, h, nonce):
+        """回應的解密金鑰：對方回了 X-Dk: 1 是新版的回應金鑰，沒回（舊版）就跟請求本文同一把。"""
+        return crypto.resp_key(self.key, nonce) if h.get("x-dk") == "1" else crypto.enc_key(self.key, nonce)
 
     @staticmethod
     def _status(f):
@@ -118,8 +123,8 @@ class Client:
             nonce, head = self._head("GET", target)
             s.sendall(head)
             f = s.makefile("rb")
-            self._status(f)
-            return crypto.SealedReader(f, crypto.enc_key(self.key, nonce)).read().decode("utf-8")
+            h = self._status(f)
+            return crypto.SealedReader(f, self._resp_key(h, nonce)).read().decode("utf-8")
         finally:
             s.close()
 
@@ -144,7 +149,7 @@ class Client:
             h = self._status(f)
             total = int(h.get("x-size", "0") or 0)
             done = 0
-            reader = crypto.SealedReader(f, crypto.enc_key(self.key, nonce))
+            reader = crypto.SealedReader(f, self._resp_key(h, nonce))
             with open(tmp, "wb") as out:
                 while True:
                     chunk = reader.read(32 * 1024)
@@ -188,8 +193,8 @@ class Client:
             sealed.close()
             wf.flush()
             rf = s.makefile("rb")
-            self._status(rf)
-            body = crypto.SealedReader(rf, crypto.enc_key(self.key, nonce)).read().decode("utf-8")
+            h = self._status(rf)
+            body = crypto.SealedReader(rf, self._resp_key(h, nonce)).read().decode("utf-8")
             parts = body.split("\t")
             return parts[1] if len(parts) > 1 else os.path.basename(src)
         finally:
@@ -261,6 +266,7 @@ class Server:
         self._seen = {}
         self._fails = {}
         self._lock = threading.Lock()
+        self._dk_local = threading.local()   # 每條連線（執行緒）自己的「對方是不是新版」：回應金鑰要不要分開
         self.running = False
 
     def start(self, port=PORT):
@@ -327,12 +333,14 @@ class Server:
                 mine = h.get("x-tailnet", "")
                 if mine and _is_tailnet_str(mine):
                     self.host.peer_address(peer[0], mine)   # 對方自己的 Tailscale 位址
-                self._route(conn, f, method, path, params, peer)
+                dk = params.get("dk") == "1"   # dk 在網址裡，已被簽章涵蓋：新版對方，回應用另一把金鑰
+                self._route(conn, f, method, path, params, peer + (dk,))
         except Exception:
             pass  # 單一連線出錯不影響伺服器
 
     def _route(self, conn, f, method, path, params, peer):
-        peer_id, key, nonce = peer
+        peer_id, key, nonce, dk = peer
+        self._dk_local.value = dk
         if path == "/v1/ping":
             self._send_text(conn, key, nonce, "ok\t" + self.host.my_name())
         elif path == "/v1/list":
@@ -360,19 +368,27 @@ class Server:
         else:
             self._reply(conn, 404, "unknown")
 
+    def _resp(self, key, nonce):
+        """這個連線的回應金鑰與要多加的標頭（看對方是不是新版，見 crypto.resp_key）。"""
+        if getattr(self._dk_local, "value", False):
+            return crypto.resp_key(key, nonce), "X-Dk: 1\r\n"
+        return crypto.enc_key(key, nonce), ""
+
     def _send_text(self, conn, key, nonce, text):
-        conn.sendall(b"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nConnection: close\r\n\r\n")
+        rk, extra = self._resp(key, nonce)
+        conn.sendall(f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n{extra}Connection: close\r\n\r\n".encode("latin-1"))
         w = conn.makefile("wb")
-        sealed = crypto.SealedWriter(w, crypto.enc_key(key, nonce))
+        sealed = crypto.SealedWriter(w, rk)
         sealed.write(text.encode("utf-8"))
         sealed.close()
         w.flush()
 
     def _send_file(self, conn, key, nonce, peer_id, path):
         size = os.path.getsize(path)
-        conn.sendall(f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: {size}\r\nConnection: close\r\n\r\n".encode("latin-1"))
+        rk, extra = self._resp(key, nonce)
+        conn.sendall(f"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Size: {size}\r\n{extra}Connection: close\r\n\r\n".encode("latin-1"))
         w = conn.makefile("wb")
-        sealed = crypto.SealedWriter(w, crypto.enc_key(key, nonce))
+        sealed = crypto.SealedWriter(w, rk)
         done = 0
         with open(path, "rb") as fin:
             while True:

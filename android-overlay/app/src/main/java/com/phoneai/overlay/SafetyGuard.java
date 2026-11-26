@@ -125,7 +125,7 @@ final class SafetyGuard {
                     if (!(t.equals("--count") || t.equals("--ignore-case") || t.equals("--invert-match") || t.equals("--line-number"))) return false;
                     continue;
                 }
-                if (prog.equals("grep") && t.matches("-[a-zA-Z]*[frRdDeEPXz][a-zA-Z]*") && !t.matches("-[a-zA-Z]*E[a-zA-Z]*")) return false;   // -f 檔案、-r/-R 遞迴、-d/-D 目錄與裝置、-e 另一種給搜尋字串的方式
+                if (prog.equals("grep") && t.matches("-[a-zA-Z]*[frRdDePXz][a-zA-Z]*")) return false;   // -f 檔案、-r/-R 遞迴（以 root 從根目錄搜會讀到金鑰檔）、-d/-D 目錄與裝置、-e 另一種給搜尋字串的方式；跟 -E 寫在一起（-ER）也不行
                 if (prog.equals("sort") && t.matches("-[a-zA-Z]*[oT][a-zA-Z]*")) return false;      // -o 寫檔、-T 暫存目錄
                 if (prog.equals("tail") && t.matches("-[a-zA-Z]*[fF][a-zA-Z]*")) return false;      // -f 不會結束
                 if (valueOpts.contains(t)) skipNext = true;

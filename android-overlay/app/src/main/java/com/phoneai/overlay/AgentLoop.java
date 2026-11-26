@@ -439,6 +439,14 @@ final class AgentLoop {
                     if (!softConfirm(c, ui, String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), st.lastTyped))) return L.t("已取消，訊息沒有送出。");
                     st.askedCats.add("傳送訊息");
                 }
+                {   // 同一步「輸入＋按 Enter」（type 帶 enter:true，或 batch 裡有輸入又有 Enter）：上面那道檢查看不到（還沒記下輸入的字），這裡先問
+                    String sendText = typedThenSent(action);
+                    if (sendText != null && isMessageTask(task) && !st.askedCats.contains("傳送訊息")) {
+                        OverlayService.showStep(c, L.t("等你確認"), step, maxSteps);
+                        if (!softConfirm(c, ui, String.format(L.t("要送出這則訊息嗎？\n\n「%s」"), sendText))) return L.t("已取消，訊息沒有送出。");
+                        st.askedCats.add("傳送訊息");
+                    }
+                }
                 JSONObject det = detail(step, action, Usage.tallyNow() - tokBefore);
                 details.add(det);
                 int historyBefore = history.size();
@@ -524,6 +532,7 @@ final class AgentLoop {
                         st.searches++;
                         ui.status(L.t("第 ") + step + L.t("／") + maxSteps + L.t(" 步 · 搜尋網路中"));
                         String ans = webSearch(c, key, q);
+                        if (ans != null) st.readNotifs = true;   // 搜尋結果是外人寫的網頁內容：跟 read_url 一樣，之後只給唯讀的聊天工具
                         history.add(step + ". " + (ans != null ? "搜尋「" + q + "」得到：" + (ans.length() > 300 ? ans.substring(0, 300) : ans)
                                 : "搜尋「" + q + "」失敗，請改用畫面操作"));
                         break;
@@ -1171,6 +1180,7 @@ final class AgentLoop {
                     String pkg = a.optString("pkg", "");
                     if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));   // 提示寫「程式會用 name 查套件」，這裡真的去查
                     if (pkg == null || pkg.isEmpty()) { st.openFailed = a.optString("name"); return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name")); }
+                    if (!validPkg(pkg)) return "套件名稱格式不對：" + (pkg.length() > 60 ? pkg.substring(0, 60) + "…" : pkg);   // 套件名稱會接進 root 指令、存成別名：只收字母、數字、點、底線，不然模型（被畫面文字誘導）可以夾帶任意指令
                     if (st.openFailed != null) { Router.saveAlias(c, st.openFailed, pkg); st.openFailed = null; }
                     if (BgDisplay.active && ProtectedApps.isProtected(c, pkg)) return "背景模式不會操作銀行、支付這類受保護的 App（" + pkg + "）；請關掉背景模式，改在主螢幕做（會先問你）";
                     sh("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1");
@@ -1352,6 +1362,7 @@ final class AgentLoop {
                 String pkg = a.optString("pkg", "");
                 if (pkg.isEmpty()) pkg = findPackage(c, a.optString("name"));
                 if (pkg == null || pkg.isEmpty()) { st.openFailed = a.optString("name"); return "找不到名稱叫「" + a.optString("name") + "」的 App" + installedHint(c, a.optString("name")); }
+                    if (!validPkg(pkg)) return "套件名稱格式不對：" + (pkg.length() > 60 ? pkg.substring(0, 60) + "…" : pkg);   // 套件名稱會接進 root 指令、存成別名：只收字母、數字、點、底線，不然模型（被畫面文字誘導）可以夾帶任意指令
                     if (st.openFailed != null) { Router.saveAlias(c, st.openFailed, pkg); st.openFailed = null; }
                 if (!Phone.launch(c, pkg)) return "打不開 " + pkg;
                 st.opened.add(pkg);
@@ -1770,6 +1781,31 @@ final class AgentLoop {
             if (o.optString("t").contains(text)) return 1;
         }
         return now != null || anyInput ? 0 : -1;
+    }
+
+    /** 純邏輯：套件名稱只能是字母、數字、點、底線（會接進 root 指令）。 */
+    static boolean validPkg(String pkg) { return pkg != null && pkg.matches("[A-Za-z0-9._]{1,200}"); }
+
+    /**
+     * 純邏輯：這個動作是不是「輸入之後馬上按 Enter」（一步就會送出）：type 帶 enter:true，或 batch 裡有 type 帶 enter、或 type 之後接 enter。
+     * 是就回傳要送出的文字，不是回 null。
+     */
+    static String typedThenSent(JSONObject action) {
+        String name = action.optString("action");
+        if ("type".equals(name)) return action.optBoolean("enter") ? action.optString("text") : null;
+        if (!"batch".equals(name)) return null;
+        JSONArray subs = action.optJSONArray("actions");
+        String typed = null;
+        for (int i = 0; subs != null && i < subs.length(); i++) {
+            JSONObject sub = subs.optJSONObject(i);
+            if (sub == null) continue;
+            String n = sub.optString("action");
+            if ("type".equals(n)) {
+                typed = sub.optString("text");
+                if (sub.optBoolean("enter")) return typed;
+            } else if ("enter".equals(n) && typed != null) return typed;
+        }
+        return null;
     }
 
     /** 切到英文鍵盤（有的話）；回傳原本的鍵盤 id，之後要切回去。找不到英文鍵盤回傳 null（呼叫端就不輸入）。 */
