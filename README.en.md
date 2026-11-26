@@ -2,30 +2,47 @@
 
 English | [繁體中文](README.md)
 
-**Say one sentence to your phone, and it gets done.**
+<p align="center"><img src="docs/images/banner.svg" alt="Vertex" width="100%"></p>
 
-> "Turn on Bluetooth." "Search for earphones in Shopee." "What's on my schedule tomorrow?" "Remember the timetable on this screen."
+**This is not a voice assistant that answers questions. It's an AI that actually operates your phone for you.**
 
-Vertex is an AI assistant for Android: give it a command by voice or text and it opens apps, taps and types on its own, toggles settings, checks your calendar, searches the web, then tells you the result.
+You say one sentence, and it opens apps, looks at the screen, taps, swipes and types by itself, then reports back. It isn't limited to certain apps; it works even with apps that have no public interface.
 
-## Why try it
+> "Search for earphones in Shopee." "Turn on Bluetooth." "Message Xiao Ming on Instagram that I'll be late." "What's on my schedule tomorrow?" "Remember the timetable in that photo."
 
-- 🗣️ **One sentence is enough**: no commands to learn; Traditional or Simplified Chinese, English, casual phrasing all work. Speech recognition runs offline on the phone, so your voice is never uploaded.
-- 👀 **It really operates the screen**: not just answers. The AI taps, swipes and types step by step, and pauses to hand over anything only you can do (unlock, verification codes).
-- 🔒 **Sensitive things always ask first**: payments, transfers, deleting, installing, sending messages, logging in… always a confirmation dialog; no answer counts as "no".
-- 💸 **Cheap and under control**: a cheaper model goes first and escalates only when stuck; repeated tasks are saved as macros and replayed; there are usage limits and cost estimates.
-- 🔌 **Not tied to one AI**: Claude, Gemini (has a free tier), DeepSeek, OpenAI, or your own local model.
-- 🧩 **Connects to outside services (MCP)**: GitHub, Notion and more, via sign-in or token, so the AI can look up your data.
-- 📁 **File transfer between your phones**: encrypted after pairing, and it works even when they're not on the same Wi-Fi.
-- 🪟 **Works without root**: root is the most complete; Shizuku or "normal mode" (accessibility service only) also work.
+<p align="center"><img src="docs/images/flow.svg" alt="How it works" width="100%"></p>
+
+## How it differs from an ordinary voice assistant
+
+| | Ordinary voice assistant | Vertex |
+|---|---|---|
+| What it can do | Only the few functions the vendor exposes | Operates **any app** by looking at the screen, including apps with no public interface |
+| How it works | Calls interfaces apps provide | Looks at the screen, taps, swipes and types like a person |
+| Gets smoother with use | No | Steps that worked are saved as **macros** and replayed next time; mistakes become remembered lessons |
+| Your phone while it works | Tied up | Can work on a **background virtual screen** while you keep using the phone (needs root) |
+| Passwords, codes, unlock | Usually just fails | **Pauses and asks you to take over**, then continues when you press "Continue" |
+| Sensitive actions | Up to the vendor | Payments, transfers, deleting, installing, sending messages, logging in… **always ask first**; no answer counts as "no" |
+| Which AI, what it costs | Locked to the vendor | Your choice: Claude, Gemini (free tier), DeepSeek, OpenAI, or a local model; a cheap model goes first and escalates only when stuck; every task shows usage and a cost estimate, with daily/monthly limits |
+| Your data | Passes through the vendor's servers | No Vertex server: your key stays on the phone and talks directly to the AI service you chose; speech recognition runs offline on the phone |
+| Root needed? | n/a | Root is the most complete; Shizuku or accessibility-only normal mode also work |
+| Source code | Closed | Open source (Apache 2.0) |
+
+## And also
+
+- **Outside services (MCP)**: connect GitHub, Notion and others by sign-in or token so the AI can look up your data; actions that change data always ask first.
+- **Your schedule and notifications**: ask "What's on tomorrow?" or have it summarize today's notifications.
+- **Scheduled tasks**: "Tell me the battery every morning at 8"; it can also operate the phone on a schedule (it waits for you to unlock a locked phone).
+- **File transfer between your phones**: encrypted after pairing, and it can also go across different networks through Tailscale.
+- **Circle to ask**: freeze the screen, circle what you want to ask about, and the AI answers from the image.
+- **Traditional Chinese, Simplified Chinese and English UI**, with adjustable theme color and a liquid-glass bottom bar.
 
 ## Get started in 3 steps
 
-1. Download the latest `PhoneAI.apk` from **[Releases](../../releases)** and install it.
+1. Download the latest `PhoneAI.apk` from **[Releases](../../releases)** and install it (later updates are one tap inside the app).
 2. Open the app, follow the guide to grant permissions, and choose an AI service and enter its key (the app has step-by-step instructions).
 3. Say "open the Wi-Fi page in Settings" in the input box.
 
-> ⚠️ This is a personal experiment. Many features have only been verified on the author's phone (Samsung Galaxy S25+, Android 16), so it may not work on every device. It uses root, Shizuku or accessibility permissions to operate the screen; please read [Safety and privacy](#safety-and-privacy) first.
+> This is a personal experiment. Many features have only been verified on the author's phone (Samsung Galaxy S25+, Android 16), so it may not work on every device. It uses root, Shizuku or accessibility permissions to operate the screen; please read [Safety and privacy](#safety-and-privacy) first.
 > To continue development, read [`CLAUDE.md`](CLAUDE.md) and [`HANDOFF.md`](HANDOFF.md) first (both are in Chinese).
 
 ---
