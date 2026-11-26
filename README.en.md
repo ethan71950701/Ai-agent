@@ -12,6 +12,14 @@ You say one sentence, and it opens apps, looks at the screen, taps, swipes and t
 
 <p align="center"><img src="docs/images/flow.svg" alt="How it works" width="100%"></p>
 
+<table align="center">
+<tr>
+<td align="center" width="33%"><img src="docs/images/shot-home.png" alt="Home: type or tap the mic"><br><sub>Home: type or tap the mic</sub></td>
+<td align="center" width="33%"><img src="docs/images/shot-panel.png" alt="Call the assistant panel over any screen"><br><sub>Call the assistant panel over any screen</sub></td>
+<td align="center" width="33%"><img src="docs/images/shot-log.png" alt="Task history: usage and cost every time"><br><sub>Task history: usage and cost every time</sub></td>
+</tr>
+</table>
+
 ## How it differs from an ordinary voice assistant
 
 | | Ordinary voice assistant | Vertex |

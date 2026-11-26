@@ -12,6 +12,14 @@
 
 <p align="center"><img src="docs/images/flow.svg" alt="運作流程" width="100%"></p>
 
+<table align="center">
+<tr>
+<td align="center" width="33%"><img src="docs/images/shot-home.png" alt="首頁：輸入或按右邊說話"><br><sub>首頁：輸入或按右邊說話</sub></td>
+<td align="center" width="33%"><img src="docs/images/shot-panel.png" alt="在任何畫面叫出助理面板"><br><sub>在任何畫面叫出助理面板</sub></td>
+<td align="center" width="33%"><img src="docs/images/shot-log.png" alt="任務過程：每次都顯示用量與估價"><br><sub>任務過程：每次都顯示用量與估價</sub></td>
+</tr>
+</table>
+
 ## 跟一般語音助理差在哪
 
 | | 一般語音助理 | Vertex |
