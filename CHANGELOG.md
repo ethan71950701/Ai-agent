@@ -5,8 +5,11 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1879
+
 - 安全修正：自動操作開 App 時檢查套件名稱、輸入後直接送出訊息也會先問你、搜尋結果當成不可信內容；互傳加密改得更安全（跟舊版仍可互傳）；完整下載的更新檔也會核對校驗碼｜Security fixes: app names are checked before opening apps during automation, typing-and-sending a message in one step now asks you first, and search results are treated as untrusted; file transfer encryption is stronger (still works with older versions); full update downloads are now verified against the checksum
 - 修正一批問題：MCP 服務用久了不會突然要求重新登入；會修改資料的 MCP 工具確認框會列出每個參數；行事曆不會多列出前一天的全天行程；舊的確認框不會誤答新的確認；定時任務執行中做的修改不會被蓋掉｜Fixes: MCP services no longer ask you to sign in again after a while; confirmations for MCP tools that change data list every argument; the calendar no longer includes the previous day's all-day events; an old confirmation dialog can no longer answer a newer one; changes made while a scheduled task runs are no longer overwritten
+
 ## 1.0.1876
 
 - 設定導覽加上後來功能需要的權限（都是選用）：通知存取、日曆、所有檔案存取、背景保活｜The setup guide now includes the permissions later features need (all optional): notification access, calendar, all files access, and keeping the app alive in the background
