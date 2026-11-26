@@ -160,48 +160,43 @@ final class Router {
         return last;
     }
 
-    /** 判斷時繁簡都要認：說話的人可能用簡體（語音輸入常是簡體）。關鍵字本身寫繁體，比對前文字與關鍵字都轉成簡體。 */
-    private static final String ACTION_WORDS =
-            "開|關|打開|關閉|開啟|音量|大聲|小聲|亮度|截圖|截屏|鎖|返回|上一頁|桌面|點|按|滑|傳訊息|傳給|傳送|發訊息|打電話|進入|前往|切換|設定|飛航|勿擾|藍牙|藍芽|wifi|wi-fi|定位|數據|流量|nfc|深色|省電|旋轉|"
-                    + "\\b(open|turn|go to|goto|tap|click|launch|switch|send|call|volume|brightness|screenshot|enable|disable)\\b";
-    private static Pattern actionHint;
-
-    private static synchronized Pattern actionHint() {
-        if (actionHint == null) actionHint = Pattern.compile(simplify(ACTION_WORDS), Pattern.CASE_INSENSITIVE);
-        return actionHint;
+    /**
+     * 先用一個很短的判斷（約 100 token、只回一個詞）決定「聊天」還是「要操作手機」，不用關鍵字：
+     * 以前用關鍵字清單擋一道，繁簡、同義詞、口語永遠寫不完（簡體的「打开设定」就被當成聊天，多繞一輪、多花三十幾秒）。
+     * 回 true＝要操作手機（再跑完整路由）、false＝聊天（直接聊天）、null＝判斷不出來（呼叫端當作要操作，交給完整路由）。
+     */
+    static Boolean classify(Context c, String text) {
+        String key = ChatEngine.key(c);
+        if (key == null || key.isEmpty() || text == null || text.trim().isEmpty()) return null;
+        try {
+            String r = askRoute(MODEL, classifyPrompt(text), key);
+            return parseKind(r);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
-    private static final String SCHED_WORDS = "每天|每隔|每[0-9一二三四五六七八九十兩]+天|每週|每周|定時|排程|(?i:\\b(every day|every \\d+ days|daily|schedule)\\b)";
-    private static Pattern schedHint;
-
-    private static synchronized Pattern schedHint() {
-        if (schedHint == null) schedHint = Pattern.compile(simplify(SCHED_WORDS));
-        return schedHint;
+    static String classifyPrompt(String text) {
+        return "使用者對手機助手說：「" + text + "」\n"
+                + "判斷這句話是「聊天」還是「要操作手機」。只回一行 JSON：{\"k\":\"chat\"} 或 {\"k\":\"phone\"}。\n"
+                + "phone＝要助手去操作這支手機：打開或切換 App、點畫面、進入設定頁、開關 Wi-Fi／藍牙／音量／亮度這類系統設定、在別的 App 裡找東西或傳訊息、截圖、返回。\n"
+                + "chat＝其他一切：問問題、閒聊、問知識、問時間日期電量等手機資訊、要記住或查記憶（待辦、筆記）、設鬧鐘計時、新增或查詢行事曆、導航查地點、撥號、搜尋網路、要在「每天／定時」重複查東西、傳檔案給自己的其他裝置、查 GitHub 或其他已連接的服務。\n"
+                + "使用者可能用繁體或簡體中文、英文，都要認得。例子：「打开设定」→phone；「幫我開藍芽」→phone；「去蝦皮搜尋耳機」→phone；「你好」→chat；「明天天氣如何」→chat；「幫我記住明天開會」→chat；「設一個七點的鬧鐘」→chat；「導航到台北車站」→chat。";
     }
 
-    /** 這句話看起來可能是要操作手機：先問路由（一次判斷固定指令、開 App、操作畫面）。不像的就直接聊天，聊天助理真的需要操作時會自己呼叫 phone_action 交出去。 */
-    static boolean likelyAction(String text) {
-        if (text != null && schedHint().matcher(simplify(text)).find()) return false;   // 要排定時查詢：交給聊天助理（它有 schedule_web_query）
-        return text != null && actionHint().matcher(simplify(text)).find();
-    }
-
-    private static final String SMALL_TALK_WORDS =
-            "^(你好|您好|哈囉|嗨|嘿|hi|hello|hey|早安|早|午安|晚安|謝謝|謝啦|感謝|多謝|掰掰|拜拜|再見|好的|好喔|好|ok|okay|嗯|哈哈|在嗎|在不在|你是誰|你叫什麼|你叫什麼名字|你會什麼|你能做什麼)[!！。.~～？?，, ]*$";
-    private static Pattern smallTalk;
-
-    private static synchronized Pattern smallTalk() {
-        if (smallTalk == null) smallTalk = Pattern.compile(simplify(SMALL_TALK_WORDS), Pattern.CASE_INSENSITIVE);
-        return smallTalk;
-    }
-
-    /** 純寒暄（你好、謝謝…）：不用問路由，直接聊天。路由的提示詞很長（App 清單、筆記），一句「你好」也要等好幾秒（使用者回報）。 */
-    static boolean isSmallTalk(String text) {
-        return text != null && smallTalk().matcher(simplify(text.trim())).matches();
+    /** 純邏輯：從模型回的文字取出 k（phone→true、chat→false）；看不懂回 null。 */
+    static Boolean parseKind(String r) {
+        if (r == null) return null;
+        try {
+            String k = new JSONObject(r).optString("k", "").trim().toLowerCase(java.util.Locale.ROOT);
+            if (k.equals("phone")) return Boolean.TRUE;
+            if (k.equals("chat")) return Boolean.FALSE;
+        } catch (Exception ignored) { }
+        return null;
     }
 
     /** 回傳判斷結果；Key 讀不到、網路失敗、回答看不懂回 null（呼叫端改用聊天）。 */
     static Decision decide(Context c, String text) {
-        if (isSmallTalk(text)) { lastNote = L.t("路由：寒暄，直接聊天（沒有問路由）"); return new Decision(CHAT, -1, null, 0); }
         String key = ChatEngine.key(c);
         if (key == null || key.isEmpty()) return null;
         Map<String, String> apps = apps(c);

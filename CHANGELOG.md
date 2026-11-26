@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 判斷「聊天」還是「操作手機」不再用關鍵字，改由 AI 做一個很短的判斷（繁體、簡體、英文、口語都認得）｜Deciding between "chat" and "operate the phone" no longer uses keyword lists; a very short AI check does it (Traditional, Simplified, English and casual phrasing all work)
 - 用簡體說「打开设定」這類指令也會直接開啟，不再先繞聊天一輪（省下幾十秒與一次 AI 呼叫）｜Commands spoken in Simplified Chinese, like "打开设定", now open directly instead of going through chat first (saves tens of seconds and one AI call)
 ## 1.0.1880
 

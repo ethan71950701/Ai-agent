@@ -66,9 +66,11 @@ final class Brain {
         }
         String over = Usage.overLimit(act);   // 超過用量上限：不送出 Claude 的請求
         if (over != null) return over;
-        final boolean likely = Router.likelyAction(t);
-        Router.Decision d = likely ? Router.decide(act, t) : null;   // 不像操作手機的話直接聊天（省掉路由那一次又長又慢的請求）；聊天助理覺得需要操作時會用 phone_action 交出去
-        if (!likely) Router.lastNote = L.t("路由：看起來是聊天，直接聊天（沒有問路由）");
+        // 不用關鍵字：先問一個很短的判斷（聊天／操作手機），聊天就直接聊天（省掉完整路由那一次又長又慢的請求）；判斷不出來就當作要操作，交給完整路由
+        final Boolean kindGuess = Router.classify(act, t);
+        final boolean likely = kindGuess == null || kindGuess;
+        Router.Decision d = likely ? Router.decide(act, t) : null;   // 聊天助理覺得需要操作時還是會用 phone_action 交出去
+        if (!likely) Router.lastNote = L.t("路由：判斷是聊天，直接聊天（沒有問完整路由）");
         String kind = d == null ? Router.CHAT : d.kind;
         switch (kind) {
             case Router.CMD:

@@ -85,4 +85,15 @@ public class ReviewFixesTest {
         assertTrue(LlmAdapter.isSafeEndpoint("http://localhost:11434/v1"));
         assertTrue(LlmAdapter.isSafeEndpoint("https://api.openai.com/v1"));
     }
+
+    @Test public void classifierReplyParsing() {
+        assertEquals(Boolean.TRUE, Router.parseKind("{\"k\":\"phone\"}"));
+        assertEquals(Boolean.FALSE, Router.parseKind("{\"k\":\"chat\"}"));
+        assertEquals(Boolean.TRUE, Router.parseKind("{\"k\": \"PHONE\"}"));
+        assertNull(Router.parseKind("{\"k\":\"maybe\"}"));
+        assertNull(Router.parseKind("not json"));
+        assertNull(Router.parseKind(null));
+        String p = Router.classifyPrompt("打开设定");
+        assertTrue(p.contains("打开设定") && p.length() < 1200);   // 很短：約 100～300 token，不是完整路由那種長提示
+    }
 }

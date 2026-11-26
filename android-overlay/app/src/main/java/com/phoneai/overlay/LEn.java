@@ -1706,6 +1706,7 @@ final class LEn {
         m.put("查時間與日期", "Time and date");
         m.put("查電池電量", "Battery level");
         m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
+        m.put("路由：判斷是聊天，直接聊天（沒有問完整路由）", "Route: judged to be chat, chatting directly (full router skipped)");
         m.put("打不開這個 App", "Couldn't open this app");
         m.put("還在讀取，請再按一次儲存", "Still loading; press save again");
         m.put("不用 root 時沒辦法執行這個指令", "This command can't be run without root");
