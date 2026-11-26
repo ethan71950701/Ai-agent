@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 修正：做完任務後的回答卡片，顏色改成跟聊天時一樣的玻璃（以前是一塊深灰色）｜Fix: the answer card shown after a task now uses the same glass look as in chat (it used to be a flat dark gray)
 ## 1.0.1882
 
 - 判斷「聊天」還是「操作手機」不再用關鍵字，改由 AI 做一個很短的判斷（繁體、簡體、英文、口語都認得）｜Deciding between "chat" and "operate the phone" no longer uses keyword lists; a very short AI check does it (Traditional, Simplified, English and casual phrasing all work)

@@ -22,9 +22,14 @@ public class AskActivity extends Activity {
         boolean plain0 = in0.getStringExtra("text") == null && in0.getStringExtra("fill") == null
                 && in0.getStringExtra("question") == null && in0.getStringExtra("reply_text") == null;
         final String demo = in0.getStringExtra("demo_reply");   // 設定裡的「測試回答卡片」：照一般開面板的流程先截圖，截好再顯示範例回答（跟真的用起來一樣）
-        if (demo != null) {
+        // 助理做完事後的文字回答（reply_text）也要先截圖：玻璃卡片靠這張截圖當背景（折射、透明）；以前這條路徑跳過截圖，
+        // 玻璃後面什麼都沒有，卡片變成一塊深灰色，跟聊天時（有截圖）的顏色完全不同
+        final String afterTask = in0.getStringExtra("reply_text");
+        final boolean shownByPrefetch = demo != null || afterTask != null;
+        if (shownByPrefetch) {
+            final String text = demo != null ? demo : afterTask;
             sheet.view().setVisibility(android.view.View.INVISIBLE);
-            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); sheet.showReply("", demo); });
+            sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); sheet.showReply("", text); });
         } else if (plain0) {   // 單純打開：面板先藏起來、先截一張畫面（才不會拍到開場動畫），截好再出現，就能直接在畫面上圈選提問
             sheet.view().setVisibility(android.view.View.INVISIBLE);
             sheet.prefetchShot(() -> { sheet.view().setVisibility(android.view.View.VISIBLE); sheet.enter(); });
@@ -37,8 +42,7 @@ public class AskActivity extends Activity {
         if (fill != null) sheet.fillText(fill);
         String q = getIntent().getStringExtra("question");
         if (q != null) sheet.setQuestion(q);   // agent2 要問使用者問題（ask_user）：回答問題模式
-        String rt = getIntent().getStringExtra("reply_text");
-        if (rt != null) sheet.showReply("", rt);   // 助理的文字回答（面板已經關掉時）：同一個面板直接顯示回答卡片＋接續對話的輸入列
+        // 助理的文字回答（面板已經關掉時）：上面 prefetchShot 截好圖後，同一個面板顯示回答卡片＋接續對話的輸入列
         // targetSdk 36 之後系統預設用「預測返回」，onBackPressed 不會被呼叫，要自己註冊
         getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT, () -> sheet.dismiss());
