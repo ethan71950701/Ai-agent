@@ -2,11 +2,37 @@
 
 English | [繁體中文](README.md)
 
-An AI phone assistant built as a single app. Tell it what to do by voice or text and it can open apps, toggle settings, create reminders, look at the screen and tap, swipe and type on its own, and search the web when it needs fresh information. **Root gives the most complete experience, but it also works without root** (Shizuku or normal mode).
+**Say one sentence to your phone, and it gets done.**
+
+> "Turn on Bluetooth." "Search for earphones in Shopee." "What's on my schedule tomorrow?" "Remember the timetable on this screen."
+
+Vertex is an AI assistant for Android: give it a command by voice or text and it opens apps, taps and types on its own, toggles settings, checks your calendar, searches the web, then tells you the result.
+
+## Why try it
+
+- 🗣️ **One sentence is enough**: no commands to learn; Traditional or Simplified Chinese, English, casual phrasing all work. Speech recognition runs offline on the phone, so your voice is never uploaded.
+- 👀 **It really operates the screen**: not just answers. The AI taps, swipes and types step by step, and pauses to hand over anything only you can do (unlock, verification codes).
+- 🔒 **Sensitive things always ask first**: payments, transfers, deleting, installing, sending messages, logging in… always a confirmation dialog; no answer counts as "no".
+- 💸 **Cheap and under control**: a cheaper model goes first and escalates only when stuck; repeated tasks are saved as macros and replayed; there are usage limits and cost estimates.
+- 🔌 **Not tied to one AI**: Claude, Gemini (has a free tier), DeepSeek, OpenAI, or your own local model.
+- 🧩 **Connects to outside services (MCP)**: GitHub, Notion and more, via sign-in or token, so the AI can look up your data.
+- 📁 **File transfer between your phones**: encrypted after pairing, and it works even when they're not on the same Wi-Fi.
+- 🪟 **Works without root**: root is the most complete; Shizuku or "normal mode" (accessibility service only) also work.
+
+## Get started in 3 steps
+
+1. Download the latest `PhoneAI.apk` from **[Releases](../../releases)** and install it.
+2. Open the app, follow the guide to grant permissions, and choose an AI service and enter its key (the app has step-by-step instructions).
+3. Say "open the Wi-Fi page in Settings" in the input box.
+
+> ⚠️ This is a personal experiment. Many features have only been verified on the author's phone (Samsung Galaxy S25+, Android 16), so it may not work on every device. It uses root, Shizuku or accessibility permissions to operate the screen; please read [Safety and privacy](#safety-and-privacy) first.
+> To continue development, read [`CLAUDE.md`](CLAUDE.md) and [`HANDOFF.md`](HANDOFF.md) first (both are in Chinese).
+
+---
+
+# Details
 
 The whole project is one app: **no PC, no Termux, no Python scripts**.
-
-> This is a personal experiment. Many features have only been verified on the author's own phone (Samsung Galaxy S25+, Android 16), so it may not work on every device. **If you want to continue development, read [`CLAUDE.md`](CLAUDE.md) and [`HANDOFF.md`](HANDOFF.md) first** (both are in Chinese).
 
 ## What it can do
 
@@ -14,7 +40,7 @@ The whole project is one app: **no PC, no Termux, no Python scripts**.
 |---|---|
 | Assistant panel | Type or speak. Open it from the app's home screen, a quick-settings tile, a long press of the power button (set it as the default digital assistant), a floating button on the screen edge, a home-screen widget or "Share to assistant" |
 | Fixed commands (instant) | Turn Wi-Fi / Bluetooth on or off, go back, set the volume (you can say a percentage), launch any app by name |
-| Chat and tools | Ask questions directly. The chat assistant can use memory (to-dos, notes), alarms, the calendar, **Samsung Reminder**, maps, dialing, file transfer and read-only system commands (battery, storage, which apps are installed…) |
+| Chat and tools | Ask questions directly. The chat assistant can use memory (to-dos, notes), alarms, the calendar (add and read events), **Samsung Reminder**, maps, dialing, file transfer and read-only system commands (battery, storage, which apps are installed…) |
 | Screen automation | The AI looks at the screen (accessibility element list, or a screenshot when needed) and taps, swipes, drags and types step by step to finish what you asked (20 steps by default, adjustable from 8 to 40 in Settings; a cheap model goes first and a stronger one takes over when stuck) |
 | Remembered routes | A clean run is saved as a **macro** and replayed next time; after a wrong turn the AI writes itself a **lesson** that is added to later prompts |
 | Background mode | Operates on a virtual screen in the background so you can keep using the phone, with preview and takeover (needs root) |
@@ -23,6 +49,7 @@ The whole project is one app: **no PC, no Termux, no Python scripts**.
 | Web search | Only when you say "look up…": paste a Tavily key and any AI can use it; with Claude there is also a built-in search (used only when current information is needed, limited per task) |
 | File transfer | Pair your own phones (and the Windows app in `windows-transfer/`) and send files; off by default |
 | Circle to ask | The ◎ in the assistant panel freezes the screen; circle something with your finger and the AI answers about it, with follow-ups |
+| Outside services (MCP) | Settings → AI & data: connect GitHub (read-only), Notion and other MCP services, with OAuth sign-in; tools that change data always ask first |
 | Memory and schedules | To-dos and notes, and scheduled simple queries such as "tell me the battery every morning at 8" |
 | Voice recognition | Offline SenseVoice model (downloaded inside the app); the text is sent after a short countdown so you can edit it |
 | While it runs | A ripple at every tap, Stop and Pause buttons in the notification, and a Now Bar capsule on Samsung phones (optional) |
