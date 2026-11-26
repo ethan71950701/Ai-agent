@@ -18,6 +18,8 @@ You say one sentence, and it opens apps, looks at the screen, taps, swipes and t
 
 > "Search for earphones in Shopee." "Turn on Bluetooth." "Message Xiao Ming on Instagram that I'll be late." "What's on my schedule tomorrow?" "Remember the timetable in that photo."
 
+<p align="center"><img src="docs/images/demo.gif" alt="Demo: say \"search for earphones in Shopee\" and it opens Shopee and searches by itself" width="300"><br><sub>Demo: say "search for earphones in Shopee" and it opens Shopee, types and searches by itself (real recording; waiting parts sped up)</sub></p>
+
 <p align="center"><img src="docs/images/flow.svg" alt="How it works" width="100%"></p>
 
 <table align="center">

@@ -18,6 +18,8 @@
 
 > 「去蝦皮搜尋耳機」「幫我開藍牙」「用 Instagram 傳訊息給小明說我晚點到」「明天有什麼行程？」「把相簿裡那張課表記起來」
 
+<p align="center"><img src="docs/images/demo.gif" alt="示範：說「幫我去蝦皮搜尋耳機」，它自己開蝦皮並搜尋" width="300"><br><sub>示範：對它說「幫我去蝦皮搜尋耳機」，它自己開蝦皮、輸入、搜尋（實際錄影，已加速等待的部分）</sub></p>
+
 <p align="center"><img src="docs/images/flow.svg" alt="運作流程" width="100%"></p>
 
 <table align="center">
