@@ -4,9 +4,17 @@ English | [繁體中文](README.md)
 
 <p align="center"><img src="docs/images/banner.svg" alt="Vertex" width="100%"></p>
 
+<p align="center">
+<a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ethan71950701/Ai-agent?label=release&color=3DDC84"></a>
+<img alt="Android 13+" src="https://img.shields.io/badge/Android-13%2B-3DDC84">
+<a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue"></a>
+</p>
+
 **This is not a voice assistant that answers questions. It's an AI that actually operates your phone for you.**
 
 You say one sentence, and it opens apps, looks at the screen, taps, swipes and types by itself, then reports back. It isn't limited to certain apps; it works even with apps that have no public interface.
+
+**You need:** Android 13 or later, a key for an AI service (the app has setup instructions), and the accessibility service. **Measured:** a fixed command like "open Settings" takes about 1 second and costs under $0.001; every task ends with a report of tokens used and an estimated cost.
 
 > "Search for earphones in Shopee." "Turn on Bluetooth." "Message Xiao Ming on Instagram that I'll be late." "What's on my schedule tomorrow?" "Remember the timetable in that photo."
 
@@ -43,6 +51,13 @@ You say one sentence, and it opens apps, looks at the screen, taps, swipes and t
 - **File transfer between your phones**: encrypted after pairing, and it can also go across different networks through Tailscale.
 - **Circle to ask**: freeze the screen, circle what you want to ask about, and the AI answers from the image.
 - **Traditional Chinese, Simplified Chinese and English UI**, with adjustable theme color and a liquid-glass bottom bar.
+
+## Honestly: when it's not for you
+
+- **It's still an experiment**: most features were verified only on the author's Samsung Galaxy S25+ (Android 16); other phones may misbehave.
+- **The AI sees your screen**: during automation, screenshots or on-screen text are sent to the AI service you chose. Don't use it on banking, private messages or screens with personal data (background mode refuses banking and payment apps).
+- **It won't always get it right**: complex tasks can get stuck or go the wrong way, which is why sensitive steps always ask first and you can press Stop at any time.
+- **Android only**, no iOS version.
 
 ## Get started in 3 steps
 
@@ -110,6 +125,14 @@ Pick a mode in the first-run guide; change it later under "Settings → While ru
 - **Sensitive actions always show a confirmation dialog** (payment, transfer, deletion, installation, sending messages, login, passwords); no response counts as "no".
 - During screen automation, **a screenshot or the on-screen text is sent to the AI service you chose at every step**. Do not use it on banking, private messaging or other personal screens (background mode refuses to operate protected apps such as banking and payment).
 - Never paste your API key into a chat or commit it to git. Screenshots, logs and model files are excluded by `.gitignore`.
+
+## FAQ
+
+- **It doesn't react when asked?** Check that every page of "Settings → Other → Setup guide" has a tick. Most often the **accessibility service was turned off by the system** (after a reinstall or system update). With root, "Features → Advanced and diagnostics → Repair permissions" restores it.
+- **Scheduled tasks or file transfer unreliable?** Many phones kill background apps. Go to "Settings → Permissions → Keep-alive check", set battery to "Unrestricted" and turn on auto-start.
+- **Is it expensive?** Every task ends with tokens and an estimated cost (your AI service's dashboard is authoritative). Set daily and monthly limits in "Settings → Usage and limits"; a cheap model goes first and escalates only when stuck.
+- **Want to know what it just did?** "Features → Task history" lists every step's reasoning, action and result, and can be exported as a text file (without your API key).
+- **What changed in each update?** See [`CHANGELOG.md`](CHANGELOG.md); the app also shows it after updating.
 
 ## Build it yourself
 
