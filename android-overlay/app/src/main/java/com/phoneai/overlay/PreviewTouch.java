@@ -422,8 +422,12 @@ final class PreviewTouch extends View {
                             card.pulse(e.getX(), e.getY());
                             if (!DirectHost.key(4)) RootInput.key(OverlayService.vdId, 4);   // 4 = KEYCODE_BACK
                         } else if (up && Math.hypot(e.getX() - downX, e.getY() - downY) < 14 * d) {
-                            liveSend(MotionEvent.ACTION_DOWN, downX, downY);   // 只是點邊緣：補送一次點擊
-                            liveSend(MotionEvent.ACTION_UP, downX, downY);
+                            if (DirectHost.ready(OverlayService.vdId) || LiveInput.ready()) {
+                                liveSend(MotionEvent.ACTION_DOWN, downX, downY);   // 只是點邊緣：補送一次點擊
+                                liveSend(MotionEvent.ACTION_UP, downX, downY);
+                            } else {
+                                RootInput.tap(OverlayService.vdId, mapX(downX), mapY(downY));   // 即時輸入還沒好：改用一般的點擊（以前這時邊緣的點擊會直接消失）
+                            }
                         }
                         edge = false;
                         live = false;

@@ -195,12 +195,12 @@ final class Router {
         Collections.sort(names);
         StringBuilder appNames = new StringBuilder();
         // 只附上跟這句話有關的 App 名稱（名稱含這句話的任何連續兩個字，最多 60 個）；以前一律附 400 個，提示詞多出上萬 token、一句話要等好幾秒
-        String tl = text == null ? "" : text.toLowerCase(java.util.Locale.ROOT);
+        String tl = norm(text);   // App 名稱是 norm 過的（轉成簡體、去空白標點）：這句話也要用同一套，不然「設定」對不到「设定」
         java.util.Set<String> grams = new java.util.HashSet<>();
         for (int i = 0; i + 2 <= tl.length(); i++) grams.add(tl.substring(i, i + 2));
         int shown = 0;
         for (int i = 0; i < names.size() && shown < 60; i++) {
-            String nm = names.get(i), nl = nm.toLowerCase(java.util.Locale.ROOT);
+            String nm = names.get(i), nl = norm(nm);
             boolean rel = tl.contains(nl);
             for (int k = 0; !rel && k + 2 <= nl.length(); k++) rel = grams.contains(nl.substring(k, k + 2));
             if (rel) appNames.append(shown++ > 0 ? "、" : "").append(nm);

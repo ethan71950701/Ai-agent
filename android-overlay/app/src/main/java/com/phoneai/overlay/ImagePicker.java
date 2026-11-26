@@ -33,6 +33,7 @@ final class ImagePicker {
             dir.mkdirs();
             java.io.File f = new java.io.File(dir, "shot_" + System.currentTimeMillis() + ".jpg");
             cameraFile = f;
+            act.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().putString("camera_file", f.getName()).apply();   // 相機佔很多記憶體，系統可能在拍照時把我們的程序殺掉：檔名記在設定裡，回來才找得到
             Uri u = androidx.core.content.FileProvider.getUriForFile(act, act.getPackageName() + ".update", f);
             Intent i = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(android.provider.MediaStore.EXTRA_OUTPUT, u)
                     .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -47,6 +48,10 @@ final class ImagePicker {
     /** 拍照回來：回一個帶著照片 Uri 的 Intent，交給 load；沒拍到回 null。 */
     static Intent cameraResult(Activity act) {
         java.io.File f = cameraFile;
+        if (f == null) {   // 程序被殺掉重開：靜態欄位沒了，用記在設定裡的檔名找
+            String nm = act.getSharedPreferences("cfg", Context.MODE_PRIVATE).getString("camera_file", "");
+            if (!nm.isEmpty() && nm.matches("shot_\\d+\\.jpg")) f = new java.io.File(new java.io.File(act.getCacheDir(), "camera"), nm);
+        }
         if (f == null || !f.exists() || f.length() < 100) return null;
         return new Intent().setData(androidx.core.content.FileProvider.getUriForFile(act, act.getPackageName() + ".update", f));
     }
@@ -58,6 +63,7 @@ final class ImagePicker {
             if (fs != null) for (java.io.File f : fs) f.delete();
         } catch (Throwable ignored) { }
         cameraFile = null;
+        c.getSharedPreferences("cfg", Context.MODE_PRIVATE).edit().remove("camera_file").apply();
     }
 
     private ImagePicker() { }

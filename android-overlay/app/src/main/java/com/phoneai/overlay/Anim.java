@@ -18,7 +18,7 @@ final class Anim {
     /** 按壓回饋的彈簧：按下是「臨界阻尼」（不過衝、稍微放慢，不會啪一下縮到底）；放開是較軟的彈簧、只輕輕過衝一點（以前剛性 900／500、阻尼 0.9／0.45，按下太硬、放開太彈）。 */
     static final float PRESS_IN_K = 600f, PRESS_IN_D = 1f, PRESS_OUT_K = 320f, PRESS_OUT_D = 0.72f;
 
-    private static final int R_FPS = 0x7f0a0e59;   // View.setTag 用的鍵
+    private static final int R_FPS = 0x7f0a0e64;   // 原本跟 R_STATE_LAYER、Ui.R_CORNER 同一個值，會互相蓋掉；   // View.setTag 用的鍵
 
     /**
      * 動畫期間要求高更新率（Android 15 以上）。這支手機的螢幕會依內容自動降更新率省電；手指離開後只剩一個小東西在彈，

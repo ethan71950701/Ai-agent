@@ -13,7 +13,21 @@ import java.nio.charset.StandardCharsets;
 final class Maintenance {
     private Maintenance() { }
 
-    private static final String[][] SU = {{Root.su(), "-mm"}, {Root.su(), "-M"}, {Root.su()}};
+    private static volatile long lastSuProbe;
+
+    /**
+     * 這次要試的 su 寫法。以前在類別載入時算一次就固定（static final）：當時還沒授權 root 的話，之後授權了也一直用錯的 su，要重開 App 才好；
+     * 載入時還會在碰到它的那條執行緒（可能是畫面執行緒）上試 su。現在每次用：已經找到就直接用；還沒找到最多每 30 秒重試一次（沒 root 時不會每次都等）。
+     */
+    private static String[][] suCmds() {
+        String su = Root.foundSu();
+        if (su == null) {
+            long now = System.currentTimeMillis();
+            if (now - lastSuProbe >= 30_000) { lastSuProbe = now; su = Root.su(); }
+            else su = "su";
+        }
+        return new String[][]{{su, "-mm"}, {su, "-M"}, {su}};
+    }
 
     /** 用 root 跑腳本（標準輸入餵進去）；回傳輸出。依序試幾種 su 寫法，第一個「結束碼 0」的就用。 */
     private static final long SU_TIMEOUT_MS = 90_000;   // 一次 root 指令最多等多久；超過就強制結束（以前 shell 卡住會永遠等）
@@ -22,7 +36,7 @@ final class Maintenance {
     static String suRun(String script) {
         if (App.ctx != null && ExecMode.SHIZUKU.equals(ExecMode.get(App.ctx))) return ShizukuBackend.run(script);
         String last = "";
-        for (String[] cmd : SU) {
+        for (String[] cmd : suCmds()) {
             Process p;
             try {
                 p = new ProcessBuilder(cmd).redirectErrorStream(true).start();

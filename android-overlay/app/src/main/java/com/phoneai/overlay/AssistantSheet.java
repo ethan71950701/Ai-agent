@@ -377,7 +377,10 @@ public class AssistantSheet {
     private JSONArray circleConvo = new JSONArray();   // 這一個選取區域的整段對話（第一輪有圖，之後接著問都帶著，才有上下文）
 
     /** 有選取：整個畫面（選取的地方畫一個框）和問題一起交給聊天模型；之後不用再選，直接接著問（同一段對話）。 */
+    private volatile String circleQuestion = "";   // 使用者自己問的那句（不含我們前面加的說明）：搜尋要用它
+
     private void askCircle(final String q, final boolean followUp) {
+        circleQuestion = q == null ? "" : q;
         try {
             JSONArray content = new JSONArray();
             if (!followUp) {
@@ -437,8 +440,9 @@ public class AssistantSheet {
                         JSONArray arr = (JSONArray) cc;
                         for (int i = arr.length() - 1; i >= 0; i--) if ("text".equals(arr.getJSONObject(i).optString("type"))) { qtext = arr.getJSONObject(i).optString("text"); break; }
                     } else if (cc instanceof String) qtext = (String) cc;
-                    if (!qtext.isEmpty() && ChatEngine.wantsSearch(qtext)) {
-                        String block = TavilySearch.search(app, qtext, "");
+                    String userQ = circleQuestion.isEmpty() ? qtext : circleQuestion;   // 第一輪的文字前面有我們加的「圖片是整個畫面…」說明，搜尋要用使用者問的那句
+                    if (!qtext.isEmpty() && ChatEngine.wantsSearch(userQ)) {
+                        String block = TavilySearch.search(app, userQ, "");
                         if (block != null) {
                             if (cc instanceof JSONArray) {
                                 JSONArray arr = (JSONArray) cc;
@@ -941,6 +945,7 @@ public class AssistantSheet {
     private String carryText = "";
 
     private void gotText(String t) {
+        if (continueMode && SpeakerId.rejects(act)) t = carryText + t;   // 接著說的那段被聲紋擋下來：前面已經在輸入框的字不能丟
         if (SpeakerId.rejects(act)) {   // 「只回應我的聲音」：聲音不像你，不自動送出，文字放進輸入框讓你確認
             LifeLog.add(act, "面板：聲紋 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.lastScore) + " 低於門檻 " + String.format(java.util.Locale.US, "%.2f", SpeakerId.threshold(act)) + "，不自動送出");
             setText(t);
@@ -1042,11 +1047,14 @@ public class AssistantSheet {
 
     /** 助理文字回答到了：卡片（沒有標題、沒有關閉鈕）出現在畫面中上方，面板留著，可以接續對話。 */
     /** 固定指令、Haiku 路由判斷後的動作、或聊天：在背景做（交給 Brain.answer，跟首頁共用同一套流程），回答到了用回答卡片顯示並唸出來。 */
+    private int runGen;   // 第幾次發問：舊的回答（還在串流或剛好答完）不能寫到新的卡片上
+
     private void runLocal(Assist.Route r, String t, final List<String> images) {
         streamCard = null;
+        final int gen = ++runGen;
         new Thread(() -> {
             TransferNotify.onStart = () -> act.runOnUiThread(AssistantSheet.this::dismiss);   // 傳檔案開始：面板收起來，進度看通知
-            ChatEngine.onPartial = s -> act.runOnUiThread(() -> onPartial(s));   // 聊天回答邊收邊顯示
+            ChatEngine.onPartial.set(s -> act.runOnUiThread(() -> { if (gen == runGen) onPartial(s); }));   // 聊天回答邊收邊顯示（只顯示這一次發問的）
             String reply;
             try {
                 reply = Brain.answer(act, t, new AgentLoop.Ui() {
@@ -1058,12 +1066,14 @@ public class AssistantSheet {
             }, images);
             } finally {
                 TransferNotify.onStart = null;
-                ChatEngine.onPartial = null;
+                ChatEngine.onPartial.remove();
             }
             if (reply == null) return;   // 沒有回覆（不該發生）
             final String fr = reply;
+            if (gen != runGen) return;   // 使用者已經問了下一句：這個舊回答不唸、也不蓋掉新的卡片
             Notify.say(act, fr);
             act.runOnUiThread(() -> {
+                if (gen != runGen) return;
                 if (!dismissing) { showReply("", fr); return; }
                 // 面板已經收起來（自動操作時會收）：搜尋結果這類較長的回答，重新叫出面板顯示回答卡片
                 if (AgentLoop.showCard) AnswerCard.show(act, fr);

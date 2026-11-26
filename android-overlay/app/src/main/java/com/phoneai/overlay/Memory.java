@@ -224,6 +224,13 @@ final class Memory {
         return sb.length() == 0 ? "（沒有）" : sb.toString();
     }
 
+    /** 純邏輯：「清除全部／全部待辦／全部筆記」會刪到的種類。全部＝待辦與筆記；AI 學到的經驗（lesson）不算，以前會被一起刪掉、也不會再補回來。 */
+    static boolean clearable(JSONObject it, String scope) {
+        String kind = it.optString("kind");
+        if (scope.equals("all")) return kind.equals("todo") || kind.equals("note");
+        return scope.equals(kind);
+    }
+
     /** 聊天模型用的記憶工具。回傳給模型看的結果字串（錯誤也用字串回）。 */
     static String runTool(Context c, String name, JSONObject args, Confirm confirm) {
         try {
@@ -266,6 +273,11 @@ final class Memory {
                             // 長筆記被改成很短的字：常是小模型把「標題」當成內容寫進去，整則筆記就被洗掉了。先問使用者
                             String q = String.format(L.t("AI 要把筆記 #%d 從 %d 字改成只剩 %d 字（可能是把標題當成內容寫進去了），要改嗎？"), it.optInt("id"), old.length(), text.length());
                             if (confirm == null || !confirm.ask(q)) return "使用者沒有同意，沒有修改（如果只是要改標題或摘要，請用 title／brief 參數，不要改 text）";
+                            // 確認框可能開了好幾分鐘，這段時間別的地方（自動操作記經驗、定時任務）可能寫過記憶：重新讀一次再改，才不會把它們蓋掉
+                            d = load(c);
+                            it = byId(d, args.optInt("id", -1));
+                            if (it == null || it.optBoolean("pinned")) return "錯誤：#" + args.optInt("id") + " 已經不在了或變成永久記憶，沒有修改";
+                            old = it.optString("text");
                         }
                         if (!old.equals(text)) it.put("prev_text", old);   // 留上一版，萬一被改壞還找得回來
                         it.put("text", text.length() > 300 ? text.substring(0, 300) : text);
@@ -294,6 +306,13 @@ final class Memory {
                         StringBuilder m = new StringBuilder(L.t("要刪除這 ") + hit.size() + L.t(" 項嗎？\n"));
                         for (int i = 0; i < hit.size() && i < 8; i++) m.append("・").append(hit.get(i).optString("text")).append('\n');
                         if (confirm == null || !confirm.ask(m.toString())) return "使用者沒有同意，沒有刪除";
+                        d = load(c);   // 確認期間記憶可能被別的地方改過：重新讀，照編號重找要刪的
+                        List<JSONObject> again = new ArrayList<>();
+                        for (JSONObject h : hit) {
+                            JSONObject it = byId(d, h.optInt("id", -1));
+                            if (it != null && !it.optBoolean("pinned")) again.add(it);
+                        }
+                        hit = again;
                     }
                     StringBuilder names = new StringBuilder();
                     for (JSONObject it : hit) { it.put("deleted", true); names.append(names.length() > 0 ? "、" : "").append(it.optString("text")); }
@@ -305,11 +324,12 @@ final class Memory {
                     if (!scope.equals("todo") && !scope.equals("note")) scope = "all";
                     int n = 0;
                     for (JSONObject it : items(d))
-                        if (!it.optBoolean("deleted") && !it.optBoolean("pinned") && (scope.equals("all") || scope.equals(it.optString("kind")))) n++;
+                        if (!it.optBoolean("deleted") && !it.optBoolean("pinned") && clearable(it, scope)) n++;
                     if (confirm == null || !confirm.ask(L.t("要刪除") + (scope.equals("all") ? L.t("全部") : scope.equals("todo") ? L.t("全部待辦") : L.t("全部筆記"))
                             + L.t("（") + n + L.t(" 項，永久記憶不會刪）嗎？"))) return "使用者沒有同意，沒有刪除";
+                    d = load(c);   // 確認期間記憶可能被別的地方改過：重新讀再刪
                     for (JSONObject it : items(d))
-                        if (!it.optBoolean("pinned") && (scope.equals("all") || scope.equals(it.optString("kind")))) it.put("deleted", true);
+                        if (!it.optBoolean("pinned") && clearable(it, scope)) it.put("deleted", true);
                     save(c, d);
                     return "已刪除 " + n + " 項";
                 }

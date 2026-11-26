@@ -44,9 +44,22 @@ final class SherpaEngine {
     static final String[] HOSTS = {"https://huggingface.co", "https://hf-mirror.com"};
     /** 下載並校驗 SenseVoice 模型；進度文字由 say 回報（可能在背景執行緒）。 */
     static void download(Context c, java.util.function.Consumer<String> say) throws Exception {
-        File d = dir(c);
+        // 先下載到旁邊的暫存資料夾，兩個檔案都核對過才換掉舊的：以前一開始就把能用的舊模型刪掉，網路不穩下載失敗就整個沒有語音辨識了
+        File target = dir(c), d = new File(target.getParentFile(), target.getName() + ".new");
         deleteRec(d);
         d.mkdirs();
+        try {
+            downloadInto(d, say);
+        } catch (Exception e) {
+            deleteRec(d);
+            throw e;
+        }
+        release();   // 換檔前先放掉正在用的引擎
+        deleteRec(target);
+        if (!d.renameTo(target)) { deleteRec(d); throw new Exception(L.t("搬移檔案失敗")); }
+    }
+
+    private static void downloadInto(File d, java.util.function.Consumer<String> say) throws Exception {
         for (int i = 0; i < FILES.length; i++) {
             final String name = FILES[i];
             File tmp = new File(d, name + ".part"), dest = new File(d, name);

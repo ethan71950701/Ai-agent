@@ -162,7 +162,11 @@ final class ChatEngine {
         }
     }
     /** 串流回答：設了之後（面板的聊天），Claude 的請求改用串流，文字邊收邊交給它（已去掉 <work> 推算過程）。別家服務、網頁搜尋、沒設的呼叫端照舊一次收完。 */
-    static volatile java.util.function.Consumer<String> onPartial;
+    /**
+     * 每條執行緒自己的串流回呼（面板每問一次就開一條新執行緒）：以前是全域一個，回答還在串流時又問下一句，
+     * 新的會蓋掉舊的，兩個回答的文字混在同一張卡片，舊的那條結束時還把新的回呼清掉。
+     */
+    static final ThreadLocal<java.util.function.Consumer<String>> onPartial = new ThreadLocal<>();
     /** 只有真正在「回答使用者」的那一次請求才邊收邊顯示；路由判斷、排程、整理通知…這些內部請求回的是給程式看的 JSON，不能顯示出來。 */
     private static final ThreadLocal<Boolean> CHAT_STREAM = ThreadLocal.withInitial(() -> false);
 
@@ -173,7 +177,7 @@ final class ChatEngine {
     private static long lastPartialAt;
 
     private static void emitPartial(String text) {
-        java.util.function.Consumer<String> cb = onPartial;
+        java.util.function.Consumer<String> cb = onPartial.get();
         if (cb == null) return;
         String t = text;
         int w = t.indexOf("<work>");
@@ -635,7 +639,7 @@ final class ChatEngine {
             if (slot.openai()) return postOpenAi(app, body, slot, key);
             if (!slot.model.isEmpty()) { body.put("model", slot.model); lastModel = slot.model; }   // 使用者自己選了 Claude 的模型：用他選的（沒選就用程式內建的）
         }
-        final boolean stream = shouldStream(CHAT_STREAM.get(), onPartial != null, hasServerTools(body), Announcements.off("chat_stream"));
+        final boolean stream = shouldStream(CHAT_STREAM.get(), onPartial.get() != null, hasServerTools(body), Announcements.off("chat_stream"));
         if (stream) body.put("stream", true);
         HttpURLConnection con = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
         inflight = con;

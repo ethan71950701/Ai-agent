@@ -133,7 +133,17 @@ public class DiagActivity extends Activity {
     }
 
     /** 登錄聲紋：4 句話、每句念 2 次（共 8 段），用正常的音量與速度念，算好平均存起來。 */
+    private SpeechCapture enrollCap;   // 目前這一段錄音：離開頁面要取消
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SpeechCapture c = enrollCap;
+        if (c != null) { c.cancel(); enrollCap = null; }
+    }
+
     private void enrollRound(final int i, final java.util.List<float[]> got) {
+        if (isFinishing() || isDestroyed()) return;   // 離開頁面就不要再重開麥克風、也不要再跳提示
         final int total = PHRASES.length * REPEAT;
         if (i >= total) {
             spkStatus.setText(L.t("計算聲紋…"));
@@ -144,10 +154,11 @@ public class DiagActivity extends Activity {
             return;
         }
         spkStatus.setText(L.t("第 ") + (i + 1) + "／" + total + L.t(" 次，請用平常的聲音念：") + "\n　" + PHRASES[i / REPEAT] + (i % REPEAT == 1 ? L.t("（再念一次）") : ""));
-        SpeechCapture.start(new SpeechCapture.Cb() {
+        enrollCap = SpeechCapture.start(new SpeechCapture.Cb() {
             @Override public void onListening() { }
             @Override public void onLevel(float v) { }
             @Override public void onDone(short[] pcm) {
+                if (isFinishing() || isDestroyed()) return;
                 if (pcm == null || pcm.length < SpeechCapture.RATE * 2) {   // 沒聽到或太短（少於 2 秒）：同一句重來
                     android.widget.Toast.makeText(DiagActivity.this, L.t("太短或沒聽到，這一句再念一次"), android.widget.Toast.LENGTH_SHORT).show();
                     enrollRound(i, got);
@@ -232,7 +243,7 @@ public class DiagActivity extends Activity {
                 .append(A11yGuard.enabled(this) ? L.t("開") : L.t("關")).append(L.t("；已修復 ")).append(cfgp.getInt("a11y_fixes", 0)).append(L.t(" 次"))
                 .append(cfgp.getString("a11y_last", null) != null ? L.t("（最近 ") + cfgp.getString("a11y_last", "") + L.t("）") : "").append('\n');
         sb.append(L.t("系統長按電源鍵動作：")).append(powerLongPressText()).append('\n');
-        sb.append(L.t("底欄玻璃效果：")).append(GlassBar.status).append('\n');
+        sb.append(L.t("底欄玻璃效果：")).append(GlassBar.status.startsWith("失敗，已退回半透明：") ? L.t("失敗，已退回半透明：") + GlassBar.status.substring("失敗，已退回半透明：".length()) : L.t(GlassBar.status)).append('\n');
         sb.append(L.t("朗讀：")).append(Notify.ttsInfo.isEmpty() ? L.t("（還沒朗讀過）") : Notify.ttsInfo).append('\n');
         // 實際用的服務與模型：依「設定 → AI 服務」選的便宜／看圖兩個欄位（Claude 沒另外選模型時用內建的 Haiku／Sonnet）
         LlmConfig.Slot cheapS = LlmConfig.cheap(this), visionS = LlmConfig.vision(this);
@@ -283,7 +294,7 @@ public class DiagActivity extends Activity {
             if (vt.length() == 0) sb.append(L.t("（還沒有紀錄）\n"));
             for (int k = 0; k < vt.length(); k++) sb.append(vt.getString(k)).append("\n");
         } catch (Exception e) { sb.append(L.t("（讀取失敗）\n")); }
-        sb.append(L.t("\n最近一次通知診斷：\n")).append(OverlayService.lastDiag).append('\n');
+        sb.append(L.t("\n最近一次通知診斷：\n")).append(L.t(OverlayService.lastDiag)).append('\n');
         return sb;
     }
 }

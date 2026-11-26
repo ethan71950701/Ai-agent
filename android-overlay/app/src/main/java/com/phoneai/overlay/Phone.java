@@ -131,10 +131,8 @@ final class Phone {
         try {
             Process p = new ProcessBuilder("sh", "-c", cmd).redirectErrorStream(true).start();
             p.getOutputStream().close();
-            InputStream in = p.getInputStream();
-            byte[] buf = in.readAllBytes();
-            if (!p.waitFor(5, TimeUnit.SECONDS)) p.destroy();
-            String out = new String(buf, java.nio.charset.StandardCharsets.UTF_8);
+            ProcRun.Text r = ProcRun.drain(p, 5000, 256 * 1024);   // 最多等 5 秒、最多 256 KB（以前先讀完全部才看逾時：`top -n 100000` 這種會讓聊天或任務永遠卡住）
+            String out = r.text;
             return out.trim().isEmpty() ? "（沒有輸出；不用 root 時有些系統資訊讀不到）" : out;
         } catch (Exception e) {
             return "執行失敗：" + e.getMessage();
@@ -204,50 +202,50 @@ final class Phone {
     /** 依代號執行；回傳要告訴使用者的話。只能打開設定頁、要使用者自己切換的，回覆不會以「已」開頭（讓 AI 知道還沒做完）。 */
     static String runNoRoot(Context c, String id) {
         switch (id) {
-            case "home": return glob("home", "已回到主畫面");
-            case "back": return glob("back", "已按返回");
-            case "recents": return glob("recents", "已打開最近使用的 App");
-            case "screenshot": return glob("screenshot", "已送出截圖");
-            case "lock": return glob("lock", "已鎖定螢幕");
-            case "shade": return glob("notifications", "已打開通知欄");
-            case "quick": return glob("quick_settings", "已打開快速設定");
-            case "collapse": return glob("back", "已收起通知欄");
+            case "home": return glob("home", L.t("已回到主畫面"));
+            case "back": return glob("back", L.t("已按返回"));
+            case "recents": return glob("recents", L.t("已打開最近使用的 App"));
+            case "screenshot": return glob("screenshot", L.t("已送出截圖"));
+            case "lock": return glob("lock", L.t("已鎖定螢幕"));
+            case "shade": return glob("notifications", L.t("已打開通知欄"));
+            case "quick": return glob("quick_settings", L.t("已打開快速設定"));
+            case "collapse": return glob("back", L.t("已收起通知欄"));
             case "vol.up": return volume(c, true);
             case "vol.down": return volume(c, false);
             case "dnd.on": return dnd(c, true);
             case "dnd.off": return dnd(c, false);
-            case "rotate.on": return systemInt(c, Settings.System.ACCELEROMETER_ROTATION, 1, "已開啟自動旋轉");
-            case "rotate.off": return systemInt(c, Settings.System.ACCELEROMETER_ROTATION, 0, "已關閉自動旋轉");
-            case "autobright.on": return systemInt(c, Settings.System.SCREEN_BRIGHTNESS_MODE, 1, "已開啟自動亮度");
-            case "autobright.off": return systemInt(c, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, "已關閉自動亮度");
+            case "rotate.on": return systemInt(c, Settings.System.ACCELEROMETER_ROTATION, 1, L.t("已開啟自動旋轉"));
+            case "rotate.off": return systemInt(c, Settings.System.ACCELEROMETER_ROTATION, 0, L.t("已關閉自動旋轉"));
+            case "autobright.on": return systemInt(c, Settings.System.SCREEN_BRIGHTNESS_MODE, 1, L.t("已開啟自動亮度"));
+            case "autobright.off": return systemInt(c, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, L.t("已關閉自動亮度"));
             case "bright.min": return setBrightness(c, 0);
             case "bright.max": return setBrightness(c, 100);
             case "wifi.panel": return page(c, Settings.Panel.ACTION_WIFI, "Wi-Fi");
-            case "bt.settings": return page(c, Settings.ACTION_BLUETOOTH_SETTINGS, "藍牙");
-            case "dark.settings": return page(c, Settings.ACTION_DISPLAY_SETTINGS, "深色模式");
-            case "saver.settings": return page(c, Settings.ACTION_BATTERY_SAVER_SETTINGS, "省電模式");
-            case "airplane.settings": return page(c, Settings.ACTION_AIRPLANE_MODE_SETTINGS, "飛航模式");
-            case "location.settings": return page(c, Settings.ACTION_LOCATION_SOURCE_SETTINGS, "定位");
+            case "bt.settings": return page(c, Settings.ACTION_BLUETOOTH_SETTINGS, L.t("藍牙"));
+            case "dark.settings": return page(c, Settings.ACTION_DISPLAY_SETTINGS, L.t("深色模式"));
+            case "saver.settings": return page(c, Settings.ACTION_BATTERY_SAVER_SETTINGS, L.t("省電模式"));
+            case "airplane.settings": return page(c, Settings.ACTION_AIRPLANE_MODE_SETTINGS, L.t("飛航模式"));
+            case "location.settings": return page(c, Settings.ACTION_LOCATION_SOURCE_SETTINGS, L.t("定位"));
             case "nfc.settings": return page(c, Settings.ACTION_NFC_SETTINGS, "NFC");
-            case "data.settings": return page(c, Settings.ACTION_NETWORK_OPERATOR_SETTINGS, "行動數據");
-            default: return "不用 root 時沒辦法執行這個指令";
+            case "data.settings": return page(c, Settings.ACTION_NETWORK_OPERATOR_SETTINGS, L.t("行動數據"));
+            default: return L.t("不用 root 時沒辦法執行這個指令");
         }
     }
 
     /** 固定指令（Brain.runFixed）用：shell 指令轉成不用 root 的做法。 */
     static String runFixedNoRoot(Context c, String shell) {
         String id = noRootAction(shell);
-        return id == null ? "不用 root 時沒辦法執行這個指令" : runNoRoot(c, id);
+        return id == null ? L.t("不用 root 時沒辦法執行這個指令") : runNoRoot(c, id);
     }
 
-    private static String glob(String key, String ok) { return key(key) ? ok : "做不到：請先到系統設定開啟 Vertex 的無障礙服務"; }
+    private static String glob(String key, String ok) { return key(key) ? ok : L.t("做不到：請先到系統設定開啟 Vertex 的無障礙服務"); }
 
     private static String page(Context c, String action, String what) {
         try {
             c.startActivity(new Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            return "不用 root 沒辦法直接切換" + what + "，已打開設定頁，請自己切換（或接著告訴我要點哪裡）";
+            return L.t("不用 root 沒辦法直接切換") + what + L.t("，已打開設定頁，請自己切換（或接著告訴我要點哪裡）");
         } catch (Exception e) {
-            return "不用 root 沒辦法直接切換" + what + "，而且打不開設定頁";
+            return L.t("不用 root 沒辦法直接切換") + what + L.t("，而且打不開設定頁");
         }
     }
 
@@ -256,7 +254,7 @@ final class Phone {
         try {
             AudioManager am = c.getSystemService(AudioManager.class);
             int v = am.getStreamVolume(AudioManager.STREAM_MUSIC), max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-            return "（現在媒體音量 " + v + "/" + max + (v == 0 ? "，已是最小" : v == max ? "，已是最大" : "") + "）";
+            return L.t("（現在媒體音量 ") + v + "/" + max + (v == 0 ? L.t("，已是最小") : v == max ? L.t("，已是最大") : "") + "）";
         } catch (Exception e) {
             return "";
         }

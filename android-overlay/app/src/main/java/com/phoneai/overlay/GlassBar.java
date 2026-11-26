@@ -165,7 +165,7 @@ final class GlassBar extends FrameLayout {
     private static final float BODY_LIFT = 0.08f;   // 靜止時透鏡比底欄微亮，看得出圓底的形狀；按住時逐漸消失，換成清澈的玻璃
     /** 透鏡裡的圖示是否經過折射著色器。實驗中：false 時不經過著色器，用來判斷半透明方塊的來源。 */
     // 圖示是否經過折射著色器：改由設定頁的開關控制（GlassPrefs.iconRefr）
-    static volatile String status = L.t("還沒畫過");
+    static volatile String status = "還沒畫過";   // 存中文原文，顯示時才 L.t
     static volatile String shaderInfo = "";   // 診斷用：最近一次餵給透鏡著色器的值
     static volatile String lensInfo = "";   // 診斷用：透鏡強度、模糊、歪斜
 
@@ -447,7 +447,7 @@ final class GlassBar extends FrameLayout {
         } catch (Throwable e) {
             failed = true;
             failedAt = SystemClock.uptimeMillis();
-            status = L.t("失敗，已退回半透明：") + e;
+            status = "失敗，已退回半透明：" + e;
         }
     }
 
@@ -540,14 +540,14 @@ final class GlassBar extends FrameLayout {
                 if (jelly) { canvas.save(); canvas.scale(jellyX, jellyY, w / 2f, h / 2f); }
                 try { drawGlass(canvas, w, h); } finally { if (jelly) canvas.restore(); }
                 canvas.restoreToCount(saved);
-                status = L.t("正常（玻璃效果執行中）");
+                status = "正常（玻璃效果執行中）";
             } catch (Throwable e) {   // 這幀玻璃效果出錯：退回半透明底色，不要讓 App 閃退（幾秒後會再試）
                 canvas.restoreToCount(saved);
                 failed = true;
                 failedAt = SystemClock.uptimeMillis();
                 capturing = false;
                 anyCapture = false;
-                status = L.t("失敗，已退回半透明：") + e;
+                status = "失敗，已退回半透明：" + e;
                 long now = SystemClock.uptimeMillis();
                 if (now - lastFailLog > 30000) { lastFailLog = now; CrashLog.w(lens ? "玻璃透鏡" : "玻璃底欄", e); }
                 drawFlat(canvas);

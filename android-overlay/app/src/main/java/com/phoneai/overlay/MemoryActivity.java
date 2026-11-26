@@ -169,10 +169,31 @@ public class MemoryActivity extends Activity {
         }, "memory-pin").start();
     }
 
+    /**
+     * 純邏輯：把「磁碟上現在的」裡畫面這份沒有的項目（AI、定時任務在你開著這一頁的時候新增的）補進畫面這份，再存。
+     * 以前直接把畫面開啟時讀的那份整個寫回去，中間別處新增的筆記與經驗會被蓋掉。
+     */
+    static void mergeNewer(JSONObject mine, JSONObject disk) {
+        try {
+            JSONArray mi = mine.optJSONArray("items"), di = disk == null ? null : disk.optJSONArray("items");
+            if (mi == null || di == null) return;
+            java.util.Set<Integer> have = new java.util.HashSet<>();
+            for (int i = 0; i < mi.length(); i++) have.add(mi.getJSONObject(i).optInt("id", -1));
+            int maxId = mine.optInt("next_id", 1);
+            for (int i = 0; i < di.length(); i++) {
+                JSONObject o = di.getJSONObject(i);
+                if (!have.contains(o.optInt("id", -1))) mi.put(o);
+                maxId = Math.max(maxId, o.optInt("id", 0) + 1);
+            }
+            mine.put("next_id", Math.max(maxId, disk.optInt("next_id", 1)));
+        } catch (Exception ignored) { }
+    }
+
     private void saveThen(Runnable after) {
         new Thread(() -> {
             String err = null;
             try {
+                mergeNewer(data, Memory.load(this));
                 Memory.save(this, data);   // 檔案在 App 自己的資料夾，直接寫，不需要 root
             } catch (Exception e) {
                 err = L.t("寫入失敗：") + e.getMessage();
@@ -198,6 +219,7 @@ public class MemoryActivity extends Activity {
     // ---------- 畫面 ----------
 
     private void render() {
+        if (data == null) return;   // 還沒讀完
         list.removeAllViews();
         JSONArray items = data.optJSONArray("items");
         int todo = section(L.t("待辦"), items, "todo", false, "circle"), done = section(L.t("已完成"), items, "todo", true, "check_circle"),
@@ -391,6 +413,7 @@ public class MemoryActivity extends Activity {
                 .setPositiveButton(L.t("儲存"), (dlg, w) -> {
                     String t = et.getText().toString().trim();
                     if (t.isEmpty()) return;
+                    if (data == null) { android.widget.Toast.makeText(this, L.t("還在讀取，請再按一次儲存"), android.widget.Toast.LENGTH_SHORT).show(); return; }
                     try {
                         if (it == null) {
                             int id = data.optInt("next_id", 1);

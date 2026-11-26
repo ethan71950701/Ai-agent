@@ -109,7 +109,7 @@ public class OverlayService extends Service {
     static final int CHIP_COLOR = 0xFF0B6BCB;  // 膠囊底色（藍）
 
     /** 給 MainActivity 顯示用的最後診斷結果 */
-    static volatile String lastDiag = L.t("（還沒發過通知）");
+    static volatile String lastDiag = "（還沒發過通知）";   // 存中文原文，顯示時才 L.t（不能在靜態初始化翻譯，換語言後不會跟著變）
     /** 有 agent2 連著 = 正在執行任務（助理面板用它決定要不要顯示「停止」）。 */
     static volatile boolean agentRunning;
     /** 背景虛擬螢幕的 SurfaceFlinger 編號（agent2 用 vd 指令告知）；空字串 = 沒有背景螢幕。 */

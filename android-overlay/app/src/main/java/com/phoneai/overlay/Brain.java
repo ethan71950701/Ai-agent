@@ -74,8 +74,7 @@ final class Brain {
             case Router.CMD:
                 return runFixed(act, Assist.fixed(d.cmdIndex));
             case Router.APP:
-                Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1");
-                return L.t("已開啟 App");
+                return openApp(act, d.pkg);
             case Router.AGENT:
                 return AgentLoop.run(act, t, ui, d == null || Router.isSystemInfoQuestion(t) ? null : d.openPkg, d == null ? null : d.macroTask);   // 查系統資訊不先開 App，讓模型用指令查
             default: {
@@ -101,10 +100,19 @@ final class Brain {
         Router.lastNote = L.t("聊天助理判斷要操作手機，交給自動操作") + (Router.lastNote.isEmpty() ? "" : "；" + Router.lastNote);
         if (d != null) {
             if (Router.CMD.equals(d.kind)) return runFixed(act, Assist.fixed(d.cmdIndex));
-            if (Router.APP.equals(d.kind)) { Maintenance.suRun("monkey -p " + d.pkg + " -c android.intent.category.LAUNCHER 1"); return L.t("已開啟 App"); }
+            if (Router.APP.equals(d.kind)) return openApp(act, d.pkg);
             if (Router.AGENT.equals(d.kind)) return AgentLoop.run(act, t, ui, Router.isSystemInfoQuestion(t) ? null : d.openPkg, d.macroTask);
         }
         return AgentLoop.run(act, t, ui);
+    }
+
+    /** 開 App：有 root／Shizuku 用 monkey，普通模式用系統的啟動方式（以前一律走 root，普通模式打不開卻回「已開啟」）。 */
+    private static String openApp(Activity act, String pkg) {
+        if (!AgentLoop.validPkg(pkg)) return L.t("打不開這個 App");   // 套件名稱會接進 root 指令
+        boolean ok;
+        if (Root.available()) ok = !Maintenance.suRun("monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1").startsWith("ERR");
+        else ok = Phone.launch(act, pkg);
+        return ok ? L.t("已開啟 App") : L.t("打不開這個 App");
     }
 
     static String runFixed(Activity act, Assist.Route r) {

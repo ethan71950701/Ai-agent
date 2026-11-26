@@ -82,6 +82,9 @@ final class Root {
             + "exec su \"$@\"\n";
 
     /** 找出能真的拿到 root 的 su：實際跑 `id`，回傳 0 才算數。順序：直接用 su（系統 PATH）→ App 的包裝腳本 → 常見路徑。 */
+    /** 已經找到可用的 su 就回它，還沒找到回 null（不會去試）。 */
+    static String foundSu() { return found; }
+
     static String su() {
         if (found != null) return found;
         java.util.List<String> cands = new java.util.ArrayList<>();

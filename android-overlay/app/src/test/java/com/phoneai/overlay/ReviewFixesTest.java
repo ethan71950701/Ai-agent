@@ -56,4 +56,33 @@ public class ReviewFixesTest {
         assertTrue(SafetyGuard.readOnly("getprop | grep -E wifi"));
         assertTrue(SafetyGuard.readOnly("getprop | grep -i wifi"));
     }
+
+    @Test public void clearAllKeepsLessons() throws Exception {
+        assertTrue(Memory.clearable(new JSONObject().put("kind", "todo"), "all"));
+        assertTrue(Memory.clearable(new JSONObject().put("kind", "note"), "all"));
+        assertFalse(Memory.clearable(new JSONObject().put("kind", "lesson"), "all"));   // AI 學到的經驗不能被「清除全部」一起刪掉
+        assertTrue(Memory.clearable(new JSONObject().put("kind", "todo"), "todo"));
+        assertFalse(Memory.clearable(new JSONObject().put("kind", "note"), "todo"));
+    }
+
+    @Test public void memoryPageKeepsItemsAddedElsewhere() throws Exception {
+        JSONObject mine = new JSONObject().put("next_id", 3).put("items", new JSONArray()
+                .put(new JSONObject().put("id", 1).put("text", "a")).put(new JSONObject().put("id", 2).put("text", "b")));
+        JSONObject disk = new JSONObject().put("next_id", 5).put("items", new JSONArray()
+                .put(new JSONObject().put("id", 1).put("text", "a"))
+                .put(new JSONObject().put("id", 2).put("text", "old b"))     // 畫面這份的優先
+                .put(new JSONObject().put("id", 4).put("text", "added by AI")));
+        MemoryActivity.mergeNewer(mine, disk);
+        assertEquals(3, mine.getJSONArray("items").length());
+        assertEquals("b", mine.getJSONArray("items").getJSONObject(1).getString("text"));
+        assertEquals("added by AI", mine.getJSONArray("items").getJSONObject(2).getString("text"));
+        assertEquals(5, mine.getInt("next_id"));
+    }
+
+    @Test public void endpointWithUserInfoIsNotLocal() {
+        assertFalse(LlmAdapter.isSafeEndpoint("http://localhost:80@attacker.example/v1"));
+        assertFalse(LlmAdapter.isSafeEndpoint("http://192.168.1.5@evil.com/v1"));
+        assertTrue(LlmAdapter.isSafeEndpoint("http://localhost:11434/v1"));
+        assertTrue(LlmAdapter.isSafeEndpoint("https://api.openai.com/v1"));
+    }
 }

@@ -134,10 +134,13 @@ final class LlmAdapter {
         String b = base == null ? "" : base.trim().toLowerCase(java.util.Locale.ROOT);
         if (b.startsWith("https://")) return true;
         if (!b.startsWith("http://")) return false;
-        String rest = b.substring(7);
-        int cut = rest.length();
-        for (char c : new char[]{'/', ':', '?', '#'}) { int i = rest.indexOf(c); if (i >= 0 && i < cut) cut = i; }
-        String host = rest.substring(0, cut);
+        String host;
+        try {
+            java.net.URI u = new java.net.URI(b);
+            if (u.getRawUserInfo() != null) return false;   // http://localhost:1@壞人.com/ 真正連到的是 @ 後面那台：含帳號密碼的一律不收
+            host = u.getHost();
+        } catch (Exception e) { return false; }
+        if (host == null || host.isEmpty()) return false;
         if (host.equals("localhost") || host.endsWith(".local") || host.endsWith(".lan")) return true;
         if (host.matches("127\\.\\d+\\.\\d+\\.\\d+") || host.matches("10\\.\\d+\\.\\d+\\.\\d+") || host.matches("192\\.168\\.\\d+\\.\\d+")) return true;
         return host.matches("172\\.(1[6-9]|2\\d|3[01])\\.\\d+\\.\\d+");

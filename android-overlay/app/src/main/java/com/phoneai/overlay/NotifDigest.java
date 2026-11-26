@@ -56,31 +56,38 @@ final class NotifDigest {
         if (today.equals(prefs(c).getString(P_LAST, ""))) return;
         int nowMin = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE);
         if (nowMin < hour(c) * 60 + minute(c)) return;
-        prefs(c).edit().putString(P_LAST, today).apply();
-        run(c, true);
+        // 失敗（沒網路、服務忙、額度）不能當作今天整理過：下一次檢查（約 15 分鐘後）再試，最多 3 次，3 次都失敗才通知你原因
+        String triesKey = "digest_tries_" + today;
+        int tries = prefs(c).getInt(triesKey, 0) + 1;
+        prefs(c).edit().putInt(triesKey, tries).apply();
+        String err = run(c, true);
+        if (err == null || tries >= 3) {
+            prefs(c).edit().putString(P_LAST, today).remove(triesKey).apply();
+            if (err != null) post(c, L.t("通知整理沒有完成"), err);
+        }
     }
 
     /** 整理一次。notify = 完成後跳通知（排程用）；手動按「立即整理」時由畫面直接打開。回傳錯誤說明，成功回 null。 */
     static String run(Context c, boolean notify) {
         if (!Root.isRoot() && !NotifListener.enabled(c)) {   // 有 root 可以直接讀通知紀錄，不一定要通知存取
             if (Root.available()) NotifListener.ensure(c);
-            if (!NotifListener.enabled(c)) {
-                String msg = L.t("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → Vertex");
-                if (notify) post(c, L.t("通知整理沒有完成"), msg);
-                return msg;
-            }
+            if (!NotifListener.enabled(c)) return L.t("要先開「通知存取」才能整理通知：設定 → 通知 → 進階設定 → 通知存取 → Vertex");   // 定時整理時由 runIfDue 決定要不要通知（重試完才通知）
         }
         // 先讀系統的通知紀錄（含已經滑掉的，從上次整理或 24 小時前開始）；沒有 root 或讀不到才只讀通知欄目前的內容
         // 定時整理：從上次定時整理（最多 24 小時前）開始；手動「立即整理」一律看最近 24 小時
         long day = System.currentTimeMillis() - 24 * 3600_000L;
         long since = notify ? Math.max(day, prefs(c).getLong("digest_last_ms", 0)) : day;
+        final long startedAt = System.currentTimeMillis();
         String snap = NotifHistory.since(c, since);
+        final boolean fromHistory = snap != null;
         if (snap == null) snap = NotifListener.snapshot(c);
-        else if (notify) prefs(c).edit().putLong("digest_last_ms", System.currentTimeMillis()).apply();
+        // 「上次整理到哪裡」要等整理成功才往前移：以前在呼叫 AI 之前就移，AI 失敗的話那段時間的通知就再也不會被整理
+        final Runnable markDone = () -> { if (notify && fromHistory) prefs(c).edit().putLong("digest_last_ms", startedAt).apply(); };
         if (!snap.startsWith("【")) {   // 沒有通知、或讀不到：不用花錢叫模型
             JSONObject o = new JSONObject();
             try { o.put("time", System.currentTimeMillis()).put("summary", snap).put("items", new JSONArray()); } catch (Exception ignored) { }
             save(c, o);
+            markDone.run();
             if (notify) post(c, L.t("通知整理好了"), snap);
             return null;
         }
@@ -122,6 +129,7 @@ final class NotifDigest {
             if (o == null) return L.t("AI 的回答看不懂，請再試一次");
             o.put("time", System.currentTimeMillis());
             save(c, o);
+            markDone.run();
             if (notify) {
                 int n = o.optJSONArray("items") == null ? 0 : o.optJSONArray("items").length();
                 String first = o.optString("summary").split("\n")[0];

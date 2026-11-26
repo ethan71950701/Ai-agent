@@ -941,7 +941,7 @@ final class Ui {
         root.invalidateOutline();
     }
 
-    private static final int R_CORNER = 0x7f0a0e59;   // View.setTag 用的鍵
+    private static final int R_CORNER = 0x7f0a0e63;   // 不能跟 Anim.R_FPS、R_STATE_LAYER 同一個值（同一個 View 上會互相蓋掉）；   // View.setTag 用的鍵
     private static float screenR = -1f;
 
     /** 手機螢幕四個角的圓角半徑（像素，取左上角；系統有回報才用，沒有就 0）。 */

@@ -250,7 +250,7 @@ public class GuideActivity extends Activity {
                 }));
             } catch (Throwable e) {
                 err = String.valueOf(e.getMessage() != null ? e.getMessage() : e);
-                SherpaEngine.deleteRec(SherpaEngine.dir(this));
+                // 下載失敗：download 自己會清掉暫存，舊的模型（有的話）留著繼續用
             }
             final String e2 = err;
             runOnUiThread(() -> {
