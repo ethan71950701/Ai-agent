@@ -96,4 +96,17 @@ public class ReviewFixesTest {
         String p = Router.classifyPrompt("打开设定");
         assertTrue(p.contains("打开设定") && p.length() < 1200);   // 很短：約 100～300 token，不是完整路由那種長提示
     }
+
+    @Test public void updateSizeLine() {
+        long mb = 1024 * 1024;
+        assertEquals("這次要下載約 1.0 MB（只下載有變的部分），完整檔是 38.0 MB", Updater.sizeText(1 * mb, 0, 38 * mb));   // 補丁
+        assertEquals("這次要下載約 6.5 MB（只下載有變的部分），完整檔是 38.0 MB", Updater.sizeText(0, 6 * mb + mb / 2, 38 * mb));   // 區塊比對
+        assertEquals("這次要下載約 1.0 MB（只下載有變的部分），完整檔是 38.0 MB", Updater.sizeText(1 * mb, 6 * mb, 38 * mb));   // 補丁優先
+        assertEquals("這次要下載約 38.0 MB（完整檔）", Updater.sizeText(0, 0, 38 * mb));
+        assertEquals("這次要下載約 38.0 MB（完整檔）", Updater.sizeText(40 * mb, 0, 38 * mb));   // 補丁比完整檔還大：不會這樣說
+        assertEquals("下載大小不明", Updater.sizeText(0, 0, 0));
+        assertEquals("這次要下載約 300 KB（只下載有變的部分）", Updater.sizeText(300 * 1024, 0, 0));
+        assertEquals("12 KB", Updater.fmtBytes(12 * 1024));
+        assertEquals("1 KB", Updater.fmtBytes(1));
+    }
 }

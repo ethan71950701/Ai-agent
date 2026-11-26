@@ -59,10 +59,11 @@ final class Updater {
                 }
                 String url = null; long size = 0; String name = "";
                 String pUrl = null, sUrl = null, bUrl = null;   // 增量補丁（從目前這一版到最新版）與校驗碼檔
+                long pSize = 0;
                 org.json.JSONArray assets = rel.getJSONArray("assets");
                 for (int i = 0; i < assets.length(); i++) {
                     JSONObject as = assets.getJSONObject(i);
-                    if (as.getString("name").equals("PhoneAI-from-" + BuildConfig.VERSION_CODE + ".patch")) pUrl = as.getString("browser_download_url");
+                    if (as.getString("name").equals("PhoneAI-from-" + BuildConfig.VERSION_CODE + ".patch")) { pUrl = as.getString("browser_download_url"); pSize = as.optLong("size", 0); }
                     if (as.getString("name").equals("SHA256SUMS.txt")) sUrl = as.getString("browser_download_url");
                     if (as.getString("name").equals("PhoneAI.blocks")) bUrl = as.getString("browser_download_url");
                     if (url == null && as.getString("name").endsWith(".apk")) {   // 不能在這裡 break：補丁、校驗碼、區塊檔在清單裡排在 APK 後面，break 了就永遠看不到（增量更新因此一直沒生效）
@@ -74,6 +75,7 @@ final class Updater {
                 if (url == null) { done(a, L.t("最新版本沒有 APK，稍後再試")); return; }
                 note(a, L.t("手動檢查：最新 ") + shown + L.t("，目前 1.0.") + BuildConfig.VERSION_CODE + L.t("，有新版本｜補丁 ") + (pUrl != null ? L.t("有") : L.t("沒有")) + L.t("、區塊檔 ") + (bUrl != null ? L.t("有") : L.t("沒有")) + L.t("、校驗碼 ") + (sUrl != null ? L.t("有") : L.t("沒有")));
                 final String v = shown;
+                final String sizeLine = downloadSizeLine(a, pUrl != null && sUrl != null ? pSize : 0, bUrl, sUrl, size);   // 還沒按「更新」就先告訴使用者這次要下載多少
                 final String apkUrl = url; final long apkSize = size; final String apkName = name; final String patchUrl = pUrl, sumsUrl = sUrl, blocksUrl = bUrl;
                 busy = false;   // 檢查完了：等使用者在對話框按「更新」才又算忙（以前這段一直是忙，對話框沒顯示出來就再也按不動）
                 if (a.isFinishing() || a.isDestroyed()) { notifyNew(a, v); return; }   // 這個畫面已經關了（例如剛重建）：改用通知
@@ -83,7 +85,7 @@ final class Updater {
                     new com.google.android.material.dialog.MaterialAlertDialogBuilder(a)
                         .setTitle(L.t("有新版本 ") + v)
                         .setMessage(L.t("目前是 1.0.") + BuildConfig.VERSION_CODE + L.t("，最新是 ") + v + L.t("。\n\n") + notesOf(rel)
-                                + L.t("\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。"))
+                                + "\n\n" + sizeLine + L.t("\n\n要現在更新嗎？進度會顯示在通知列與 Now Bar。"))
                         .setPositiveButton(L.t("更新"), (d, w) -> {
                             if (busy && System.currentTimeMillis() - busySince < 180_000L) { toast(a, L.t("正在檢查或更新中")); return; }
                             busy = true;
@@ -103,6 +105,47 @@ final class Updater {
                 done(a, L.t("檢查失敗：") + e.getMessage());
             }
         }).start();
+    }
+
+    /**
+     * 純邏輯：對話框裡「這次要下載多少」那一行。patchBytes／blockBytes 是這次實際會下載的量（0 或負數＝這種方式不能用）。
+     * 補丁優先、其次區塊比對（只下載缺的部分），都沒有就是完整 APK；有省的話一併寫出完整大小比較。
+     */
+    static String sizeText(long patchBytes, long blockBytes, long fullBytes) {
+        long use = patchBytes > 0 ? patchBytes : blockBytes > 0 ? blockBytes : 0;
+        if (use > 0 && (fullBytes <= 0 || use < fullBytes))
+            return String.format(java.util.Locale.US, L.t("這次要下載約 %s（只下載有變的部分）"), fmtBytes(use)) + (fullBytes > 0 ? String.format(java.util.Locale.US, L.t("，完整檔是 %s"), fmtBytes(fullBytes)) : "");
+        if (fullBytes > 0) return String.format(java.util.Locale.US, L.t("這次要下載約 %s（完整檔）"), fmtBytes(fullBytes));
+        return L.t("下載大小不明");
+    }
+
+    static String fmtBytes(long b) {
+        if (b >= 1024 * 1024) return String.format(java.util.Locale.US, "%.1f MB", b / 1048576.0);
+        return String.format(java.util.Locale.US, "%d KB", Math.max(1, (b + 1023) / 1024));
+    }
+
+    /** 在背景執行緒呼叫（要用網路）：算出這次更新實際會下載多少，回對話框用的那一行文字。任何一步失敗都退回完整檔大小。 */
+    private static String downloadSizeLine(Activity a, long patchBytes, String blocksUrl, String sumsUrl, long fullBytes) {
+        long blockBytes = 0;
+        try {
+            if (patchBytes <= 0 && blocksUrl != null && sumsUrl != null) {   // 沒有「剛好上一版」的補丁：用區塊比對算（只下載很小的區塊指紋檔，另外讀自己已安裝的 APK）
+                android.content.pm.ApplicationInfo ai = a.getApplicationInfo();
+                File oldF = new File(ai.sourceDir);
+                boolean split = ai.splitSourceDirs != null && ai.splitSourceDirs.length > 0;
+                if (!split && oldF.length() <= 400L * 1024 * 1024) {
+                    BlockSync.Control ctl = BlockSync.parse(httpBytes(blocksUrl, 2L * 1024 * 1024));
+                    if (ctl != null) {
+                        int[] src = BlockSync.plan(java.nio.file.Files.readAllBytes(oldF.toPath()), ctl);
+                        java.util.List<long[]> ranges = BlockSync.ranges(ctl, src, 64 * 1024);
+                        long need = BlockSync.totalBytes(ranges);
+                        if (!(need > ctl.size / 2 || ranges.size() > 200)) blockBytes = need;   // 跟下載時同一個門檻：不划算就會改下載完整檔
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            note(a, L.t("算下載大小失敗，改顯示完整檔大小：") + t);
+        }
+        return sizeText(patchBytes, blockBytes, fullBytes);
     }
 
     /** 有新版本、但對話框沒辦法顯示時：在通知欄跳一則，點了進 App 開始更新（跟自動檢查同一則）。 */

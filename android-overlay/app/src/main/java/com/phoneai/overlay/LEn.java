@@ -1706,6 +1706,11 @@ final class LEn {
         m.put("查時間與日期", "Time and date");
         m.put("查電池電量", "Battery level");
         m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
+        m.put("下載大小不明", "Download size unknown");
+        m.put("算下載大小失敗，改顯示完整檔大小：", "Couldn't work out the download size; showing the full file size: ");
+        m.put("這次要下載約 %s（只下載有變的部分）", "This update downloads about %s (only the changed parts)");
+        m.put("這次要下載約 %s（完整檔）", "This update downloads about %s (the full file)");
+        m.put("，完整檔是 %s", ", the full file is %s");
         m.put("路由：判斷是聊天，直接聊天（沒有問完整路由）", "Route: judged to be chat, chatting directly (full router skipped)");
         m.put("打不開這個 App", "Couldn't open this app");
         m.put("還在讀取，請再按一次儲存", "Still loading; press save again");

@@ -5,6 +5,7 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 有新版本時，更新對話框先告訴你這次要下載多少（還沒按「更新」就看得到）｜When there's a new version, the update dialog now tells you how much will be downloaded before you tap Update
 - 修正：做完任務後的回答卡片，顏色改成跟聊天時一樣的玻璃（以前是一塊深灰色）｜Fix: the answer card shown after a task now uses the same glass look as in chat (it used to be a flat dark gray)
 ## 1.0.1882
 
