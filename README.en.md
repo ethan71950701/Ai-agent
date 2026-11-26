@@ -128,7 +128,7 @@ Pick a mode in the first-run guide; change it later under "Settings → While ru
 
 ## FAQ
 
-- **It doesn't react when asked?** Check that every page of "Settings → Other → Setup guide" has a tick. Most often the **accessibility service was turned off by the system** (after a reinstall or system update). With root, "Features → Advanced and diagnostics → Repair permissions" restores it.
+- **It doesn't react when asked?** Check that every page of "Settings → Other → Setup guide" has a tick. Most often the **accessibility service was turned off by the system** (after a reinstall or system update). With root, "Features → Advanced & diagnostics → Repair permissions" restores it.
 - **Scheduled tasks or file transfer unreliable?** Many phones kill background apps. Go to "Settings → Permissions → Keep-alive check", set battery to "Unrestricted" and turn on auto-start.
 - **Is it expensive?** Every task ends with tokens and an estimated cost (your AI service's dashboard is authoritative). Set daily and monthly limits in "Settings → Usage and limits"; a cheap model goes first and escalates only when stuck.
 - **Want to know what it just did?** "Features → Task history" lists every step's reasoning, action and result, and can be exported as a text file (without your API key).
