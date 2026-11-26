@@ -59,9 +59,9 @@ final class McpClient {
                 if (o != null && o.optInt("id", -1) == id) found = o;
             }
         }
-        if (found == null) throw new Exception("MCP 沒有回應這個請求（id " + id + "）");
+        if (found == null) throw new Exception(L.t("MCP 沒有回應這個請求（id ") + id + "）");
         JSONObject err = found.optJSONObject("error");
-        if (err != null) throw new Exception("MCP 錯誤：" + err.optString("message", err.toString()));
+        if (err != null) throw new Exception(L.t("MCP 錯誤：") + err.optString("message", err.toString()));
         JSONObject r = found.optJSONObject("result");
         return r == null ? new JSONObject() : r;
     }
@@ -79,7 +79,7 @@ final class McpClient {
     static final class AuthRequired extends Exception {
         final String wwwAuth;
         AuthRequired(String wwwAuth) {
-            super("權杖被拒絕（HTTP 401）：請確認權杖有沒有過期、有沒有需要的權限");
+            super(L.t("權杖被拒絕（HTTP 401）：請確認權杖有沒有過期、有沒有需要的權限"));
             this.wwwAuth = wwwAuth;
         }
     }
@@ -110,7 +110,7 @@ final class McpClient {
             byte[] b = new byte[8192];
             int n;
             while ((n = in.read(b)) > 0) {
-                if (bo.size() + n > MAX_BODY) throw new Exception("MCP 回應太大");
+                if (bo.size() + n > MAX_BODY) throw new Exception(L.t("MCP 回應太大"));
                 bo.write(b, 0, n);
             }
             in.close();
@@ -126,8 +126,8 @@ final class McpClient {
         Resp r = post(m, true);
         if (r.session != null) session = r.session;
         if (r.code == 401) throw new AuthRequired(r.wwwAuth);
-        if (r.code == 403) throw new Exception("權杖被拒絕（HTTP " + r.code + "）：請確認權杖有沒有過期、有沒有需要的權限");
-        if (r.code >= 400) throw new Exception("MCP 連線失敗（HTTP " + r.code + "）");
+        if (r.code == 403) throw new Exception(L.t("權杖被拒絕（HTTP 403）：請確認權杖有沒有過期、有沒有需要的權限"));
+        if (r.code >= 400) throw new Exception(L.t("MCP 連線失敗（HTTP ") + r.code + "）");
         return parseResponse(r.type, r.body, id);
     }
 

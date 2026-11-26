@@ -373,26 +373,23 @@ public class OverlayService extends Service {
 
         /** 在連線執行緒呼叫，會等使用者按是/否（最多 120 秒，逾時當否）。對話框沒跳出來回 "unavailable"。 */
     private String confirm(String msg) {
-        java.util.concurrent.CompletableFuture<Integer> ans = new java.util.concurrent.CompletableFuture<>();
-        java.util.concurrent.CountDownLatch shown = new java.util.concurrent.CountDownLatch(1);
-        ConfirmActivity.answer = ans;
-        ConfirmActivity.shown = shown;
+        final ConfirmActivity.Req r = ConfirmActivity.newRequest();
         main.post(() -> {
             try {
-                startActivity(new Intent(this, ConfirmActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                        .putExtra("msg", msg), mainDisplayOptions());
+                startActivity(ConfirmActivity.intentFor(this, r, msg, false), mainDisplayOptions());
             } catch (Exception e) {
                 Log.e(TAG, "confirm start", e);
             }
         });
         try {
-            if (!shown.await(4, java.util.concurrent.TimeUnit.SECONDS)) return "unavailable";
-            return ans.get(120, java.util.concurrent.TimeUnit.SECONDS) >= 1 ? "yes" : "no";
+            if (!r.shown.await(4, java.util.concurrent.TimeUnit.SECONDS)) return "unavailable";
+            return r.answer.get(120, java.util.concurrent.TimeUnit.SECONDS) >= 1 ? "yes" : "no";
         } catch (java.util.concurrent.TimeoutException e) {
             return "no";
         } catch (Exception e) {
             return "unavailable";
+        } finally {
+            ConfirmActivity.close(r);
         }
     }
 

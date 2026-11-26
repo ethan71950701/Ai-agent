@@ -32,4 +32,18 @@ public class CalendarReadTest {
         assertTrue(CalendarRead.format(new ArrayList<>(), "牙醫", TPE, false).contains("沒有符合「牙醫」"));
         assertTrue(CalendarRead.format(l, "", TPE, true).contains("只列前"));
     }
+
+    @Test public void allDayEventsUseUtcDate() {
+        long todayLocal = 1795622400000L;               // 2026-11-26 00:00 台北
+        long yesterdayAllDay = 1795564800000L;          // 2026-11-25 00:00 UTC
+        long todayAllDay = 1795651200000L;              // 2026-11-26 00:00 UTC
+        assertTrue(!CalendarRead.allDayInRange(yesterdayAllDay, todayLocal, 1, TPE));   // 台灣查今天不能多出昨天的全天事件
+        assertTrue(CalendarRead.allDayInRange(todayAllDay, todayLocal, 1, TPE));
+        assertTrue(CalendarRead.allDayInRange(todayAllDay + 86_400_000L, todayLocal, 2, TPE));
+        assertTrue(!CalendarRead.allDayInRange(todayAllDay + 86_400_000L, todayLocal, 1, TPE));
+        TimeZone ny = TimeZone.getTimeZone("America/New_York");
+        long todayNy = CalendarRead.dayStart("2026-11-26", 0, ny);
+        assertTrue(!CalendarRead.allDayInRange(todayAllDay + 86_400_000L, todayNy, 1, ny));   // 紐約查今天不能多出明天的
+        assertTrue(CalendarRead.allDayInRange(todayAllDay, todayNy, 1, ny));
+    }
 }

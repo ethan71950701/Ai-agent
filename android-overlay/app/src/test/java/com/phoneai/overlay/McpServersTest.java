@@ -48,4 +48,22 @@ public class McpServersTest {
         assertNotNull(McpServers.checkUrl("http://example.com/mcp"));
         assertNotNull(McpServers.checkUrl("mcp.notion.com"));
     }
+
+    @Test public void confirmShowsEveryArgument() throws Exception {
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < 2000; i++) body.append('x');
+        JSONObject a = new JSONObject().put("body", body.toString()).put("to", "evil@example.com").put("cc", "x@y.z");
+        String s = McpServers.argsForConfirm(a);
+        assertTrue(s, s.contains("to：evil@example.com"));   // 收件人不能被長內文擠掉
+        assertTrue(s, s.contains("cc：x@y.z"));
+        assertTrue(s, s.contains("（共 2000 字）"));
+        assertTrue(s.length() < 400);
+        assertEquals("（沒有參數）", McpServers.argsForConfirm(new JSONObject()));
+    }
+
+    @Test public void cachedClientHasFixedLifetime() {
+        assertTrue(McpServers.cacheValid(1000L, 1000L + 9 * 60_000L));
+        assertFalse(McpServers.cacheValid(1000L, 1000L + 10 * 60_000L));
+        assertFalse(McpServers.cacheValid(null, 0));
+    }
 }

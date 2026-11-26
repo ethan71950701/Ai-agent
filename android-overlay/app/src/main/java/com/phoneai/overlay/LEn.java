@@ -1706,6 +1706,17 @@ final class LEn {
         m.put("查時間與日期", "Time and date");
         m.put("查電池電量", "Battery level");
         m.put("刪除檔案（每次都會跳確認框）", "Delete files (a confirmation appears every time)");
+        m.put("MCP 回應太大", "MCP response too large");
+        m.put("MCP 沒有回應這個請求（id ", "MCP didn't answer this request (id ");
+        m.put("MCP 連線失敗（HTTP ", "MCP connection failed (HTTP ");
+        m.put("MCP 錯誤：", "MCP error: ");
+        m.put("權杖被拒絕（HTTP 401）：請確認權杖有沒有過期、有沒有需要的權限", "Token rejected (HTTP 401): check that it hasn't expired and has the needed permissions");
+        m.put("權杖被拒絕（HTTP 403）：請確認權杖有沒有過期、有沒有需要的權限", "Token rejected (HTTP 403): check that it hasn't expired and has the needed permissions");
+        m.put("授權伺服器回應看不懂", "Couldn't read the authorization server's response");
+        m.put("授權伺服器暫時有問題（HTTP ", "The authorization server has a temporary problem (HTTP ");
+        m.put("沒有拿到權杖", "No token was received");
+        m.put("（共 %d 字）", " (%d characters in total)");
+        m.put("（沒有參數）", "(no arguments)");
         m.put("通知存取（選用）", "Notification access (optional)");
         m.put("日曆（選用）", "Calendar (optional)");
         m.put("所有檔案存取（選用）", "All files access (optional)");

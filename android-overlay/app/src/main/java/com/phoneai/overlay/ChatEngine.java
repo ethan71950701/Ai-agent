@@ -851,7 +851,7 @@ final class ChatEngine {
                     String tn = u.optString("name");
                     JSONObject ti = u.optJSONObject("input") == null ? new JSONObject() : u.optJSONObject("input");
                     if (tn.equals("phone_action")) { HANDOFF.set(true); return null; }   // 交給自動操作：這一輪不存對話紀錄、不回答
-                    if (tn.equals("read_notifications")) { readNotifs = true; SAW_NOTIFS.set(true); }
+                    if (tn.equals("read_notifications") || tn.equals("read_calendar")) { readNotifs = true; SAW_NOTIFS.set(true); }   // 行事曆跟通知一樣：邀請是別人寫的、內容又是私人資料，之後只給唯讀工具，連 read_url 也不給（避免把行程帶到外面的網址）
                     if (tn.equals("read_url") || tn.equals("current_page") || McpTools.handles(tn) || McpServers.handles(tn)) readNotifs = true;   // 網頁、GitHub 的內容是外人寫的：之後只給唯讀工具
                     String out = runTool(c, tn, ti, confirm);
                     { String a = ti.toString(); LifeLog.add(c, "聊天工具：" + tn + " " + (a.length() > 120 ? a.substring(0, 120) + "…" : a) + " → " + (out == null ? 0 : out.length()) + " 字"); }   // 診斷：看 AI 這一輪呼叫了哪些工具、回傳多長

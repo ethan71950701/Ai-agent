@@ -69,6 +69,23 @@ final class CalendarRead {
         return sb.toString().trim();
     }
 
+    /**
+     * 純邏輯：全天事件存的是 UTC 的午夜到午夜，用本地時間的範圍去查，會多抓到前一天或後一天的全天事件（台灣 UTC+8 查今天會抓到昨天的）。
+     * 所以全天事件另外用「UTC 日期」比對：落在使用者要的本地日期（fromLocal 那天起 days 天）裡才算。
+     */
+    static boolean allDayInRange(long beginUtc, long fromLocal, int days, TimeZone tz) {
+        SimpleDateFormat utc = new SimpleDateFormat("yyyy-MM-dd", Locale.US), loc = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        utc.setTimeZone(TimeZone.getTimeZone("UTC"));
+        loc.setTimeZone(tz);
+        String d = utc.format(new Date(beginUtc));
+        Calendar cal = Calendar.getInstance(tz);
+        cal.setTimeInMillis(fromLocal);
+        String first = loc.format(cal.getTime());
+        cal.add(Calendar.DAY_OF_MONTH, days);
+        String endExcl = loc.format(cal.getTime());
+        return d.compareTo(first) >= 0 && d.compareTo(endExcl) < 0;
+    }
+
     static boolean hasPermission(Context c) {
         return c.checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
@@ -100,6 +117,7 @@ final class CalendarRead {
                 it.allDay = cur.getInt(3) == 1;
                 it.location = nz(cur.getString(4));
                 it.calendar = nz(cur.getString(5));
+                if (it.allDay && !allDayInRange(it.begin, from, days, tz)) continue;   // 前後一天的全天事件
                 if (!q.isEmpty() && !(it.title.toLowerCase(Locale.ROOT).contains(q.toLowerCase(Locale.ROOT)) || it.location.toLowerCase(Locale.ROOT).contains(q.toLowerCase(Locale.ROOT)))) continue;
                 all.add(it);
             }

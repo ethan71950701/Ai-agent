@@ -156,6 +156,11 @@ public class McpOAuthTest {
                 @Override public void progress(String msg) { }
                 @Override public void openBrowser(String url) {
                     Map<String, String> q = McpOAuth.parseQuery(url.substring(url.indexOf('?') + 1));
+                    try {   // 瀏覽器常會先開一條不送請求的「預先連線」：不能讓登入因此失敗
+                        java.net.URL ru = new java.net.URL(q.get("redirect_uri"));
+                        final Socket idle = new Socket("127.0.0.1", ru.getPort());
+                        new Thread(() -> { try { Thread.sleep(7000); idle.close(); } catch (Exception ignored) { } }).start();
+                    } catch (Exception e) { throw new RuntimeException(e); }
                     assertEquals("client-1", q.get("client_id"));
                     assertEquals(base + "/mcp", q.get("resource"));
                     new Thread(() -> {   // 使用者在瀏覽器按了同意：跳回 redirect_uri

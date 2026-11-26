@@ -156,17 +156,34 @@ final class McpServers {
         synchronized (CLIENTS) { CLIENTS.remove(id); }
     }
 
-    /** 目前可用的權杖（OAuth 快過期會先換新的）；沒登入回 ""。 */
-    private static String accessToken(Context c, String id, boolean forceRefresh) throws Exception {
-        JSONObject a = readJson(c, authFile(id));
-        if (a == null) return "";
-        if (a.optString("type").equals("token")) return a.optString("token");
-        McpOAuth.Session s = McpOAuth.Session.fromJson(a);
-        if (forceRefresh || s.needsRefresh(System.currentTimeMillis())) {
-            McpOAuth.refresh(s);
-            saveOAuth(c, id, s);
+    private static final Map<String, Object> LOCKS = new HashMap<>();
+
+    private static Object lockFor(String id) {
+        synchronized (LOCKS) {
+            Object l = LOCKS.get(id);
+            if (l == null) { l = new Object(); LOCKS.put(id, l); }
+            return l;
         }
-        return s.accessToken;
+    }
+
+    /**
+     * 目前可用的權杖（OAuth 快過期會先換新的）；沒登入回 ""。
+     * 同一個服務同時只有一條執行緒在換權杖：更新權杖用一次就換新的（OAuth 2.1），兩條同時拿舊的去換，後到的會被拒絕、被誤當成「要重新登入」。
+     * staleToken：呼叫端剛被服務拒絕的那個權杖；鎖裡重讀發現已經被別人換成新的，就直接用新的、不再換一次。
+     */
+    private static String accessToken(Context c, String id, boolean forceRefresh, String staleToken) throws Exception {
+        synchronized (lockFor(id)) {
+            JSONObject a = readJson(c, authFile(id));
+            if (a == null) return "";
+            if (a.optString("type").equals("token")) return a.optString("token");
+            McpOAuth.Session s = McpOAuth.Session.fromJson(a);
+            boolean alreadyNew = staleToken != null && !s.accessToken.equals(staleToken);
+            if (!alreadyNew && (forceRefresh || s.needsRefresh(System.currentTimeMillis()))) {
+                McpOAuth.refresh(s);   // 被拒絕丟 RefreshRejected；網路問題丟一般例外
+                saveOAuth(c, id, s);
+            }
+            return s.accessToken;
+        }
     }
 
     // ---------- 工具清單 ----------
@@ -201,21 +218,34 @@ final class McpServers {
 
     private static final Map<String, McpClient> CLIENTS = new HashMap<>();
     private static final Map<String, Long> CLIENT_AT = new HashMap<>();
+    private static final long CLIENT_TTL = 10 * 60_000L;   // 固定壽命（從建立算起，不是最後一次使用）：用久了也會換新連線、重新檢查權杖有沒有快過期
 
-    /** 連上服務（必要時用更新權杖換新權杖再試一次）。還是 401 就把 AuthRequired 丟出去（介面拿去開始登入）。 */
+    /** 純邏輯：快取的連線還能不能用（固定壽命，不因為一直在用就延長）。 */
+    static boolean cacheValid(Long createdAt, long now) { return createdAt != null && now - createdAt < CLIENT_TTL; }
+
+    private static void evict(String id) {
+        synchronized (CLIENTS) { CLIENTS.remove(id); CLIENT_AT.remove(id); }
+    }
+
+    /** 連上服務（必要時用更新權杖換新權杖再試一次）。還是 401、或授權伺服器拒絕更新，就把 AuthRequired 丟出去（介面拿去開始登入）；網路問題照原樣丟。 */
     private static McpClient client(Context c, Server s, boolean fresh) throws Exception {
         synchronized (CLIENTS) {
             McpClient k = CLIENTS.get(s.id);
-            Long at = CLIENT_AT.get(s.id);
-            if (!fresh && k != null && at != null && System.currentTimeMillis() - at < 10 * 60_000L) { CLIENT_AT.put(s.id, System.currentTimeMillis()); return k; }
+            if (!fresh && k != null && cacheValid(CLIENT_AT.get(s.id), System.currentTimeMillis())) return k;
         }
+        evict(s.id);
         McpClient k;
+        String tok;
+        try { tok = accessToken(c, s.id, false, null); }
+        catch (McpOAuth.RefreshRejected re) { throw new McpClient.AuthRequired(null); }   // 快過期、換新又被拒絕：要重新登入
         try {
-            k = new McpClient(s.url, accessToken(c, s.id, false));
+            k = new McpClient(s.url, tok);
             k.initialize();
         } catch (McpClient.AuthRequired e) {
             if (!authType(c, s.id).equals("oauth")) throw e;
-            try { k = new McpClient(s.url, accessToken(c, s.id, true)); } catch (Exception re) { throw e; }   // 權杖過期：用更新權杖換一個再試
+            try { tok = accessToken(c, s.id, true, tok); }   // 權杖被拒絕：用更新權杖換一個再試（別的執行緒剛換好就直接用新的）
+            catch (McpOAuth.RefreshRejected re) { throw e; }   // 更新權杖也不行：真的要重新登入
+            k = new McpClient(s.url, tok);
             k.initialize();
         }
         synchronized (CLIENTS) { CLIENTS.put(s.id, k); CLIENT_AT.put(s.id, System.currentTimeMillis()); }
@@ -297,6 +327,23 @@ final class McpServers {
         return sb.toString();
     }
 
+    /**
+     * 純邏輯：給確認框看的參數。每個參數各一行、一定都列出來（只截短太長的「值」），
+     * 不能整串截斷：那樣很長的內文會把收件人、編號這些關鍵參數擠到看不見的地方，使用者同意的卻是完整的參數。
+     */
+    static String argsForConfirm(JSONObject args) {
+        StringBuilder sb = new StringBuilder();
+        java.util.List<String> keys = new ArrayList<>();
+        for (java.util.Iterator<String> it = args.keys(); it.hasNext();) keys.add(it.next());
+        java.util.Collections.sort(keys);
+        for (String k : keys) {
+            String v = String.valueOf(args.opt(k));
+            if (v.length() > 160) v = v.substring(0, 160) + "…" + String.format(L.t("（共 %d 字）"), v.length());
+            sb.append("\n• ").append(k).append("：").append(v);
+        }
+        return sb.length() == 0 ? L.t("（沒有參數）") : sb.toString();
+    }
+
     private static String lastKey, lastFull;
     private static long lastAt;
 
@@ -323,8 +370,7 @@ final class McpServers {
         if (def == null) return s.name + " 沒有這個工具：" + tool + "（先用 mcp_browse 看有哪些）";
         JSONObject targs = args.optJSONObject("arguments") == null ? new JSONObject() : args.optJSONObject("arguments");
         if (!def.optBoolean("read_only")) {   // 可能會寫入、刪除、傳送：每次都問
-            String a = targs.toString();
-            if (a.length() > 400) a = a.substring(0, 400) + "…";
+            String a = argsForConfirm(targs);
             boolean ok = confirm != null && confirm.ask(String.format(L.t("要讓 AI 在「%1$s」執行「%2$s」嗎？這個動作可能會修改你的資料。\n參數：%3$s"), s.name, tool, a));
             if (!ok) return "使用者不同意（或沒有回應），沒有執行 " + tool;
         }
@@ -342,6 +388,8 @@ final class McpServers {
                     synchronized (McpServers.class) { lastKey = key; lastFull = full; lastAt = System.currentTimeMillis(); }
                     break;
                 } catch (McpClient.AuthRequired e) {
+                    evict(s.id);
+                    if (attempt == 0) continue;   // 快取的連線權杖過期了：被拒絕代表沒執行，換新權杖重連再試一次（寫入的工具也安全）
                     return s.name + " 需要重新登入：請使用者到「設定 → AI 與資料 → 其他 MCP 服務」點這個服務再登入一次";
                 } catch (Exception e) {
                     if (attempt == 1 || !def.optBoolean("read_only")) return s.name + " 執行失敗：" + e.getMessage() + "\n這個工具的參數格式：" + compact(def.optJSONObject("input_schema"));   // 會寫入的不自動重試：避免做兩次

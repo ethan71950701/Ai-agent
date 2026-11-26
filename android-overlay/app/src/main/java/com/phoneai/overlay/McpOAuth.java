@@ -167,7 +167,7 @@ final class McpOAuth {
     /** 權杖回應（JSON）寫進 session；沒有 access_token 就丟例外。更新時服務沒給新的更新權杖，就保留舊的。 */
     static void applyToken(Session s, JSONObject j, long now) throws Exception {
         String at = j.optString("access_token", "");
-        if (at.isEmpty()) throw new Exception("登入失敗：" + j.optString("error_description", j.optString("error", "沒有拿到權杖")));
+        if (at.isEmpty()) throw new Exception(j.optString("error_description", j.optString("error", L.t("沒有拿到權杖"))));
         s.accessToken = at;
         String rt = j.optString("refresh_token", "");
         if (!rt.isEmpty()) s.refreshToken = rt;
@@ -345,6 +345,7 @@ final class McpOAuth {
             if (ui.cancelled()) throw new Exception(L.t("已取消登入"));
             Socket sock;
             try { sock = server.accept(); } catch (java.net.SocketTimeoutException e) { continue; }
+            Map<String, String> got = null;
             try (Socket so = sock) {
                 so.setSoTimeout(5000);
                 InputStream in = so.getInputStream();
@@ -358,8 +359,11 @@ final class McpOAuth {
                 Map<String, String> q = parseQuery(qi < 0 ? "" : target.substring(qi + 1));
                 if (!state.equals(q.get("state"))) { respond(so, 400, L.t("登入驗證碼不符，請回到 App 重試")); continue; }   // 不是這次登入發出的：不收
                 respond(so, 200, q.containsKey("error") ? L.t("登入沒有完成，請回到 Vertex 看說明。") : L.t("登入完成，可以回到 Vertex 了。"));
-                return q;
+                got = q;
+            } catch (java.io.IOException e) {
+                continue;   // 這條連線沒送請求（瀏覽器預先連線、別的 App 探測埠）或斷了：不影響登入，繼續等真正的跳回
             }
+            if (got != null) return got;
         }
         throw new Exception(L.t("等太久了（5 分鐘），沒有完成登入"));
     }
@@ -377,9 +381,14 @@ final class McpOAuth {
         } catch (Exception ignored) { }
     }
 
-    /** 用更新權杖換新的存取權杖（成功會直接改 s）。 */
+    /** 授權伺服器拒絕更新（更新權杖過期、被撤銷）：要重新登入。網路錯誤不是這個（丟原本的例外，下次再試就好）。 */
+    static final class RefreshRejected extends Exception {
+        RefreshRejected() { super(L.t("登入已過期，請重新登入")); }
+    }
+
+    /** 用更新權杖換新的存取權杖（成功會直接改 s）。被拒絕丟 RefreshRejected；網路問題丟一般例外。 */
     static void refresh(Session s) throws Exception {
-        if (s.refreshToken.isEmpty() || s.tokenEndpoint.isEmpty()) throw new Exception(L.t("登入已過期，請重新登入"));
+        if (s.refreshToken.isEmpty() || s.tokenEndpoint.isEmpty()) throw new RefreshRejected();
         Map<String, String> f = new LinkedHashMap<>();
         f.put("grant_type", "refresh_token");
         f.put("refresh_token", s.refreshToken);
@@ -387,7 +396,9 @@ final class McpOAuth {
         f.put("client_secret", s.clientSecret);
         if (!isGoogle(s.tokenEndpoint)) f.put("resource", s.resource);
         Http r = http("POST", s.tokenEndpoint, "application/x-www-form-urlencoded", form(f));
-        if (r.code >= 400) throw new Exception(L.t("登入已過期，請重新登入"));
-        applyToken(s, new JSONObject(r.body), System.currentTimeMillis());
+        if (r.code >= 400 && r.code < 500) throw new RefreshRejected();
+        if (r.code >= 500) throw new Exception(L.t("授權伺服器暫時有問題（HTTP ") + r.code + "）");
+        try { applyToken(s, new JSONObject(r.body), System.currentTimeMillis()); }
+        catch (org.json.JSONException e) { throw new Exception(L.t("授權伺服器回應看不懂")); }
     }
 }

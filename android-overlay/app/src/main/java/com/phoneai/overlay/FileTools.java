@@ -45,6 +45,8 @@ final class FileTools {
                     String p = a.optString("path");
                     if (local) {
                         File dir = new File(TransferStore.root(), p);
+                        String rootPath = TransferStore.root().getCanonicalPath(), dirPath = dir.getCanonicalPath();
+                        if (!dirPath.equals(rootPath) && !dirPath.startsWith(rootPath + File.separator)) return "錯誤：只能看手機共用儲存空間裡的資料夾";   // 跟傳檔、刪檔一樣：不能用 ../ 跑到外面
                         File[] kids = dir.listFiles();
                         StringBuilder sb = new StringBuilder();
                         if (kids != null) for (int i = 0; i < kids.length && i < 100; i++) sb.append(TransferServer.lineOf(TransferStore.root(), kids[i]));

@@ -279,12 +279,7 @@ final class Schedule {
             if (wl != null && wl.isHeld()) wl.release();
         }
         try {
-            JSONArray items = load(c);
-            for (int i = 0; i < items.length(); i++) {
-                JSONObject it = items.getJSONObject(i);
-                if (it.optInt("id") == id) { it.put("lastResult", shorten(res, 200)); it.put("lastAt", System.currentTimeMillis()); }
-            }
-            save(c, items);
+            patch(c, new JSONObject().put("id", id).put("lastResult", shorten(res, 200)).put("lastAt", System.currentTimeMillis()), "lastResult", "lastAt");   // 只寫這兩欄，不蓋掉別的改動
         } catch (Exception ignored) { }
         notify(c, L.t("定時自動操作：") + shorten(task, 20), shorten(res, 300), 7197 + id);
         return res;
@@ -378,12 +373,14 @@ final class Schedule {
                 if (pending && !today.equals(it.optString("pday"))) {   // 昨天的沒能執行：通知一下，今天照常
                     notify(c, L.t("定時自動操作沒有執行：") + shorten(it.optString("task"), 20), L.t("昨天到了時間，但手機一直鎖著或沒有可以操作的環境，所以沒有做。"), 7197 + it.optInt("id"));
                     it.put("pending", false);
+                    patch(c, it, "pending");
                     pending = false;
                 }
                 if (today.compareTo(it.optString("next", today)) < 0 || late < 0) continue;
                 if (!canRunTaskNow(c)) {
                     if (!pending) {
                         it.put("pending", true).put("pday", today);
+                        patch(c, it, "pending", "pday");
                         notify(c, L.t("定時自動操作等你解鎖：") + shorten(it.optString("task"), 20), L.t("時間到了但手機鎖著；你解鎖之後會自動做一次。"), 7197 + it.optInt("id"));
                     }
                     continue;
@@ -394,7 +391,7 @@ final class Schedule {
                 it.put("next", dayStr(nx));
                 final int tid = it.optInt("id");
                 final String ttask = it.optString("task");
-                save(c, items);   // 先記下「今天做過了」，避免這次還沒跑完下一輪又開始
+                patch(c, it, "pending", "last", "next");   // 先記下「今天做過了」，避免這次還沒跑完下一輪又開始
                 new Thread(() -> runTaskNow(c, tid, ttask), "sched-task").start();
                 continue;
             }
@@ -408,14 +405,35 @@ final class Schedule {
                 Calendar nx = Calendar.getInstance();
                 nx.add(Calendar.DAY_OF_YEAR, Math.max(1, it.optInt("every", 1)));
                 it.put("next", dayStr(nx));
+                patch(c, it, "prev", "last", "next");
                 notify(c, L.t("定時查詢：") + it.optString("query"), res, 7197 + it.optInt("id"));
                 continue;
             }
             String ans = quickAnswer(c, it.optString("task"));
             it.put("last", today);
+            patch(c, it, "last");
             if (ans != null) notify(c, L.t("定時：") + it.optString("task"), ans, 7197 + it.optInt("id"));
         }
-        save(c, items);
+    }
+
+    /**
+     * 把這一項改過的欄位寫回「現在存著的」清單（照 id 找）：runDue 會跑很久（網路查詢、AI），
+     * 不能拿一開始讀的整份清單蓋回去，不然中途使用者取消、新增的定時，或別的執行緒寫的結果會被蓋掉。
+     * 讀、改、存在同一把鎖裡（load／save 也是同一把），中間不會被插隊。項目已經被刪掉就不寫。
+     */
+    static synchronized void patch(Context c, JSONObject changed, String... keys) throws Exception {
+        JSONArray cur = load(c);
+        int id = changed.optInt("id", -1);
+        for (int i = 0; i < cur.length(); i++) {
+            JSONObject o = cur.optJSONObject(i);
+            if (o == null || o.optInt("id", -2) != id) continue;
+            for (String k : keys) {
+                if (changed.has(k)) o.put(k, changed.get(k));
+                else o.remove(k);
+            }
+            save(c, cur);
+            return;
+        }
     }
 
     private static void notify(Context c, String title, String text, int id) {
