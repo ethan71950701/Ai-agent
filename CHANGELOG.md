@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 互傳：對方回報位址時，不再跳「FCM 門鈴」通知（只有被叫醒的那一端才會看到通知）｜Transfer: no more "FCM doorbell" notification when the other phone reports its address (only the phone being woken up shows one)
+
 - 互傳：兩支手機在不同路由器但網段一樣時，叫醒對方會請它也開 Tailscale 並回報位址（以前對方以為在同一個 Wi-Fi，不開 Tailscale，連線一直逾時）｜Transfer: when the two phones are on different routers that use the same address range, waking the other phone now asks it to turn on Tailscale and report its address (before, it assumed the same Wi-Fi, kept Tailscale off, and the connection timed out)
 
 ## 1.0.1884
