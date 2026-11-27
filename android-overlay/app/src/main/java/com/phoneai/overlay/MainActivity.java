@@ -1408,7 +1408,7 @@ public class MainActivity extends Activity {
                     cfg().getBoolean("claude_web_search", false), (v, on) -> cfg().edit().putBoolean("claude_web_search", on).apply());
             Ui.switchRow(this, g, k++, n, "bell", L.t("接手時顯示懸浮卡片"), L.t("要你自己動手時（輸入密碼、解鎖…），在畫面上方放一張可拖動的卡片（有「我做完了，繼續」）。關掉就只跳通知"),
                     cfg().getBoolean("handoff_card", true), (v, on) -> cfg().edit().putBoolean("handoff_card", on).apply());
-            if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式選項（實驗）"), L.t("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作"),
+            if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景模式選項（實驗）"), L.t("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做（定時自動操作則一律在背景螢幕做，不用另外開）；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作"),
                     cfg().getBoolean("bg_feature", true), (v, on) -> cfg().edit().putBoolean("bg_feature", on).apply());
             if (hasRoot) Ui.switchRow(this, g, k++, n, "monitor", L.t("背景螢幕：橫式遊戲不轉向（實驗）"), L.t("開：叫系統忽略 App 的方向要求，橫式遊戲在直式背景螢幕上維持正的（比較小）。關：遊戲會轉 90 度。有的遊戲在直式畫面裡會當掉，當掉就關掉這個再試"),
                     cfg().getBoolean("bg_ignore_orient", true), (v, on) -> cfg().edit().putBoolean("bg_ignore_orient", on).apply());
