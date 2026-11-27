@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1900
+
 - 電腦版驗證失敗（手機看到 401）時，會在電腦版的記錄寫明原因（不認得這個裝置、金鑰對不上、請求被重送、兩邊時鐘差太多）；時鐘差太多時，手機看到的錯誤也會說差幾秒｜When the Windows app rejects a request (the 401 the phone shows), it now logs why (unknown device, key mismatch, replayed request, clocks too far apart); for a clock difference the phone's error also says by how many seconds
 
 ## 1.0.1898
