@@ -255,7 +255,7 @@ final class Schedule {
             android.app.KeyguardManager km = (android.app.KeyguardManager) c.getSystemService(Context.KEYGUARD_SERVICE);
             android.os.PowerManager pm = (android.os.PowerManager) c.getSystemService(Context.POWER_SERVICE);
             boolean locked = km != null && km.isKeyguardLocked();
-            boolean bg = BgDisplay.wanted(c);
+            boolean bg = BgDisplay.wantedForSchedule(c);   // 定時任務不看面板上的背景按鈕：有背景模式就在背景螢幕做
             if (locked) return bg && c.getSharedPreferences("cfg", Context.MODE_PRIVATE).getBoolean("sched_try_locked", false);
             return bg || (pm != null && pm.isInteractive());
         } catch (Throwable t) { return false; }
@@ -270,12 +270,14 @@ final class Schedule {
         HeadlessUi ui = new HeadlessUi();
         try {
             LifeLog.add(c, "定時自動操作開始：" + shorten(task, 30));
+            BgDisplay.SCHEDULED.set(true);   // 在背景螢幕（小螢幕）做，不搶主螢幕
             res = AgentLoop.run(c, task, ui);
             if (res == null || res.trim().isEmpty()) res = L.t("（做完了，沒有文字結果）");
             if (!ui.refused.isEmpty()) res = L.t("遇到需要你確認的事，已停下沒有繼續：") + shorten(ui.refused, 60) + "\n" + res;
         } catch (Throwable t) {
             res = L.t("執行失敗：") + t.getMessage();
         } finally {
+            BgDisplay.SCHEDULED.remove();
             if (wl != null && wl.isHeld()) wl.release();
         }
         try {

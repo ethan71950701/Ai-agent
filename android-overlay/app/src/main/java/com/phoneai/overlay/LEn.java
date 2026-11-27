@@ -706,7 +706,7 @@ final class LEn {
         m.put("已暫停，按 Now Bar 的「繼續」", "Paused, tap Resume on the Now Bar");
         m.put("你接手中，AI 暫停", "You have taken over, the AI is paused");
         m.put("背景模式選項（實驗）", "Background mode option (experimental)");
-        m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself; normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
+        m.put("在助理面板「＋」選單顯示「在背景螢幕操作」。要自己選開，平常任務還是在目前的畫面做（定時自動操作則一律在背景螢幕做，不用另外開）；開著時任務在隱形的第二螢幕執行，只用截圖模式（Sonnet 看圖，費用較高），銀行、支付類 App 不會在背景操作", "Shows \"Operate on the background screen\" in the assistant panel's \"+\" menu. You turn it on yourself (scheduled tasks always use the background screen without this); normally tasks still run on your current screen. When it is on, tasks run on an invisible second screen in screenshot mode only (Sonnet reads images, higher cost); banking and payment apps are never operated in the background");
         m.put("更多", "More");
         m.put("允許 Claude 內建網頁搜尋（較貴）", "Allow Claude's built-in web search (more expensive)");
         m.put("預設關：搜尋一律用 Tavily（便宜）。打開後，Tavily 失敗時聊天會改用 Claude 內建搜尋、自動操作的搜尋也用它，Claude 每次搜尋另外計費", "Off by default: all searches use Tavily (cheaper). When on, chat falls back to Claude's built-in search if Tavily fails and automation searches use it too; Claude bills each search separately");

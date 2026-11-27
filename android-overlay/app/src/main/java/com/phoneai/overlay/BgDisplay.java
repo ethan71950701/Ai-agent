@@ -59,7 +59,17 @@ final class BgDisplay {
 
     private static Process host;
 
+    /** 這條執行緒正在跑定時自動操作：沒有人看著，不管面板上的「在背景螢幕操作」按鈕，有背景模式就一律用背景螢幕（不搶主螢幕、不用等螢幕亮）。 */
+    static final ThreadLocal<Boolean> SCHEDULED = new ThreadLocal<>();
+
+    /** 定時自動操作能不能用背景螢幕：只看設定裡的功能開關與 root，不看面板按鈕。 */
+    static boolean wantedForSchedule(Context c) {
+        android.content.SharedPreferences p = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+        return !Announcements.off("background_mode") && p.getBoolean("bg_feature", true) && Root.isRoot();
+    }
+
     static boolean wanted(Context c) {
+        if (Boolean.TRUE.equals(SCHEDULED.get())) return wantedForSchedule(c);
         android.content.SharedPreferences p = c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
         return !Announcements.off("background_mode") && p.getBoolean("bg_feature", true) && p.getBoolean("bg_on", false) && Root.isRoot();   // 遠端公告可以暫時停用背景模式（出重大問題時）   // bg_feature＝設定裡的功能開關（有 root 預設開）；bg_on＝助理面板上的按鈕（每次自己決定，預設關）
     }
