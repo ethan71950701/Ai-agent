@@ -29,6 +29,8 @@ public class PeerFinderTest {
         String reportedTsIp = "100.99.77.50";
         Set<String> reachable = new HashSet<>();           // 連得上的 ip:port
         int scans, directs, wakes, tsTurnOns;
+        List<Boolean> wakeRemote = new ArrayList<>();      // 每次叫醒時有沒有請對方「當作外網」
+        boolean everWokenRemote;
         List<String> logs = new ArrayList<>(), phases = new ArrayList<>();
 
         static TransferDiscovery.Found found(String ip, int port) {
@@ -43,7 +45,7 @@ public class PeerFinderTest {
         @Override public TransferDiscovery.Found scan(int timeoutMs) {
             clock += timeoutMs;
             scans++;
-            if (reportTsAfterScans > 0 && scans >= reportTsAfterScans) { stored.tsIp = reportedTsIp; stored.tsPort = 47321; }
+            if (everWokenRemote && reportTsAfterScans > 0 && scans >= reportTsAfterScans) {   // 跟真的對方一樣：只有被當作外網叫醒，才會開 Tailscale 並回報位址 stored.tsIp = reportedTsIp; stored.tsPort = 47321; }
             return scanFindsAfter > 0 && scans >= scanFindsAfter ? found("192.168.1.130", 47321) : null;
         }
         @Override public TransferDiscovery.Found directLan() {
@@ -60,7 +62,12 @@ public class PeerFinderTest {
         @Override public String lanNet() { return lanNet; }
         @Override public boolean tailscaleOn() { return tsOn; }
         @Override public void turnOnTailscale() { tsTurnOns++; if (tsTurnsOn) tsOn = true; }
-        @Override public String wake() { wakes++; return wakeErr; }
+        @Override public String wake(boolean remote) {
+            wakes++;
+            wakeRemote.add(remote);
+            if (remote && wakeErr == null) everWokenRemote = true;
+            return wakeErr;
+        }
         @Override public long now() { return clock; }
         @Override public boolean stopRequested() { return stop; }
         @Override public void log(String line) { logs.add(line); }
@@ -127,6 +134,32 @@ public class PeerFinderTest {
         assertEquals("100.99.77.50", r.ip);
         assertTrue(e.phases.contains("開外網"));
         assertTrue(e.wakes >= 1);
+    }
+
+    /**
+     * 2026-11-27 查出的原因：上面那種情況，這支判斷要走外網、自己開了 Tailscale，但叫醒推播以前是用網段重算（網段一樣＝同一個區網），
+     * 送出去的是「不是外網」，對方就不開 Tailscale、也不回報位址，這邊只能一直連舊的 Tailscale 位址到逾時。每一次叫醒（含補送）都要說是外網。
+     */
+    @Test public void differentRouterSameSubnetAsksPeerToTreatItAsRemote() throws Exception {
+        TransferStore.Peer p = peer();
+        Fake e = fake(p);
+        e.tsOn = false;
+        e.reportTsAfterScans = 10;   // 對方晚一點才回報：中間會補送推播
+        e.reachable.add("100.99.77.50:47321");
+        PeerFinder.find(e, p);
+        assertTrue("應該補送過推播：" + e.wakes, e.wakes >= 2);
+        assertFalse("每次叫醒都要說是外網：" + e.wakeRemote, e.wakeRemote.contains(false));
+    }
+
+    @Test public void sameWifiWithTailscaleOnWakesAsLocal() throws Exception {
+        TransferStore.Peer p = peer();
+        p.tsIp = null;
+        p.tsPort = 0;
+        Fake e = fake(p);
+        e.scanFindsAfter = 3;   // 同一個 Wi-Fi、這支 Tailscale 開著：當作區網叫醒，不必請對方開 Tailscale
+        PeerFinder.find(e, p);
+        assertEquals(1, e.wakes);
+        assertEquals(Boolean.FALSE, e.wakeRemote.get(0));
     }
 
     @Test public void sameWifiDoesNotTurnOnTailscaleAndWaitsAbout25s() throws Exception {

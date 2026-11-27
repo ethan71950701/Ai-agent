@@ -29,8 +29,11 @@ final class PeerFinder {
         String lanNet();
         boolean tailscaleOn();
         void turnOnTailscale();
-        /** 送推播叫醒對方；成功回 null，失敗回原因。 */
-        String wake();
+        /**
+         * 送推播叫醒對方；成功回 null，失敗回原因。remote＝請對方當作「我從外面來」：開它自己的 Tailscale、回報它的 Tailscale 位址。
+         * 要跟這裡的判斷一致（不能讓 FcmLab.wake 用網段重算）：不同路由器但網段一樣時，網段看起來相同，對方卻必須開 Tailscale。
+         */
+        String wake(boolean remote);
         long now();
         boolean stopRequested();
         void log(String line);
@@ -57,7 +60,7 @@ final class PeerFinder {
             }
             e.phase(L.t("對方沒回應，正在用推播叫醒：") + p.name, L.t("叫醒中"));
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
-            String err = e.wake();
+            String err = e.wake(remoteNow);
             if (err == null) {
                 long t0 = e.now(), until = t0 + (remoteNow ? WAIT_REMOTE_MS : WAIT_LAN_MS), nextRing = t0 + RERING_MS;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
                 while (f == null && e.now() < until) {
@@ -67,7 +70,7 @@ final class PeerFinder {
                     TransferStore.Peer now = e.fresh();   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
                     if (f == null && now.tsIp != null && now.tsPort > 0 && e.ping(now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走 Tailscale
                     if (f == null && e.now() >= nextRing && e.now() < until - 4000) {
-                        e.wake();   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
+                        e.wake(remoteNow);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
                         nextRing += RERING_MS;
                     }
                 }

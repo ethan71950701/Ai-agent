@@ -367,9 +367,13 @@ final class FcmLab {
 
     /** 叫醒對方：送一則「請把互傳伺服器開起來」的門鈴。回 null 成功，否則錯誤。之後的連線都照原本的直連方式。 */
     static String wake(Context c, TransferStore.Peer peer) {
+        return wake(c, peer, isRemote(lanNet(), peer == null ? null : peer.ip));   // 沒連 Wi-Fi，或連的是另一個網路（網段跟對方上次的區網位址不同）：從外面來，走 Tailscale
+    }
+
+    /** remote 由呼叫的人決定（找對方時 PeerFinder 已判斷要走外網，例如不同路由器但網段一樣）：對方看到 remote 才會開 Tailscale、回報位址。 */
+    static String wake(Context c, TransferStore.Peer peer, boolean remote) {
         if (peer == null || peer.fcmToken == null) return "還沒有存這台裝置的 token";
         String ip = lanIp();
-        boolean remote = isRemote(lanNet(), peer.ip);   // 沒連 Wi-Fi，或連的是另一個網路（網段跟對方上次的區網位址不同）：從外面來，走 Tailscale
         if (remote) {
             String ts = TransferClient.localTailnetIp();
             ip = ts == null ? "" : ts;

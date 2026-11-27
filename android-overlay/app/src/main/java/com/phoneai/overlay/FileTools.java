@@ -381,7 +381,7 @@ final class FileTools {
                 boolean tsOk = TailscaleControl.turnOnForSession(c, 12000, tsLog);
                 TransferStore.log(c, "自動開 Tailscale：" + (tsOk ? "成功" : "失敗") + "｜" + tsLog.toString().trim().replace('\n', ' '));   // 診斷：沒裝、沒 root、或廣播送出了但沒連上
             }
-            @Override public String wake() { return FcmLab.wake(c, p); }
+            @Override public String wake(boolean remote) { return FcmLab.wake(c, p, remote); }
             @Override public long now() { return System.currentTimeMillis(); }
             @Override public boolean stopRequested() { return TransferNotify.stopRequested(); }
             @Override public void log(String line) { TransferStore.log(c, line); }
