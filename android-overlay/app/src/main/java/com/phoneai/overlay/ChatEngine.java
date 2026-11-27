@@ -581,23 +581,58 @@ final class ChatEngine {
     /** 伺服器回了錯誤碼（為了判斷要不要重試，帶著狀態碼）。 */
     static final class HttpStatus extends Exception {
         final int code;
-        HttpStatus(int code, String msg) { super(msg); this.code = code; }
+        final long retryAfterMs;   // 伺服器在 Retry-After 標頭說要等多久（秒數換成毫秒）；沒說是 -1
+        HttpStatus(int code, String msg) { this(code, msg, -1); }
+        HttpStatus(int code, String msg, long retryAfterMs) { super(msg); this.code = code; this.retryAfterMs = retryAfterMs; }
+    }
+
+    /** Retry-After 標頭（秒數）換成毫秒；沒有或看不懂（例如是日期格式）回 -1。 */
+    static long retryAfterMs(String header) {
+        if (header == null) return -1;
+        try { long s = Long.parseLong(header.trim()); return s < 0 ? -1 : s * 1000; } catch (NumberFormatException e) { return -1; }
+    }
+
+    /** 伺服器忙線（502/503/504/529）：Gemini 常回 503「model is overloaded」，通常等幾秒就好，所以比一般網路錯誤多試幾次、等久一點。 */
+    static boolean serverBusy(Exception e) {
+        if (!(e instanceof HttpStatus)) return false;
+        int c = ((HttpStatus) e).code;
+        return c == 502 || c == 503 || c == 504 || c == 529;
     }
 
     /** 偶發的網路問題值得重試：連不上、逾時、連線被重設、伺服器暫時錯誤（500/502/503/504/529）。金鑰錯、額度用完、請求被拒絕這類重試沒用。 */
     private static boolean transientFailure(Exception e) {
-        if (e instanceof HttpStatus) { int c = ((HttpStatus) e).code; return c == 500 || c == 502 || c == 503 || c == 504 || c == 529; }
+        if (serverBusy(e)) return true;
+        if (e instanceof HttpStatus) return ((HttpStatus) e).code == 500;
         return e instanceof java.io.IOException;
+    }
+
+    static final long[] BUSY_WAIT_MS = {2000, 5000, 10000};   // 忙線時第 1、2、3 次失敗後各等多久（最多試 4 次，總共等約 17 秒）
+    static final long MAX_RETRY_AFTER_MS = 15000;   // 伺服器要求等更久就不等了（使用者在等回答）
+
+    /**
+     * 第 attempt 次（從 1 算）失敗後要等多久再試；不要再試回 -1。純邏輯，方便測試。
+     * 忙線：最多 4 次，等 2、5、10 秒（伺服器有說 Retry-After 就照它，但不超過 15 秒）；連線階段失敗最多 3 次、其他暫時錯誤最多 2 次，等 0.5 秒 × 次數。
+     */
+    static long retryDelayMs(Exception e, int attempt, boolean connectPhase) {
+        if (!transientFailure(e)) return -1;
+        if (serverBusy(e)) {
+            if (attempt > BUSY_WAIT_MS.length) return -1;
+            long ra = ((HttpStatus) e).retryAfterMs;
+            if (ra > MAX_RETRY_AFTER_MS) return -1;
+            return ra >= 0 ? Math.max(ra, 500) : BUSY_WAIT_MS[attempt - 1];
+        }
+        int limit = connectPhase ? 3 : 2;
+        return attempt < limit ? 500L * attempt : -1;
     }
 
     /**
      * 送出一則請求；偶發的網路失敗自動重試（使用者回報 Gemini 與 Claude 都「有時候連不上」：手機網路切換、連線閒置被斷、伺服器暫時忙都會這樣，重試一次通常就好）。
-     * 連線階段失敗最多試 3 次，其他（例如等回答逾時）多試 1 次；每次失敗都記進診斷頁的事件紀錄。按了停止就不重試。這個請求只是問模型，重送不會重複執行任何動作。
+     * 伺服器忙線（503 等）最多試 4 次、等 2／5／10 秒；連線階段失敗最多試 3 次，其他（例如等回答逾時）多試 1 次（見 retryDelayMs）；每次失敗都記進診斷頁的事件紀錄。按了停止就不重試。這個請求只是問模型，重送不會重複執行任何動作。
      */
     static JSONObject post(JSONObject body, String key) throws Exception {
         String snapshot = body.toString();
         Exception last = null;
-        for (int attempt = 1; attempt <= 3; attempt++) {
+        for (int attempt = 1; ; attempt++) {
             long started = android.os.SystemClock.uptimeMillis();
             try {
                 final JSONObject sent = attempt == 1 ? body : new JSONObject(snapshot);   // 重試用原本的請求內容（postOnce 會改 body 裡的模型名）
@@ -613,14 +648,27 @@ final class ChatEngine {
                 String m = String.valueOf(e.getMessage());
                 boolean connectPhase = e instanceof java.net.UnknownHostException || e instanceof java.net.ConnectException || e instanceof javax.net.ssl.SSLException
                         || m.toLowerCase(java.util.Locale.ROOT).contains("connect");
-                int limit = connectPhase ? 3 : 2;
-                boolean again = transientFailure(e) && attempt < limit && abortedAt < started;
-                if (App.ctx != null) LifeLog.add(App.ctx, "網路：第 " + attempt + " 次失敗（" + e.getClass().getSimpleName() + "：" + (m.length() > 80 ? m.substring(0, 80) : m) + "）" + (again ? "，重試" : "，不再重試"));
-                if (!again) break;
-                try { Thread.sleep(500L * attempt); } catch (InterruptedException ie) { break; }
+                long wait = abortedAt < started ? retryDelayMs(e, attempt, connectPhase) : -1;
+                if (App.ctx != null) LifeLog.add(App.ctx, "網路：第 " + attempt + " 次失敗（" + e.getClass().getSimpleName() + "：" + (m.length() > 80 ? m.substring(0, 80) : m) + "）"
+                        + (wait < 0 ? "，不再重試" : serverBusy(e) ? "，伺服器忙線，" + (wait / 1000.0) + " 秒後重試" : "，重試"));
+                if (wait < 0) break;
+                if (!sleepUnlessAborted(wait, started)) break;
             }
         }
         throw last;
+    }
+
+    /** 等 ms 毫秒；中途使用者按了停止就提早結束並回 false（忙線時可能要等 10 秒，不能讓停止沒反應）。 */
+    private static boolean sleepUnlessAborted(long ms, long started) {
+        long end = android.os.SystemClock.uptimeMillis() + ms;
+        try {
+            while (true) {
+                if (abortedAt >= started) return false;
+                long left = end - android.os.SystemClock.uptimeMillis();
+                if (left <= 0) return true;
+                Thread.sleep(Math.min(left, 250));
+            }
+        } catch (InterruptedException ie) { Thread.currentThread().interrupt(); return false; }
     }
 
     private static JSONObject postOnce(JSONObject body, String key) throws Exception {
@@ -659,7 +707,7 @@ final class ChatEngine {
         } else {
             String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
             inflight = null;
-            if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()));
+            if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot == null ? "Claude" : slot.label()), retryAfterMs(con.getHeaderField("Retry-After")));
             r = new JSONObject(text);
         }
         JSONObject u = r.optJSONObject("usage");
@@ -690,7 +738,7 @@ final class ChatEngine {
         InputStream in = code < 400 ? con.getInputStream() : con.getErrorStream();
         String text = in == null ? "" : new String(readAll(in), StandardCharsets.UTF_8);
         inflight = null;
-        if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot.label()));
+        if (code >= 400) throw new HttpStatus(code, LlmErrors.explain(code, text, slot.label()), retryAfterMs(con.getHeaderField("Retry-After")));
         JSONObject r = LlmAdapter.fromOpenAi(new JSONObject(text));
         JSONObject u = r.optJSONObject("usage");
         if (u != null) {

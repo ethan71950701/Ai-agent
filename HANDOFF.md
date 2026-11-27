@@ -152,7 +152,7 @@ Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](d
 - Now Bar（Live Update）靠 `enable_notification_nowbar_test` 這個系統設定；重開機或系統更新後可能被清掉，到「功能 → 維護 → 修復權限」重設（需要 root 或 Shizuku）。App 在前景時系統不顯示 Now Bar 膠囊（系統行為）。
 - 三星提醒／時鐘的 AppFunctions 只在作者的機型實測；欄位名稱被混淆，詳見 `docs/APP_FUNCTIONS.md`；`findTasks` 的搜尋條件欄位還沒查。
 - 「展開動畫還是怪怪的、感覺不連續」（2026-11-05 使用者）：還不確定是設定群組展開（`Anim.expandSmooth`）還是子頁面開啟（`Ui.enterSpring`）；用戶沒回答是哪一個。
-- Gemini 的 `gemini-flash-lite-latest` 尖峰時段常回 503（伺服器忙、不是額度）；已在通知整理自動重試兩次，其他路徑（聊天、操作畫面）沒有。可建議使用者把便宜模型換成 `gemini-flash-latest`。
+- Gemini 的 `gemini-flash-lite-latest` 尖峰時段常回 503（伺服器忙、不是額度）；2026-11-27 起所有模型請求（`ChatEngine.post`：聊天、操作畫面、路由、通知整理、定時）碰到 502/503/504/529 都自動重試最多 3 次（等 2／5／10 秒，有 Retry-After 照它、超過 15 秒不等；`retryDelayMs`，測試 `RetryDelayTest`）🟡 手機未測。還是常失敗可建議使用者把便宜模型換成 `gemini-flash-latest`。
 - 玻璃的外圈陰影（`drawOuterShadow`）沒有被使用者確認看得到；透鏡靜止時的亮度（見狀態表）還在調。
 
 

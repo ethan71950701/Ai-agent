@@ -104,18 +104,7 @@ final class NotifDigest {
                     + snap;
             JSONObject body = new JSONObject().put("model", ChatEngine.MODEL).put("max_tokens", 3000)
                     .put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
-            JSONObject r = null;
-            for (int attempt = 0; ; attempt++) {   // 服務暫時太忙（502、503、504）通常幾秒就好：自動多試兩次，不用你重按
-                try {
-                    r = ChatEngine.post(body, key);
-                    break;
-                } catch (Exception e) {
-                    String m = String.valueOf(e.getMessage());
-                    boolean busy = m.contains("HTTP 503") || m.contains("HTTP 502") || m.contains("HTTP 504");
-                    if (!busy || attempt >= 2) throw e;
-                    try { Thread.sleep(attempt == 0 ? 3000 : 7000); } catch (InterruptedException ie) { throw e; }
-                }
-            }
+            JSONObject r = ChatEngine.post(body, key);   // 服務暫時太忙（502、503、504）由 ChatEngine.post 自動重試
             JSONArray content = r.optJSONArray("content");
             StringBuilder sb = new StringBuilder();
             for (int i = 0; content != null && i < content.length(); i++)
