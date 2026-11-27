@@ -44,7 +44,8 @@ class Service:
             self.last_error = ""
         except OSError as e:
             self.last_error = str(e)
-            self.events.put(("error", "互傳伺服器啟動失敗：" + str(e)))
+            hint = "\n\n可能已經有另一個互傳程式在執行（看右下角圖示或工作管理員），請先把它結束再開。" if getattr(e, "errno", None) in (98, 48, 10013, 10048) else ""
+            self.events.put(("error", "互傳伺服器啟動失敗：" + str(e) + hint))
 
     def stop(self):
         self.server.stop()
