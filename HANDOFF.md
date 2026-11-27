@@ -68,8 +68,7 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 | `HANDOFF.md`（本文件）、`CHANGELOG.md` | 交接與狀態表；雙語更新說明（CI 發布時把 Unreleased 移到版本標題底下） |
 | `android-overlay/` | App 原始碼（Java、Gradle）；`app/src/main/java/com/phoneai/overlay/` 是全部程式，`app/src/test/` 是單元測試，`tools/check_i18n.py` 檢查中英文翻譯 |
 | `windows-transfer/` | 互傳檔案的 Windows 版（Python），協定與手機版相同；GitHub Actions 打包成 .exe |
-| `.github/workflows/android.yml` | 編譯、簽名、發布 APK（只在 `android-overlay/**` 或工作流程變動時觸發；簽名金鑰在 GitHub Secrets） |
-| `.github/workflows/windows-transfer.yml` | 打包 Windows 版 |
+| `.github/workflows/android.yml` | 編譯、簽名、發布 APK（只在 `android-overlay/**`、`windows-transfer/**` 或工作流程變動時觸發；簽名金鑰在 GitHub Secrets）；也跑互通測試、打包 Windows 版 exe，一起發布在同一個 Release（Windows 版更新找最近 Release 裡編號最大且有 `PhoneAI.exe` 的）。舊的 `windows-latest` 預發行不再更新，舊版電腦版要手動換一次新 exe |
 | `docs/` | `APP_FUNCTIONS.md`（AppFunctions 實測）、`NO_ROOT.md`（三種模式對照）、`FILE_TRANSFER.md`（互傳設計）、`PUBLISH_CHECKLIST.md`（簽名金鑰與公開前清查）、`VIDEO_PLAN.md`；`archive/` 是 Termux 時期與已完成的路線圖 |
 
 主要類別（都在 `android-overlay/app/src/main/java/com/phoneai/overlay/`）：

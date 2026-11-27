@@ -15,7 +15,7 @@ python -m unittest discover -s tests -v
 `tests/test_interop.py` 會用 `javac` 編譯手機版的 Java 程式碼，跟 Python 雙向互通測試；沒有 javac 會跳過。
 
 ## 打包成 .exe
-GitHub Actions 的 `.github/workflows/windows-transfer.yml` 會在 Windows 機器上打包，產物是 `PhoneAI互傳.exe`。
+GitHub Actions 的 `.github/workflows/android.yml`（`windows` job）會在 Windows 機器上打包，產物是 `PhoneAI互傳.exe`；發布時改名成 `PhoneAI.exe`，跟手機 APK 放在同一個 Release。
 
 ## 資料位置
 - 設定、已配對裝置與金鑰：`%APPDATA%\PhoneAI互傳\config.json`（只存在這台電腦）
