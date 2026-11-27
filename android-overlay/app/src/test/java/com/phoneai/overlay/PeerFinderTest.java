@@ -45,7 +45,10 @@ public class PeerFinderTest {
         @Override public TransferDiscovery.Found scan(int timeoutMs) {
             clock += timeoutMs;
             scans++;
-            if (everWokenRemote && reportTsAfterScans > 0 && scans >= reportTsAfterScans) {   // 跟真的對方一樣：只有被當作外網叫醒，才會開 Tailscale 並回報位址 stored.tsIp = reportedTsIp; stored.tsPort = 47321; }
+            if (everWokenRemote && reportTsAfterScans > 0 && scans >= reportTsAfterScans) {   // 跟真的對方一樣：只有被當作外網叫醒，才會開 Tailscale 並回報位址
+                stored.tsIp = reportedTsIp;
+                stored.tsPort = 47321;
+            }
             return scanFindsAfter > 0 && scans >= scanFindsAfter ? found("192.168.1.130", 47321) : null;
         }
         @Override public TransferDiscovery.Found directLan() {
