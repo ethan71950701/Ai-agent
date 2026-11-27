@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1891
+
 - 聊天與自動操作碰到 AI 伺服器忙線（Gemini 常見的 503）會自動等幾秒重試，最多再試 3 次（等 2、5、10 秒），不會一碰到就失敗；按停止會立刻結束等待｜Chat and screen actions now automatically retry when the AI server is busy (the 503 Gemini often returns): up to 3 more tries after waiting 2, 5 and 10 seconds, instead of failing right away; pressing Stop ends the wait immediately
 
 ## 1.0.1890
