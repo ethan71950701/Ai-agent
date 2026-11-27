@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1897
+
 - GitHub（MCP）可以叫 AI 開 Issue、留言、開或合併 PR、改檔案、建立分支、啟動工作流程；每次執行前都會跳確認框列出參數，按「否」或沒回應就不做（權杖要有寫入權限）｜GitHub (MCP) can now have the AI open issues, comment, open or merge PRs, change files, create branches and start workflows; each one shows a confirmation with its parameters first and does nothing if you tap No or don't answer (the token needs write permission)
 
 ## 1.0.1895
