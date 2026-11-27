@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1890
+
 - 互傳：對方回報位址時，不再跳「FCM 門鈴」通知（只有被叫醒的那一端才會看到通知）｜Transfer: no more "FCM doorbell" notification when the other phone reports its address (only the phone being woken up shows one)
 
 ## 1.0.1887
