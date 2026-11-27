@@ -38,7 +38,6 @@ public class FcmLabService extends FirebaseMessagingService {
 
     private void onDoorbell(RemoteMessage m) {
         LifeLog.add(this, "FCM 門鈴：收到（尚未驗證），欄位 " + m.getData().keySet());
-        notifyLab("收到叫醒推播，驗證中…");
         Doorbell.Result r = BELL.verify(m.getData(), System.currentTimeMillis(), FcmLab.lanNet());
         if (!r.ok()) {   // 驗證不過：不連線。實驗版才跳通知講原因（正式版只留記錄）
             LifeLog.add(this, "FCM 門鈴被拒絕：" + r.error);

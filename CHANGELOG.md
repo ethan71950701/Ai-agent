@@ -7,6 +7,10 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 - 聊天與自動操作碰到 AI 伺服器忙線（Gemini 常見的 503）會自動等幾秒重試，最多再試 3 次（等 2、5、10 秒），不會一碰到就失敗；按停止會立刻結束等待｜Chat and screen actions now automatically retry when the AI server is busy (the 503 Gemini often returns): up to 3 more tries after waiting 2, 5 and 10 seconds, instead of failing right away; pressing Stop ends the wait immediately
 
+## 1.0.1890
+
+- 互傳：對方回報位址時，不再跳「FCM 門鈴」通知（只有被叫醒的那一端才會看到通知）｜Transfer: no more "FCM doorbell" notification when the other phone reports its address (only the phone being woken up shows one)
+
 ## 1.0.1887
 
 - 互傳：兩支手機在不同路由器但網段一樣時，叫醒對方會請它也開 Tailscale 並回報位址（以前對方以為在同一個 Wi-Fi，不開 Tailscale，連線一直逾時）｜Transfer: when the two phones are on different routers that use the same address range, waking the other phone now asks it to turn on Tailscale and report its address (before, it assumed the same Wi-Fi, kept Tailscale off, and the connection timed out)
