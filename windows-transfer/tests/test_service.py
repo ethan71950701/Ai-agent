@@ -7,6 +7,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -89,6 +90,33 @@ class ServiceFlow(unittest.TestCase):
         c = net.Client("127.0.0.1", self.a.port, "stranger", "X", os.urandom(32))
         with self.assertRaises(IOError):
             c.ping()
+
+    def test_clock_skew_is_reported(self):
+        """時鐘差太多：回應告訴對方差幾秒，電腦版的記錄也寫明原因（不是只有一個 401）。"""
+        self._pair()
+        c = net.Client("127.0.0.1", self.a.port, self.b.store.my_id(), self.b.store.my_name(),
+                       self.b.store.key_of(self.a.store.my_id()))
+        orig = net.Client._head
+
+        def skewed_head(client, method, target):   # 只有客戶端的時間快 10 分鐘，伺服器的時間照舊
+            real = time.time
+            time.time = lambda: real() + 600
+            try:
+                return orig(client, method, target)
+            finally:
+                time.time = real
+        with mock.patch.object(net.Client, "_head", skewed_head):
+            with self.assertRaises(IOError) as cm:
+                c.ping()
+        self.assertIn("clocks differ", str(cm.exception))
+        self.assertTrue(any("時鐘差" in l for l in self.a.store.recent(50)))
+
+    def test_unknown_device_reason_is_only_in_the_log(self):
+        c = net.Client("127.0.0.1", self.a.port, "stranger", "X", os.urandom(32))
+        with self.assertRaises(IOError) as cm:
+            c.ping()
+        self.assertNotIn("不認得", str(cm.exception))
+        self.assertTrue(any("不認得" in l for l in self.a.store.recent(50)))
 
     def test_stop_deletes_partial_download(self):
         self._pair()
