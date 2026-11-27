@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1898
+
 - 定時自動操作在有 root 背景模式時一律在背景螢幕（小螢幕）做，不再因為面板上的背景按鈕沒開，就等你開螢幕後搶主螢幕操作｜With root background mode, scheduled phone tasks now always run on the background (small) screen instead of waiting for the screen to turn on and taking over the main screen when the panel's background button was off
 
 ## 1.0.1897
