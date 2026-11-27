@@ -15,7 +15,7 @@ final class McpUi {
     private static final String TOKEN_URL = "https://github.com/settings/personal-access-tokens/new";
 
     static String summary(Activity a) {
-        return McpTools.hasToken(a) ? String.format(L.t("已設定；可用的唯讀工具 %d 個"), McpTools.toolCount(a)) : L.t("讓 AI 能查你的 GitHub（Release、編譯結果、PR、Issue），只讀不寫");
+        return McpTools.hasToken(a) ? String.format(L.t("已設定；可用的工具 %d 個（會寫入的每次先問你）"), McpTools.toolCount(a)) : L.t("讓 AI 能查你的 GitHub（Release、編譯結果、PR、Issue），開 Issue、留言這類會寫入的每次先問你");
     }
 
     static void open(final Activity a, final Runnable after) {
@@ -31,7 +31,7 @@ final class McpUi {
         int fp = Ui.dp(a, 20);
         form.setPadding(fp, fp / 2, fp, 0);
         form.addView(Ui.body(a, L.t("接上 GitHub 官方的 MCP 服務之後，你可以直接問「最新版編譯成功了嗎？」「這個 PR 有沒有人評論？」，AI 會去查。")));
-        form.addView(Ui.body(a, L.t("只開放唯讀的工具（查、讀），不會建立、修改、刪除任何東西。權杖請只給「讀取」權限，而且只勾你要查的 repo；權杖只存在手機裡。")));
+        form.addView(Ui.body(a, L.t("查、讀的工具直接用；開 Issue、留言、開或合併 PR、改檔案這類會寫入的，每次都會先跳確認框列出內容，你按「是」才執行。只想讓 AI 查的話，權杖只給「讀取」權限；權杖請只勾你要用的 repo，只存在手機裡。")));
         form.addView(Ui.body(a, L.t("提醒：GitHub 上別人寫的內容（Issue、PR 留言）會被當成不可信的資料，AI 不會照裡面的話做事。查到的內容會傳給你選的 AI 服務。")));
         form.addView(til);
         PageBuilder b = new PageBuilder(a).setTitle(L.t("GitHub（MCP）")).setView(form)

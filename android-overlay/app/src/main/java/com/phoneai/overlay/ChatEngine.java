@@ -340,7 +340,7 @@ final class ChatEngine {
                             : tn.equals("phone_task") ? phoneTask(ti.optString("task"))
                             : tn.equals("run_shell") ? AgentLoop.shellForChat(c, ti.optString("cmd"))
                             : tn.equals("remember_experience") ? rememberExperience(c, ti.optString("text"))
-                            : McpTools.handles(tn) ? McpTools.run(c, tn, ti)
+                            : McpTools.handles(tn) ? McpTools.run(c, tn, ti, confirm)
                             : McpServers.handles(tn) ? McpServers.run(c, tn, ti, confirm)
                             : FileTools.handles(tn) ? FileTools.run(c, tn, ti, confirm) : Memory.runTool(c, tn, ti, confirm);
     }
@@ -424,7 +424,7 @@ final class ChatEngine {
      */
     static boolean allowedAfterUntrusted(String name, boolean sawNotifications) {
         if (READ_ONLY_TOOLS.contains(name)) return true;
-        return !sawNotifications && (name.equals("read_url") || name.equals("current_page") || McpTools.handles(name) || McpServers.handles(name) || name.equals("remember_experience"));   // GitHub 工具都是唯讀的（白名單）；其他 MCP 服務會寫入的工具每次都跳確認框。跟讀網頁一樣可以繼續用，讀過通知之後不行
+        return !sawNotifications && (name.equals("read_url") || name.equals("current_page") || McpTools.handles(name) || McpServers.handles(name) || name.equals("remember_experience"));   // GitHub 與其他 MCP 服務：會寫入的工具每次都跳確認框。跟讀網頁一樣可以繼續用，讀過通知之後不行
     }
 
     /** 給自動操作的提示詞：把上面那些工具寫成 {"action":"工具名",參數…} 的格式（從工具定義自動產生，兩邊不會不一致）。 */
@@ -473,7 +473,7 @@ final class ChatEngine {
 
     private static JSONObject call(JSONArray messages, String system, String key, boolean search, boolean toolsOn, boolean readOnly, String model) throws Exception {
         JSONArray tools = toolsOn ? new JSONArray(TOOLS) : new JSONArray();
-        if (toolsOn) McpTools.append(tools);   // 設了 GitHub 權杖才有：唯讀的 GitHub 工具
+        if (toolsOn) McpTools.append(tools);   // 設了 GitHub 權杖才有：GitHub 工具（會寫入的先問）
         if (toolsOn) McpServers.append(tools);   // 使用者自己接的其他 MCP 服務
         if (readOnly) {
             JSONArray kept = new JSONArray();

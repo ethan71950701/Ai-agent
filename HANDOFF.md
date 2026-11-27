@@ -103,7 +103,7 @@ LLM 出口：ChatEngine.post（Claude 格式）；LlmAdapter 轉成 OpenAI chat/
 | 路由與聊天（聊天優先、串流） | 🟡 | 不用關鍵字路由（`Assist.route` 一律 NONE）；「有時候連不上」查過一輪 | #258 #307 #326 |
 | 用量上限與估價、AI 比較測試 | ✅ | 價格是第三方資料，以 Console 為準 | #36 #50 #159 |
 | 網頁：搜尋（Tavily）、`read_url`、`current_page` | ✅ 搜尋／🟡 其他 | 搜尋全改 Tavily（2026-11-13）未實測 | #235 #309 #333 #334 |
-| MCP：GitHub、其他服務＋OAuth | ✅ | GitHub 唯讀白名單工具（分類瀏覽、分頁讀取）；其他服務（Notion 等）用 OAuth 登入、會寫入的工具每次確認；code review 修正（權杖自動換新、確認框列出每個參數）🟡 | #343 #344 #348 |
+| MCP：GitHub、其他服務＋OAuth | ✅ | GitHub 唯讀白名單工具（分類瀏覽、分頁讀取）；GitHub 寫入白名單工具（`McpTools.WRITE`：Issue、留言、PR、分支、檔案、啟動工作流程，每次確認、不重試、不重用快取）🟡；其他服務（Notion 等）用 OAuth 登入、會寫入的工具每次確認；code review 修正（權杖自動換新、確認框列出每個參數）🟡 | #343 #344 #348 |
 | MCP：Google（雲端硬碟、Gmail、日曆） | ❌ 擱置 | Google 的 Workspace MCP 只收公司／學校帳號（@gmail.com 不行）；程式留著（填 Client ID、Google 預設按鈕） | #345 |
 | 聊天工具：鬧鐘、計時、行事曆（新增／讀取）、地圖、撥號、三星提醒、唯讀 shell | ✅ 多數／🟡 讀行事曆 | `read_calendar` 讀手機行事曆（取代 Google 日曆 MCP），讀過後跟通知一樣只給唯讀工具 | #228 #240 #346 #348 |
 | 記憶（待辦、筆記、永久、索引）、聊天的「經驗」 | ✅ 記憶／🟡 經驗 | `remember_experience` 由 AI 自己決定記；有防注入檢查 | #206 #214 #260 #312 #315 #349 |
@@ -170,7 +170,7 @@ Termux 時期的實測數據與問題解法在 [`docs/archive/EXPERIMENTS.md`](d
 
 1. **互傳外網**：使用者回報兩支手機在不同路由器、瀏覽一直讀取中。2026-11-27 修了叫醒推播沒說「外網」、對方不開 Tailscale 的問題（見狀態表），先請使用者實測這個。下一步要使用者看「對方」手機的 Tailscale 有沒有連線、100.x 位址是不是記下的 `100.99.77.49`，以及對方的互傳紀錄（被叫醒後有沒有開 Tailscale、有沒有回報位址）。可能要做：被叫醒的一方回報自己現在的區網位址（目前只回報 Tailscale 位址）。
 2. **等使用者實測這批 🟡**：讀行事曆、code review 修正（MCP 權杖自動換新、確認框參數）、定時自動操作、三檔確認、保活檢查頁、聊天的經驗、拉伸幅度。
-3. **MCP 會寫入的工具**：叫 AI 在 Notion 新增一筆，確認框要先出現、按「否」不能建立。
+3. **MCP 會寫入的工具**：叫 AI 在 Notion 新增一筆、在 GitHub 開一個 Issue（權杖要有 Issues 寫入權限），確認框要先出現、按「否」不能建立。
 4. 遊戲沒有元件清單：考慮本機 OCR（ML Kit）。
 5. 提醒的查詢、修改、刪除走 AppFunctions（`docs/APP_FUNCTIONS.md`，要使用者在手機掃參數名稱）。
 6. 拆大檔案（`MainActivity` 很大）。

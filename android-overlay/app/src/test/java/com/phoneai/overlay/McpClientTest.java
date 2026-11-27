@@ -54,6 +54,29 @@ public class McpClientTest {
         assertTrue(McpTools.browse(out, "nope").contains("沒有這個類別"));
     }
 
+    @Test public void writeToolsAreKeptButNeedConfirm() throws Exception {
+        JSONArray in = new JSONArray("[" +
+                "{\"name\":\"issue_write\",\"description\":\"開 Issue\",\"annotations\":{\"readOnlyHint\":false}}," +
+                "{\"name\":\"merge_pull_request\",\"description\":\"合併\"}," +
+                "{\"name\":\"delete_repository\",\"description\":\"不在任何白名單\"}," +
+                "{\"name\":\"list_issues\",\"description\":\"d\",\"annotations\":{\"readOnlyHint\":true}}]");
+        JSONArray out = McpTools.convert(in, "");
+        assertEquals(3, out.length());
+        JSONObject iw = out.getJSONObject(0), mg = out.getJSONObject(1), li = out.getJSONObject(2);
+        assertEquals("issue_write", iw.getString("name"));
+        assertFalse(iw.getBoolean("read_only"));
+        assertEquals("issues", iw.getString("category"));
+        assertEquals("pulls", mg.getString("category"));
+        assertTrue(McpTools.needsConfirm(iw) && McpTools.needsConfirm(mg));
+        assertFalse(McpTools.needsConfirm(li));
+        // 存的資料被改成 read_only=true 也不行：不在唯讀白名單就要問
+        assertTrue(McpTools.needsConfirm(new JSONObject().put("name", "issue_write").put("read_only", true)));
+        assertTrue(McpTools.needsConfirm(null));
+        assertEquals("files", McpTools.categoryOf("create_or_update_file"));
+        assertEquals("pulls", McpTools.categoryOf("update_pull_request_branch"));
+        assertTrue(McpTools.browse(out, "issues").contains("會寫入"));
+    }
+
     /** 假的 MCP 服務（ServerSocket）：回應 initialize、tools/list、tools/call，並檢查權杖與 session 標頭有帶。 */
     @Test public void clientTalksToFakeServer() throws Exception {
         final ServerSocket ss = new ServerSocket(0);

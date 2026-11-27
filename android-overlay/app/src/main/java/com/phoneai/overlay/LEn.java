@@ -1255,6 +1255,9 @@ final class LEn {
         m.put("儲存並測試連線", "Save and test connection");
         m.put("只開放唯讀的工具（查、讀），不會建立、修改、刪除任何東西。權杖請只給「讀取」權限，而且只勾你要查的 repo；權杖只存在手機裡。", "Only read-only tools are enabled (look up, read); nothing is created, changed or deleted. Give the token read-only access to just the repos you want to query; the token stays on this phone.");
         m.put("已有權杖；貼上新的會取代", "A token is already set; pasting a new one replaces it");
+        m.put("已設定；可用的工具 %d 個（會寫入的每次先問你）", "Set up; %d tools available (ones that write ask you first)");
+        m.put("讓 AI 能查你的 GitHub（Release、編譯結果、PR、Issue），開 Issue、留言這類會寫入的每次先問你", "Let the AI look up your GitHub (releases, build results, PRs, issues); anything that writes, like opening an issue or commenting, asks you first");
+        m.put("查、讀的工具直接用；開 Issue、留言、開或合併 PR、改檔案這類會寫入的，每次都會先跳確認框列出內容，你按「是」才執行。只想讓 AI 查的話，權杖只給「讀取」權限；權杖請只勾你要用的 repo，只存在手機裡。", "Lookup tools run directly. Anything that writes (opening or editing issues, commenting, opening or merging PRs, changing files) shows a confirmation with the details every time and only runs if you tap Yes. If you only want the AI to look things up, give the token read-only permissions. Limit the token to the repos you use; it is stored only on this phone.");
         m.put("已設定；可用的唯讀工具 %d 個", "Set up; %d read-only tools available");
         m.put("接上 GitHub 官方的 MCP 服務之後，你可以直接問「最新版編譯成功了嗎？」「這個 PR 有沒有人評論？」，AI 會去查。", "Once connected to GitHub's official MCP service you can ask things like \"Did the latest build succeed?\" or \"Has anyone commented on this PR?\" and the AI will look it up.");
         m.put("提醒：GitHub 上別人寫的內容（Issue、PR 留言）會被當成不可信的資料，AI 不會照裡面的話做事。查到的內容會傳給你選的 AI 服務。", "Note: content written by other people on GitHub (issues, PR comments) is treated as untrusted data and the AI will not follow instructions in it. What is looked up is sent to the AI service you chose.");

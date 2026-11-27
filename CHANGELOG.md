@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- GitHub（MCP）可以叫 AI 開 Issue、留言、開或合併 PR、改檔案、建立分支、啟動工作流程；每次執行前都會跳確認框列出參數，按「否」或沒回應就不做（權杖要有寫入權限）｜GitHub (MCP) can now have the AI open issues, comment, open or merge PRs, change files, create branches and start workflows; each one shows a confirmation with its parameters first and does nothing if you tap No or don't answer (the token needs write permission)
+
 ## 1.0.1895
 
 - 電腦版互傳的 exe 改放在跟手機 APK 同一個 Release（不再是另外的預發行版 windows-latest），電腦版的「檢查更新」也改從這裡找；舊版電腦版請到 Releases 手動下載一次 PhoneAI.exe 換掉，之後就能一鍵更新｜The Windows transfer app's exe is now published in the same Release as the phone APK (no more separate windows-latest pre-release), and its Check for updates looks there; with an older Windows app, download PhoneAI.exe from Releases once by hand, after that one-click update works again
