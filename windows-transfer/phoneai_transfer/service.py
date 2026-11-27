@@ -80,6 +80,27 @@ class Service:
         p = self.pending
         return p["state"] if p and p["id"] == peer_id else "none"
 
+    def auth_failed(self, peer_id, ip, why):
+        """有請求驗證失敗：把原因寫進記錄（同一個原因一分鐘內只寫一次，不要被重試洗版）。"""
+        now = time.time()
+        last = getattr(self, "_auth_logged", {})
+        self._auth_logged = last
+        if now - last.get(why, 0) < 60:
+            return
+        last[why] = now
+        reasons = {
+            "unknown_device": "電腦版不認得這個裝置（沒配對，或配對紀錄被刪過）",
+            "bad_signature": "金鑰對不上（兩邊要各自刪掉對方、重新配對）",
+            "replay": "同一個請求被重送",
+            "bad_request": "請求格式不對",
+        }
+        if why.startswith("clock:"):
+            text = f"拒絕 {ip}：兩邊的時鐘差 {why[6:]} 秒（要在 60 秒內），請校正電腦或手機的時間"
+        else:
+            text = f"拒絕 {ip}：{reasons.get(why, why)}"
+        self.store.log(text)
+        self.events.put(("log", text))
+
     def peer_address(self, peer_id, ip):
         """對方（已驗證）連上來：記下它的來源位址。埠固定是 PORT。"""
         if self.store.peer(peer_id):

@@ -319,10 +319,16 @@ class Server:
                 if path.startswith("/v1/pair/"):
                     self._pair(conn, f, path, params, h)
                     return
-                peer = self._authenticate(method, target, h, ip)
+                peer, why = self._authenticate(method, target, h, ip)
                 if peer is None:
                     self._fail(ip)
-                    self._reply(conn, 401, "unauthorized")
+                    note = getattr(self.host, "auth_failed", None)
+                    if note:
+                        note(h.get("x-id", ""), ip, why)
+                    if why.startswith("clock:"):
+                        self._reply(conn, 401, f"unauthorized: clocks differ by {why[6:]} s")
+                    else:
+                        self._reply(conn, 401, "unauthorized")
                     return
                 name = h.get("x-name")
                 if name:
@@ -474,27 +480,29 @@ class Server:
         self._reply(conn, 200, f"id={self.host.my_id()}\nname={self.host.my_name()}\npub={crypto.hexs(pair.public)}")
 
     def _authenticate(self, method, target, h, ip):
+        """驗證請求；失敗回 (None, 原因)。原因只寫進電腦版的記錄，只有「時鐘差太多」會告訴對方（那是對方自己的時間，不洩漏配對資訊）。"""
         peer_id, ts, nonce, sig = h.get("x-id"), h.get("x-ts"), h.get("x-nonce"), h.get("x-sig")
         if not (peer_id and ts and nonce and sig) or len(nonce) > 64 or len(peer_id) > 64:
-            return None
-        key = self.host.key_of(peer_id)
-        if key is None:
-            return None
+            return None, "bad_request"
         try:
             t = int(ts)
         except ValueError:
-            return None
-        if abs(time.time() - t) > SIG_WINDOW:
-            return None
+            return None, "bad_request"
+        skew = int(time.time() - t)
+        if abs(skew) > SIG_WINDOW:
+            return None, f"clock:{skew}"
+        key = self.host.key_of(peer_id)
+        if key is None:
+            return None, "unknown_device"
         if not crypto.same_hex(crypto.sign(key, method, target, ts, nonce), sig):
-            return None
+            return None, "bad_signature"
         with self._lock:
             now = time.time()
             self._seen = {k: v for k, v in self._seen.items() if now - v < 600}
             if peer_id + nonce in self._seen:
-                return None   # 同一個請求被重送
+                return None, "replay"   # 同一個請求被重送
             self._seen[peer_id + nonce] = now
-        return peer_id, key, nonce
+        return (peer_id, key, nonce), ""
 
     def _blocked(self, ip):
         with self._lock:
