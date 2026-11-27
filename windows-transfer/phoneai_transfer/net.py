@@ -271,7 +271,12 @@ class Server:
 
     def start(self, port=PORT):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            # Windows：SO_REUSEADDR 會讓兩個程式同時綁同一個埠、都不報錯，連線隨機被其中一個接走
+            # （舊程式還留著舊的配對資料，結果配對後還是 401）；改成獨占，第二個程式啟動時會明確失敗
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   # Linux／Mac：重啟時才不會卡在 TIME_WAIT
         s.bind(("", port))
         s.listen(16)
         self._sock = s
