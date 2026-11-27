@@ -10,6 +10,7 @@ on:
       - main  # 只在 main 編譯；工作分支推送不再重複編譯
     paths:
       - "android-overlay/**"
+      - "windows-transfer/**"
       - ".github/workflows/android.yml"
   workflow_dispatch:
 
@@ -136,8 +137,40 @@ jobs:
           python -m pip install "cryptography>=42"
           python -m unittest tests.test_interop -v
 
+  # 電腦版互傳（Windows exe）：跟手機 APK 發布在同一個 Release；版本號跟 Release 標籤的編號一樣（執行編號 + 1000）
+  windows:
+    needs: interop
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows-transfer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false   # 建置（會安裝第三方套件）用不到寫入憑證
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-build.txt
+      - name: Test (Python side)
+        run: python -m unittest tests.test_service tests.test_updater -v
+      - name: Stamp build number
+        run: |
+          $n = [int]$env:GITHUB_RUN_NUMBER + 1000
+          (Get-Content phoneai_transfer/version.py) -replace 'BUILD = 0', "BUILD = $n" | Set-Content phoneai_transfer/version.py
+      - name: Build exe
+        run: pyinstaller --noconfirm --onefile --windowed --name PhoneAI互傳 --collect-all tkinterdnd2 --collect-all sv_ttk --hidden-import pystray._win32 run_app.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: PhoneAI互傳-windows
+          path: windows-transfer/dist/PhoneAI互傳.exe
+          if-no-files-found: error
+
   release:
-    needs: [build, interop]
+    needs: [build, interop, windows]
     if: github.ref == 'refs/heads/main' && needs.build.outputs.signed == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -150,12 +183,18 @@ jobs:
         with:
           name: phoneai-overlay-apk
           path: apk
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: PhoneAI互傳-windows
+          path: winexe
       - name: Verify artifact checksum
         run: |
           set -euo pipefail
           cd apk
           ls -l
           sha256sum -c SHA256SUMS.txt   # 兩個 job 之間檔案被換掉或損壞就中止，不發布
+          # 電腦版 exe：GitHub 會去掉檔名裡的中文，所以改成英文檔名（電腦版 version.py 的 ASSET_NAME 也是這個）
+          cp "../winexe/PhoneAI互傳.exe" ../apk/PhoneAI.exe
       # 發布 Release：App 與 update_app.py 都從「最新的 Release」下載，不需要權杖。只在 main 上、且有簽名金鑰時發布。
       - name: Publish release
         env:
@@ -209,7 +248,7 @@ jobs:
           # GitHub 偶爾回 500，或上傳到一半失敗留下半成品（再傳會說「檔案已存在」）：失敗就刪掉這個版本的半成品，等一下再試，最多 3 次
           ok=0
           for attempt in 1 2 3; do
-            if gh release create "$TAG" apk/PhoneAI.apk apk/SHA256SUMS.txt "${EXTRA[@]}" \
+            if gh release create "$TAG" apk/PhoneAI.apk apk/PhoneAI.exe apk/SHA256SUMS.txt "${EXTRA[@]}" \
                 --target "$GITHUB_SHA" --title "PhoneAI ${SHORT}" --latest \
                 --notes-file "$RUNNER_TEMP/notes.md"; then ok=1; break; fi
             echo "建立 Release 失敗（第 ${attempt} 次），清掉半成品後重試"

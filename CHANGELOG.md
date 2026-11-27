@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+- 電腦版互傳的 exe 改放在跟手機 APK 同一個 Release（不再是另外的預發行版 windows-latest），電腦版的「檢查更新」也改從這裡找；舊版電腦版請到 Releases 手動下載一次 PhoneAI.exe 換掉，之後就能一鍵更新｜The Windows transfer app's exe is now published in the same Release as the phone APK (no more separate windows-latest pre-release), and its Check for updates looks there; with an older Windows app, download PhoneAI.exe from Releases once by hand, after that one-click update works again
+
 ## 1.0.1891
 
 - 聊天與自動操作碰到 AI 伺服器忙線（Gemini 常見的 503）會自動等幾秒重試，最多再試 3 次（等 2、5、10 秒），不會一碰到就失敗；按停止會立刻結束等待｜Chat and screen actions now automatically retry when the AI server is busy (the 503 Gemini often returns): up to 3 more tries after waiting 2, 5 and 10 seconds, instead of failing right away; pressing Stop ends the wait immediately

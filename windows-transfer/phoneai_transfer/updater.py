@@ -1,6 +1,7 @@
-"""一鍵更新：去 GitHub 看 windows-latest 這個 Release，有新版就下載，替換自己後重新開啟。"""
+"""一鍵更新：去 GitHub 看最近的 Release（跟手機 APK 同一個），挑編號最大且帶電腦版檔案的，有新版就下載，替換自己後重新開啟。"""
 import json
 import os
+import re
 import ssl
 import subprocess
 import sys
@@ -10,15 +11,28 @@ from . import version
 
 
 def parse_release(data):
-    """從 GitHub 的 release JSON 取出 (版本號, 下載網址)；找不到就回 (None, None)。"""
-    try:
-        build = int(str(data.get("name", "")).rsplit("-", 1)[-1])
-    except ValueError:
+    """從 GitHub 的 release JSON 取出 (版本號, 下載網址)；版本號是標籤 build-<編號>-<提交> 的編號。
+    找不到編號或電腦版檔案就回 (None, None)。"""
+    m = re.match(r"build-(\d+)(?:-|$)", str(data.get("tag_name", "")))
+    if not m:
         return None, None
     for a in data.get("assets", []):
         if a.get("name") == version.ASSET_NAME:
-            return build, a.get("browser_download_url")
+            return int(m.group(1)), a.get("browser_download_url")
     return None, None
+
+
+def pick_latest(releases):
+    """從最近幾個 Release 挑編號最大、而且有電腦版檔案的（跟手機版一樣自己挑，不靠 /releases/latest；
+    有些版本可能沒有 exe，例如電腦版那次打包失敗）。"""
+    best = (None, None)
+    for rel in releases:
+        if rel.get("draft") or rel.get("prerelease"):
+            continue
+        build, url = parse_release(rel)
+        if build is not None and (best[0] is None or build > best[0]):
+            best = (build, url)
+    return best
 
 
 def is_newer(remote_build, local_build=None):
@@ -36,10 +50,10 @@ def _ssl_context():
 
 
 def fetch_latest():
-    url = f"https://api.github.com/repos/{version.REPO}/releases/tags/{version.RELEASE_TAG}"
+    url = f"https://api.github.com/repos/{version.REPO}/releases?per_page=15"
     req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "PhoneAI-Transfer"})
     with urllib.request.urlopen(req, timeout=15, context=_ssl_context()) as r:
-        return parse_release(json.loads(r.read().decode("utf-8")))
+        return pick_latest(json.loads(r.read().decode("utf-8")))
 
 
 def download(url, dest):
