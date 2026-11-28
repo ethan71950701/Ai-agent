@@ -147,11 +147,39 @@ public class PeerFinderTest {
         TransferStore.Peer p = peer();
         Fake e = fake(p);
         e.tsOn = false;
-        e.reportTsAfterScans = 10;   // 對方晚一點才回報：中間會補送推播
+        e.reportTsAfterScans = 12;   // 對方晚一點才回報：中間會補送推播
+        e.reachable.add("100.99.77.50:47321");
+        PeerFinder.Result r = PeerFinder.find(e, p);
+        assertEquals("100.99.77.50", r.ip);
+        assertEquals("升級成外網後才開 Tailscale", 1, e.tsTurnOns);
+        assertEquals("第一次先當區網叫醒", Boolean.FALSE, e.wakeRemote.get(0));
+        assertEquals("升級後要說是外網", Boolean.TRUE, e.wakeRemote.get(e.wakeRemote.size() - 1));
+        assertTrue("等太久：" + e.clock, e.clock <= PeerFinder.WAIT_REMOTE_MS);
+    }
+
+    /** 2026-11-28 使用者回報：同一個 Wi-Fi、對方螢幕關著（伺服器沒開，廣播也被丟掉），以前會莫名其妙開 Tailscale。對方被叫醒後在區網出現，就不該碰 Tailscale。 */
+    @Test public void sameWifiPeerWithScreenOffDoesNotTurnOnTailscale() throws Exception {
+        TransferStore.Peer p = peer();
+        Fake e = fake(p);
+        e.tsOn = false;
+        e.scanFindsAfter = 4;   // 叫醒後幾輪對方的伺服器起來、在區網出現
+        PeerFinder.Result r = PeerFinder.find(e, p);
+        assertEquals("192.168.1.130", r.ip);
+        assertEquals(0, e.tsTurnOns);
+        assertFalse(e.wakeRemote.contains(true));
+        assertFalse(e.phases.contains("開外網"));
+    }
+
+    @Test public void differentSubnetStartsRemoteImmediately() throws Exception {
+        TransferStore.Peer p = peer();
+        Fake e = fake(p);
+        e.tsOn = false;
+        e.lanNet = "192.168.51.20/24";   // 網段跟對方記下的 192.168.1.x 不同：一開始就是外網
+        e.reportTsAfterScans = 2;
         e.reachable.add("100.99.77.50:47321");
         PeerFinder.find(e, p);
-        assertTrue("應該補送過推播：" + e.wakes, e.wakes >= 2);
-        assertFalse("每次叫醒都要說是外網：" + e.wakeRemote, e.wakeRemote.contains(false));
+        assertEquals(1, e.tsTurnOns);
+        assertEquals(Boolean.TRUE, e.wakeRemote.get(0));
     }
 
     @Test public void sameWifiWithTailscaleOnWakesAsLocal() throws Exception {

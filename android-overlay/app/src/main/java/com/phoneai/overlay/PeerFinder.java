@@ -5,15 +5,15 @@ package com.phoneai.overlay;
  * 順序：
  * 1) 區網廣播搜尋（同一個 Wi-Fi 最快）
  * 2) 廣播被擋：直接連上次記下的區網位址；連不上再掃本機網段（Env.directLan 裡做）
- * 3) 還是找不到、能用推播叫醒、而且記下的 Tailscale 位址也不通：Tailscale 沒開就先開，再叫醒對方，
- *    然後每一輪重新找（廣播、區網、對方中途回報的 Tailscale 位址），每 8 秒補送一次推播；同一個 Wi-Fi 等 25 秒，外網等 45 秒
+ * 3) 還是找不到、能用推播叫醒、而且記下的 Tailscale 位址也不通：叫醒對方，然後每一輪重新找（廣播、區網、對方中途回報的 Tailscale 位址），每 8 秒補送一次推播。
+ *    網段看起來不同（或沒連 Wi-Fi）一開始就走外網（先開 Tailscale、叫醒時告訴對方是外網），等 45 秒；網段一樣先當區網叫醒（不開 Tailscale），14 秒還沒找到才升級成外網，總共等 45 秒
  * 4) 決定位址：找到的 > 連得上的 Tailscale 位址 > 上次記下的區網位址（這個要再測一次連得上才用）
  * 網路、推播、Tailscale、時鐘全部經過 Env，這個類別本身不碰 Android。
  */
 final class PeerFinder {
     private PeerFinder() { }
 
-    static final long WAIT_LAN_MS = 25000, WAIT_REMOTE_MS = 45000, RERING_MS = 8000;
+    static final long WAIT_LAN_MS = 25000, WAIT_REMOTE_MS = 45000, RERING_MS = 8000, LAN_FIRST_MS = 14000;
 
     interface Env {
         /** 區網廣播搜尋，找不到回 null。 */
@@ -52,8 +52,12 @@ final class PeerFinder {
         if (f == null) e.log("廣播搜尋沒找到：" + p.name);
         if (f == null) f = e.directLan();   // 區網「廣播搜尋」被擋（路由器、省電、螢幕關著的手機常會丟掉廣播封包）時，直接連上次記下的區網位址
         if (f == null && e.canRing() && !(p.tsIp != null && p.tsPort > 0 && e.ping(p, p.tsIp, p.tsPort))) {
-            // 區網（廣播、記下的位址、掃網段）都找不到、Tailscale 又沒開：兩邊的網段可能剛好一樣（例如都是 192.168.1.x 但不是同一台路由器），也當作在外面，主動開 Tailscale
-            final boolean remoteNow = FcmLab.isRemote(e.lanNet(), p.ip) || !e.tailscaleOn();
+            // 區網（廣播、記下的位址、掃網段）都找不到、Tailscale 又沒開：有兩種可能，從這邊分不出來——
+            // ①同一個 Wi-Fi，只是對方螢幕關著、伺服器沒開（最常見）；②不同路由器但網段剛好一樣（例如都是 192.168.1.x）。
+            // 網段看起來不同、或自己沒連 Wi-Fi 才一開始就走外網；網段一樣就先當區網叫醒（不開 Tailscale），等 LAN_FIRST_MS 還找不到才升級成外網（開 Tailscale、重新叫醒）。
+            // 以前一律當外網，所以同一個 Wi-Fi、對方螢幕關著也會莫名其妙開 Tailscale。
+            boolean remoteNow = FcmLab.isRemote(e.lanNet(), p.ip);
+            final boolean mayEscalate = !remoteNow && !e.tailscaleOn();
             if (remoteNow && !e.tailscaleOn()) {   // 不需要先知道對方的 Tailscale 位址：叫醒後它會自己回報
                 e.phase(L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                 e.turnOnTailscale();
@@ -62,14 +66,22 @@ final class PeerFinder {
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
             String err = e.wake(remoteNow);
             if (err == null) {
-                long t0 = e.now(), until = t0 + (remoteNow ? WAIT_REMOTE_MS : WAIT_LAN_MS), nextRing = t0 + RERING_MS;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
+                long t0 = e.now(), until = t0 + (remoteNow || mayEscalate ? WAIT_REMOTE_MS : WAIT_LAN_MS), nextRing = t0 + RERING_MS;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
+                final long escalateAt = t0 + LAN_FIRST_MS;
                 while (f == null && e.now() < until) {
                     if (e.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = e.scan(1500);
                     if (f == null) f = e.directLan();   // 對方伺服器開好了，但廣播沒回應：每一輪也直接連連看
                     TransferStore.Peer now = e.fresh();   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
                     if (f == null && now.tsIp != null && now.tsPort > 0 && e.ping(now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走 Tailscale
-                    if (f == null && e.now() >= nextRing && e.now() < until - 4000) {
+                    if (f == null && mayEscalate && !remoteNow && e.now() >= escalateAt) {   // 當區網叫醒等了一陣子還是沒人：改當外網
+                        remoteNow = true;
+                        e.log("同一個網段等了 " + LAN_FIRST_MS / 1000 + " 秒沒找到，改走外網：" + p.name);
+                        e.phase(L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
+                        e.turnOnTailscale();
+                        e.wake(true);
+                        nextRing = e.now() + RERING_MS;
+                    } else if (f == null && e.now() >= nextRing && e.now() < until - 4000) {
                         e.wake(remoteNow);   // 對方的推播連線可能剛好斷著：補送一則新的（舊的過期會被拒絕，新的才有效）
                         nextRing += RERING_MS;
                     }
