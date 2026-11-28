@@ -5,6 +5,8 @@ Each entry is written as "中文｜English"; the app shows the half that matches
 
 ## Unreleased
 
+## 1.0.1905
+
 - 修正：互傳時，同一個 Wi-Fi、對方螢幕關著，不會再莫名其妙開 Tailscale（外網）；網段一樣時先當區網叫醒，對方被叫醒後會回報自己的區網位址，連得上就是同一個區網、連不上就馬上改走外網（兩支都要更新；對方是舊版時最多等 14 秒再改走外網）｜Fix: file transfer no longer turns on Tailscale (external network) when both phones are on the same Wi-Fi and the other screen is off. With the same address range it wakes over the LAN first; the woken phone reports its LAN address, and if it can be reached we stay on the LAN, otherwise we switch to the external network right away (both phones need the update; with an older peer it waits up to 14 seconds first)
 
 ## 1.0.1902
