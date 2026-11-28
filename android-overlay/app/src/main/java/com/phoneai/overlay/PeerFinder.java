@@ -6,7 +6,8 @@ package com.phoneai.overlay;
  * 1) 區網廣播搜尋（同一個 Wi-Fi 最快）
  * 2) 廣播被擋：直接連上次記下的區網位址；連不上再掃本機網段（Env.directLan 裡做）
  * 3) 還是找不到、能用推播叫醒、而且記下的 Tailscale 位址也不通：叫醒對方，然後每一輪重新找（廣播、區網、對方中途回報的 Tailscale 位址），每 8 秒補送一次推播。
- *    網段看起來不同（或沒連 Wi-Fi）一開始就走外網（先開 Tailscale、叫醒時告訴對方是外網），等 45 秒；網段一樣先當區網叫醒（不開 Tailscale），14 秒還沒找到才升級成外網，總共等 45 秒
+ *    網段看起來不同（或沒連 Wi-Fi）一開始就走外網（先開 Tailscale、叫醒時告訴對方是外網），等 45 秒；網段一樣先當區網叫醒（不開 Tailscale）：
+ *    對方（新版）醒了會回報它的區網位址，連得上就是同一個區網，連不上（兩輪）就馬上升級成外網；舊版對方不回報，等 14 秒還沒找到才升級。總共等 45 秒
  * 4) 決定位址：找到的 > 連得上的 Tailscale 位址 > 上次記下的區網位址（這個要再測一次連得上才用）
  * 網路、推播、Tailscale、時鐘全部經過 Env，這個類別本身不碰 Android。
  */
@@ -64,19 +65,27 @@ final class PeerFinder {
             }
             e.phase(L.t("對方沒回應，正在用推播叫醒：") + p.name, L.t("叫醒中"));
             // 找不到對方：用推播叫它把互傳伺服器開起來，再等它出現。傳檔、瀏覽、找檔都走這裡，所以全部都不用對方先開著
+            final long wakeStart = e.now();   // 對方回報區網位址的時間要跟這個比（回報可能比下面的 t0 還早到）
             String err = e.wake(remoteNow);
             if (err == null) {
                 long t0 = e.now(), until = t0 + (remoteNow || mayEscalate ? WAIT_REMOTE_MS : WAIT_LAN_MS), nextRing = t0 + RERING_MS;   // 外網要多等：對方的推播、開 Tailscale、建立路徑都要時間（螢幕關著更慢）
                 final long escalateAt = t0 + LAN_FIRST_MS;
+                boolean lanUnreachable = false;
+                int lanReportMisses = 0;   // 對方回報了區網位址、但連不上的次數
                 while (f == null && e.now() < until) {
                     if (e.stopRequested()) throw new TransferNotify.Stopped();   // 等對方醒來的時候也要能按停止
                     f = e.scan(1500);
+                    TransferStore.Peer now = e.fresh();   // 對方回報的位址會在等待中途才寫進來，每一輪都重讀（要在 directLan 之前讀：directLan 會連剛寫進來的區網位址）
                     if (f == null) f = e.directLan();   // 對方伺服器開好了，但廣播沒回應：每一輪也直接連連看
-                    TransferStore.Peer now = e.fresh();   // 對方回報的 Tailscale 位址會在等待中途才寫進來，每一輪都重讀
+                    if (f == null && mayEscalate && !remoteNow && now.lanReportMs >= wakeStart && ++lanReportMisses >= 2) {
+                        // 對方（新版）醒了、回報了它的區網位址，但連了兩輪都連不上：我們其實不在同一個區網（不同路由器、網段剛好一樣），不用再等，直接改走外網
+                        e.log("對方回報的區網位址連不上（" + now.ip + "），不在同一個區網，改走外網：" + p.name);
+                        lanUnreachable = true;
+                    }
                     if (f == null && now.tsIp != null && now.tsPort > 0 && e.ping(now, now.tsIp, now.tsPort)) break;   // 區網找不到，但 Tailscale 位址連得上了：往下走 Tailscale
-                    if (f == null && mayEscalate && !remoteNow && e.now() >= escalateAt) {   // 當區網叫醒等了一陣子還是沒人：改當外網
+                    if (f == null && mayEscalate && !remoteNow && (lanUnreachable || e.now() >= escalateAt)) {   // 對方回報的區網位址連不上，或當區網叫醒等了一陣子還是沒人（舊版對方不會回報）：改當外網
                         remoteNow = true;
-                        e.log("同一個網段等了 " + LAN_FIRST_MS / 1000 + " 秒沒找到，改走外網：" + p.name);
+                        if (!lanUnreachable) e.log("同一個網段等了 " + LAN_FIRST_MS / 1000 + " 秒沒找到，改走外網：" + p.name);
                         e.phase(L.t("正在開 Tailscale（外網）…"), L.t("開外網"));
                         e.turnOnTailscale();
                         e.wake(true);

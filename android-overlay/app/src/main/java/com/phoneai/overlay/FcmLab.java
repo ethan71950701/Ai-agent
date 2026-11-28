@@ -343,7 +343,13 @@ final class FcmLab {
      * 被外網叫醒、Tailscale 開起來之後，把我的 Tailscale 位址用推播回報給叫醒我的人。最多等 20 秒讓 Tailscale 出現位址；沒有就不回報。
      * 背景執行緒做（不佔著收推播的回呼）。
      */
-    static void reportAddressAsync(final Context c, final String peerId) {
+    static void reportAddressAsync(final Context c, final String peerId) { reportAddressAsync(c, peerId, false); }
+
+    /**
+     * lan＝true：被「區網叫醒」（對方沒說從外網來）：把我現在的區網位址回報給叫醒我的人。對方試連這個位址：通＝真的在同一個區網；
+     * 不通＝只是網段剛好一樣（不同路由器），對方就能馬上改走外網，不必乾等。伺服器已經開好才會呼叫，所以不用等 Tailscale。
+     */
+    static void reportAddressAsync(final Context c, final String peerId, final boolean lan) {
         final Context app = c.getApplicationContext();
         Thread t = new Thread(() -> {
             try {
@@ -351,14 +357,16 @@ final class FcmLab {
                 for (TransferStore.Peer q : TransferStore.peers(app)) if (q.id.equals(peerId)) peer = q;
                 if (peer == null || peer.fcmToken == null) return;
                 String ts = null;
-                long until = System.currentTimeMillis() + 20_000;
-                while (ts == null && System.currentTimeMillis() < until) {
+                long until = System.currentTimeMillis() + (lan ? 0 : 20_000);
+                if (lan) ts = lanIp();
+                while (!lan && ts == null && System.currentTimeMillis() < until) {
                     ts = TransferClient.localTailnetIp();
                     if (ts == null) Thread.sleep(500);
                 }
-                if (ts == null) { LifeLog.add(app, "FCM：Tailscale 一直沒有位址，沒辦法回報給「" + peer.name + "」"); return; }
+                final String what = lan ? "區網" : "Tailscale";
+                if (ts == null) { LifeLog.add(app, "FCM：" + (lan ? "沒連 Wi-Fi" : "Tailscale 一直沒有位址") + "，沒辦法回報給「" + peer.name + "」"); return; }
                 String err = sendData(app, peer.fcmToken, Doorbell.makeAddr(peer.key, TransferStore.myId(app), ts, TransferServer.PORT, System.currentTimeMillis()));
-                LifeLog.add(app, "FCM：把我的 Tailscale 位址回報給「" + peer.name + "」" + (err == null ? "" : "失敗：" + err));
+                LifeLog.add(app, "FCM：把我的" + what + "位址回報給「" + peer.name + "」" + (err == null ? "" : "失敗：" + err));
             } catch (Throwable ignored) { }
         }, "fcm-report-addr");
         t.setDaemon(true);

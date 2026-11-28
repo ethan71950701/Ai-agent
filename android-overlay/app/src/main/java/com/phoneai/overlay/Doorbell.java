@@ -175,8 +175,8 @@ final class Doorbell {
 
     /** 內容欄位檢查：位址必須是區網私有位址，大小、路徑、檔名有上限，不接受控制字元。 */
     static String checkFields(Ring r, String myIpOrNull) {
-        if ("addr".equals(r.mode)) {   // 回報位址：只收 Tailscale 位址，不收區網、公開位址或亂格式
-            if (!isTailnet(r.ip)) return "回報的位址不是 Tailscale 位址";
+        if ("addr".equals(r.mode)) {   // 回報位址：只收 Tailscale 位址或區網私有位址（區網的是被叫醒的一端回報「我現在在這個區網位址」），不收公開位址或亂格式
+            if (!isTailnet(r.ip) && !isPrivateLan(r.ip)) return "回報的位址不是區網或 Tailscale 位址";
             if (r.port < 1 || r.port > 65535) return "埠號不對";
             return null;
         }

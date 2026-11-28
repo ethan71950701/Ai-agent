@@ -219,7 +219,7 @@ public class DoorbellTest {
     }
 
     @Test
-    public void addressReportRoundTripsAndOnlyAcceptsTailscaleAddresses() {
+    public void addressReportRoundTripsAndOnlyAcceptsLanOrTailscaleAddresses() {
         byte[] key = TransferCrypto.random(32);
         Doorbell.Verifier v = new Doorbell.Verifier(id -> id.equals("peer") ? key : null);
         long now = 1_000_000L;
@@ -228,8 +228,11 @@ public class DoorbellTest {
         assertEquals("addr", ok.ring.mode);
         assertEquals("100.101.102.103", ok.ring.ip);
         assertEquals(47321, ok.ring.port);
-        // 區網位址、公開位址、亂格式都不收（不能讓人用推播把我們的紀錄改成別的位址）
-        for (String bad : new String[]{"192.168.1.9", "8.8.8.8", "127.0.0.1", "not an ip", ""})
+        // 區網位址（被區網叫醒的一端回報它現在的位址）收；公開位址、亂格式都不收（不能讓人用推播把我們的紀錄改成別的位址）
+        Doorbell.Result lan = v.verify(Doorbell.makeAddr(key, "peer", "192.168.1.9", 47321, now), now, null);
+        assertTrue(lan.error, lan.ok());
+        assertEquals("192.168.1.9", lan.ring.ip);
+        for (String bad : new String[]{"8.8.8.8", "127.0.0.1", "not an ip", ""})
             assertFalse(bad, v.verify(Doorbell.makeAddr(key, "peer", bad, 47321, now), now, null).ok());
         assertFalse("埠號不對", v.verify(Doorbell.makeAddr(key, "peer", "100.101.102.103", 0, now), now, null).ok());
         // 同一則只認一次、金鑰不對、過期都照樣拒絕

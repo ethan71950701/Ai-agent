@@ -31,7 +31,13 @@ final class TransferStore {
         int tsPort;
         byte[] key;
         String fcmToken;         // 實驗：對方的 FCM token（叫醒用，門鈴會送到這裡）
+        long lanReportMs;        // 對方最近一次用推播回報「我的區網位址」的時間（只放記憶體；0＝沒有）。叫醒後收到它，就知道對方醒了、現在的區網位址是哪個
     }
+
+    private static final java.util.Map<String, Long> LAN_REPORTS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 對方回報了它的區網位址（位址本身另外用 updateAddress 存）。 */
+    static void noteLanReport(String id, long nowMs) { LAN_REPORTS.put(id, nowMs); }
 
     /** Tailscale 的位址範圍 100.64.0.0/10。 */
     static boolean isTailnet(String ip) {
@@ -103,6 +109,8 @@ final class TransferStore {
                 p.fcmToken = o.optString("fcm", "");
                 if (p.fcmToken.isEmpty()) p.fcmToken = null;
                 p.key = TransferCrypto.unhex(o.getString("key"));
+                Long lr = LAN_REPORTS.get(p.id);
+                p.lanReportMs = lr == null ? 0 : lr;
                 out.add(p);
             }
         } catch (Exception ignored) { }

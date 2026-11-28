@@ -31,6 +31,8 @@ public class PeerFinderTest {
         int scans, directs, wakes, tsTurnOns;
         List<Boolean> wakeRemote = new ArrayList<>();      // 每次叫醒時有沒有請對方「當作外網」
         boolean everWokenRemote;
+        boolean peerReportsLan, peerOnSameLan = true;      // 新版對方被區網叫醒後會回報區網位址；它是不是真的跟我們同一個區網
+        int reportLanAfterScans = 2;
         List<String> logs = new ArrayList<>(), phases = new ArrayList<>();
 
         static TransferDiscovery.Found found(String ip, int port) {
@@ -45,6 +47,7 @@ public class PeerFinderTest {
         @Override public TransferDiscovery.Found scan(int timeoutMs) {
             clock += timeoutMs;
             scans++;
+            if (peerReportsLan && wakes > 0 && !everWokenRemote && scans >= reportLanAfterScans) stored.lanReportMs = clock;   // 區網叫醒後，新版對方回報區網位址
             if (everWokenRemote && reportTsAfterScans > 0 && scans >= reportTsAfterScans) {   // 跟真的對方一樣：只有被當作外網叫醒，才會開 Tailscale 並回報位址
                 stored.tsIp = reportedTsIp;
                 stored.tsPort = 47321;
@@ -54,6 +57,7 @@ public class PeerFinderTest {
         @Override public TransferDiscovery.Found directLan() {
             clock += 300;
             directs++;
+            if (peerReportsLan && peerOnSameLan && stored.lanReportMs > 0) return found("192.168.1.131", 47321);   // 對方回報的區網位址連得上
             return directFindsAfter > 0 && directs >= directFindsAfter ? found("192.168.1.131", 47321) : null;
         }
         @Override public boolean canRing() { return canRing; }
@@ -168,6 +172,36 @@ public class PeerFinderTest {
         assertEquals(0, e.tsTurnOns);
         assertFalse(e.wakeRemote.contains(true));
         assertFalse(e.phases.contains("開外網"));
+    }
+
+    /** 2026-11-29 使用者的想法：被叫醒的一端把自己的區網位址推播回來，叫醒的人馬上試連。同一個 Wi-Fi 連得上＝不碰 Tailscale。 */
+    @Test public void peerReportsLanAddressAndWeConnectWithoutTailscale() throws Exception {
+        TransferStore.Peer p = peer();
+        Fake e = fake(p);
+        e.tsOn = false;
+        e.peerReportsLan = true;
+        PeerFinder.Result r = PeerFinder.find(e, p);
+        assertEquals("192.168.1.131", r.ip);
+        assertEquals(0, e.tsTurnOns);
+        assertFalse(e.wakeRemote.contains(true));
+        assertTrue("應該很快：" + e.clock, e.clock < 10000);
+    }
+
+    /** 不同路由器、網段剛好一樣：對方回報的區網位址連不上，不必等 14 秒，馬上改走外網。 */
+    @Test public void peerReportsLanAddressButUnreachableEscalatesImmediately() throws Exception {
+        TransferStore.Peer p = peer();
+        Fake e = fake(p);
+        e.tsOn = false;
+        e.peerReportsLan = true;
+        e.peerOnSameLan = false;
+        e.reportTsAfterScans = 8;
+        e.reachable.add("100.99.77.50:47321");
+        PeerFinder.Result r = PeerFinder.find(e, p);
+        assertEquals("100.99.77.50", r.ip);
+        assertEquals(1, e.tsTurnOns);
+        assertEquals(Boolean.TRUE, e.wakeRemote.get(e.wakeRemote.size() - 1));
+        assertTrue(e.logs.toString().contains("不在同一個區網"));
+        assertTrue("應該比 14 秒的後備更早改走外網", e.logs.toString().indexOf("等了 14") < 0);
     }
 
     @Test public void differentSubnetStartsRemoteImmediately() throws Exception {
